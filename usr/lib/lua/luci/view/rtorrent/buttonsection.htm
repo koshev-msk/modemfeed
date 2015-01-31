@@ -1,0 +1,8 @@
+<fieldset class="cbi-section">
+	<div class="cbi-section-node" id="cbi-<%=self.config%>-<%=tostring(self):sub(8)%>">
+		<div<% if self.style and #self.style > 0 then %> style="<%=self.style%>"<% end %>>
+			<% self:render_children(1, { valueheader = "rtorrent/empty", valuefooter = "rtorrent/empty" }) %>
+		</div>
+	</div>
+	<br />
+</fieldset>
