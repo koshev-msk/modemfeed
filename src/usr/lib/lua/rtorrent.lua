@@ -24,6 +24,30 @@ local scgi_port = 5000
 
 module "rtorrent"
 
+function map(array, func)
+	local new_array = {}
+	for i, v in ipairs(array) do
+		new_array[i] = func(v)
+	end
+	return new_array
+end
+
+function has(array, value)
+	for _, v in ipairs(array) do
+		if value == v then return true end
+	end
+	return false
+end
+
+function merge(a, b)
+	for _, v in ipairs(b) do
+		if not has(a, v) then
+			table.insert(a, v)
+		end
+	end
+	return a
+end
+
 function favicon(d)
 	if not d["custom1"] or d["custom1"] == "" then
 		d["custom1"] = "/luci-static/resources/icons/unknown_tracker.png"
@@ -63,7 +87,7 @@ function eta(d)
 end
 
 function accessor(prefix, methods, postfix)
-	methods = own.map(methods, function(m)
+	methods = map(methods, function(m)
 		if m == 0 then return m end
 		local acc = "get_"
 		local is_methods = {
@@ -90,12 +114,12 @@ end
 function depends(methods)
 	local deps = {}
 	for _, m in pairs(methods) do
-	        if     m == "icon" then deps = own.merge(deps, {"hash", "custom1"})
-		elseif m == "done_percent" then deps = own.merge(deps, {"size_bytes", "bytes_done"})
-		elseif m == "chunks_percent" then deps = own.merge(deps, {"size_chunks", "completed_chunks"})
-		elseif m == "status" then deps = own.merge(deps, {"hashing", "open", "state", "complete"})
-		elseif m == "eta" then deps = own.merge(deps, {"size_bytes", "bytes_done", "down_rate"})
-		else   deps = own.merge(deps, {m}) end
+	        if     m == "icon" then deps = merge(deps, {"hash", "custom1"})
+		elseif m == "done_percent" then deps = merge(deps, {"size_bytes", "bytes_done"})
+		elseif m == "chunks_percent" then deps = merge(deps, {"size_chunks", "completed_chunks"})
+		elseif m == "status" then deps = merge(deps, {"hashing", "open", "state", "complete"})
+		elseif m == "eta" then deps = merge(deps, {"size_bytes", "bytes_done", "down_rate"})
+		else   deps = merge(deps, {m}) end
 	end
 	return deps
 end

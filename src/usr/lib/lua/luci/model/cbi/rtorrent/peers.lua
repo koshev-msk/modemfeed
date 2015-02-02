@@ -18,7 +18,7 @@ local common = require "luci.model.cbi.rtorrent.common"
 
 local hash = luci.dispatcher.context.requestpath[4]
 local details = rtorrent.batchcall(hash, "d.", {"name"})
-local format, map = {}, {}
+local format, total, map = {}, {}, {}
 
 function map.googlemap(latitude, longitude, zoom)
 	return "https://google.com/maps/place/%s,%s/@%s,%s,%sz" % {latitude, longitude, latitude, longitude, zoom}
@@ -29,10 +29,11 @@ function map.openstreetmap(latitude, longitude, zoom)
 end
 
 function format.address(r, v)
+	total["address"] = (total["address"] or 0) + 1
 	local map = map.googlemap(r.latitude, r.longitude, 11)
 	-- local map = map.openstreetmap(r.latitude, r.longitude, 11)
 	local flag = "<img src=\"http://www.iplocation.net/images/flags/%s.gif\" />" % string.lower(r["country_code"])
-	return "%s <a href=\"%s\" style=\"color: #404040;\" target=\"_blank\">%s</a>" % {flag, map, v}
+	return "%s <a href=\"%s\" target=\"_blank\">%s</a>" % {flag, map, v}
 end
 
 function format.completed_percent(r, v)
@@ -40,10 +41,12 @@ function format.completed_percent(r, v)
 end
 
 function format.down_rate(d, v)
+	total["down_rate"] = (total["down_rate"] or 0) + v
 	return string.format("%.2f", v / 1000)
 end
 
 function format.up_rate(d, v)
+	total["up_rate"] = (total["up_rate"] or 0) + v
 	return string.format("%.2f", v / 1000)
 end
 
@@ -76,6 +79,14 @@ function add_location(r)
 	r["location"] = table.concat(location, "/")
 end
 
+function add_summary(list)
+ 	table.insert(list, {
+ 		["address"] = "TOTAL: " .. total["address"] .. " pcs.",
+ 		["down_rate"] = string.format("%.2f", total["down_rate"] / 1000),
+ 		["up_rate"] = string.format("%.2f", total["up_rate"] / 1000)
+ 	})
+end
+
 local list = rtorrent.multicall("p.", hash, 0, "address", "completed_percent", "client_version", 
 	"down_rate", "up_rate", "up_total", "down_total")
 
@@ -91,25 +102,22 @@ f.redirect = luci.dispatcher.build_url("admin/rtorrent/main")
 f.reset = false
 f.submit = false
 
+if #list > 1 then add_summary(list) end
 t = f:section(Table, list)
-t.template = "rtorrent/list_new"
+t.template = "rtorrent/list"
 t.pages = common.get_pages(hash)
 t.page = "peer list"
 
-address = t:option(DummyValue, "address", "Address")
-address.rawhtml = true
-address.tooltip = "Peer IP address"
-t:option(DummyValue, "client_version", "Client").tooltip = "Client version"
-t:option(DummyValue, "location", "Location").tooltip = "Location: country/region/city"
-t:option(DummyValue, "completed_percent", "Done").tooltip = "Download done percent"
-t:option(DummyValue, "down_rate", "Down<br />speed").tooltip = "Download speed in kb/s"
-t:option(DummyValue, "up_rate", "Up<br />speed").tooltip = "Upload speed in kb/s"
-down_total = t:option(DummyValue, "down_total", "Downloaded")
-down_total.rawhtml = true
-down_total.tooltip = "Total downloaded"
-up_total = t:option(DummyValue, "up_total", "Uploaded")
-up_total.rawhtml = true
-up_total.tooltip = "Total uploaded"
+AbstractValue.tooltip = function(self, s) self.hint = s return self end
+
+t:option(DummyValue, "address", "Address"):tooltip("Peer IP address").rawhtml = true
+t:option(DummyValue, "client_version", "Client"):tooltip("Client version")
+t:option(DummyValue, "location", "Location"):tooltip("Location: country/region/city")
+t:option(DummyValue, "completed_percent", "Done"):tooltip("Download done percent")
+t:option(DummyValue, "down_rate", "Down<br />speed"):tooltip("Download speed in kb/s")
+t:option(DummyValue, "up_rate", "Up<br />speed"):tooltip("Upload speed in kb/s")
+t:option(DummyValue, "down_total", "Downloaded"):tooltip("Total downloaded").rawhtml = true
+t:option(DummyValue, "up_total", "Uploaded"):tooltip("Total uploaded").rawhtml = true
 
 return f
 

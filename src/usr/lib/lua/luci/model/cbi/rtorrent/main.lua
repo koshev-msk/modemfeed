@@ -14,7 +14,6 @@ $Id$
 
 local common = require "luci.model.cbi.rtorrent.common"
 local rtorrent = require "rtorrent"
-local own = require "own"
 
 local selected, format = {}, {}
 local total = {["name"] = 0, ["size_bytes"] = 0, ["down_rate"] = 0, ["up_rate"] = 0}
@@ -64,93 +63,88 @@ end
 function format.name(d, v)
 	total["name"] = total["name"] + 1
 	local url = luci.dispatcher.build_url("admin/rtorrent/files/" .. d["hash"])
-	return "<div style=\"word-break: break-all\"><a href=\"%s\" style=\"color: #404040;\">%s</a></div>" % {url, v}
+	return "<a href=\"%s\">%s</a>" % {url, v}
 end
 
 function format.size_bytes(d, v)
 	total["size_bytes"] = total["size_bytes"] + v
-	return own.html(common.human_size(v), "nowrap", "center", "title: " .. v .. " B")
+	return "<div title=\"%s B\">%s</div>" % {v, common.human_size(v)}
 end
 
 function format.done_percent(d, v)
-	return own.html(string.format("%.1f%%", v), "center")
+	return string.format("%.1f%%", v)
 end
 
 function format.status(d, v)
-	return own.html(v, "center", v == "close" and "red", v == "seed" and "blue",
+	return common.div(v, v == "close" and "red", v == "seed" and "blue",
 		v == "down" and "green", v == "hash" and "green")
-end
-
-function format.peers_accounted(d, v)
-	return own.html(tostring(v), "center")
-end
-
-function format.peers_complete(d, v)
-	return own.html(tostring(v), "center")
 end
 
 function format.down_rate(d, v)
 	total["down_rate"] = total["down_rate"] + v
-	return own.html(string.format("%.2f", v / 1000), "center")
+	return string.format("%.2f", v / 1000)
 end
 
 function format.up_rate(d, v)
 	total["up_rate"] = total["up_rate"] + v
-	return own.html(string.format("%.2f", v / 1000), "center")
+	return string.format("%.2f", v / 1000)
 end
 
 function format.ratio(d, v)
-	return own.html(string.format("%.2f", v / 1000), "center", v < 1000 and "red" or "green",
-		"title: Total uploaded: " .. common.human_size(d["up_total"]))
+	return common.div(string.format("%.2f", v / 1000), v < 1000 and "red" or "green")
+	--	"title: Total uploaded: " .. common.human_size(d["up_total"]))
 end
 
 function format.eta(d, v)
-	-- return own.html(common.human_size(tonumber(v)), "nowrap", "center")
 	return type(v) == "number" and common.human_time(v) or v
 end
 
 function add_summary(details)
  	table.insert(details, {
- 		["name"] = own.html("TOTAL: " .. total["name"] .. " pcs.", "bold"),
- 		["size_bytes"] = own.html(common.human_size(total["size_bytes"]), "bold", "center"),
- 		["down_rate"] =  own.html(string.format("%.2f", total["down_rate"] / 1000), "bold", "center"),
- 		["up_rate"] =  own.html(string.format("%.2f", total["up_rate"] / 1000), "bold", "center"),
- 		["select"] = "hidden"
+ 		["name"] = "TOTAL: " .. total["name"] .. " pcs.",
+ 		["size_bytes"] = common.human_size(total["size_bytes"]),
+ 		["down_rate"] = string.format("%.2f", total["down_rate"] / 1000),
+ 		["up_rate"] =  string.format("%.2f", total["up_rate"] / 1000),
+ 		["select"] = "%hidden%"
  	})
-	return details
 end
 
 function html_format(details)
 	table.sort(details, function(a, b) return a["name"] < b["name"] end)
 	for _, d in ipairs(details) do
 		for m, v in pairs(d) do
-			d[m] = format[m] and format[m](d, v) or v
+			d[m] = format[m] and format[m](d, v) or tostring(v)
 		end
 	end
-	-- return add_summary(details)
-	return details
 end
 
 f = SimpleForm("rtorrent")
 f.reset = false
 f.submit = false
 
-t = f:section(Table, html_format(filtered))
+html_format(filtered)
+if #filtered > 1 then add_summary(filtered) end
+t = f:section(Table, filtered)
 t.template = "rtorrent/list"
 t.pages = tags
 t.page = page
+t.headcol = 2
+
+AbstractValue.tooltip = function(self, s) self.hint = s return self end
+
 t:option(DummyValue, "icon").rawhtml = true
 t:option(DummyValue, "name", "Name").rawhtml = true
-t:option(DummyValue, "size_bytes", own.html("Size", "center", "title: Full size of torrent")).rawhtml = true
-t:option(DummyValue, "done_percent", own.html("Done", "center", "title: Download done percent")).rawhtml = true
-t:option(DummyValue, "status", own.html("Status", "center")).rawhtml = true
-t:option(DummyValue, "peers_accounted", own.html("&uarr;", "center", "title: Seeder count")).rawhtml = true
-t:option(DummyValue, "peers_complete", own.html("&darr;", "center", "title: Leecher count")).rawhtml = true
-t:option(DummyValue, "down_rate", own.html("Down<br />speed", "center", "title: Download speed in kb/s")).rawhtml = true
-t:option(DummyValue, "up_rate", own.html("Up<br />speed", "center", "title: Upload speed in kb/s")).rawhtml = true
-t:option(DummyValue, "ratio", own.html("Ratio", "center", "title: Download/upload ratio")).rawhtml = true
-t:option(DummyValue, "eta", own.html("ETA", "center", "title: Estimated Time of Arrival")).rawhtml = true
-select = t:option(Flag, "select", "")
+t:option(DummyValue, "size_bytes", "Size"):tooltip("Full size of torrent").rawhtml = true
+t:option(DummyValue, "done_percent", "Done"):tooltip("Download done percent").rawhtml = true
+t:option(DummyValue, "status", "Status").rawhtml = true
+t:option(DummyValue, "peers_accounted", "&uarr;"):tooltip("Seeder count").rawhtml = true
+t:option(DummyValue, "peers_complete", "&darr;"):tooltip("Leecher count").rawhtml = true
+t:option(DummyValue, "down_rate", "Down<br />speed"):tooltip("Download speed in kb/s").rawhtml = true
+t:option(DummyValue, "up_rate", "Up<br />speed"):tooltip("Upload speed in kb/s").rawhtml = true
+t:option(DummyValue, "ratio", "Ratio"):tooltip("Download/upload ratio").rawhtml = true
+t:option(DummyValue, "eta", "ETA"):tooltip("Estimated Time of Arrival").rawhtml = true
+select = t:option(Flag, "select")
+select.template = "rtorrent/fvalue"
 
 function select.write(self, section, value)
 	table.insert(selected, filtered[section].hash)

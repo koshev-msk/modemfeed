@@ -21,11 +21,7 @@ local details = rtorrent.batchcall(hash, "d.", {"name", "base_path", "done_perce
 local files = rtorrent.multicall("f.", hash, 0, "path", "path_depth", "path_components", "size_bytes",
 	"chunks_percent", "priority", "frozen_path")
 
-local format = {}
-
-function format.dir(r, v)
-	return "<img style=\"vertical-align: text-top;\" src=\"/luci-static/resources/icons/filetypes/dir.png\" /> " .. v
-end
+local format, total = {}, {}
 
 function format.icon(r, v)
 	local icon_path = "/luci-static/resources/icons/filetypes"
@@ -36,13 +32,19 @@ function format.icon(r, v)
 	return "%s/%s.png" % {icon_path, "file"}
 end
 
+function format.dir(r, v)
+	return "<img style=\"vertical-align: text-top;\" src=\"/luci-static/resources/icons/filetypes/dir.png\" /> " .. v
+end
+
 function format.file(r, v)
+	total["name"] = (total["name"] or 0) + 1
 	local url = luci.dispatcher.build_url("admin/rtorrent/download/") .. nixio.bin.b64encode(r["frozen_path"])
-	local link = r["chunks_percent"] == 100 and "<a href=\"" .. url .. "\" style=\"color: #404040;\">" .. v .. "</a>" or v
+	local link = r["chunks_percent"] == 100 and "<a href=\"" .. url .. "\">" .. v .. "</a>" or v
 	return "<img style=\"vertical-align: middle;\" src=\"" .. format["icon"](r, v) .. "\" /> " .. link
 end
 
 function format.size_bytes(r, v)
+	total["size_bytes"] = (total["size_bytes"] or 0) + v
 	return common.human_size(v)
 end
 
@@ -58,6 +60,14 @@ function add_id(files)
 	for i, r in ipairs(files) do
 		r["id"] = i
 	end
+end
+
+function add_summary(list)
+ 	table.insert(list, {
+ 		["name"] = "TOTAL: " .. total["name"] .. " pcs.",
+ 		["size_bytes"] = common.human_size(total["size_bytes"]),
+		["priority"] = "%hidden%"
+ 	})
 end
 
 function path_compare(a, b)
@@ -80,7 +90,7 @@ for _, r in ipairs(files) do
 					n[m] = format[m] and format[m](r, v) or tostring(v)
 				end
 			else
-				n["priority"] = "hidden"
+				n["priority"] = "%hidden%"
 			end
 			n["name"] = string.rep("&emsp;", i - 1) .. format[t](r, p)
 			table.insert(list, n)
@@ -97,18 +107,19 @@ else
 	f.cancel = false
 end
 
+if #list > 1 then add_summary(list) end
 t = f:section(Table, list)
-t.template = "rtorrent/list_new"
+t.template = "rtorrent/list"
 t.pages = common.get_pages(hash)
 t.page = "file list"
+
+AbstractValue.tooltip = function(self, s) self.hint = s return self end
+
 t:option(DummyValue, "name", "Name").rawhtml = true
 t:option(DummyValue, "size_bytes", "Size")
-chunks_percent = t:option(DummyValue, "chunks_percent", "Done")
-chunks_percent.rawhtml = true
-chunks_percent.tooltip = "Download done percent"
-
-prio = t:option(ListValue, "priority", "Priority")
-prio.tooltip = "Rotate priority"
+t:option(DummyValue, "chunks_percent", "Done"):tooltip("Download done percent").rawhtml = true
+prio = t:option(ListValue, "priority", "Priority"):tooltip("Rotate priority")
+prio.template = "rtorrent/lvalue"
 prio.onclick = [[
 	var inputs = document.getElementsByClassName("cbi-input-select");
 	for (var i = 0; i < inputs.length; i++) {

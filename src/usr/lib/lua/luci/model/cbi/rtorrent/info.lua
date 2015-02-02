@@ -31,11 +31,11 @@ function h.cfgvalue(self, section)
 	return hash
 end
 
-labels = f:field(Value, "labels", "Labels")
-labels.default = details["custom2"]
-labels.rmempty = false
+tags = f:field(Value, "tags", "Tags")
+tags.default = details["custom2"]
+tags.rmempty = false
 
-function labels.write(self, section, value)
+function tags.write(self, section, value)
 	rtorrent.call("d.set_custom2", hash, value)
 end
 
