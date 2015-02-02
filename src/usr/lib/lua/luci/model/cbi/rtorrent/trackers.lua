@@ -12,7 +12,6 @@ You may obtain a copy of the License at
 $Id$
 ]]--
 
-local own = require "own"
 local rtorrent = require "rtorrent"
 local common = require "luci.model.cbi.rtorrent.common"
 
@@ -20,24 +19,8 @@ local hash = luci.dispatcher.context.requestpath[4]
 local details = rtorrent.batchcall(hash, "d.", {"name"})
 local format = {}
 
-function format.enabled(r, v)
-	return tostring(v)
-end
-
-function format.scrape_complete(r, v)
-	return own.html(tostring(v), "center")
-end
-
-function format.scrape_incomplete(r, v)
-	return own.html(tostring(v), "center")
-end
-
-function format.scrape_downloaded(r, v)
-	return own.html(tostring(v), "center")
-end
-
 function format.scrape_time_last(r, v)
-	return own.html(own.human_time(os.time() - v), "center")
+	return common.human_time(os.time() - v)
 end
 
 local list = rtorrent.multicall("t.", hash, 0, "enabled", "url", "scrape_downloaded", "scrape_complete",
@@ -45,9 +28,7 @@ local list = rtorrent.multicall("t.", hash, 0, "enabled", "url", "scrape_downloa
 
 for _, r in ipairs(list) do
 	for k, v in pairs(r) do
-		if format[k] then
-			r[k] = format[k](r, v)
-		end
+		r[k] = format[k] and format[k](r, v) or tostring(v)
 	end
 end
 
@@ -55,9 +36,17 @@ f = SimpleForm("rtorrent", details["name"])
 f.redirect = luci.dispatcher.build_url("admin/rtorrent/main")
 
 t = f:section(Table, list)
-t.template = "rtorrent/list"
+t.template = "rtorrent/list_new"
 t.pages = common.get_pages(hash)
 t.page = "tracker list"
+
+t:option(DummyValue, "url", "Url")
+t:option(DummyValue, "scrape_downloaded", "D").tooltip = "Downloaded"
+t:option(DummyValue, "scrape_complete", "S").tooltip = "Seeders"
+t:option(DummyValue, "scrape_incomplete", "L").tooltip = "Leechers"
+scrape_time_last = t:option(DummyValue, "scrape_time_last", "Updated")
+scrape_time_last.tooltip = "Last update time"
+scrape_time_last.rawhtml = true
 
 enabled = t:option(Flag, "enabled", "Enabled")
 enabled.rmempty = false
@@ -69,12 +58,6 @@ function enabled.write(self, section, value)
 		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/trackers/%s" % hash))
 	end
 end
-
-t:option(DummyValue, "url", "Url").rawhtml = true
-t:option(DummyValue, "scrape_downloaded", own.html("D", "center", "title: Downloaded")).rawhtml = true
-t:option(DummyValue, "scrape_complete", own.html("S", "center", "title: Seeders")).rawhtml = true
-t:option(DummyValue, "scrape_incomplete", own.html("L", "center", "title: Leechers")).rawhtml = true
-t:option(DummyValue, "scrape_time_last", own.html("Updated", "center", "title: Last update time")).rawhtml = true
 
 add = f:field(Value, "add_tracker", "Add tracker")
 function add.write(self, section, value)

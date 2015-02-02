@@ -14,7 +14,6 @@ $Id$
 
 local http = require "luci.http"
 local nixio = require "nixio"
-local own = require "own"
 local ltn12 = require "ltn12"
 local sys = require "luci.controller.admin.system"
 
@@ -24,9 +23,14 @@ local PROTECTED_PATH = {"/bin", "/dev", "/etc", "/lib", "/overlay", "/root", "/s
 
 module(...)
 
+function start_with(s, b)
+	if not s then return false end
+	return string.sub(s, 1, string.len(b)) == b
+end
+
 function security_check(file)
 	for _, path_prefix in ipairs(PROTECTED_PATH) do
-		if own.start_with(file, path_prefix) then
+		if start_with(file, path_prefix) then
 			http.write("<h1>Access Denied</h1>")
 			return false
 		end

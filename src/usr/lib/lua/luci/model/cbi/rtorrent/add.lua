@@ -25,9 +25,13 @@ local torrent
 uri = f:field(TextValue, "uri", "Torrent<br />or magnet URI")
 uri.rows = 1
 
+function trim(s)
+	return s:match('^%s*(.*%S)') or ''
+end
+
 function uri.validate(self, value, section)
-	if "magnet:" == string.sub(own.trim(value), 1, 7) then
-		torrent = bencode.encode({ ["magnet-uri"] = own.trim(value) })
+	if "magnet:" == string.sub(trim(value), 1, 7) then
+		torrent = bencode.encode({ ["magnet-uri"] = trim(value) })
 	else
 		local ok, res = own.get(value)
 		if not ok then return nil, "Not able to download torrent: " .. res end
@@ -53,9 +57,9 @@ dir.default = "/store/download"
 dir.datatype = "directory"
 dir.rmempty = false
 
-labels = f:field(Value, "labels", "Labels")
-labels.default = "all " .. luci.dispatcher.context.authuser
-labels.rmempty = false
+tags = f:field(Value, "tags", "Tags")
+tags.default = "all " .. luci.dispatcher.context.authuser
+tags.rmempty = false
 
 start = f:field(Flag, "start", "Start now")
 start.default  = "1"
@@ -67,7 +71,7 @@ function f.handle(self, state, data)
 		table.insert(params, data.start == "1" and "load_raw_start" or "load_raw")
 		table.insert(params, xmlrpc.newTypedValue((nixio.bin.b64encode(torrent)), "base64"))
 		table.insert(params, "d.set_directory=\"" .. data.dir .. "\"")
-		table.insert(params, "d.set_custom2=\"" .. data.labels .. "\"")
+		table.insert(params, "d.set_custom2=\"" .. data.tags .. "\"")
 		if data.uri then
 			table.insert(params, "d.set_custom3=" .. nixio.bin.b64encode(data.uri))
 		end

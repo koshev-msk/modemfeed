@@ -13,7 +13,6 @@ $Id$
 ]]--
 
 local rtorrent = require "rtorrent"
-local own = require "own"
 local nixio = require "nixio"
 local common = require "luci.model.cbi.rtorrent.common"
 
@@ -44,11 +43,11 @@ function format.file(r, v)
 end
 
 function format.size_bytes(r, v)
-	return own.html(own.human_size(v), "nowrap", "center")
+	return common.human_size(v)
 end
 
 function format.chunks_percent(r, v)
-	return own.html(string.format("%.1f%%", v), "center", "vcenter", v < 100 and "red")
+	return common.div(string.format("%.1f%%", v), v < 100 and "red")
 end
 
 function format.priority(r, v)
@@ -78,7 +77,7 @@ for _, r in ipairs(files) do
 			local n = {}
 			if t == "file" then
 				for m, v in pairs(r) do
-					n[m] = format[m] and format[m](r, v) or v
+					n[m] = format[m] and format[m](r, v) or tostring(v)
 				end
 			else
 				n["priority"] = "hidden"
@@ -99,14 +98,18 @@ else
 end
 
 t = f:section(Table, list)
-t.template = "rtorrent/list"
+t.template = "rtorrent/list_new"
 t.pages = common.get_pages(hash)
 t.page = "file list"
 t:option(DummyValue, "name", "Name").rawhtml = true
-t:option(DummyValue, "size_bytes", own.html("Size", "center")).rawhtml = true
-t:option(DummyValue, "chunks_percent", own.html("Done", "center", "title: Download done percent")).rawhtml = true
+t:option(DummyValue, "size_bytes", "Size")
+chunks_percent = t:option(DummyValue, "chunks_percent", "Done")
+chunks_percent.rawhtml = true
+chunks_percent.tooltip = "Download done percent"
 
-local rotate_prio_js = [[
+prio = t:option(ListValue, "priority", "Priority")
+prio.tooltip = "Rotate priority"
+prio.onclick = [[
 	var inputs = document.getElementsByClassName("cbi-input-select");
 	for (var i = 0; i < inputs.length; i++) {
 		if (inputs[i].selectedIndex < inputs[i].length - 1) {
@@ -116,8 +119,6 @@ local rotate_prio_js = [[
 		}
 	}
 ]]
-prio = t:option(ListValue, "priority", own.html("Priority", "center", "onclick: " .. rotate_prio_js, "title: Rotate priority"))
-prio.style = "margin: 0px auto; display: block;"
 prio:value("0", "off")
 prio:value("1", "normal")
 prio:value("2", "high")

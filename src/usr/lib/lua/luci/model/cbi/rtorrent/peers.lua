@@ -36,36 +36,28 @@ function format.address(r, v)
 end
 
 function format.completed_percent(r, v)
-	return own.html(string.format("%.1f%%", v), "center")
-end
-
-function format.client_version(r, v)
-	return own.html(v, "center")
+	return string.format("%.1f%%", v)
 end
 
 function format.down_rate(d, v)
-	return own.html(string.format("%.2f", v / 1000), "center")
+	return string.format("%.2f", v / 1000)
 end
 
 function format.up_rate(d, v)
-	return own.html(string.format("%.2f", v / 1000), "center")
+	return string.format("%.2f", v / 1000)
 end
 
 function format.down_total(d, v)
-	return own.html(own.human_size(v), "nowrap", "center", "title: " .. v .. " B")
+	return "<div title=\"%s B\">%s</div>" % {v, common.human_size(v)}
 end
 
 function format.up_total(d, v)
-	return own.html(own.human_size(v), "nowrap", "center", "title: " .. v .. " B")
+	return format.down_total(d, v)
 end
 
 function json2table(json)
 	loadstring("j2t = " .. string.gsub(string.gsub(json, '([,%{])%s*\n?%s*"', '%1["'), '"%s*:%s*', '"]='))()
 	return j2t
-end
-
-function format.location(r, v)
-	return own.html(v, "center")
 end
 
 function ip2geo(ip)
@@ -90,9 +82,7 @@ local list = rtorrent.multicall("p.", hash, 0, "address", "completed_percent", "
 for _, r in ipairs(list) do
 	add_location(r)
 	for k, v in pairs(r) do
-		if format[k] then
-			r[k] = format[k](r, v)
-		end
+		r[k] = format[k] and format[k](r, v) or tostring(v)
 	end
 end
 
@@ -102,18 +92,24 @@ f.reset = false
 f.submit = false
 
 t = f:section(Table, list)
-t.template = "rtorrent/list"
+t.template = "rtorrent/list_new"
 t.pages = common.get_pages(hash)
 t.page = "peer list"
 
-t:option(DummyValue, "address", own.html("Address", "title: Peer IP address")).rawhtml = true
-t:option(DummyValue, "client_version", own.html("Client", "center", "title: Client version")).rawhtml = true
-t:option(DummyValue, "location", own.html("Location", "center", "title: Location: country/region/city")).rawhtml = true
-t:option(DummyValue, "completed_percent", own.html("Done", "center", "title: Download done percent")).rawhtml = true
-t:option(DummyValue, "down_rate", own.html("Down<br />speed", "center", "title: Download speed in kb/s")).rawhtml = true
-t:option(DummyValue, "up_rate", own.html("Up<br />speed", "center", "title: Upload speed in kb/s")).rawhtml = true
-t:option(DummyValue, "down_total", own.html("Downloaded", "center", "title: Total downloaded")).rawhtml = true
-t:option(DummyValue, "up_total", own.html("Uploaded", "center", "title: Total uploaded")).rawhtml = true
+address = t:option(DummyValue, "address", "Address")
+address.rawhtml = true
+address.tooltip = "Peer IP address"
+t:option(DummyValue, "client_version", "Client").tooltip = "Client version"
+t:option(DummyValue, "location", "Location").tooltip = "Location: country/region/city"
+t:option(DummyValue, "completed_percent", "Done").tooltip = "Download done percent"
+t:option(DummyValue, "down_rate", "Down<br />speed").tooltip = "Download speed in kb/s"
+t:option(DummyValue, "up_rate", "Up<br />speed").tooltip = "Upload speed in kb/s"
+down_total = t:option(DummyValue, "down_total", "Downloaded")
+down_total.rawhtml = true
+down_total.tooltip = "Total downloaded"
+up_total = t:option(DummyValue, "up_total", "Uploaded")
+up_total.rawhtml = true
+up_total.tooltip = "Total uploaded"
 
 return f
 

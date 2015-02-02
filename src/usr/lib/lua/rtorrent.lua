@@ -57,7 +57,7 @@ end
 
 function eta(d)
 	if d["bytes_done"] < d["size_bytes"] then
-		if d["down_rate"] > 0 then return own.human_time((d["size_bytes"] - d["bytes_done"]) / d["down_rate"])
+		if d["down_rate"] > 0 then return (d["size_bytes"] - d["bytes_done"]) / d["down_rate"]
 		else return "&#8734;" end
 	else return "--" end
 end

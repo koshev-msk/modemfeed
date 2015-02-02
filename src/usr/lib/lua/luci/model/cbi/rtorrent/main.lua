@@ -12,6 +12,7 @@ You may obtain a copy of the License at
 $Id$
 ]]--
 
+local common = require "luci.model.cbi.rtorrent.common"
 local rtorrent = require "rtorrent"
 local own = require "own"
 
@@ -21,18 +22,18 @@ local total = {["name"] = 0, ["size_bytes"] = 0, ["down_rate"] = 0, ["up_rate"] 
 local methods = { "hash", "name", "size_bytes", "done_percent", "status", "eta", "icon",
 	 "peers_accounted", "peers_complete", "down_rate", "up_rate", "ratio", "up_total", "custom2" }
 
-function has_label(labels, label)
-	for i, l in ipairs(labels) do
-		if l.name == label then return true end
+function has_tag(tags, tag)
+	for _, t in ipairs(tags) do
+		if t.name == tag then return true end
 	end
 	return false
 end
 
-function labels(details)
+function get_tags(details)
 	local l = {}
 	for _, d in ipairs(details) do
 		for p in string.gmatch(d["custom2"] or "all", "%S+") do
-			if not has_label(l, p) then
+			if not has_tag(l, p) then
 				table.insert(l, {name = p, link = luci.dispatcher.build_url("admin/rtorrent/main/%s" % p)})
 			end
 		end
@@ -51,9 +52,9 @@ function filter(details, page)
 end
 
 local details = rtorrent.multicall("d.", "default", unpack(methods))
-local labels = labels(details)
+local tags = get_tags(details)
 local user = luci.dispatcher.context.authuser
-local page = luci.dispatcher.context.requestpath[4] or (has_label(labels, user) and user or "all")
+local page = luci.dispatcher.context.requestpath[4] or (has_tag(tags, user) and user or "all")
 local filtered = filter(details, page)
 
 function format.icon(d, v)
@@ -68,7 +69,7 @@ end
 
 function format.size_bytes(d, v)
 	total["size_bytes"] = total["size_bytes"] + v
-	return own.html(own.human_size(v), "nowrap", "center", "title: " .. v .. " B")
+	return own.html(common.human_size(v), "nowrap", "center", "title: " .. v .. " B")
 end
 
 function format.done_percent(d, v)
@@ -100,17 +101,18 @@ end
 
 function format.ratio(d, v)
 	return own.html(string.format("%.2f", v / 1000), "center", v < 1000 and "red" or "green",
-		"title: Total uploaded: " .. own.human_size(d["up_total"]))
+		"title: Total uploaded: " .. common.human_size(d["up_total"]))
 end
 
 function format.eta(d, v)
-	return own.html(v, "nowrap", "center")
+	-- return own.html(common.human_size(tonumber(v)), "nowrap", "center")
+	return type(v) == "number" and common.human_time(v) or v
 end
 
 function add_summary(details)
  	table.insert(details, {
  		["name"] = own.html("TOTAL: " .. total["name"] .. " pcs.", "bold"),
- 		["size_bytes"] = own.html(own.human_size(total["size_bytes"]), "bold", "center"),
+ 		["size_bytes"] = own.html(common.human_size(total["size_bytes"]), "bold", "center"),
  		["down_rate"] =  own.html(string.format("%.2f", total["down_rate"] / 1000), "bold", "center"),
  		["up_rate"] =  own.html(string.format("%.2f", total["up_rate"] / 1000), "bold", "center"),
  		["select"] = "hidden"
@@ -122,12 +124,11 @@ function html_format(details)
 	table.sort(details, function(a, b) return a["name"] < b["name"] end)
 	for _, d in ipairs(details) do
 		for m, v in pairs(d) do
- 			if format[m] then
-				d[m] = format[m](d, v)
-			end
+			d[m] = format[m] and format[m](d, v) or v
 		end
 	end
-	return add_summary(details)
+	-- return add_summary(details)
+	return details
 end
 
 f = SimpleForm("rtorrent")
@@ -136,7 +137,7 @@ f.submit = false
 
 t = f:section(Table, html_format(filtered))
 t.template = "rtorrent/list"
-t.pages = labels
+t.pages = tags
 t.page = page
 t:option(DummyValue, "icon").rawhtml = true
 t:option(DummyValue, "name", "Name").rawhtml = true
