@@ -19,7 +19,7 @@ local common = require "luci.model.cbi.rtorrent.common"
 local hash = luci.dispatcher.context.requestpath[4]
 local details = rtorrent.batchcall(hash, "d.", {"name", "base_path", "done_percent"})
 local files = rtorrent.multicall("f.", hash, 0, "path", "path_depth", "path_components", "size_bytes",
-	"chunks_percent", "priority", "frozen_path")
+	"size_chunks", "completed_chunks", "priority", "frozen_path")
 
 local format, total = {}, {}
 
@@ -56,9 +56,10 @@ function format.priority(r, v)
 	return tostring(v)
 end
 
-function add_id(files)
+function add_custom(files)
 	for i, r in ipairs(files) do
 		r["id"] = i
+		r["chunks_percent"] = r["completed_chunks"] * 100.0 / r["size_chunks"]
 	end
 end
 
@@ -78,7 +79,7 @@ function path_compare(a, b)
 end
 
 local list, last_path = {}, {}
-add_id(files)
+add_custom(files)
 table.sort(files, path_compare)
 for _, r in ipairs(files) do
 	for i, p in ipairs(r["path_components"]) do

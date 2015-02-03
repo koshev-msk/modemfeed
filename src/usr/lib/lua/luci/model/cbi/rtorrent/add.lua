@@ -12,11 +12,11 @@ You may obtain a copy of the License at
 $Id$
 ]]--
 
-local own = require "own"
 local bencode = require "bencode"
 local nixio = require "nixio"
 local rtorrent = require "rtorrent"
 local xmlrpc = require "xmlrpc"
+local common = require "luci.model.cbi.rtorrent.common"
 
 f = SimpleForm("rtorrent", "Add torrent")
 
@@ -33,7 +33,7 @@ function uri.validate(self, value, section)
 	if "magnet:" == string.sub(trim(value), 1, 7) then
 		torrent = bencode.encode({ ["magnet-uri"] = trim(value) })
 	else
-		local ok, res = own.get(value)
+		local ok, res = common.get(value)
 		if not ok then return nil, "Not able to download torrent: " .. res end
 		local tab, err = bencode.decode(res)
 		if not tab then return nil, "Not able to parse torrent file: " .. err end

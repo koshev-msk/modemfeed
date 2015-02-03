@@ -13,8 +13,9 @@ $Id$
 ]]--
 
 local luci = require "luci"
+local cURL = require "cURL"
 
-local string, os, math, ipairs, table = string, os, math, ipairs, table
+local string, os, math, ipairs, table, pcall = string, os, math, ipairs, table, pcall
 
 module "luci.model.cbi.rtorrent.common"
 
@@ -55,5 +56,37 @@ function div(body, ...)
 	else
 		return body
 	end
+end
+
+function get(url)
+	local function fetch(url)
+		local res = {}
+		local res_code, res_message = "500", ""
+	
+		curl = cURL.easy_init()
+		curl:setopt_url(url)
+		curl:setopt_header(0)
+		curl:setopt_timeout(5)
+		curl:setopt_useragent("unknown")
+		curl:setopt_referer("http://www.google.com")
+		curl:setopt_ssl_verifypeer(0)
+		curl:setopt_ssl_verifyhost(0)
+		curl:setopt_followlocation(1)
+		curl:setopt_encoding("")
+		curl:setopt_maxredirs(10)
+		curl:setopt_cookiefile("/etc/cookies.conf")
+		curl:perform({
+			headerfunction = function(s)
+				local code, message = string.match(s, "^HTTP/.* (%d+) (.+)$")
+				if code then res_code, res_message = code, message end
+			end,
+			writefunction = function(buf) table.insert(res, buf) end
+		})		
+	 	if res_code == "200" then return true, table.concat(res)
+		else return false, res_code .. ": " .. res_message end
+	end
+
+	local ok, r1, r2 = pcall(fetch, url)
+	if ok then return r1, r2 else return ok, r1 end
 end
 
