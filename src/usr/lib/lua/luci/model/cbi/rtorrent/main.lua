@@ -15,11 +15,48 @@ $Id$
 local common = require "luci.model.cbi.rtorrent.common"
 local rtorrent = require "rtorrent"
 
-local selected, format = {}, {}
-local total = {["name"] = 0, ["size_bytes"] = 0, ["down_rate"] = 0, ["up_rate"] = 0}
+local selected, format, total = {}, {}, {}
 
-local methods = { "hash", "name", "size_bytes", "done_percent", "status", "eta", "icon",
-	 "peers_accounted", "peers_complete", "down_rate", "up_rate", "ratio", "up_total", "custom2" }
+local methods = { "hash", "name", "size_bytes", "bytes_done", "hashing", "open", "state", "complete",
+	"peers_accounted", "peers_complete", "down_rate", "up_rate", "ratio", "up_total", "custom1", "custom2" }
+
+function status(d)
+	if     d["hashing"] > 0 then return "hash"
+	elseif d["open"] == 0 then return "close"
+	elseif d["state"] == 0 then return "stop"
+	elseif d["state"] > 0 then
+		if d["complete"] == 0 then return "down"
+		else return "seed" end
+	else return "unknown" end
+end
+
+function eta(d)
+	if d["bytes_done"] < d["size_bytes"] then
+		if d["down_rate"] > 0 then
+			return common.human_time((d["size_bytes"] - d["bytes_done"]) / d["down_rate"])
+		else return "&#8734;" end
+	else return "--" end
+end
+
+function favicon(d)
+	if not d["custom1"] or d["custom1"] == "" then
+		d["custom1"] = "/luci-static/resources/icons/unknown_tracker.png"
+		for _, t in pairs(rtorrent.multicall("t.", d["hash"], 0, "url", "enabled")) do
+			if t["enabled"] then
+				local domain = t["url"]:match("[%w%.:/]*[%./](%w+%.%w+)")
+				if domain then
+					local icon = "http://" .. domain .. "/favicon.ico"
+					if common.get(icon) then
+						d["custom1"] = icon
+						break
+					end
+				end
+			end
+		end
+		rtorrent.call("d.set_custom1", d["hash"], d["custom1"])
+	end
+ 	return d["custom1"]
+end
 
 function has_tag(tags, tag)
 	for _, t in ipairs(tags) do
@@ -50,24 +87,18 @@ function filter(details, page)
 	return filtered
 end
 
-local details = rtorrent.multicall("d.", "default", unpack(methods))
-local tags = get_tags(details)
-local user = luci.dispatcher.context.authuser
-local page = luci.dispatcher.context.requestpath[4] or (has_tag(tags, user) and user or "all")
-local filtered = filter(details, page)
-
 function format.icon(d, v)
 	return "<img src=\"" .. v .. "\" />"
 end
 
 function format.name(d, v)
-	total["name"] = total["name"] + 1
+	total["name"] = (total["name"] or 0) + 1
 	local url = luci.dispatcher.build_url("admin/rtorrent/files/" .. d["hash"])
 	return "<a href=\"%s\">%s</a>" % {url, v}
 end
 
 function format.size_bytes(d, v)
-	total["size_bytes"] = total["size_bytes"] + v
+	total["size_bytes"] = (total["size_bytes"] or 0) + v
 	return "<div title=\"%s B\">%s</div>" % {v, common.human_size(v)}
 end
 
@@ -81,12 +112,12 @@ function format.status(d, v)
 end
 
 function format.down_rate(d, v)
-	total["down_rate"] = total["down_rate"] + v
+	total["down_rate"] = (total["down_rate"] or 0) + v
 	return string.format("%.2f", v / 1000)
 end
 
 function format.up_rate(d, v)
-	total["up_rate"] = total["up_rate"] + v
+	total["up_rate"] = (total["up_rate"] or 0) + v
 	return string.format("%.2f", v / 1000)
 end
 
@@ -95,8 +126,13 @@ function format.ratio(d, v)
 	--	"title: Total uploaded: " .. common.human_size(d["up_total"]))
 end
 
-function format.eta(d, v)
-	return type(v) == "number" and common.human_time(v) or v
+function add_custom(details)
+	for _, d in ipairs(details) do
+		d["status"] = status(d)
+		d["done_percent"] = d["bytes_done"] * 100.0 / d["size_bytes"]
+		d["eta"] = eta(d)
+		d["icon"] = favicon(d)
+	end
 end
 
 function add_summary(details)
@@ -121,6 +157,13 @@ end
 f = SimpleForm("rtorrent")
 f.reset = false
 f.submit = false
+
+local details = rtorrent.multicall("d.", "default", unpack(methods))
+add_custom(details)
+local tags = get_tags(details)
+local user = luci.dispatcher.context.authuser
+local page = luci.dispatcher.context.requestpath[4] or (has_tag(tags, user) and user or "all")
+local filtered = filter(details, page)
 
 html_format(filtered)
 if #filtered > 1 then add_summary(filtered) end
