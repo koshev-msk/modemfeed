@@ -12,9 +12,9 @@ You may obtain a copy of the License at
 $Id$
 ]]--
 
-local http = require "luci.http"
 local nixio = require "nixio"
-local ltn12 = require "ltn12"
+local http = require "luci.http"
+local ltn12 = require "luci.ltn12"
 local sys = require "luci.controller.admin.system"
 
 local ipairs, string = ipairs, string

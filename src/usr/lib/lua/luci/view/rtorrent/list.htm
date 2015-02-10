@@ -11,6 +11,18 @@ end
 
 -%>
 
+<style type="text/css">
+	.center { text-align: center }
+	.nowrap { white-space: nowrap }
+	.wrap   { word-break: break-all }
+	.red    { color: #b20000 }
+	.green  { color: #00a100 }
+	.blue   { color: #0000bf }
+	.bold   { font-weight: bold }
+	table.cbi-section-table a:link { color: #404040 }
+	table.cbi-section-table a:visited { color: #404040 }
+</style>
+
 <fieldset class="cbi-section" id="cbi-<%=self.config%>-<%=self.sectiontype%>">
 	<div class="cbi-section-node">
 		<ul class="cbi-tabmenu">
@@ -25,20 +37,25 @@ end
 		<table class="cbi-section-table">
 			<tr class="cbi-section-table-titles">
 			<%- for i, k in pairs(self.children) do -%>
-				<th class="cbi-section-table-cell"><%=k.title%></th>
+				<th class="cbi-section-table-cell<% if i ~= (self.headcol or 1) then %> center nowrap<% else %> wrap<% end -%>
+				"<%=ifattr(k.hint, "title", k.hint)%><%=ifattr(k.onclick, "onclick", k.onclick)%>><%=k.title%></th>
 			<%- end -%>
 			</tr>
 
-			<%- for i, k in ipairs(self:cfgsections()) do
+			<%- for j, k in ipairs(self:cfgsections()) do
 				section = k
-				scope = { valueheader = "cbi/cell_valueheader", valuefooter = "cbi/cell_valuefooter" }
+				scope = { valueheader = "rtorrent/empty", valuefooter = "rtorrent/empty" }
 			-%>
 				<tr class="cbi-section-table-row cbi-rowstyle-<%=rowstyle()%>" id="cbi-<%=self.config%>-<%=section%>">
-				<%- for k, node in ipairs(self.children) do
-					if not node.optional then
-						node:render(section, scope or {})
-					end
-				end -%>
+				<%- for i, node in ipairs(self.children) do -%>
+					<td class="cbi-value-field<% if i ~= (self.headcol or 1) then %> center nowrap<% else %> wrap
+					<%- end if j > 1 and j == table.getn(self:cfgsections()) then %> bold<% end %>">
+						<div id="cbi-<%=node.config.."-"..section.."-"..node.option%>">
+							<%- node:render(section, scope or {}) -%>
+						</div>
+						<div id="cbip-<%=node.config.."-"..section.."-"..node.option%>"></div>
+					</td>
+				<%- end -%>
 				</tr>
 			<%- end -%>
 		</table>
