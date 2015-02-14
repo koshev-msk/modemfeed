@@ -10,7 +10,12 @@ IPKG_NO_SCRIPT=1 opkg install http://downloads.openwrt.org/snapshots/trunk/ar71x
 following dependent packages were also installed: _libpthread, libpolarssl, libcurl, xmlrpc-c-common, xmlrpc-c-internal, xmlrpc-c, libstdcpp, xmlrpc-c-server, libsigcxx, zlib libopenssl, libtorrent libncursesw_
 
 2.) Create rTorrent config file
-```
-TODO
-```
 
+Minimal _/root/.rtorrent.rc_ file:
+```
+directory = /path/to/downloads/
+session = /path/to/session/
+scgi_port = 127.0.0.1:5000
+```
+Sample _/root/.rtorrent.rc_ file:
+http://pissedoffadmins.com/os/linux/sample-rtorrent-rc-file.html
