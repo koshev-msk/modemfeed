@@ -59,7 +59,8 @@ chmod +x /etc/init.d/rtorrent
 ### Install wget
 (the wget in  busybox does not support https)
 ```
-opkg install wget ca-certificates
+opkg install wget
+IPKG_NO_SCRIPT=1 opkg install http://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/base/ca-certificates_20141019_ar71xx.ipk
 ```
 
 ### Install luci-app-rtorrent
