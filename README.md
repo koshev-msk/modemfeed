@@ -64,7 +64,7 @@ opkg install wget ca-certificates
 
 ### Install luci-app-rtorrent
 ```
-echo '' > /etc/opkg.conf
+echo 'src/gz luci_app_rtorrent https://github.com/wolandmaster/luci-app-rtorrent/releases/download/packages' >> /etc/opkg.conf
 opkg update
 opkg install luci-app-rtorrent
 ```
