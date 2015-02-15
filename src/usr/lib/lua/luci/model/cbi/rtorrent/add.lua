@@ -53,7 +53,7 @@ function file.validate(self, value, section)
 end
 
 dir = f:field(Value, "dir", "Download directory")
-dir.default = "/store/download"
+dir.default = rtorrent.call("get_directory")
 dir.datatype = "directory"
 dir.rmempty = false
 
