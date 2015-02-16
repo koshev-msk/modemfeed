@@ -69,3 +69,6 @@ echo 'src/gz luci_app_rtorrent https://github.com/wolandmaster/luci-app-rtorrent
 opkg update
 opkg install luci-app-rtorrent
 ```
+
+### Screenshots
+[luci-app-rtorrent 0.1.1](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
