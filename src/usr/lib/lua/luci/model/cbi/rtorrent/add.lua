@@ -58,7 +58,8 @@ dir.datatype = "directory"
 dir.rmempty = false
 
 tags = f:field(Value, "tags", "Tags")
-tags.default = "all " .. luci.dispatcher.context.authuser
+local user =  luci.dispatcher.context.authuser
+tags.default = "all" .. (user ~= "root" and " " .. user or "")
 tags.rmempty = false
 
 start = f:field(Flag, "start", "Start now")
