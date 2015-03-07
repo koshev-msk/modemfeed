@@ -2,6 +2,7 @@
 rTorrent client for OpenWrt's LuCI web interface
 
 ## Install instructions
+(for Openwrt 14.07 Barrier Breaker)
 
 ### Install rtorrent-rpc (available in snapshots repository)
 ```
