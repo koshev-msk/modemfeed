@@ -1,6 +1,9 @@
 # luci-app-rtorrent
 rTorrent client for OpenWrt's LuCI web interface
 
+## Screenshots
+[luci-app-rtorrent 0.1.1](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
+
 ## Install instructions
 (for Openwrt 14.07 Barrier Breaker)
 
@@ -71,5 +74,8 @@ opkg update
 opkg install luci-app-rtorrent
 ```
 
-### Screenshots
-[luci-app-rtorrent 0.1.1](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
+### Upgrade installed version
+```
+opkg update
+opkg upgrade luci-app-rtorrent
+```
