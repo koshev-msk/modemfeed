@@ -5,18 +5,12 @@ rTorrent client for OpenWrt's LuCI web interface
 [luci-app-rtorrent 0.1.1](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
 
 ## Install instructions
-(for Openwrt 14.07 Barrier Breaker)
+(for Openwrt 15.05 Chaos Calmer)
 
 ### Install rtorrent-rpc (available in snapshots repository)
 ```
 opkg update
-IPKG_NO_SCRIPT=1 opkg install http://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/packages/libtorrent_0.13.4-git-0-72e908707f01ee01a9b4918436c64348878b63f7_ar71xx.ipk
-IPKG_NO_SCRIPT=1 opkg install http://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/packages/rtorrent-rpc_0.9.4-git-0-7343e33a6a0d279179b304a380bf011f1c8be64a_ar71xx.ipk
-```
-
-### Install libncurses
-```
-opkg install libncurses
+opkg install rtorrent-rpc
 ```
 
 ### Create rTorrent config file
@@ -64,7 +58,7 @@ chmod +x /etc/init.d/rtorrent
 (the wget in  busybox does not support https)
 ```
 opkg install wget
-IPKG_NO_SCRIPT=1 opkg install http://downloads.openwrt.org/snapshots/trunk/ar71xx/generic/packages/base/ca-certificates_20141019_ar71xx.ipk
+opkg install ca-certificates
 ```
 
 ### Install luci-app-rtorrent
