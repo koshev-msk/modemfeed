@@ -36,10 +36,14 @@ opkg install screen
 #!/bin/sh /etc/rc.common
 
 START=99
+STOP=99
+
+SCREEN=/usr/sbin/screen
+PROG=/usr/bin/rtorrent
 
 start() {
   sleep 3
-  screen -dm -t rtorrent nice -19 rtorrent
+  $SCREEN -dm -t rtorrent nice -19 $PROG
 }
 
 stop() {
