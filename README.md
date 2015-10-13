@@ -7,7 +7,7 @@ rTorrent client for OpenWrt's LuCI web interface
 ## Install instructions
 (for Openwrt 15.05 Chaos Calmer)
 
-### Install rtorrent-rpc (available in snapshots repository)
+### Install rtorrent-rpc
 ```
 opkg update
 opkg install rtorrent-rpc
