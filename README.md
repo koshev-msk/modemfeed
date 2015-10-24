@@ -32,6 +32,7 @@ opkg install screen
 ```
 
 #### Create _/etc/init.d/rtorrent_ script
+_Notice: rtorrent must be started with "-D" option in order to support deprecated commands_
 ```
 #!/bin/sh /etc/rc.common
 
@@ -40,10 +41,11 @@ STOP=99
 
 SCREEN=/usr/sbin/screen
 PROG=/usr/bin/rtorrent
+ARGS="-D"
 
 start() {
   sleep 3
-  $SCREEN -dm -t rtorrent nice -19 $PROG
+  $SCREEN -dm -t rtorrent nice -19 $PROG $ARGS
 }
 
 stop() {
