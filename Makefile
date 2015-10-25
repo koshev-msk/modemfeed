@@ -44,17 +44,17 @@ clean:
 	rm -fr ipk
 
 test-deploy:
-	cp -a src/lib/* /lib
 	cp -a src/usr/* /usr
 	cp -a src/www/* /www
 	rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
 
 test-remove:
-	find src/lib src/usr src/www -type f -o -type l | sed 's/^src//' | xargs rm -f
-	rm -f /usr/lib/lua/luci/model/cbi/rtorrent
-	rm -f /usr/lib/lua/luci/view/rtorrent
-	rm -f /usr/lib/lua/xmlrpc
-	rm -f /www/luci-static/resources/icons/filetypes
+	find src/usr src/www -type f -o -type l | sed 's/^src//' | xargs rm -f
+	rm -fr /usr/lib/lua/luci/model/cbi/rtorrent
+	rm -fr /usr/lib/lua/luci/view/rtorrent
+	rm -fr /usr/lib/lua/xmlrpc
+	rm -fr /www/luci-static/resources/icons/filetypes
+	rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
 	opkg list-installed | grep -q $(NAME) \
 	&& opkg --force-reinstall install $(NAME) \
 	|| echo "$(NAME) not installed, skip reinstall"
