@@ -61,15 +61,17 @@ chmod +x /etc/init.d/rtorrent
 ```
 
 ### Install wget
-(the wget in  busybox does not support https)
+(the wget in busybox does not support https)
 ```
-opkg install wget
 opkg install ca-certificates
+opkg install wget
+ln -sf $(which wget-ssl) /usr/bin/wget
 ```
 
 ### Install luci-app-rtorrent
 ```
-echo 'src/gz luci_app_rtorrent https://github.com/wolandmaster/luci-app-rtorrent/releases/download/packages' >> /etc/opkg.conf
+wget -nv https://github.com/wolandmaster/luci-app-rtorrent/releases/download/latest/e1a1ba8004c4220f -O /etc/opkg/keys/e1a1ba8004c4220f
+echo 'src/gz luci_app_rtorrent https://github.com/wolandmaster/luci-app-rtorrent/releases/download/latest' >> /etc/opkg.conf
 opkg update
 opkg install luci-app-rtorrent
 ```
