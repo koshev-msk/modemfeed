@@ -1,7 +1,5 @@
----------------------------------------------------------------------
+-- Copyright 2003-2010 Kepler Project
 -- XML-RPC implementation for Lua.
--- See Copyright Notice in license.html
----------------------------------------------------------------------
 
 local lxp = require "lxp"
 local lom = require "lxp.lom"

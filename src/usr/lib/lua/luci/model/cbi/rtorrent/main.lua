@@ -1,28 +1,18 @@
---[[
-LuCI - Lua Configuration Interface - rTorrent client
-
-Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-]]--
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the Apache License 2.0.
 
 local common = require "luci.model.cbi.rtorrent.common"
 local rtorrent = require "rtorrent"
 
+require "luci.model.cbi.rtorrent.string"
+
 local selected, format, total = {}, {}, {}
 
-local methods = { "hash", "name", "size_bytes", "bytes_done", "hashing", "open", "state", "complete",
-	"peers_accounted", "peers_complete", "down_rate", "up_rate", "ratio", "up_total", "custom1", "custom2" }
+local methods = { "hash", "name", "size_bytes", "bytes_done", "hashing", "state", "complete",
+	"peers_accounted", "peers_complete", "down.rate", "up.rate", "ratio", "up.total", "custom1", "custom2" }
 
 function status(d)
 	if     d["hashing"] > 0 then return "hash"
-	elseif d["open"] == 0 then return "close"
 	elseif d["state"] == 0 then return "stop"
 	elseif d["state"] > 0 then
 		if d["complete"] == 0 then return "down"
@@ -41,8 +31,8 @@ end
 function favicon(d)
 	if not d["custom1"] or d["custom1"] == "" then
 		d["custom1"] = "/luci-static/resources/icons/unknown_tracker.png"
-		for _, t in pairs(rtorrent.multicall("t.", d["hash"], 0, "url", "enabled")) do
-			if t["enabled"] then
+		for _, t in pairs(rtorrent.multicall("t.", d["hash"], 0, "url", "is_enabled")) do
+			if t["is_enabled"] then
 				local domain = t["url"]:match("[%w%.:/]*[%./](%w+%.%w+)")
 				if domain then
 					local icon = "http://" .. domain .. "/favicon.ico"
@@ -53,7 +43,7 @@ function favicon(d)
 				end
 			end
 		end
-		rtorrent.call("d.set_custom1", d["hash"], d["custom1"])
+		rtorrent.call("d.custom1.set", d["hash"], d["custom1"])
 	end
  	return d["custom1"]
 end
@@ -68,10 +58,13 @@ end
 function get_tags(details)
 	local l = {}
 	for _, d in ipairs(details) do
-		for p in string.gmatch(d["custom2"] or "all", "%S+") do
+		for _, p in ipairs(d["custom2"]:split()) do
 			if not has_tag(l, p) then
 				table.insert(l, {name = p, link = luci.dispatcher.build_url("admin/rtorrent/main/%s" % p)})
 			end
+		end
+		if d["complete"] == 0 and not has_tag(l, "incomplete") then
+			table.insert(l, {name = "incomplete", link = luci.dispatcher.build_url("admin/rtorrent/main/incomplete")})
 		end
 	end
 	return l
@@ -80,7 +73,10 @@ end
 function filter(details, page)
 	local filtered = {}
 	for _, d in ipairs(details) do
-		if string.find(d["custom2"] or "all", page) then
+		if string.find(d["custom2"], page) then
+			table.insert(filtered, d)
+		end
+		if page == "incomplete" and d["complete"] == 0 then
 			table.insert(filtered, d)
 		end
 	end
@@ -107,7 +103,7 @@ function format.done_percent(d, v)
 end
 
 function format.status(d, v)
-	return common.div(v, v == "close" and "red", v == "seed" and "blue",
+	return common.div(v, v == "stop" and "red", v == "seed" and "blue",
 		v == "down" and "green", v == "hash" and "green")
 end
 
@@ -129,9 +125,10 @@ end
 function add_custom(details)
 	for _, d in ipairs(details) do
 		d["status"] = status(d)
-		d["done_percent"] = d["bytes_done"] * 100.0 / d["size_bytes"]
+		d["done_percent"] = 100.0 * d["bytes_done"] / d["size_bytes"]
 		d["eta"] = eta(d)
 		d["icon"] = favicon(d)
+		d["custom2"] = (d["custom2"] == "") and "all" or d["custom2"]
 	end
 end
 
@@ -211,13 +208,14 @@ function start.write(self, section, value)
 	end
 end
 
-close = s:option(Button, "close", "close")
-close.template = "rtorrent/button"
-close.inputstyle = "reset"
+stop = s:option(Button, "stop", "stop")
+stop.template = "rtorrent/button"
+stop.inputstyle = "reset"
 
-function close.write(self, section, value)
+function stop.write(self, section, value)
 	if next(selected) ~= nil then
 		for _, hash in ipairs(selected) do
+			rtorrent.call("d.stop", hash)
 			rtorrent.call("d.close", hash)
 		end
 		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main"))

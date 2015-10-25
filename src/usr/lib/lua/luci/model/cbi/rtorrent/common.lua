@@ -1,30 +1,28 @@
---[[
-LuCI - Lua Configuration Interface - rTorrent client
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the Apache License 2.0.
 
-Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+local http = require "socket.http"
+local https = require "ssl.https"
+local ssl = require "ssl"
+local ltn12 = require "ltn12"
+local fs = require "nixio.fs"
+local dispatcher = require "luci.dispatcher"
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+require "luci.model.cbi.rtorrent.string"
 
-	http://www.apache.org/licenses/LICENSE-2.0
+local string, os, math, ipairs, table, unpack, tonumber = string, os, math, ipairs, table, unpack, tonumber
+local pairs, print = pairs, print
 
-$Id$
-]]--
-
-local luci = require "luci"
-local cURL = require "cURL"
-
-local string, os, math, ipairs, table, pcall = string, os, math, ipairs, table, pcall
+local COOKIES_FILE = "/etc/cookies.txt"
 
 module "luci.model.cbi.rtorrent.common"
 
 function get_pages(hash)
 	return {
-		{ name = "info", link = luci.dispatcher.build_url("admin/rtorrent/info/") .. hash },
-		{ name = "file list", link = luci.dispatcher.build_url("admin/rtorrent/files/") .. hash },
-		{ name = "tracker list", link = luci.dispatcher.build_url("admin/rtorrent/trackers/") .. hash },
-		{ name = "peer list", link = luci.dispatcher.build_url("admin/rtorrent/peers/") .. hash }
+		{ name = "info", link = dispatcher.build_url("admin/rtorrent/info/") .. hash },
+		{ name = "file list", link = dispatcher.build_url("admin/rtorrent/files/") .. hash },
+		{ name = "tracker list", link = dispatcher.build_url("admin/rtorrent/trackers/") .. hash },
+		{ name = "peer list", link = dispatcher.build_url("admin/rtorrent/peers/") .. hash }
 	}
 end
 
@@ -42,7 +40,7 @@ function human_time(sec)
 	if     t["day"]  > 25 then return "&#8734;"
 	elseif t["day"]  > 1 then return string.format("%dd<br />%dh %dm", t["day"] - 1, t["hour"], t["min"])
 	elseif t["hour"] > 1 then return string.format("%dh<br />%dm %ds", t["hour"] - 1, t["min"], t["sec"])
-	elseif t["min"] > 0 then return string.format("%dm %ds", t["min"], t["sec"])
+	elseif t["min"]  > 0 then return string.format("%dm %ds", t["min"], t["sec"])
 	else   return string.format("%ds", t["sec"]) end
 end
 
@@ -59,34 +57,37 @@ function div(body, ...)
 end
 
 function get(url)
-	local function fetch(url)
-		local res = {}
-		local res_code, res_message = "500", ""
-	
-		curl = cURL.easy_init()
-		curl:setopt_url(url)
-		curl:setopt_header(0)
-		curl:setopt_timeout(5)
-		curl:setopt_useragent("unknown")
-		curl:setopt_referer("http://www.google.com")
-		curl:setopt_ssl_verifypeer(0)
-		curl:setopt_ssl_verifyhost(0)
-		curl:setopt_followlocation(1)
-		curl:setopt_encoding("")
-		curl:setopt_maxredirs(10)
-		curl:setopt_cookiefile("/etc/cookies.conf")
-		curl:perform({
-			headerfunction = function(s)
-				local code, message = string.match(s, "^HTTP/.* (%d+) (.+)$")
-				if code then res_code, res_message = code, message end
-			end,
-			writefunction = function(buf) table.insert(res, buf) end
-		})		
-	 	if res_code == "200" then return true, table.concat(res)
-		else return false, res_code .. ": " .. res_message end
-	end
+	local response = {}
+	local proto = url:starts("https://") and https or http
+	proto.TIMEOUT = 5
+	local body, code, headers, status = proto.request {
+		method = "GET",
+		headers = {
+			["Referer"] = "http://www.google.com",
+			["User-Agent"] = "unknown",
+			["Cookie"] = get_cookies(url)
+		},
+		url = url,
+		redirect = (proto.PORT == 80) and true or nil,
+		sink = ltn12.sink.table(response)
+	}
+	if code == 301 then return get(headers["location"]) end
+	if code == 200 then return true, table.concat(response)
+	else return false, status end
+end
 
-	local ok, r1, r2 = pcall(fetch, url)
-	if ok then return r1, r2 else return ok, r1 end
+function get_cookies(url)
+	local cookies = {}
+	for _, line in ipairs(fs.readfile(COOKIES_FILE):split("\n\r")) do
+		if not line:match("^\s*#.*") then
+			local domain, tailmatch, path, secure, expiration, name, value = unpack(line:split())
+			local url_match = (secure == "TRUE") and "^https://" or "^https?://"
+			url_match = url_match .. (tailmatch == "TRUE" and ".*" or "") .. domain .. path
+			if url:match(url_match) and tonumber(expiration) >= os.time() then
+				table.insert(cookies, name .. "=" .. value)
+			end
+		end
+	end
+	return table.concat(cookies, "; ")
 end
 

@@ -1,16 +1,5 @@
---[[
-LuCI - Lua Configuration Interface - rTorrent client
-
-Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-]]--
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the Apache License 2.0.
 
 local rtorrent = require "rtorrent"
 local common = require "luci.model.cbi.rtorrent.common"
@@ -49,11 +38,11 @@ function add_summary(list)
 		["scrape_downloaded"] = tostring(total["scrape_downloaded"]),
 		["scrape_complete"] = tostring(total["scrape_complete"]),
 		["scrape_incomplete"] = tostring(total["scrape_incomplete"]),
-		["enabled"] = "%hidden%"
+		["is_enabled"] = "%hidden%"
  	})
 end
 
-local list = rtorrent.multicall("t.", hash, 0, "enabled", "url", "scrape_downloaded", "scrape_complete",
+local list = rtorrent.multicall("t.", hash, 0, "is_enabled", "url", "scrape_downloaded", "scrape_complete",
 	"scrape_incomplete", "scrape_time_last")
 
 for _, r in ipairs(list) do
@@ -79,13 +68,13 @@ t:option(DummyValue, "scrape_complete", "S"):tooltip("Seeders")
 t:option(DummyValue, "scrape_incomplete", "L"):tooltip("Leechers")
 t:option(DummyValue, "scrape_time_last", "Updated"):tooltip("Last update time").rawhtml = true
 
-enabled = t:option(Flag, "enabled", "Enabled")
+enabled = t:option(Flag, "is_enabled", "Enabled")
 enabled.template = "rtorrent/fvalue"
 enabled.rmempty = false
 enabled.rawhtml = true
 
 function enabled.write(self, section, value)
-	if value ~= tostring(list[section].enabled) then
+	if value ~= tostring(list[section].is_enabled) then
 		rtorrent.call("t.set_enabled", hash, section - 1, tonumber(value))
 		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/trackers/%s" % hash))
 	end

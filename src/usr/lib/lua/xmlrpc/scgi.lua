@@ -1,7 +1,6 @@
----------------------------------------------------------------------
+-- Copyright 2003-2010 Kepler Project
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
 -- XML-RPC over SCGI.
--- See Copyright Notice in license.html
----------------------------------------------------------------------
 
 local error, tonumber, tostring, unpack = error, tonumber, tostring, unpack
 

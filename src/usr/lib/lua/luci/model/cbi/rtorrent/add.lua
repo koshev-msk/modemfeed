@@ -1,16 +1,5 @@
---[[
-LuCI - Lua Configuration Interface - rTorrent client
-
-Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-]]--
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the Apache License 2.0.
 
 local bencode = require "bencode"
 local nixio = require "nixio"
@@ -38,6 +27,7 @@ function uri.validate(self, value, section)
 		local tab, err = bencode.decode(res)
 		if not tab then return nil, "Not able to parse torrent file: " .. err end
 		torrent = res
+nixio.fs.writefile("/tmp/alma", torrent)
 	end
 	return value
 end
@@ -53,7 +43,7 @@ function file.validate(self, value, section)
 end
 
 dir = f:field(Value, "dir", "Download directory")
-dir.default = rtorrent.call("get_directory")
+dir.default = rtorrent.call("directory.default")
 dir.datatype = "directory"
 dir.rmempty = false
 
@@ -69,12 +59,13 @@ start.rmempty  = false
 function f.handle(self, state, data)
 	if state == FORM_VALID and torrent and #torrent > 0 then
 		local params = {}
-		table.insert(params, data.start == "1" and "load_raw_start" or "load_raw")
+		table.insert(params, data.start == "1" and "load.raw_start" or "load.raw")
+		table.insert(params, "") -- target
 		table.insert(params, xmlrpc.newTypedValue((nixio.bin.b64encode(torrent)), "base64"))
-		table.insert(params, "d.set_directory=\"" .. data.dir .. "\"")
-		table.insert(params, "d.set_custom2=\"" .. data.tags .. "\"")
+		table.insert(params, "d.directory.set=\"" .. data.dir .. "\"")
+		table.insert(params, "d.custom2.set=\"" .. data.tags .. "\"")
 		if data.uri then
-			table.insert(params, "d.set_custom3=" .. nixio.bin.b64encode(data.uri))
+			table.insert(params, "d.custom3.set=" .. nixio.bin.b64encode(data.uri))
 		end
 		rtorrent.call(unpack(params))
 		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/add"))

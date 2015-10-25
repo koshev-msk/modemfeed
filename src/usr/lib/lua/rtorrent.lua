@@ -1,16 +1,5 @@
---[[
-rTorrent XML-RPC helper library
-
-Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-]]--
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the Apache License 2.0.
 
 local ipairs, string, tostring, table = ipairs, string, tostring, table
 local assert, type, unpack = assert, type, unpack
@@ -18,8 +7,8 @@ local assert, type, unpack = assert, type, unpack
 local xmlrpc = require "xmlrpc"
 local scgi = require "xmlrpc.scgi"
 
-local scgi_address = "localhost"
-local scgi_port = 5000
+local SCGI_ADDRESS = "localhost"
+local SCGI_PORT = 5000
 
 module "rtorrent"
 
@@ -31,6 +20,7 @@ function map(array, func)
 	return new_array
 end
 
+-- depricated: used till rtorrent 0.9.4
 function accessor(prefix, methods, postfix)
 	methods = map(methods, function(m)
 		if m == 0 then return m end
@@ -56,12 +46,22 @@ function accessor(prefix, methods, postfix)
 	return methods
 end
 
+function alter(prefix, methods, postfix)
+	methods = map(methods, function(method)
+		if method == 0 then return method end
+		if prefix then method = prefix .. method end
+		if postfix then method = method .. postfix end
+		return method
+	end)
+	return methods
+end
+
 function format(method_type, res, methods)
 	local formatted = {}
 	for _, r in ipairs(res) do
 		local item = {}
 		for i, v in ipairs(r) do
-			item[methods[method_type == "d." and i or i + 1]] = v
+			item[methods[method_type == "d." and i or i + 1]:gsub("%.", "_")] = v
 		end
 		table.insert(formatted, item)
 	end
@@ -69,20 +69,22 @@ function format(method_type, res, methods)
 end
 
 function call(method, ...)
-	local ok, res = scgi.call(scgi_address, scgi_port, method, ...)
+	local ok, res = scgi.call(SCGI_ADDRESS, SCGI_PORT, method, ...)
 	assert(ok, string.format("XML-RPC call failed on client: %s", tostring(res)))
 	return res
 end
 
 function multicall(method_type, filter, ...)
-	local res = call(method_type .. "multicall", filter, unpack(accessor(method_type, {...}, "=")))
+	local res = (method_type == "d.")
+		and call(method_type .. "multicall2", "", filter, unpack(alter(method_type, {...}, "=")))
+		or call(method_type .. "multicall", filter, unpack(alter(method_type, {...}, "=")))
 	return format(method_type, res, {...})
 end
 
 function batchcall(params, prefix, methods, postfix)
 	local p = type(params) == "table" and params or { params }
 	local methods_array = {}
-	for _, m in ipairs(accessor(prefix, methods, postfix)) do
+	for _, m in ipairs(alter(prefix, methods, postfix)) do
 		table.insert(methods_array, {
 			["methodName"] = m,
 			["params"] = xmlrpc.newTypedValue(p, "array")

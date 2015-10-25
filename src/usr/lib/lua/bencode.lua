@@ -1,9 +1,7 @@
---[[
-
-	public domain lua-module for handling bittorrent-bencoded data.
-	This module includes both a recursive decoder and a recursive encoder.
-
-]]--
+-- Copyright (c) 2009, 2010, 2011, 2012 by Moritz Wilhelmy
+-- Copyright (c) 2009 by Kristofer Karlsson
+-- Public domain lua-module for handling bittorrent-bencoded data.
+-- This module includes both a recursive decoder and a recursive encoder.
 
 local sort, concat, insert = table.sort, table.concat, table.insert
 local pairs, ipairs, type, tonumber = pairs, ipairs, type, tonumber

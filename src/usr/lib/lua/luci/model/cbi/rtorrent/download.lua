@@ -1,36 +1,23 @@
---[[
-LuCI - Lua Configuration Interface - rTorrent client
-
-Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-]]--
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the Apache License 2.0.
 
 local nixio = require "nixio"
 local http = require "luci.http"
 local ltn12 = require "luci.ltn12"
 local sys = require "luci.controller.admin.system"
+local common = require "luci.model.cbi.rtorrent.common"
+
+require "luci.model.cbi.rtorrent.string"
 
 local ipairs, string = ipairs, string
 
 local PROTECTED_PATH = {"/bin", "/dev", "/etc", "/lib", "/overlay", "/root", "/sbin", "/tmp", "/usr", "/var", "/www"}
 
-module(...)
-
-function start_with(s, b)
-	if not s then return false end
-	return string.sub(s, 1, string.len(b)) == b
-end
+module("luci.model.cbi.rtorrent.download", package.seeall)
 
 function security_check(file)
 	for _, path_prefix in ipairs(PROTECTED_PATH) do
-		if start_with(file, path_prefix) then
+		if file:starts(path_prefix) then
 			http.write("<h1>Access Denied</h1>")
 			return false
 		end

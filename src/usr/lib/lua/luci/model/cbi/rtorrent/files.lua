@@ -1,23 +1,12 @@
---[[
-LuCI - Lua Configuration Interface - rTorrent client
-
-Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-$Id$
-]]--
+-- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the Apache License 2.0.
 
 local rtorrent = require "rtorrent"
 local nixio = require "nixio"
 local common = require "luci.model.cbi.rtorrent.common"
 
 local hash = luci.dispatcher.context.requestpath[4]
-local details = rtorrent.batchcall(hash, "d.", {"name", "base_path", "done_percent"})
+local details = rtorrent.batchcall(hash, "d.", {"name", "base_path"})
 local files = rtorrent.multicall("f.", hash, 0, "path", "path_depth", "path_components", "size_bytes",
 	"size_chunks", "completed_chunks", "priority", "frozen_path")
 
