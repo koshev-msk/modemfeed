@@ -11,7 +11,6 @@ local dispatcher = require "luci.dispatcher"
 require "luci.model.cbi.rtorrent.string"
 
 local string, os, math, ipairs, table, unpack, tonumber = string, os, math, ipairs, table, unpack, tonumber
-local pairs, print = pairs, print
 
 local COOKIES_FILE = "/etc/cookies.txt"
 

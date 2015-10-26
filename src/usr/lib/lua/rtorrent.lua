@@ -20,32 +20,6 @@ function map(array, func)
 	return new_array
 end
 
--- depricated: used till rtorrent 0.9.4
-function accessor(prefix, methods, postfix)
-	methods = map(methods, function(m)
-		if m == 0 then return m end
-		local acc = "get_"
-		local is_methods = {
-			"active", "hash_checked", "hash_checking", "multi_file",			-- (d)etails
-			"not_partially_done", "open", "partially_done", "pex_active", "private",
-			"create_queued", "created", "open", "resize_queued",				-- (f)iles
-			"encrypted", "incoming", "obfuscated", "preferred", "snubbed", "unwanted",	-- (p)eers
-			"busy", "enabled", "enabled.set", "extra_tracker", "open", "usable"		-- (t)rackers
-		}
-		for i = 1, #is_methods do
-			if m == is_methods[i] then
-				acc = "is_"
-				break
-			end
-		end
-		local method = acc .. m
-		if prefix then method = prefix .. method end
-		if postfix then method = method .. postfix end
-		return method
-	end)
-	return methods
-end
-
 function alter(prefix, methods, postfix)
 	methods = map(methods, function(method)
 		if method == 0 then return method end

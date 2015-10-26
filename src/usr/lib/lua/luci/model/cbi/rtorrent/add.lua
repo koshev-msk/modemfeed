@@ -27,7 +27,6 @@ function uri.validate(self, value, section)
 		local tab, err = bencode.decode(res)
 		if not tab then return nil, "Not able to parse torrent file: " .. err end
 		torrent = res
-nixio.fs.writefile("/tmp/alma", torrent)
 	end
 	return value
 end
