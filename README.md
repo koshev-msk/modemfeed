@@ -6,7 +6,7 @@ rTorrent client for OpenWrt's LuCI web interface
 - Add new torrent by url/magnet uri/file
 - Stop/start/delete torrents
 - Mark torrents with tags
-- Set priority by file
+- Set priority per file
 - Enable/disable and add trackers to torrent
 - Detailed peer listing
 - Completely LuCI based interface
