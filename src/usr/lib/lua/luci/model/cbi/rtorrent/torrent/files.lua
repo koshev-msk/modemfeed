@@ -5,7 +5,7 @@ local rtorrent = require "rtorrent"
 local nixio = require "nixio"
 local common = require "luci.model.cbi.rtorrent.common"
 
-local hash = luci.dispatcher.context.requestpath[4]
+local hash = arg[1]
 local details = rtorrent.batchcall(hash, "d.", {"name", "base_path"})
 local files = rtorrent.multicall("f.", hash, 0, "path", "path_depth", "path_components", "size_bytes",
 	"size_chunks", "completed_chunks", "priority", "frozen_path")
@@ -100,8 +100,8 @@ end
 if #list > 1 then add_summary(list) end
 t = f:section(Table, list)
 t.template = "rtorrent/list"
-t.pages = common.get_pages(hash)
-t.page = "file list"
+t.pages = common.get_torrent_pages(hash)
+t.page = "File List"
 
 AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
@@ -125,7 +125,7 @@ prio:value("1", "normal")
 prio:value("2", "high")
 
 function prio.write(self, section, value)
-	rtorrent.call("f.set_priority", hash, list[tonumber(section)].id - 1, tonumber(value))
+	rtorrent.call("f.priority.set", hash .. ":f" .. (list[tonumber(section)].id - 1), tonumber(value))
 	luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/files/%s" % hash))
 end
 

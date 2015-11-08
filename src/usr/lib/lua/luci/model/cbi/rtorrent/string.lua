@@ -15,3 +15,11 @@ function string.split(str, sep)
 	return t
 end
 
+function string.ucfirst(str)
+	return (str:gsub("^%l", string.upper))
+end
+
+function string.trim(str)
+	return str:match("^()%s*$") and "" or str:match("^%s*(.*%S)")
+end
+

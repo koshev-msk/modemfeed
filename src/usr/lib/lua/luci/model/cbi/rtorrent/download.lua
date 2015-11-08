@@ -6,7 +6,6 @@ local http = require "luci.http"
 local ltn12 = require "luci.ltn12"
 local sys = require "luci.controller.admin.system"
 local common = require "luci.model.cbi.rtorrent.common"
-
 require "luci.model.cbi.rtorrent.string"
 
 local ipairs, string = ipairs, string

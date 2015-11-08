@@ -7,7 +7,6 @@ local ssl = require "ssl"
 local ltn12 = require "ltn12"
 local fs = require "nixio.fs"
 local dispatcher = require "luci.dispatcher"
-
 require "luci.model.cbi.rtorrent.string"
 
 local string, os, math, ipairs, table, unpack, tonumber = string, os, math, ipairs, table, unpack, tonumber
@@ -16,12 +15,19 @@ local COOKIES_FILE = "/etc/cookies.txt"
 
 module "luci.model.cbi.rtorrent.common"
 
-function get_pages(hash)
+function get_torrent_pages(hash)
 	return {
-		{ name = "info", link = dispatcher.build_url("admin/rtorrent/info/") .. hash },
-		{ name = "file list", link = dispatcher.build_url("admin/rtorrent/files/") .. hash },
-		{ name = "tracker list", link = dispatcher.build_url("admin/rtorrent/trackers/") .. hash },
-		{ name = "peer list", link = dispatcher.build_url("admin/rtorrent/peers/") .. hash }
+		{ name = "Info", link = dispatcher.build_url("admin/rtorrent/info/") .. hash },
+		{ name = "File List", link = dispatcher.build_url("admin/rtorrent/files/") .. hash },
+		{ name = "Tracker List", link = dispatcher.build_url("admin/rtorrent/trackers/") .. hash },
+		{ name = "Peer List", link = dispatcher.build_url("admin/rtorrent/peers/") .. hash }
+	}
+end
+
+function get_admin_pages()
+	return {
+		{ name = "rTorrent", link = dispatcher.build_url("admin/rtorrent/admin/rtorrent") },
+		{ name = "RSS", link = dispatcher.build_url("admin/rtorrent/admin/rss") }
 	}
 end
 

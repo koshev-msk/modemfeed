@@ -20,6 +20,8 @@ opkg install rtorrent-rpc
 directory = /path/to/downloads/
 session = /path/to/session/
 scgi_port = 127.0.0.1:5000
+
+schedule = rss_downloader,300,300,"execute=/usr/lib/lua/rss_downloader.lua"
 ```
 #### Sample _/root/.rtorrent.rc_ file:
 http://pissedoffadmins.com/os/linux/sample-rtorrent-rc-file.html
@@ -32,7 +34,6 @@ opkg install screen
 ```
 
 #### Create _/etc/init.d/rtorrent_ script
-_Notice: rtorrent must be started with "-D" option in order to support deprecated commands_
 ```
 #!/bin/sh /etc/rc.common
 
@@ -41,11 +42,10 @@ STOP=99
 
 SCREEN=/usr/sbin/screen
 PROG=/usr/bin/rtorrent
-ARGS="-D"
 
 start() {
   sleep 3
-  $SCREEN -dm -t rtorrent nice -19 $PROG $ARGS
+  $SCREEN -dm -t rtorrent nice -19 $PROG
 }
 
 stop() {

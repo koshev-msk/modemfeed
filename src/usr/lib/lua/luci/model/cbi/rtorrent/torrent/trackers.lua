@@ -4,7 +4,7 @@
 local rtorrent = require "rtorrent"
 local common = require "luci.model.cbi.rtorrent.common"
 
-local hash = luci.dispatcher.context.requestpath[4]
+local hash = arg[1]
 local details = rtorrent.batchcall(hash, "d.", {"name"})
 
 local format, total = {}, {}
@@ -57,8 +57,8 @@ f.redirect = luci.dispatcher.build_url("admin/rtorrent/main")
 if #list > 1 then add_summary(list) end
 t = f:section(Table, list)
 t.template = "rtorrent/list"
-t.pages = common.get_pages(hash)
-t.page = "tracker list"
+t.pages = common.get_torrent_pages(hash)
+t.page = "Tracker List"
 
 AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
@@ -75,7 +75,7 @@ enabled.rawhtml = true
 
 function enabled.write(self, section, value)
 	if value ~= tostring(list[section].is_enabled) then
-		rtorrent.call("t.set_enabled", hash, section - 1, tonumber(value))
+		rtorrent.call("t.is_enabled.set", hash .. ":t" .. (section - 1), tonumber(value))
 		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/trackers/%s" % hash))
 	end
 end

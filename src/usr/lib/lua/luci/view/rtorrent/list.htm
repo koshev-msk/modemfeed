@@ -4,11 +4,6 @@ function rowstyle()
 	rowcnt = rowcnt + 1
 	return (rowcnt % 2) + 1
 end
-
-function ucfirst(s)
-	return s:gsub("^%l", string.upper)
-end
-
 -%>
 
 <style type="text/css">
@@ -23,17 +18,10 @@ end
 	table.cbi-section-table a:visited { color: #404040 }
 </style>
 
+<%+rtorrent/tabmenu%>
 <fieldset class="cbi-section" id="cbi-<%=self.config%>-<%=self.sectiontype%>">
+	<div class="cbi-section-descr"><%=self.description%></div>
 	<div class="cbi-section-node">
-		<ul class="cbi-tabmenu">
-			<%- for i, k in ipairs(self.pages) do -%>
-				<%- if k.name ~= "protected" then if self.page == k.name then -%>
-					<li class="cbi-tab"><a href="<%=k.link%>"><%=ucfirst(k.name)%></a></li>
-				<%- else -%>
-					<li class="cbi-tab-disabled"><a href="<%=k.link%>"><%=ucfirst(k.name)%></a></li>
-				<%- end end -%>
-			<%- end -%>
-		</ul>
 		<table class="cbi-section-table">
 			<tr class="cbi-section-table-titles">
 			<%- for i, k in pairs(self.children) do -%>

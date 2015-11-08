@@ -5,7 +5,7 @@ local rtorrent = require "rtorrent"
 local http = require "socket.http"
 local common = require "luci.model.cbi.rtorrent.common"
 
-local hash = luci.dispatcher.context.requestpath[4]
+local hash = arg[1]
 local details = rtorrent.batchcall(hash, "d.", {"name"})
 local format, total, map = {}, {}, {}
 
@@ -94,8 +94,8 @@ f.submit = false
 if #list > 1 then add_summary(list) end
 t = f:section(Table, list)
 t.template = "rtorrent/list"
-t.pages = common.get_pages(hash)
-t.page = "peer list"
+t.pages = common.get_torrent_pages(hash)
+t.page = "Peer List"
 
 AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
@@ -103,8 +103,8 @@ t:option(DummyValue, "address", "Address"):tooltip("Peer IP address").rawhtml = 
 t:option(DummyValue, "client_version", "Client"):tooltip("Client version")
 t:option(DummyValue, "location", "Location"):tooltip("Location: country/region/city")
 t:option(DummyValue, "completed_percent", "Done"):tooltip("Download done percent")
-t:option(DummyValue, "down_rate", "Down<br />speed"):tooltip("Download speed in kb/s")
-t:option(DummyValue, "up_rate", "Up<br />speed"):tooltip("Upload speed in kb/s")
+t:option(DummyValue, "down_rate", "Down<br />Speed"):tooltip("Download speed in kb/s")
+t:option(DummyValue, "up_rate", "Up<br />Speed"):tooltip("Upload speed in kb/s")
 t:option(DummyValue, "down_total", "Downloaded"):tooltip("Total downloaded").rawhtml = true
 t:option(DummyValue, "up_total", "Uploaded"):tooltip("Total uploaded").rawhtml = true
 

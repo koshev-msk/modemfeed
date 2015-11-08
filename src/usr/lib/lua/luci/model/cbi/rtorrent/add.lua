@@ -6,21 +6,19 @@ local nixio = require "nixio"
 local rtorrent = require "rtorrent"
 local xmlrpc = require "xmlrpc"
 local common = require "luci.model.cbi.rtorrent.common"
+require "luci.model.cbi.rtorrent.string"
 
-f = SimpleForm("rtorrent", "Add torrent")
+f = SimpleForm("rtorrent", "Add Torrent")
+f.submit = "Add"
 
 local torrent
 
 uri = f:field(TextValue, "uri", "Torrent<br />or magnet URI")
 uri.rows = 1
 
-function trim(s)
-	return s:match('^%s*(.*%S)') or ''
-end
-
 function uri.validate(self, value, section)
-	if "magnet:" == string.sub(trim(value), 1, 7) then
-		torrent = bencode.encode({ ["magnet-uri"] = trim(value) })
+	if "magnet:" == string.sub(value:trim(), 1, 7) then
+		torrent = bencode.encode({ ["magnet-uri"] = value:trim() })
 	else
 		local ok, res = common.get(value)
 		if not ok then return nil, "Not able to download torrent: " .. res end

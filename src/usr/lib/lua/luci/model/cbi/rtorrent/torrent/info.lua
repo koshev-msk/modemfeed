@@ -4,7 +4,7 @@
 local rtorrent = require "rtorrent"
 local common = require "luci.model.cbi.rtorrent.common"
 
-local hash = luci.dispatcher.context.requestpath[4]
+local hash = arg[1]
 local details = rtorrent.batchcall(hash, "d.", {"name", "custom2"})
 
 f = SimpleForm("rtorrent", details["name"])
@@ -12,8 +12,8 @@ f.redirect = luci.dispatcher.build_url("admin/rtorrent/main")
 
 t = f:section(Table, list)
 t.template = "rtorrent/list"
-t.pages = common.get_pages(hash)
-t.page = "info"
+t.pages = common.get_torrent_pages(hash)
+t.page = "Info"
 
 h = f:field(DummyValue, "hash", "Hash")
 function h.cfgvalue(self, section)

@@ -3,7 +3,6 @@
 
 local common = require "luci.model.cbi.rtorrent.common"
 local rtorrent = require "rtorrent"
-
 require "luci.model.cbi.rtorrent.string"
 
 local selected, format, total = {}, {}, {}
@@ -50,22 +49,26 @@ end
 
 function has_tag(tags, tag)
 	for _, t in ipairs(tags) do
-		if t.name == tag then return true end
+		if t.name:lower() == tag:lower() then return true end
 	end
 	return false
 end
 
 function get_tags(details)
 	local l = {}
+	local has_incomplete = false
 	for _, d in ipairs(details) do
 		for _, p in ipairs(d["custom2"]:split()) do
 			if not has_tag(l, p) then
-				table.insert(l, {name = p, link = luci.dispatcher.build_url("admin/rtorrent/main/%s" % p)})
+				table.insert(l, {name = p:ucfirst(), link = luci.dispatcher.build_url("admin/rtorrent/main/%s" % p)})
 			end
 		end
-		if d["complete"] == 0 and not has_tag(l, "incomplete") then
-			table.insert(l, {name = "incomplete", link = luci.dispatcher.build_url("admin/rtorrent/main/incomplete")})
+		if d["complete"] == 0 then
+			has_incomplete = true
 		end
+	end
+	if has_incomplete then
+		table.insert(l, {name = "Incomplete", link = luci.dispatcher.build_url("admin/rtorrent/main/incomplete")})
 	end
 	return l
 end
@@ -151,7 +154,7 @@ function html_format(details)
 	end
 end
 
-f = SimpleForm("rtorrent")
+f = SimpleForm("rtorrent", "Torrent List")
 f.reset = false
 f.submit = false
 
@@ -179,10 +182,11 @@ t:option(DummyValue, "done_percent", "Done"):tooltip("Download done percent").ra
 t:option(DummyValue, "status", "Status").rawhtml = true
 t:option(DummyValue, "peers_accounted", "&uarr;"):tooltip("Seeder count").rawhtml = true
 t:option(DummyValue, "peers_complete", "&darr;"):tooltip("Leecher count").rawhtml = true
-t:option(DummyValue, "down_rate", "Down<br />speed"):tooltip("Download speed in kb/s").rawhtml = true
-t:option(DummyValue, "up_rate", "Up<br />speed"):tooltip("Upload speed in kb/s").rawhtml = true
+t:option(DummyValue, "down_rate", "Down<br />Speed"):tooltip("Download speed in kb/s").rawhtml = true
+t:option(DummyValue, "up_rate", "Up<br />Speed"):tooltip("Upload speed in kb/s").rawhtml = true
 t:option(DummyValue, "ratio", "Ratio"):tooltip("Download/upload ratio").rawhtml = true
 t:option(DummyValue, "eta", "ETA"):tooltip("Estimated Time of Arrival").rawhtml = true
+
 select = t:option(Flag, "select")
 select.template = "rtorrent/fvalue"
 

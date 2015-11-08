@@ -43,7 +43,7 @@ clean:
 	rm -f control/conffiles
 	rm -fr ipk
 
-test-deploy:
+test-deploy: test-remove
 	cp -a src/usr/* /usr
 	cp -a src/www/* /www
 	rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
@@ -55,6 +55,8 @@ test-remove:
 	rm -fr /usr/lib/lua/xmlrpc
 	rm -fr /www/luci-static/resources/icons/filetypes
 	rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
+
+test-reinstall:
 	opkg list-installed | grep -q $(NAME) \
 	&& opkg --force-reinstall install $(NAME) \
 	|| echo "$(NAME) not installed, skip reinstall"
