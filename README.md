@@ -1,6 +1,19 @@
 # luci-app-rtorrent
 rTorrent client for OpenWrt's LuCI web interface
 
+## Features
+- List all torrent downloads
+- Add new torrent by url/magnet uri/file
+- Stop/start/delete torrents
+- Mark torrents with tags
+- Set priority by file
+- Enable/disable and add trackers to torrent
+- Detailed peer listing
+- Completely LuCI based interface
+- OpenWrt device independent (written in lua)
+- Opkg package manager support
+- RSS feed downloader (automatically download torrents that match the specified criteria)
+
 ## Screenshots
 [luci-app-rtorrent 0.1.1](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
 
@@ -76,7 +89,7 @@ opkg update
 opkg install luci-app-rtorrent
 ```
 
-### Upgrade installed version
+### Upgrade already installed version
 ```
 opkg update
 opkg upgrade luci-app-rtorrent
