@@ -15,7 +15,7 @@ rTorrent client for OpenWrt's LuCI web interface
 - RSS feed downloader (automatically download torrents that match the specified criteria)
 
 ## Screenshots
-[luci-app-rtorrent 0.1.1](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
+[luci-app-rtorrent 0.1.3](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
 
 ## Install instructions
 (for Openwrt 15.05 Chaos Calmer)
