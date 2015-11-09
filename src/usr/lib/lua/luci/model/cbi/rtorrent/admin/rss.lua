@@ -22,7 +22,7 @@ name = s:option(Value, "name", "Name")
 name.rmempty = false
 
 url = s:option(Value, "url", "RSS Feed URL")
-url.size = "75px"
+url.size = "65"
 url.rmempty = false
 
 enabled = s:option(Flag, "enabled", "Enabled")
