@@ -6,7 +6,7 @@ local nixio = require "nixio"
 local common = require "luci.model.cbi.rtorrent.common"
 
 local hash = arg[1]
-local details = rtorrent.batchcall(hash, "d.", {"name", "base_path"})
+local details = rtorrent.batchcall({"name", "base_path"}, hash, "d.")
 local files = rtorrent.multicall("f.", hash, 0, "path", "path_depth", "path_components", "size_bytes",
 	"size_chunks", "completed_chunks", "priority", "frozen_path")
 

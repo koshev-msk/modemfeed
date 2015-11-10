@@ -5,7 +5,7 @@ local rtorrent = require "rtorrent"
 local common = require "luci.model.cbi.rtorrent.common"
 
 local hash = arg[1]
-local details = rtorrent.batchcall(hash, "d.", {"name"})
+local details = rtorrent.batchcall({"name"}, hash, "d.")
 
 local format, total = {}, {}
 

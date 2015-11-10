@@ -5,7 +5,7 @@ local rtorrent = require "rtorrent"
 local common = require "luci.model.cbi.rtorrent.common"
 
 local hash = arg[1]
-local details = rtorrent.batchcall(hash, "d.", {"name", "custom2"})
+local details = rtorrent.batchcall({"name", "custom2"}, hash, "d.")
 
 f = SimpleForm("rtorrent", details["name"])
 f.redirect = luci.dispatcher.build_url("admin/rtorrent/main")

@@ -55,7 +55,7 @@ function multicall(method_type, filter, ...)
 	return format(method_type, res, {...})
 end
 
-function batchcall(params, prefix, methods, postfix)
+function batchcall(methods, params, prefix, postfix)
 	local p = type(params) == "table" and params or { params }
 	local methods_array = {}
 	for _, m in ipairs(alter(prefix, methods, postfix)) do
