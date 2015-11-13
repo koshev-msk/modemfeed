@@ -162,7 +162,7 @@ local details = rtorrent.multicall("d.", "default", unpack(methods))
 add_custom(details)
 local tags = get_tags(details)
 local user = luci.dispatcher.context.authuser
-local page = luci.dispatcher.context.requestpath[4] or (has_tag(tags, user) and user or "all")
+local page = arg[1] or (has_tag(tags, user) and user or "all")
 local filtered = filter(details, page)
 
 html_format(filtered)
@@ -208,7 +208,7 @@ function start.write(self, section, value)
 			rtorrent.call("d.open", hash)
 			rtorrent.call("d.start", hash)
 		end
-		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main"))
+		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main/" .. page))
 	end
 end
 
@@ -222,7 +222,7 @@ function stop.write(self, section, value)
 			rtorrent.call("d.stop", hash)
 			rtorrent.call("d.close", hash)
 		end
-		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main"))
+		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main/" .. page))
 	end
 end
 
@@ -236,7 +236,7 @@ function delete.write(self, section, value)
 			rtorrent.call("d.close", hash)
 			rtorrent.call("d.erase", hash)
 		end
-		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main"))
+		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main/" .. page))
 	end
 end
 
