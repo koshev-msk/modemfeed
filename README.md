@@ -42,6 +42,18 @@ schedule = rss_downloader,300,300,"execute=/usr/lib/lua/rss_downloader.lua"
 #### Sample _/root/.rtorrent.rc_ file:
 http://pissedoffadmins.com/os/linux/sample-rtorrent-rc-file.html
 
+#### Recommended kernel parameters to avoid low memory issues:
+```
+cat /etc/sysctl.conf
+...
+# handle rtorrent related low memory issues
+vm.swappiness=95
+vm.vfs_cache_pressure=200
+vm.min_free_kbytes=4096
+vm.overcommit_memory=2
+vm.overcommit_ratio=60
+```
+
 ### Create init.d script (optional)
 
 #### Install screen
