@@ -32,12 +32,10 @@ opkg install rtorrent-rpc
 ```
 directory = /path/to/downloads/
 session = /path/to/session/
+
 scgi_port = 127.0.0.1:5000
 
 schedule = rss_downloader,300,300,"execute=/usr/lib/lua/rss_downloader.lua"
-
-# network.send_buffer.size = 4096
-# network.receive_buffer.size = 4096
 ```
 #### Sample _/root/.rtorrent.rc_ file:
 http://pissedoffadmins.com/os/linux/sample-rtorrent-rc-file.html
