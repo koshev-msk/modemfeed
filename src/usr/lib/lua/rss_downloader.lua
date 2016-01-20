@@ -1,6 +1,6 @@
 #!/usr/bin/lua
 
--- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Copyright 2014-2016 Sandor Balazsi <sandor.balazsi@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
 
 local uci = require "luci.model.uci".cursor()
@@ -67,7 +67,7 @@ function get_torrent_size(torrent)
 	if t then
 		local piece_length = tonumber(t["info"]["piece length"])
 		local piece_count = t["info"]["pieces"]:len() / sha1_size
-		return piece_length * piece_count / 1024 /1024
+		return piece_length * piece_count / 1024 / 1024
 	else
 		return nil
 	end
@@ -77,6 +77,11 @@ end
 
 -- TODO: fix character encoding (eg.: lua expat does not support iso8859-2)
 -- string.gsub(rss, "[^\128-\193]", "")
+
+local feed_logfile = uci:get(CONFIG, "logging", "feed_logfile")
+if feed_logfile ~= nil then
+	feed_log = assert(io.open(feed_logfile, "a"))
+end
 
 local rules = get_rules(filter_enabled)
 for _, feed in ipairs(get_feeds(filter_enabled)) do
@@ -93,11 +98,15 @@ for _, feed in ipairs(get_feeds(filter_enabled)) do
 	while item do
 		local pubdate = date.to_unix(next_tag(item, "pubDate")[1])
 		if pubdate > lastupdate then
-			local title = next_tag(item, "title")[1]:lower()
+			local title = next_tag(item, "title")[1]
+			if feed_log ~= nil then
+				feed_log:write(os.date("!%Y-%m-%d %H:%M:%S", pubdate) .. 
+					" (" .. feed.name .. ") " .. title .. "\n")
+			end
 			for _, rule in ipairs(rules) do
 				if rule.feed and contains(rule.feed:split(";"), feed.name)
-				and title:find(rule.match:lower())
-				and (not rule.exclude or not title:find(rule.exclude:lower())) then
+				and title:lower():find(rule.match:lower())
+				and (not rule.exclude or not title:lower():find(rule.exclude:lower())) then
 					local link = next_tag(item, "link")[1]
 					local ok, torrent = common.get(link)
 					local size = get_torrent_size(torrent)
@@ -119,5 +128,10 @@ for _, feed in ipairs(get_feeds(filter_enabled)) do
 		end
 		item, i = next_tag(channel, "item", i + 1)
 	end
+end
+
+if feed_log ~= nil then
+	feed_log:flush()
+	feed_log:close()
 end
 
