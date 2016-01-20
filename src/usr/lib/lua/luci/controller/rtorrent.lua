@@ -13,10 +13,10 @@ function index()
 	entry({"admin", "rtorrent", "rss"}, arcombine(cbi("rtorrent/rss"), cbi("rtorrent/rss-rule")), "RSS Downloader", 30).leaf = true
 	entry({"admin", "rtorrent", "admin"}, cbi("rtorrent/admin/rtorrent"), "Admin", 40)
 
+	entry({"admin", "rtorrent", "info"}, cbi("rtorrent/torrent/info"), nil).leaf = true
 	entry({"admin", "rtorrent", "files"}, cbi("rtorrent/torrent/files"), nil).leaf = true
 	entry({"admin", "rtorrent", "trackers"}, cbi("rtorrent/torrent/trackers"), nil).leaf = true
 	entry({"admin", "rtorrent", "peers"}, cbi("rtorrent/torrent/peers"), nil).leaf = true
-	entry({"admin", "rtorrent", "info"}, cbi("rtorrent/torrent/info"), nil).leaf = true
 
 	entry({"admin", "rtorrent", "download"}, call("download"), nil).leaf = true
 	entry({"admin", "rtorrent", "downloadall"}, call("downloadall"), nil).leaf = true
