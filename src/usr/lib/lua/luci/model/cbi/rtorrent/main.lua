@@ -76,7 +76,7 @@ end
 function filter(details, page)
 	local filtered = {}
 	for _, d in ipairs(details) do
-		if string.find(d["custom2"], page) then
+		if string.find(" " .. d["custom2"] .. " ", " " .. page .. " ") then
 			table.insert(filtered, d)
 		end
 		if page == "incomplete" and d["complete"] == 0 then
