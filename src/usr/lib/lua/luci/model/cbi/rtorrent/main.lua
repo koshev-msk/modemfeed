@@ -8,7 +8,8 @@ require "luci.model.cbi.rtorrent.string"
 local selected, format, total = {}, {}, {}
 
 local methods = { "hash", "name", "size_bytes", "bytes_done", "hashing", "state", "complete",
-	"peers_accounted", "peers_complete", "down.rate", "up.rate", "ratio", "up.total", "custom1", "custom2" }
+	"peers_accounted", "peers_complete", "down.rate", "up.rate", "ratio", "up.total", 
+	"timestamp.started", "timestamp.finished", "custom1", "custom2" }
 
 function status(d)
 	if     d["hashing"] > 0 then return "hash"
@@ -123,6 +124,15 @@ end
 function format.ratio(d, v)
 	return common.div(string.format("%.2f", v / 1000), v < 1000 and "red" or "green")
 	--	"title: Total uploaded: " .. common.human_size(d["up_total"]))
+end
+
+function format.eta(d, v)
+	local download_started = d["timestamp_started"] == 0
+		and "not yet started" or os.date("!%Y-%m-%d %H:%M:%S", d["timestamp_started"])
+	local download_finished = d["timestamp_finished"] == 0
+		and "not yet finished" or os.date("!%Y-%m-%d %H:%M:%S", d["timestamp_finished"])
+	return "<div title=\"Download started: %s&#13;Download finished: %s\">%s</div>" % {
+		download_started, download_finished, v }
 end
 
 function add_custom(details)
