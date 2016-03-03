@@ -9,6 +9,14 @@ local hash = arg[1]
 local details = rtorrent.batchcall({"name"}, hash, "d.")
 local format, total, map = {}, {}, {}
 
+local geoplugin_net = {
+	address = "http://www.geoplugin.net/json.gp?ip=%s",
+	fields = { geoplugin_countryCode = "country_code", geoplugin_countryName = "country", geoplugin_region = "region",
+		   geoplugin_city = "city", geoplugin_latitude = "latitude", geoplugin_longitude = "longitude"
+}}
+
+local ip2geo = geoplugin_net 
+
 function map.googlemap(latitude, longitude, zoom)
 	return "https://google.com/maps/place/%s,%s/@%s,%s,%sz" % {latitude, longitude, latitude, longitude, zoom}
 end
@@ -21,7 +29,8 @@ function format.address(r, v)
 	total["address"] = (total["address"] or 0) + 1
 	local map = map.googlemap(r.latitude, r.longitude, 11)
 	-- local map = map.openstreetmap(r.latitude, r.longitude, 11)
-	local flag = "<img src=\"http://www.iplocation.net/images/flags/%s.gif\" />" % string.lower(r["country_code"])
+	-- local flag = "<img src=\"http://www.iplocation.net/images/flags/%s.gif\" />" % r.country_code:lower()
+	local flag = "<img src=\"http://static.hltv.org/images/flag/%s.gif\" />" % r.country_code:lower()
 	return "%s <a href=\"%s\" target=\"_blank\">%s</a>" % {flag, map, v}
 end
 
@@ -52,18 +61,15 @@ function json2table(json)
 	return j2t
 end
 
-function ip2geo(ip)
-	-- return http.request("http://www.geoplugin.net/json.gp?ip=%s" % ip)
-	return http.request("http://www.telize.com/geoip/%s" % ip)
-end
-
 function add_location(r)
-	for i, j in pairs(json2table(ip2geo(r.address))) do
-		r[i] = j
+	for i, j in pairs(json2table(http.request(ip2geo.address % r.address))) do
+		if ip2geo.fields[i] then r[ip2geo.fields[i]] = j end
 	end
 	local location = {}
 	for _, k in ipairs({"country", "region", "city"}) do
-		if r[k] ~= "" then table.insert(location, r[k]) end
+		if r[k] ~= "" and not tonumber(r[k]) then
+			table.insert(location, (r[k]:gsub("\u(%x%x%x%x)", "&#x%1")))
+		end
 	end
 	r["location"] = table.concat(location, "/")
 end
@@ -101,7 +107,7 @@ AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
 t:option(DummyValue, "address", "Address"):tooltip("Peer IP address").rawhtml = true
 t:option(DummyValue, "client_version", "Client"):tooltip("Client version")
-t:option(DummyValue, "location", "Location"):tooltip("Location: country/region/city")
+t:option(DummyValue, "location", "Location"):tooltip("Location: country/region/city").rawhtml = true
 t:option(DummyValue, "completed_percent", "Done"):tooltip("Download done percent")
 t:option(DummyValue, "down_rate", "Down<br />Speed"):tooltip("Download speed in kb/s")
 t:option(DummyValue, "up_rate", "Up<br />Speed"):tooltip("Upload speed in kb/s")
