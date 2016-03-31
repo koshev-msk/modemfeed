@@ -21,6 +21,9 @@ module("xmlrpc.scgi")
 function call(addr, port, method, ...)
 	local request_body = xmlrpc.clEncode(method, ...)
 	local sock = socket.connect(addr, port)
+	if sock == nil then
+		return false, "socket connect failed"
+	end
 	sock:send(netstring(request_body))
 	local err, code, headers, body = receive(sock)
 

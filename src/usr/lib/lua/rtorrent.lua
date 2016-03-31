@@ -44,6 +44,13 @@ end
 
 function call(method, ...)
 	local ok, res = scgi.call(SCGI_ADDRESS, SCGI_PORT, method, ...)
+	if not ok and res == "socket connect failed" then
+		assert(ok, "\n\nFailed to connect to rtorrent: rpc port not reachable!\n"
+			.. "Possible reasons:\n"
+			.. "- not the rpc version of rtorrent is installed\n"
+			.. "- scgi port is not defined in .rtorrent.rc (scgi_port = 127.0.0.1:5000)\n"
+			.. "- rtorrent is not running (ps | grep rtorrent)\n")
+	end
 	assert(ok, string.format("XML-RPC call failed on client: %s", tostring(res)))
 	return res
 end
