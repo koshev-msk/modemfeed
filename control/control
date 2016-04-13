@@ -1,5 +1,5 @@
 Package: luci-app-rtorrent
-Version: 0.1.4
+Version: 0.1.5
 Depends: libc, rtorrent-rpc, luaexpat, luasocket, luasec
 Source: https://github.com/wolandmaster/luci-app-rtorrent
 Section: luci
