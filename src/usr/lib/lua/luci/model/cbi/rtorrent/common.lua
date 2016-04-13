@@ -9,7 +9,8 @@ local fs = require "nixio.fs"
 local dispatcher = require "luci.dispatcher"
 require "luci.model.cbi.rtorrent.string"
 
-local string, os, math, ipairs, table, unpack, tonumber = string, os, math, ipairs, table, unpack, tonumber
+local string, os, io, math, assert = string, os, io, math, assert
+local ipairs, table, unpack, tonumber = ipairs, table, unpack, tonumber
 
 local COOKIES_FILE = "/etc/cookies.txt"
 
@@ -61,6 +62,19 @@ function div(body, ...)
 	end
 end
 
+function wget(url)
+	local file = assert(io.popen("/usr/bin/wget "
+		.. "--quiet "
+		.. "--user-agent=unknown "
+		.. "--referer=http://www.google.com "
+		.. "--load-cookies=" .. COOKIES_FILE .. " "
+		.. "--output-document=- "
+		.. url, "r"))
+	local response = file:read("*all")
+	file:close()
+	return response
+end
+
 function get(url)
 	local response = {}
 	local proto = url:starts("https://") and https or http
@@ -78,7 +92,11 @@ function get(url)
 	}
 	if code == 301 then return get(headers["location"]) end
 	if code == 200 then return true, table.concat(response)
-	else return false, status end
+	else
+		local body = wget(url)
+		if body:len() > 0 then return true, body
+		else return false, status end
+	end
 end
 
 function get_cookies(url)

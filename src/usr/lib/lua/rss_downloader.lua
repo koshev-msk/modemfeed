@@ -43,13 +43,29 @@ end
 
 function next_tag(t, tag, i)
 	if not i then i = 1 end
-	while t[i] do
-		if type(t[i]) == "table" and t[i].tag == tag then
-			return t[i], i
+	if t ~= nil then
+		while t[i] do
+			if type(t[i]) == "table" and t[i].tag == tag then
+				return t[i], i
+			end
+			i = i + 1
 		end
-		i = i + 1
 	end
 	return nil, i
+end
+
+function parse_feed(url)
+	local ok, content = common.get(url)
+	if ok and content ~= nil then
+		local rss, err = xml.parse(content)
+		if rss ~= nil then
+			return rss
+		else
+			log("Failed to parse rss feed: " .. err)
+		end
+	else
+		log("Failed to download rss feed: " .. url)
+	end
 end
 
 function contains(tbl, value)
@@ -69,8 +85,17 @@ function get_torrent_size(torrent)
 		local piece_count = t["info"]["pieces"]:len() / sha1_size
 		return piece_length * piece_count / 1024 / 1024
 	else
+		log("Failed to parse torrent file: " .. tostring(torrent))
 		return nil
 	end
+end
+
+function get_torrent_link(item)
+	local enclosure = next_tag(item, "enclosure")
+	if enclosure == nil then
+		return next_tag(item, "link")[1]
+	end
+	return enclosure.attr.url
 end
 
 --[[ M A I N ]]--
@@ -85,9 +110,9 @@ end
 
 local rules = get_rules(filter_enabled)
 for _, feed in ipairs(get_feeds(filter_enabled)) do
-	log("Downloading \"" .. feed.name .. "\" rss feed")
-	local ok, rss = common.get(feed.url)
-	local channel = next_tag(xml.parse(rss), "channel")
+	log("Processing \"" .. feed.name .. "\" rss feed")
+	local rss = parse_feed(feed.url)
+	local channel = next_tag(rss, "channel")
 	local item, i = next_tag(channel, "item")
 	local lastupdate = tonumber(feed.lastupdate) or 0
 	if item then
@@ -107,7 +132,7 @@ for _, feed in ipairs(get_feeds(filter_enabled)) do
 				if rule.feed and contains(rule.feed:split(";"), feed.name)
 				and title:lower():find(rule.match:lower())
 				and (not rule.exclude or not title:lower():find(rule.exclude:lower())) then
-					local link = next_tag(item, "link")[1]
+					local link = get_torrent_link(item)
 					local ok, torrent = common.get(link)
 					local size = get_torrent_size(torrent)
 					if ok and size 
