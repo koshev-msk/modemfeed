@@ -3,4 +3,7 @@
 . ${IPKG_INSTROOT}/lib/functions.sh
 default_postinst $0 $@
 uci get rtorrent.logging &>/dev/null || ( uci set rtorrent.logging=rss; uci commit )
+for CONFIG in "/etc/config/rtorrent" "/etc/cookies.txt"; do
+  [ -e "${CONFIG}-orig" ] && mv "${CONFIG}-orig" "${CONFIG}"
+done
 rm -fr /tmp/luci-indexcache /tmp/luci-modulecache
