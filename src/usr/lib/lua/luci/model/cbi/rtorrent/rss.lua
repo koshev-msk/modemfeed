@@ -1,4 +1,4 @@
--- Copyright 2014-2015 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Copyright 2014-2016 Sandor Balazsi <sandor.balazsi@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
 
 m = Map("rtorrent", "RSS Downloader")
