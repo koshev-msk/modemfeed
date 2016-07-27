@@ -16,7 +16,7 @@ start() {
 }
 
 stop() {
-	if [ ! `pgrep dns_proxy` ]; then
+	if [ -z `pgrep dns_proxy` ]; then
 		echo "dns_proxy is not running"
 		exit 0
 	fi
@@ -24,6 +24,6 @@ stop() {
 	/bin/echo -n "stopping dns_proxy ..."
 	
 	# kill the process
-	/bin/kill `pgrep dns_proxy` 
+	/bin/kill -9 `pgrep dns_proxy` 
 	echo " done"
 }
