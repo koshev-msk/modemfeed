@@ -5,7 +5,7 @@ local rtorrent = require "rtorrent"
 local common = require "luci.model.cbi.rtorrent.common"
 
 local hash = arg[1]
-local details = rtorrent.batchcall({"name", "custom2", "timestamp.started", "timestamp.finished"}, hash, "d.")
+local details = rtorrent.batchcall({"name", "custom1", "timestamp.started", "timestamp.finished"}, hash, "d.")
 
 f = SimpleForm("rtorrent", details["name"])
 f.redirect = luci.dispatcher.build_url("admin/rtorrent/main")
@@ -31,11 +31,11 @@ finished.value = details["timestamp.finished"] == 0
 	or os.date("!%Y-%m-%d %H:%M:%S", details["timestamp.finished"])
 
 tags = f:field(Value, "tags", "Tags")
-tags.default = details["custom2"]
+tags.default = details["custom1"]
 tags.rmempty = false
 
 function tags.write(self, section, value)
-	rtorrent.call("d.custom2.set", hash, value)
+	rtorrent.call("d.custom1.set", hash, value)
 end
 
 function f.handle(self, state, data)    

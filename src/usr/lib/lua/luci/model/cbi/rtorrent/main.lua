@@ -1,5 +1,12 @@
 -- Copyright 2014-2016 Sandor Balazsi <sandor.balazsi@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
+--
+-- Custom fields:
+-- d.custom1: tags (space delimited) 
+-- d.custom2: tracker favicon 
+-- d.custom3: url of torrent file  
+-- d.custom4: not used
+-- d.custom5: when "1": delete files from disk on erase
 
 local common = require "luci.model.cbi.rtorrent.common"
 local rtorrent = require "rtorrent"
@@ -29,23 +36,23 @@ function eta(d)
 end
 
 function favicon(d)
-	if not d["custom1"] or d["custom1"] == "" then
-		d["custom1"] = "/luci-static/resources/icons/unknown_tracker.png"
+	if not d["custom2"] or d["custom2"] == "" then
+		d["custom2"] = "/luci-static/resources/icons/unknown_tracker.png"
 		for _, t in pairs(rtorrent.multicall("t.", d["hash"], 0, "url", "is_enabled")) do
 			if t["is_enabled"] then
 				local domain = t["url"]:match("[%w%.:/]*[%./](%w+%.%w+)")
 				if domain then
 					local icon = "http://" .. domain .. "/favicon.ico"
 					if common.get(icon) then
-						d["custom1"] = icon
+						d["custom2"] = icon
 						break
 					end
 				end
 			end
 		end
-		rtorrent.call("d.custom1.set", d["hash"], d["custom1"])
+		rtorrent.call("d.custom2.set", d["hash"], d["custom2"])
 	end
- 	return d["custom1"]
+ 	return d["custom2"]
 end
 
 function has_tag(tags, tag)
@@ -59,7 +66,7 @@ function get_tags(details)
 	local l = {}
 	local has_incomplete = false
 	for _, d in ipairs(details) do
-		for _, p in ipairs(d["custom2"]:split()) do
+		for _, p in ipairs(d["custom1"]:split()) do
 			if not has_tag(l, p) then
 				table.insert(l, {name = p:ucfirst(), link = luci.dispatcher.build_url("admin/rtorrent/main/%s" % p)})
 			end
@@ -77,7 +84,7 @@ end
 function filter(details, page)
 	local filtered = {}
 	for _, d in ipairs(details) do
-		if string.find(" " .. d["custom2"] .. " ", " " .. page .. " ") then
+		if string.find(" " .. d["custom1"] .. " ", " " .. page .. " ") then
 			table.insert(filtered, d)
 		end
 		if page == "incomplete" and d["complete"] == 0 then
@@ -137,11 +144,19 @@ end
 
 function add_custom(details)
 	for _, d in ipairs(details) do
+		-- refactor: swap favicon (custom1) and tags (custom2)
+		if d["custom1"]:ends(".ico") or d["custom1"]:ends(".png") then
+			local temp = d["custom1"]
+			d["custom1"] = d["custom2"]
+			d["custom2"] = temp
+			rtorrent.call("d.custom1.set", d["hash"], d["custom1"])
+			rtorrent.call("d.custom2.set", d["hash"], d["custom2"])
+		end
 		d["status"] = status(d)
 		d["done_percent"] = 100.0 * d["bytes_done"] / d["size_bytes"]
 		d["eta"] = eta(d)
 		d["icon"] = favicon(d)
-		d["custom2"] = (d["custom2"] == "") and "all" or d["custom2"]
+		d["custom1"] = (d["custom1"] == "") and "all" or d["custom1"]
 	end
 end
 

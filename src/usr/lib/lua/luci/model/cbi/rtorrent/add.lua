@@ -60,7 +60,7 @@ function f.handle(self, state, data)
 		table.insert(params, "") -- target
 		table.insert(params, xmlrpc.newTypedValue((nixio.bin.b64encode(torrent)), "base64"))
 		table.insert(params, "d.directory.set=\"" .. data.dir .. "\"")
-		table.insert(params, "d.custom2.set=\"" .. data.tags .. "\"")
+		table.insert(params, "d.custom1.set=\"" .. data.tags .. "\"")
 		if data.uri then
 			table.insert(params, "d.custom3.set=" .. nixio.bin.b64encode(data.uri))
 		end

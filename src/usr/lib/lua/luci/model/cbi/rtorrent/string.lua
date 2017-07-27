@@ -6,6 +6,11 @@ function string.starts(str, begin)
 	return string.sub(str, 1, string.len(begin)) == begin
 end
 
+function string.ends(str, tail)
+	if not str then return false end
+	return string.sub(str, -string.len(tail)) == tail
+end
+
 function string.split(str, sep)
 	if sep == nil then sep = "%s" end
 	local t = {}
