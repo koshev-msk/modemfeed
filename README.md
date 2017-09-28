@@ -1,7 +1,7 @@
 3proxy running on Openwrt/LEDE
 ===
 
-±àÒë/Compile
+ç¼–è¯‘/Compile
 ---
 
 ```bash
