@@ -1,0 +1,28 @@
+--- a/Makefile.Linux	2017-06-25 12:12:56.000000000 -0400
++++ b/Makefile.Linux	2017-09-28 00:58:10.808210736 -0400
+@@ -8,13 +8,11 @@
+ # library support. Add -DSAFESQL for poorely written ODBC library / drivers.
+ 
+ BUILDDIR =
+-CC = gcc
+ 
+-CFLAGS = -g -O2 -c -pthread -DGETHOSTBYNAME_R -D_THREAD_SAFE -D_REENTRANT -DNOODBC -DWITH_STD_MALLOC -DFD_SETSIZE=4096 -DWITH_POLL
++CFLAGS += -c -pthread -DGETHOSTBYNAME_R -D_THREAD_SAFE -D_REENTRANT -DNOODBC -DWITH_STD_MALLOC -DFD_SETSIZE=4096 -DWITH_POLL
+ COUT = -o 
+-LN = gcc
++LN = $(CC)
+ DCFLAGS = -fpic
+-LDFLAGS = -O2 -pthread
+ DLFLAGS = -shared
+ DLSUFFICS = .ld.so
+ # -lpthreads may be reuqired on some platforms instead of -pthreads
+@@ -32,7 +30,7 @@ MAKEFILE = Makefile.Linux
+ # PamAuth requires libpam, you may require pam-devel package to be installed
+ # SSLPlugin requires  -lcrypto -lssl
+ #LIBS = -lcrypto -lssl -ldl 
+-LIBS = -ldl 
++LIBS = -lcrypto -lssl -ldl -pthread
+ #PLUGINS = SSLPlugin StringsPlugin TrafficPlugin PCREPlugin TransparentPlugin PamAuth
+ PLUGINS = StringsPlugin TrafficPlugin PCREPlugin TransparentPlugin
+ 
+
