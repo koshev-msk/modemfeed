@@ -25,6 +25,7 @@ rTorrent client for OpenWrt's LuCI web interface
 opkg update
 opkg install rtorrent-rpc
 ```
+Note: If you going to install rtorrent-rpc to an own [opkg destination](https://wiki.openwrt.org/doc/techref/opkg#installation_destinations) then you have to install libopenssl to the root destination before.
 
 ### Create rTorrent config file
 
