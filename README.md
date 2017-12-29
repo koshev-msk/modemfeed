@@ -18,14 +18,14 @@ rTorrent client for OpenWrt's LuCI web interface
 [luci-app-rtorrent 0.1.3](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
 
 ## Install instructions
-(for Openwrt 15.05 Chaos Calmer)
+(for Openwrt 15.05.1 Chaos Calmer)
 
 ### Install rtorrent-rpc
 ```
 opkg update
 opkg install rtorrent-rpc
 ```
-Note: If you going to install rtorrent-rpc to an own [opkg destination](https://wiki.openwrt.org/doc/techref/opkg#installation_destinations) then you have to install libopenssl to the root destination before.
+(Note: If you going to install rtorrent-rpc to an own [opkg destination](https://wiki.openwrt.org/doc/techref/opkg#installation_destinations) then you have to install libopenssl to the root destination before)
 
 ### Create rTorrent config file
 
@@ -108,3 +108,7 @@ opkg install luci-app-rtorrent
 opkg update
 opkg upgrade luci-app-rtorrent
 ```
+
+### References
+<https://www.pcsuggest.com/openwrt-torrent-download-box-luci/>
+<https://medium.com/openwrt-iot/lede-openwrt-setting-up-torrent-downloading-a06fe37a1ea2>
