@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ndpi-netfilter
-PKG_VERSION:=054bb8f
+PKG_VERSION:=054bb8f-2.0
 PKG_RELEASE:=1
 PKG_REV:=054bb8f
 
@@ -38,15 +38,14 @@ define Package/iptables-mod-ndpi/description
 endef
 
 CONFIGURE_CMD=./autogen.sh
+CONFIGURE_ARGS += --with-pic
 
 MAKE_PATH:=ndpi-netfilter
 
 MAKE_FLAGS += \
 	KERNEL_DIR="$(LINUX_DIR)" \
-	ARCH="$(LINUX_KARCH)" \
-	NDPI_PATH=$(PKG_BUILD_DIR)/ndpi-netfilter \
-	CROSS_COMPILE="$(TARGET_CROSS)" \
-	all
+	MODULES_DIR="$(TARGET_MODULES_DIR)" \
+	NDPI_PATH=$(PKG_BUILD_DIR)/ndpi-netfilter
 
 
 define Package/iptables-mod-ndpi/install
@@ -57,7 +56,7 @@ endef
 define KernelPackage/ipt-ndpi
   SUBMENU:=Netfilter Extensions
   TITLE:= nDPI net netfilter module
-  DEPENDS:=+kmod-ipt-compat-xtables +kmod-nf-conntrack
+  DEPENDS:=+kmod-nf-conntrack +kmod-nf-conntrack-netlink +kmod-ipt-compat-xtables
   KCONFIG:=CONFIG_NF_CONNTRACK_LABELS \
 	  CONFIG_NETFILTER_XT_MATCH_CONNLABEL=y
   FILES:= \
