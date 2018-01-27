@@ -144,7 +144,7 @@ for _, feed in ipairs(get_feeds(filter_enabled)) do
 						table.insert(params, "") -- target
 						table.insert(params, xmlrpc.newTypedValue((nixio.bin.b64encode(torrent)), "base64"))
 						table.insert(params, "d.directory.set=\"" .. rule.destdir .. "\"")
-						if rule.tags then table.insert(params, "d.custom2.set=\"" .. rule.tags .. "\"") end
+						if rule.tags then table.insert(params, "d.custom1.set=\"" .. rule.tags .. "\"") end
 						table.insert(params, "d.custom3.set=" .. nixio.bin.b64encode(link))
 						rtorrent.call(unpack(params))
 					end
