@@ -4,12 +4,16 @@
 local ipairs, string, tostring, tonumber, table = ipairs, string, tostring, tonumber, table
 local assert, type, unpack = assert, type, unpack
 
+local nixio = require "nixio"
 local socket = require "socket"
 local xmlrpc = require "xmlrpc"
 local scgi = require "xmlrpc.scgi"
 
 local SCGI_ADDRESS = "localhost"
 local SCGI_PORT = 5000
+
+local HTTP_AUTH_USER = "rtorrent"
+local HTTP_AUTH_PASSWORD = "czNz9JwdcLYcGDcVnZbQ"
 
 module "rtorrent"
 
@@ -57,16 +61,21 @@ function call(method, ...)
 end
 
 function rpc(xml)
-	local res = 'Status: 500 Internal Server Error\r\n\r\n'
+	local auth = "Basic " .. nixio.bin.b64encode(HTTP_AUTH_USER .. ":" .. HTTP_AUTH_PASSWORD)
+	if auth ~= nixio.getenv("HTTP_AUTHORIZATION") then
+		return 'Status: 401 Unauthorized\r\n'
+			.. 'WWW-Authenticate: Basic realm="rTorrent"\r\n\r\n'
+	end
 	local sock = socket.connect(SCGI_ADDRESS, SCGI_PORT)
 	if sock ~= nil then
 		sock:send(scgi.netstring(xml))
 		local err, code, headers, body = scgi.receive(sock)
 		if tonumber(code) == 200 then
-			res = 'Status: 200 OK\r\nContent-Type: application/xml\r\n\r\n' .. body
+			return 'Status: 200 OK\r\n'
+				.. 'Content-Type: application/xml\r\n\r\n' .. body
 		end
 	end
-	return res
+	return 'Status: 500 Internal Server Error\r\n\r\n'
 end
 
 function multicall(method_type, filter, ...)

@@ -1,3 +1,6 @@
 ipk/
 key/
 todo/
+*~
+*.swp
+*.swo
