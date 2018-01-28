@@ -1,9 +1,10 @@
 -- Copyright 2014-2016 Sandor Balazsi <sandor.balazsi@gmail.com>
 -- Licensed to the public under the Apache License 2.0.
 
-local ipairs, string, tostring, table = ipairs, string, tostring, table
+local ipairs, string, tostring, tonumber, table = ipairs, string, tostring, tonumber, table
 local assert, type, unpack = assert, type, unpack
 
+local socket = require "socket"
 local xmlrpc = require "xmlrpc"
 local scgi = require "xmlrpc.scgi"
 
@@ -52,6 +53,19 @@ function call(method, ...)
 			.. "- rtorrent is not running (ps | grep rtorrent)\n")
 	end
 	assert(ok, string.format("XML-RPC call failed on client: %s", tostring(res)))
+	return res
+end
+
+function rpc(xml)
+	local res = 'Status: 500 Internal Server Error\r\n\r\n'
+	local sock = socket.connect(SCGI_ADDRESS, SCGI_PORT)
+	if sock ~= nil then
+		sock:send(scgi.netstring(xml))
+		local err, code, headers, body = scgi.receive(sock)
+		if tonumber(code) == 200 then
+			res = 'Status: 200 OK\r\nContent-Type: application/xml\r\n\r\n' .. body
+		end
+	end
 	return res
 end
 

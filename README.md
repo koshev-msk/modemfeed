@@ -13,6 +13,7 @@ rTorrent client for OpenWrt's LuCI web interface
 - OpenWrt device independent (written in lua)
 - Opkg package manager support
 - RSS feed downloader (automatically download torrents that match the specified criteria)
+- Support for [Transdroid](https://www.transdroid.org/) ([Transdrone](https://play.google.com/store/apps/details?id=org.transdroid.lite))
 
 ## Screenshots
 [luci-app-rtorrent 0.1.3](https://github.com/wolandmaster/luci-app-rtorrent/wiki/Screenshots)
