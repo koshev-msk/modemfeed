@@ -1,5 +1,5 @@
--- Copyright 2014-2016 Sandor Balazsi <sandor.balazsi@gmail.com>
--- Licensed to the public under the Apache License 2.0.
+-- Copyright 2014-2018 Sandor Balazsi <sandor.balazsi@gmail.com>
+-- Licensed to the public under the GNU General Public License.
 
 function string.starts(str, begin)
 	if not str then return false end
