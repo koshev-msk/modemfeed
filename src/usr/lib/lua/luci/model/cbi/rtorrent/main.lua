@@ -251,13 +251,32 @@ function stop.write(self, section, value)
 	end
 end
 
-delete = s:option(Button, "delete", "delete")
+remove = s:option(Button, "remove", "remove")
+remove.template = "rtorrent/button"
+remove.inputstyle = "remove"
+
+function remove.write(self, section, value)
+	if next(selected) ~= nil then
+		for _, hash in ipairs(selected) do
+			rtorrent.call("d.close", hash)
+			rtorrent.call("d.erase", hash)
+		end
+		luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/main/" .. page))
+	end
+end
+
+r = f:section(SimpleSection)
+r.template = "rtorrent/buttonsection"
+r.style = "float: right;"
+
+delete = r:option(Button, "delete", "remove and delete data")
 delete.template = "rtorrent/button"
 delete.inputstyle = "remove"
 
 function delete.write(self, section, value)
 	if next(selected) ~= nil then
 		for _, hash in ipairs(selected) do
+			rtorrent.call("d.custom5.set", hash, "1")
 			rtorrent.call("d.close", hash)
 			rtorrent.call("d.erase", hash)
 		end
