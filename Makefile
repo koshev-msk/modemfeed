@@ -14,11 +14,9 @@ ipk: clean control data
 	rm -f ipk/*.tar.gz ipk/debian-binary
 
 control:
-	find src/etc -type f | sed 's/^src//' > control/conffiles
 	mkdir -p ipk
 	rm -f ../ipk/control.tar.gz
 	cd control && tar czf ../ipk/control.tar.gz *
-	rm -f control/conffiles
 
 data:
 	mkdir -p ipk
@@ -40,7 +38,6 @@ packages-file: ipk
 	gzip ipk/Packages
 
 clean:
-	rm -f control/conffiles
 	rm -fr ipk
 
 test-deploy: test-remove

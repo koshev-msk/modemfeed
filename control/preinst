@@ -1,5 +1,0 @@
-#!/bin/sh
-[ "${IPKG_NO_SCRIPT}" = "1" ] && exit 0
-for CONFIG in "/etc/config/rtorrent" "/etc/cookies.txt"; do
-  [ -e "${CONFIG}" ] && mv "${CONFIG}" "${CONFIG}-orig"
-done
