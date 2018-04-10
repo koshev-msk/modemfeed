@@ -1,0 +1,35 @@
+diff --git a/src/include/ndpi_api.h b/src/include/ndpi_api.h
+index b1dc160..af07996 100644
+--- a/src/include/ndpi_api.h
++++ b/src/include/ndpi_api.h
+@@ -83,7 +83,7 @@ extern "C" {
+    * nDPI personal allocation and free functions
+   **/
+   void * ndpi_malloc(size_t size);
+-  void * ndpi_calloc(unsigned long count, size_t size);
++  void * ndpi_calloc(size_t count, size_t size);
+   void * ndpi_realloc(void *ptr, size_t old_size, size_t new_size);
+   char * ndpi_strdup(const char *s);
+   void   ndpi_free(void *ptr);
+@@ -743,7 +743,7 @@ extern "C" {
+   void set_ndpi_flow_free(void  (*__ndpi_flow_free)(void *ptr));
+   void set_ndpi_debug_function(struct ndpi_detection_module_struct *ndpi_str, ndpi_debug_function_ptr ndpi_debug_printf);
+   void * ndpi_malloc(size_t size);
+-  void * ndpi_calloc(unsigned long count, size_t size);
++  void * ndpi_calloc(size_t count, size_t size);
+   void ndpi_free(void *ptr);
+   u_int8_t ndpi_get_api_version(void);
+ #ifdef __cplusplus
+diff --git a/src/lib/ndpi_main.c b/src/lib/ndpi_main.c
+index c4c6813..b5c6833 100644
+--- a/src/lib/ndpi_main.c
++++ b/src/lib/ndpi_main.c
+@@ -350,7 +350,7 @@ void * ndpi_flow_malloc(size_t size) { return(_ndpi_flow_malloc ? _ndpi_flow_mal
+ 
+ /* ****************************************** */
+ 
+-void * ndpi_calloc(unsigned long count, size_t size)
++void * ndpi_calloc(size_t count, size_t size)
+ {
+   size_t len = count*size;
+   void *p = ndpi_malloc(len);
