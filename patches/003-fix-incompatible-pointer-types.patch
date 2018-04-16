@@ -1,19 +1,10 @@
 diff --git a/ndpi-netfilter/src/main.c b/ndpi-netfilter/src/main.c
-index 56e316b..953b97f 100644
+index b779774..4344bc1 100644
 --- a/ndpi-netfilter/src/main.c
 +++ b/ndpi-netfilter/src/main.c
-@@ -455,7 +455,7 @@ for(i=0,j=0; i < _x_alloc_mem_c; i++) {
+@@ -550,7 +550,7 @@ if(c->strings) {
+ return 1;
  }
- }
- 
--static void *malloc_wrapper(unsigned long size)
-+static void *malloc_wrapper(size_t size)
- {
- if(trace_alloc_mem) {
- 	void *ret = kmalloc(size+4, GFP_KERNEL);
-@@ -475,7 +475,7 @@ if(trace_alloc_mem) {
- 
- #else
  
 -static void *malloc_wrapper(unsigned long size)
 +static void *malloc_wrapper(size_t size)
