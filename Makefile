@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ndpi-netfilter
-PKG_VERSION:=5bcfd49-2.2
+PKG_VERSION:=97099ff-2.2
 PKG_RELEASE:=1
-PKG_REV:=5bcfd49
+PKG_REV:=97099ff
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -62,9 +62,7 @@ endef
 define KernelPackage/ipt-ndpi
   SUBMENU:=Netfilter Extensions
   TITLE:= nDPI net netfilter module
-  DEPENDS:=+kmod-nf-conntrack +kmod-nf-conntrack-netlink +kmod-ipt-compat-xtables
-  KCONFIG:=CONFIG_NF_CONNTRACK_LABELS \
-	  CONFIG_NETFILTER_XT_MATCH_CONNLABEL=y
+  DEPENDS:=+kmod-nf-conntrack +kmod-nf-conntrack-netlink +kmod-ipt-compat-xtables +kmod-ipt-conntrack-label
   FILES:= \
 	$(PKG_BUILD_DIR)/ndpi-netfilter/src/xt_ndpi.ko
   AUTOLOAD:=$(call AutoProbe,xt_ndpi)
