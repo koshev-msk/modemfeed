@@ -9,7 +9,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/z3APA3A/3proxy.git
-PKG_SOURCE_VERSION:=c0bb608acc89ddd69fdab9dab5b733ee01f4c729
+PKG_SOURCE_VERSION:=cc503ba9252ba4197d48a520189fb04289329c2c
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
@@ -35,7 +35,7 @@ endef
 
 define Package/3proxy/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/3proxy $(1)/usr/bin/3proxy
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/3proxy $(1)/usr/bin/3proxy
 endef
 
 $(eval $(call BuildPackage,3proxy))
