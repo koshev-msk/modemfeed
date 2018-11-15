@@ -1,0 +1,15 @@
+diff --git a/ndpi-netfilter/src/main.c b/ndpi-netfilter/src/main.c
+index 702ec5e..01cddee 100644
+--- a/ndpi-netfilter/src/main.c
++++ b/ndpi-netfilter/src/main.c
+@@ -2830,8 +2830,8 @@ static int parse_ndpi_proto(struct ndpi_net *n,char *cmd) {
+ 	if(!strcmp(hid,"init")) {
+ 		int i;
+ 		for(i=0; i < NDPI_NUM_BITS; i++) {
+-			n->mark[i].mark = i;
+-			n->mark[i].mask = 0x1ff;
++			n->mark[i].mark = i << 8;
++			n->mark[i].mask = 0xff00;
+ 		}
+ 		return 0;
+ 	}
