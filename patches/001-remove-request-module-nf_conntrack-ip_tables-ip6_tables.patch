@@ -1,8 +1,8 @@
 diff --git a/ndpi-netfilter/src/main.c b/ndpi-netfilter/src/main.c
-index 7ca25f4..56e316b 100644
+index 94de551..e712853 100644
 --- a/ndpi-netfilter/src/main.c
 +++ b/ndpi-netfilter/src/main.c
-@@ -2678,6 +2678,7 @@ static int __init ndpi_mt_init(void)
+@@ -2501,6 +2501,7 @@ static int __init ndpi_mt_init(void)
  	ndpi_size_flow_struct = ndpi_detection_get_sizeof_ndpi_flow_struct();
  	detection_tick_resolution = HZ;
  
@@ -10,7 +10,7 @@ index 7ca25f4..56e316b 100644
  	if(request_module("nf_conntrack") < 0) {
  		pr_err("xt_ndpi: nf_conntrack required!\n");
  		return -EOPNOTSUPP;
-@@ -2692,6 +2693,7 @@ static int __init ndpi_mt_init(void)
+@@ -2515,6 +2516,7 @@ static int __init ndpi_mt_init(void)
  		return -EOPNOTSUPP;
  	}
  #endif
