@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+# Copyright (c) 2011-2015 OpenWrt.org
+
+START=99
+
+start() {
+	if [ ! -f "/var/run/telegram_bot.pid" ]; then
+		echo "1" > /var/run/telegram_bot.pid
+		/usr/lib/telegram-bot/telegram_bot >/dev/null 2>&1 &
+	fi
+	return 0
+}
+
+stop() {
+	rm -f /var/run/telegram_bot.pid
+	ps | grep '/usr/lib/telegram-bot/telegram_bot' | grep -v grep | awk '{print $1}' | xargs kill -s 9
+}
+
+restart(){
+	stop
+	sleep 1
+	start
+}
+
+boot() {
+	(sleep 5 && start >/dev/null 2>&1) &
+	return 0
+}

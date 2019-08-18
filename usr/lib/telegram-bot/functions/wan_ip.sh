@@ -1,0 +1,1 @@
+nslookup myip.opendns.com resolver1.opendns.com | awk '/^Address( 1)?: / { print $3 }'
