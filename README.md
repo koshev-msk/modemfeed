@@ -1,6 +1,6 @@
 # Openwrt Telegram Bot
 
-Fork form [filirnd](https://github.com/filirnd/Lede_Openwrt_Telegram_Bot) !
+Part of the code comes from [filirnd](https://github.com/filirnd/Lede_Openwrt_Telegram_Bot), thanks to him!
 
 Telegram bot for router with firmware Lede/Openwrt.
 
