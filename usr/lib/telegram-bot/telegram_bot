@@ -2,9 +2,30 @@
 
 PATH='/usr/bin:/usr/sbin:/bin:/sbin'
 
-source /usr/lib/telegram-bot/variables
+token=$(uci get telegram_bot.config.bot_token 2>/dev/nul)
+chat_id=$(uci get telegram_bot.config.chat_id 2>/dev/nul)
+timeout=$(uci get telegram_bot.config.timeout 2>/dev/nul)
+polling_time=$(uci get telegram_bot.config.polling_time 2>/dev/nul)
 
-api="https://api.telegram.org/bot$key"
+if [ -z "$token" ]; then
+	echo "token is empty"
+	exit 2
+fi
+
+if [ -z "$chat_id" ]; then
+	echo "chat_id is empty"
+	exit 2
+fi
+
+if [ -z "$timeout" ]; then
+	$timeout = 30
+fi
+
+if [ -z "$polling_time" ]; then
+	$polling_time = 1
+fi
+
+api="https://api.telegram.org/bot$token"
 
 if [ ! -d "/tmp/telegram-bot" ]; then
   mkdir /tmp/telegram-bot
@@ -12,18 +33,17 @@ fi
 
 #telegram_log_file=/tmp/telegram-bot/telegram.log
 #cmd_log_file=/tmp/telegram-bot/telegram_cmd.log
+
 telegram_log_file=/dev/null
 cmd_log_file=/dev/null
-
 offset_file=/tmp/telegram-bot/telegram_offset
 
-curl -k -s -X POST $api/sendMessage -d chat_id=$my_chat_id -d parse_mode=Markdown --data-urlencode text="Router started." &> $telegram_log_file
+curl -k -s -X POST $api/sendMessage -d chat_id=$chat_id -d parse_mode=Markdown --data-urlencode text="Router started." &> $telegram_log_file
 
-polling_timeout=30
-offset=0
 if [ -f "$offset_file" ] ; then
 	offset=$( cat $offset_file )
 else
+	offset=0
 	echo $offset > $offset_file
 fi
 
@@ -36,7 +56,7 @@ reply_to_msg () {
 
 while [ true ]
 do
-	updates=$(curl -s -k -X GET ${api}/getUpdates?offset=${offset}&timeout=${polling_timeout})
+	updates=$(curl -s -k -X GET ${api}/getUpdates?offset=${offset}&timeout=${timeout})
 	status=$(jsonfilter -s "$updates" -e $.ok)
 	if [ $status = 'true' ]; then
 		update_ids=$(jsonfilter -s "$updates" -e $.result[*].update_id)
@@ -50,7 +70,7 @@ do
 			is_a_cmd=$(jsonfilter -s "$updates" -e "$.result[@.update_id=$update_id].message.entities[*].type")
 			query_ans=$(jsonfilter -s "$updates" -e "$.result[@.update_id=$update_id].callback_query.id")
 			origin_ans=$(jsonfilter -s "$updates"  -e "$.result[@.update_id=$update_id].callback_query.message.chat.id")
-			if [[ "$origin" != "$my_chat_id" && "$origin_ans" != "$my_chat_id" ]];then
+			if [[ "$origin" != "$chat_id" && "$origin_ans" != "$chat_id" ]];then
 				curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode text="This is a Private bot." &> $telegram_log_file
 				curl -k -s -X POST $api/leaveChat -d chat_id=$origin  &> $telegram_log_file
 			else
@@ -96,5 +116,5 @@ do
 			fi
 		done
 	fi
-	sleep 1
+	sleep $polling_time
 done&

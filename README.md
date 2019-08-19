@@ -40,11 +40,13 @@ service telegram_bot enable
 
 ### Step three:
 
-Set your variables (bot token and chat id) in `variables` file under `/usr/lib/telegram-bot/` dir.
+Set your variables (bot token and chat id) in `telegram_bot` file under `/etc/config/` dir.
 
 ```sh
-echo "key='[PUT YOUR BOT TOKEN HERE]'
-my_chat_id='[PUT YOUR CHAT ID HERE]'" > /usr/lib/telegram-bot/variables
+uci set telegram_bot.config.bot_token='[PUT YOUR BOT TOKEN HERE]'
+uci set telegram_bot.config.chat_id='[PUT YOUR CHAT ID HERE]'
+
+uci commit telegram_bot
 ```
 
 Start `telegram_bot` service with commands:
