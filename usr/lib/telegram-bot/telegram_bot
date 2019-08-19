@@ -31,12 +31,25 @@ if [ ! -d "/tmp/telegram-bot" ]; then
   mkdir /tmp/telegram-bot
 fi
 
+plugins="/usr/lib/telegram-bot/plugins"
 #telegram_log_file=/tmp/telegram-bot/telegram.log
-#cmd_log_file=/tmp/telegram-bot/telegram_cmd.log
-
 telegram_log_file=/dev/null
-cmd_log_file=/dev/null
 offset_file=/tmp/telegram-bot/telegram_offset
+
+command_not_found="Sorry,
+I only recognize *commands*.
+Commands are words beginning with a slash.
+Try it !
+Send [/start](/start) to get my commands list."
+
+command_start="*/memory* return RAM info
+*/clients* connected clients
+*/wll_list* wifi clients
+*/wifi_list* wifi info
+*/reboot* reboot the device
+*/wol <mac_address>* wake on lan over the Internet
+*/wanip* WAN ip address
+*/<script_name>* any scripts in the `plugins` directory"
 
 curl -k -s -X POST $api/sendMessage -d chat_id=$chat_id -d parse_mode=Markdown --data-urlencode text="Router started." &> $telegram_log_file
 
@@ -48,10 +61,10 @@ else
 fi
 
 reply_to_msg () {
-	msg_id=$1
-	origin=$2
-	eval toReturn="$3"
-        curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=HTML --data-urlencode text="$toReturn" &> $telegram_log_file
+	local msg_id=$1
+	local origin=$2
+	eval local text="$3"
+        curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode text="$text" &> $telegram_log_file
 }
 
 while [ true ]
@@ -71,43 +84,37 @@ do
 			query_ans=$(jsonfilter -s "$updates" -e "$.result[@.update_id=$update_id].callback_query.id")
 			origin_ans=$(jsonfilter -s "$updates"  -e "$.result[@.update_id=$update_id].callback_query.message.chat.id")
 			if [[ "$origin" != "$chat_id" && "$origin_ans" != "$chat_id" ]];then
-				curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode text="This is a Private bot." &> $telegram_log_file
+				curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode \
+					text="This is a Private bot. If you want to implement one for you, check this out https://github.com/ixiumu/openwrt-telegram-bot" &> $telegram_log_file
 				curl -k -s -X POST $api/leaveChat -d chat_id=$origin  &> $telegram_log_file
 			else
-				if [ "$is_a_cmd" ==  "bot_command" ]; then
+				if [ $(echo "$is_a_cmd" | grep "bot_command") != "" ]; then
 					
 					cmd=$(echo $command | awk '{print $1}')
-					param=$(echo $command | awk '{$1="";print $0}')
+					prms=$(echo $command | awk '{$1="";print $0}' | sed 's/^[ \t]*//g')
+					parms=${prms//[\"\&\;\\\>\<\|]/}
 					DATE=`date +%Y-%m-%d_%H:%M:%S`
 					RETURN_TEXT=""
 					case "$cmd" in
 						("/start")
-	                                                RETURN_TEXT=$(printf "/memory Return memory (RAM) info\n/clients List of connected clients\n/reboot Reboot the device\n/wanip WAN ip address")
-							reply_to_msg $msg_id $origin "\${RETURN_TEXT}"
+							reply_to_msg $msg_id $origin "\${command_start}"
 							;;
 						("/reboot")
-                                                	echo "[ $DATE ] reboot!" >> $cmd_log_file
+                                                	(echo "Call $cmd" | logger -t "telegram_bot" -p daemon.info)&
 	                                                RETURN_TEXT="Command executed!"
 							reply_to_msg $msg_id $origin "\${RETURN_TEXT}" && sleep 5 && reboot
 							;;
 						("/wol")
-							echo "[ $DATE ] wol [ $param ]!" >> $cmd_log_file
-							RETURN_TEXT="$(/usr/lib/telegram-bot/functions/wol.sh ${param})"
-							reply_to_msg $msg_id $origin "\${RETURN_TEXT}"
-                                                        ;;
-						("/memory")
-							echo "[ $DATE ] memory!" >> $cmd_log_file
-							clients=$("/usr/lib/telegram-bot/functions/memory_info.sh")
-							RETURN_TEXT="$(printf "Memory informations: \n$clients")"
+							(echo "Call $cmd [$parms]" | logger -t "telegram_bot" -p daemon.info)&
+							RETURN_TEXT="$(${plugins}/wol.sh ${parms})"
 							reply_to_msg $msg_id $origin "\${RETURN_TEXT}"
                                                         ;;
 						(*)
-							if [ -f "/usr/lib/telegram-bot/functions/${cmd}.sh" ] ; then
-								echo "[ $DATE ] $cmd !" >> $cmd_log_file
-								RETURN_TEXT=$("/usr/lib/telegram-bot/functions/${cmd}.sh")
+							if [ -f "${plugins}/${cmd}.sh" ] ; then
+								(echo "Call $cmd [$parms]" | logger -t "telegram_bot" -p daemon.info)&
+								RETURN_TEXT=$(${plugins}/${cmd}.sh ${parms})
 							else
-								echo "[ $DATE ] $cmd command not enabled" >> $cmd_log_file
-                                    		        	RETURN_TEXT="This command is not enabled."
+                                    		        	RETURN_TEXT="Command *${cmd}* not found!"
 							fi
 
                                                         reply_to_msg $msg_id $origin "\${RETURN_TEXT}"
@@ -115,7 +122,7 @@ do
                                     	esac
 
 				else
- 					curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode text="Is not a command." &> $telegram_log_file
+ 					reply_to_msg $msg_id $origin "\${command_not_found}"
 				fi
 
 			fi

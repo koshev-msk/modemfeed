@@ -1,17 +1,17 @@
 # Openwrt Telegram Bot
 
-Part of the code comes from [filirnd](https://github.com/filirnd/Lede_Openwrt_Telegram_Bot), thanks to him!
-
 Telegram bot for router with firmware Lede/Openwrt.
 
 ## Implemented functions (Commands via Telegram message)
 
-  - /reboot : Reboot router
-  - /clients : List of connected clients
-  - /wol <mac_address> : Wake On Lan over the Internet.
-  - /memory : Return memory (RAM) info
-  - /wanip : WAN ip address
-  - /<script_name> : Any file is in the `functions` directory
+  - */memory* return RAM info
+  - */clients* connected clients
+  - */wll_list* wifi clients
+  - */wifi_list* wifi info
+  - */reboot* reboot the device
+  - */wol <mac_address>* wake on lan over the Internet
+  - */wanip* WAN ip address
+  - */<script_name>* any scripts in the `plugins` directory
 
 ## Prerequisites
 

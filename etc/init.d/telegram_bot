@@ -13,7 +13,7 @@ start() {
 
 stop() {
 	rm -f /var/run/telegram_bot.pid
-	ps | grep '/usr/lib/telegram-bot/telegram_bot' | grep -v grep | awk '{print $1}' | xargs kill -s 9
+	kill $(pgrep -f telegram-bot/telegram_bot) >/dev/null 2>&1
 }
 
 restart(){
