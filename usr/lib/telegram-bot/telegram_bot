@@ -90,6 +90,11 @@ do
 	                                                RETURN_TEXT="Command executed!"
 							reply_to_msg $msg_id $origin "\${RETURN_TEXT}" && sleep 5 && reboot
 							;;
+						("/wol")
+							echo "[ $DATE ] wol [ $param ]!" >> $cmd_log_file
+							RETURN_TEXT="$(/usr/lib/telegram-bot/functions/wol.sh ${param})"
+							reply_to_msg $msg_id $origin "\${RETURN_TEXT}"
+                                                        ;;
 						("/memory")
 							echo "[ $DATE ] memory!" >> $cmd_log_file
 							clients=$("/usr/lib/telegram-bot/functions/memory_info.sh")

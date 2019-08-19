@@ -8,6 +8,7 @@ Telegram bot for router with firmware Lede/Openwrt.
 
   - /reboot : Reboot router
   - /clients : List of connected clients
+  - /wol <mac_address> : Wake On Lan over the Internet.
   - /memory : Return memory (RAM) info
   - /wanip : WAN ip address
   - /<script_name> : Any file is in the `functions` directory
