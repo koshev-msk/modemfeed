@@ -4,6 +4,7 @@ PATH='/usr/bin:/usr/sbin:/bin:/sbin'
 
 token=$(uci get telegram_bot.config.bot_token 2>/dev/nul)
 chat_id=$(uci get telegram_bot.config.chat_id 2>/dev/nul)
+server=$(uci get telegram_bot.config.server 2>/dev/nul)
 timeout=$(uci get telegram_bot.config.timeout 2>/dev/nul)
 polling_time=$(uci get telegram_bot.config.polling_time 2>/dev/nul)
 
@@ -17,15 +18,19 @@ if [ -z "$chat_id" ]; then
 	exit 2
 fi
 
+if [ -z "$server" ]; then
+	server="https://api.telegram.org"
+fi
+
 if [ -z "$timeout" ]; then
-	$timeout = 30
+	timeout=30
 fi
 
 if [ -z "$polling_time" ]; then
-	$polling_time = 1
+	polling_time=1
 fi
 
-api="https://api.telegram.org/bot$token"
+api="${server}/bot${token}"
 
 if [ ! -d "/tmp/telegram-bot" ]; then
   mkdir /tmp/telegram-bot
@@ -49,7 +54,7 @@ command_start="*/memory* return RAM info
 */reboot* reboot the device
 */wol <mac_address>* wake on lan over the Internet
 */wanip* WAN ip address
-*/<script_name>* any scripts in the `plugins` directory"
+*/<script_name>* any scripts in the \`plugins\` directory"
 
 curl -k -s -X POST $api/sendMessage -d chat_id=$chat_id -d parse_mode=Markdown --data-urlencode text="Router started." &> $telegram_log_file
 
