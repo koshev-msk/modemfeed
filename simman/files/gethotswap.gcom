@@ -1,0 +1,18 @@
+opengt
+ set com 115200n81
+ set comecho off
+ set senddelay 0.02
+ waitquiet 0.2 0.2
+ flash 0.1
+
+:start
+ send "AT+UIMHOTSWAPLEVEL?^m"
+ waitfor 1 "+UIMHOTSWAPLEVEL: "
+ get 1 "^m" $s
+ send "AT+UIMHOTSWAPON?^m"
+ waitfor 1 "+UIMHOTSWAPON: "
+ get 1 "^m" $t
+ print $s$t
+
+:continue
+ exit 0

@@ -1,0 +1,30 @@
+opengt
+ set com 115200n81
+ set comecho off
+ set senddelay 0.02
+ waitquiet 0.2 0.2
+ flash 0.1
+
+:start
+ send "AT+CENG=4,0^m"
+ waitfor 1 "OK"
+ send "AT+CENG?^m"
+ waitfor 1 "UMTS", "+CENG: 0,"
+ if % = 0 goto umts
+ if % = 1 goto gsm
+
+:umts
+ waitfor 1 "+CENG: 0,"
+ get 1 "^m" $s
+ print "UMTS:"
+ print $s
+ goto continue
+
+:gsm
+ get 1 "^m" $s
+ print "GSM:"
+ print $s
+ goto continue
+
+:continue
+ exit 0

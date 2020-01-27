@@ -1,0 +1,43 @@
+#!/bin/sh
+
+disable()
+{
+	CHECK=$(grep -r "#ttyAPP4" /etc/inittab)
+	if [ -z "$CHECK" ]; then
+		sed -i -e "s/ttyAPP4/#ttyAPP4/g" /etc/inittab
+		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
+		if [ -n "$CHECK" ]; then
+			sed -i -e "s/#kernel.printk/kernel.printk/g" /etc/sysctl.conf
+		fi
+		reboot
+	else
+		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
+		if [ -n "$CHECK" ]; then
+			sed -i -e "s/#kernel.printk/kernel.printk/g" /etc/sysctl.conf
+			reboot
+		fi
+	fi
+}
+
+enable()
+{
+	CHECK=$(grep -r "#ttyAPP4" /etc/inittab)
+	if [ -n "$CHECK" ]; then
+		sed -i -e "s/#ttyAPP4/ttyAPP4/g" /etc/inittab
+		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
+		if [ -z "$CHECK" ]; then
+			sed -i -e "s/kernel.printk/#kernel.printk/g" /etc/sysctl.conf
+		fi
+		reboot
+	else
+		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
+		if [ -z "$CHECK" ]; then
+			sed -i -e "s/kernel.printk/#kernel.printk/g" /etc/sysctl.conf
+			reboot
+		fi
+	fi
+}
+
+$1
+
+exit 0

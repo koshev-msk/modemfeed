@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+USE_PROCD=1
+
+DIR=/sbin
+PROG=pollmydevice
+
+error()
+{
+	echo "${initscript}:" "$@" 1>&2
+}
+
+start_service_daemon()
+{
+	procd_open_instance
+	procd_set_param command "$DIR/$PROG"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service()
+{
+	start_service_daemon
+	config_load 'interface'
+	config_foreach start_service_daemon 'interface'
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "pollmydevice"
+}
+
+stop()
+{
+	service_stop $DIR/$PROG
+}
+
+reload_service()
+{
+	service_stop $DIR/$PROG
+	config_load 'interface'
+	config_foreach start_service_daemon 'interface'
+}

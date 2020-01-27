@@ -1,0 +1,14 @@
+opengt
+ set com 9600n81
+ set senddelay 0.02
+ waitquiet 1 0.2
+ flash 0.1
+
+:start
+ send "AT+CGSN=1^m"
+ waitfor 1 "+CGSN:"
+ get 1 "^m" $s
+ print $s
+
+:continue
+ exit 0

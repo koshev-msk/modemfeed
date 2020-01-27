@@ -1,0 +1,15 @@
+opengt
+ set com 115200n81
+ set comecho off
+ set senddelay 0.02
+ waitquiet 0.2 0.2
+ flash 0.1
+
+:start
+ send "AT+UIMHOTSWAPLEVEL=1^m"
+ waitfor 2 "OK"
+ send "AT+UIMHOTSWAPON=1^m"
+ waitfor 2 "OK"
+
+:continue
+ exit 0

@@ -1,0 +1,21 @@
+opengt
+ set com 115200n81
+ set senddelay 0.02
+ waitquiet 1 0.2
+ flash 0.1
+
+:start
+ send "AT+CFUN"
+ send $env("COMMAND")
+ send "^m"
+ waitfor 3 "OK","+CFUN: "
+ if % = 0 goto continue
+ if % = 1 goto request
+
+:request
+ get 1 "^m" $s
+ print $s
+ exit 0
+
+:continue
+ exit 0

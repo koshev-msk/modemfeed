@@ -1,0 +1,99 @@
+SIM7100="1e0e/9001/232"
+SIM7600="1e0e/9001/318"
+SIM5360="5c6/9000/0"
+EHS5="1e2d/58/1730"
+SIM5300="1e0e/20/1730"
+
+case "$ACTION" in
+    add)
+        #echo "ADDED: PRODUCT: $PRODUCT, TYPE: $TYPE, DEVPATH: $DEVPATH, INTERFACE: $INTERFACE" >> /tmp/foo.log
+        if [ "$PRODUCT" = "$SIM7100" -o "$PRODUCT" = "$SIM7600" ];then
+            if  [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.2" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.2" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.2" ]; then
+                DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                CHECK=$(gcom -d /dev/$DEVICE_NAME -s /etc/simman/gethotswap.gcom)
+                if [ "$CHECK" != "11" ]; then
+                    gcom -d /dev/$DEVICE_NAME -s /etc/simman/sethotswap.gcom                
+                    echo 1 > /sys/class/gpio/gpio83/value
+                    sleep 1
+                    echo 0 > /sys/class/gpio/gpio83/value                
+                    dev=$(ls /dev/ | grep cdc-wdm)
+                    while [ -z "$dev"]; do
+                        sleep 4
+                        dev=$(ls /dev/ | grep cdc-wdm)
+                    done
+                    exit 0
+                else                    
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                    exit 0
+                fi
+            fi
+            if  [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.3" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.3" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.3" ]; then
+                DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM3
+                exit 0
+            fi
+        fi
+
+        if [ "$PRODUCT" = "$EHS5" ];then
+            if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.6" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.6" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.6" ]; then
+                DEVICE_NAME=$(ls /sys$DEVPATH/tty | grep tty)
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                exit 0
+            fi
+            if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.8" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.8" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.8" ]; then
+                DEVICE_NAME=$(ls /sys$DEVPATH/tty | grep tty)
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM3
+                exit 0
+            fi
+        fi
+
+        if [ "$PRODUCT" = "$SIM5300" ];then
+            if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.6" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.6" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.6" ]; then
+                DEVICE_NAME=$(ls /sys$DEVPATH/tty | grep tty)
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM3
+                exit 0
+            fi
+        fi
+
+        if [ "$PRODUCT" = "$SIM5360" ];then
+            if  [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.2" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.2" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.2" ]; then
+                DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                exit 0
+            fi
+            if  [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.3" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.3" \
+                    -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.3" ]; then
+                DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                ln -s /dev/$DEVICE_NAME /dev/ttyGSM3
+                exit 0
+            fi
+        fi
+    ;;
+
+    remove)
+        if  [ "$PRODUCT" = "$SIM7100" -o "$PRODUCT" = "$SIM7600" -o "$PRODUCT" = "$EHS5" -o "$PRODUCT" = "$SIM5300" -o "$PRODUCT" = "$SIM5360" ]; then
+            rm /dev/ttyGSM1
+            rm /dev/ttyGSM2
+            rm /dev/ttyGSM3
+            exit 0
+        fi
+    ;;
+esac
