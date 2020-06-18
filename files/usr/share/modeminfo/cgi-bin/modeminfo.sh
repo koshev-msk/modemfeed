@@ -14,7 +14,6 @@ fi
 
 function json_status() {
 	sed -e "s!{DEVICE}!$DEVICE!g; \
-	s!{STATUS}!$STATUS!g; \
 	s!{COPS_MCC}!$COPS_MCC!g; \
 	s!{COPS_MNC}!$COPS_MNC!g; \
 	s!{COPS}!$COPS!g; \
