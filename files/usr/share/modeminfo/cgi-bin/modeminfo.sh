@@ -163,17 +163,12 @@ else
 	fi
 
 	if [ "x$DEVICE" = "x" ]; then
-		echo $NOTDETECTED
+		DEVICE="not detected"
 		exit 0
 	fi
 
 	if [ ! -e $DEVICE ]; then
-		DEVICE=$NODEVICE
-		COPS_MCC="-"
-		COPS_MNC="-"
-		COPS="-"
-		MODE="-"
-		IMEI='-'
+		DEVICE="not found"
 		exit 0
 	fi
 
