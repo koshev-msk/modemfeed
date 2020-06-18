@@ -6,38 +6,37 @@
 
 
 RES="/usr/share/modeminfo"
+TPL=$RES/modem.json
+
+if [ ! -e $TPL ]; then
+        exit 0
+fi
 
 function json_status() {
-	TPL=$RES/modem.json
-	if [ -e $TPL ]; then
-		sed -e "s!{DEVICE}!$DEVICE!g; \
-		s!{STATUS}!$STATUS!g; \
-		s!{COPS_MCC}!$COPS_MCC!g; \
-		s!{COPS_MNC}!$COPS_MNC!g; \
-		s!{COPS}!$COPS!g; \
-		s!{MODE}!$MODE!g; \
-		s!{CSQ_PER}!$CSQ_PER!g; \
-		s!{LAC}!$LAC!g; \
-		s!{LAC_NUM}!$LAC_NUM!g; \
-		s!{CID}!$CID!g; \
-		s!{CID_NUM}!$CID_NUM!g;\
-		s!{CSQ_RSSI}!$CSQ_RSSI!g; \
-		s!{SINR}!$SINR!g; \
-		s!{RSRP}!$RSRP!g; \
-		s!{RSRQ}!$RSRQ!g; \
-		s!{IMEI}!$IMEI!g; \
-		s!{REGST}!$REGST!g; \
-		s!{CSQ_COL}!$CSQ_COL!g; \
-		s!{BAND}!$BAND!g; \
-		s!{FUL}!$FUL!g; \
-		s!{FDL}!$FDL!g; \
-		s!{EARFCN}!$EARFCN!g;\
-		s!{CNNAME}!$CNNAME!g;\
-		s!{SNRNAME}!$SNRNAME!g" $TPL
-else
-	echo "Template $TPL missing!"
-	exit 0
-fi
+	sed -e "s!{DEVICE}!$DEVICE!g; \
+	s!{STATUS}!$STATUS!g; \
+	s!{COPS_MCC}!$COPS_MCC!g; \
+	s!{COPS_MNC}!$COPS_MNC!g; \
+	s!{COPS}!$COPS!g; \
+	s!{MODE}!$MODE!g; \
+	s!{CSQ_PER}!$CSQ_PER!g; \
+	s!{LAC}!$LAC!g; \
+	s!{LAC_NUM}!$LAC_NUM!g; \
+	s!{CID}!$CID!g; \
+	s!{CID_NUM}!$CID_NUM!g;\
+	s!{CSQ_RSSI}!$CSQ_RSSI!g; \
+	s!{SINR}!$SINR!g; \
+	s!{RSRP}!$RSRP!g; \
+	s!{RSRQ}!$RSRQ!g; \
+	s!{IMEI}!$IMEI!g; \
+	s!{REGST}!$REGST!g; \
+	s!{CSQ_COL}!$CSQ_COL!g; \
+	s!{BAND}!$BAND!g; \
+	s!{FUL}!$FUL!g; \
+	s!{FDL}!$FDL!g; \
+	s!{EARFCN}!$EARFCN!g;\
+	s!{CNNAME}!$CNNAME!g;\
+	s!{SNRNAME}!$SNRNAME!g" $TPL
 }
 
 function freq_band(){
