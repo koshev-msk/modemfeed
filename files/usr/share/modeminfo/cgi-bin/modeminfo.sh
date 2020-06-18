@@ -43,81 +43,81 @@ fi
 function freq_band(){
 	case $MODE in
         LTE)
-			if [ $EARFCN -ge 0 ] && [ $EARFCN -le 599 ]; then
+	if [ $EARFCN -ge 0 ] && [ $EARFCN -le 599 ]; then
                 BAND="B1 FDD"
                 FDL_LOW=2110
                 FUL_LOW=1920
                 NOFFDL=0
-			elif [ $EARFCN -ge 1200 ] && [ $EARFCN -le 1949 ]; then
+	elif [ $EARFCN -ge 1200 ] && [ $EARFCN -le 1949 ]; then
                 BAND="B3 FDD"
                 FDL_LOW=1805
                 FUL_LOW=1710
                 NOFFDL=1200
-			elif [ $EARFCN -ge 2750 ] && [ $EARFCN -le 3449 ]; then
+	elif [ $EARFCN -ge 2750 ] && [ $EARFCN -le 3449 ]; then
                 BAND="B7 FDD"
                 FDL_LOW=2620
                 FUL_LOW=2500
                 NOFFDL=2750
-			elif [ $EARFCN -ge 6150 ] && [ $EARFCN -le 6449 ]; then
+	elif [ $EARFCN -ge 6150 ] && [ $EARFCN -le 6449 ]; then
                 BAND="B20 FDD"
                 FDL_LOW=791
                 FUL_LOW=832
                 NOFFDL=6150
-			elif [ $EARFCN -ge 9870 ] && [ $EARFCN -le 9919 ]; then
+	elif [ $EARFCN -ge 9870 ] && [ $EARFCN -le 9919 ]; then
                 BAND="B31 FDD"
                 FDL_LOW=452
                 FUL_LOW=462
                 NOFFDL=9870
-			elif [ $EARFCN -ge 33750 ] && [ $EARFCN -le 38249 ]; then
+	elif [ $EARFCN -ge 33750 ] && [ $EARFCN -le 38249 ]; then
                 BAND="B38 TDD"
                 FDL_LOW=2570
                 FUL_LOW=2570
                 NOFFDL=33750
-			elif  [ $EARFCN -ge 38650 ] && [ $EARFCN -le 39649 ]; then
+	elif  [ $EARFCN -ge 38650 ] && [ $EARFCN -le 39649 ]; then
                 BAND="B40 TDD"
                 FDL_LOW=2300
                 FUL_LOW=2300
                 NOFFDL=38650
-			fi
-			if [ $FUL_LOW ] && [ $FDL_LOW ]; then
+	fi
+	if [ $FUL_LOW ] && [ $FDL_LOW ]; then
                 FDL=$(($FDL_LOW + (($EARFCN - $NOFFDL)/10)))
                 FUL=$(($FUL_LOW + (($EARFCN - $NOFFDL)/10)))
-			else
+	else
                 FDL="-"
                 FUL="-"
-			fi
+	fi
         ;;
         *)
-			if [ $EARFCN -ge 10562 ] && [ $EARFCN -le 10838 ]; then
+	if [ $EARFCN -ge 10562 ] && [ $EARFCN -le 10838 ]; then
                 BAND="IMT2100"
                 OFFSET=950
                 FDL=$(($EARFCN/5))
                 FUL=$((($EARFCN - $OFFSET)/5))
-			elif [ $EARFCN -ge 2937 ] && [ $EARFCN -le 3088 ]; then
+	elif [ $EARFCN -ge 2937 ] && [ $EARFCN -le 3088 ]; then
                 BAND="UMTS900"
                 FUL_LOW=925
                 OFFSET=340
                 FUL=$(($OFFSET + ($EARFCN/5)))
                 FDL=$(($FUL - 45))
-			elif [ $EARFCN -ge 955 ] && [ $EARFCN -le 1023 ]; then
+	elif [ $EARFCN -ge 955 ] && [ $EARFCN -le 1023 ]; then
                 BAND="DCS900"
                 FUL_LOW=890
                 FUL=$(($FUL_LOW + ($EARFCN - 1024)/5))
                 FDL=$(($FUL + 45))
-			elif  [ $EARFCN -ge 512 ] && [ $EARFCN -le 885 ]; then
+	elif  [ $EARFCN -ge 512 ] && [ $EARFCN -le 885 ]; then
                 BAND="DSC1800"
                 FUL_LOW=1710
                 FUL=$(($FUL_LOW + ($EARFCN - 512)/5))
                 FDL=$(($FUL + 95))
-			elif [ $EARFCN -ge 1 ] && [ $EARFCN -le 124 ]; then
+	elif [ $EARFCN -ge 1 ] && [ $EARFCN -le 124 ]; then
                 BAND="GSM900"
                 FUL_LOW=890
                 FUL=$(($FUL_LOW + ($EARFCN/5)))
                 FDL=$(($FUL + 45))
-			else
+	else
                 FUL="-"
                 FDL="-"
-			fi
+	fi
         ;;
 	esac
 }
@@ -187,7 +187,7 @@ else
 		exit 0
 	fi
 
-	# найти соответствующий раздел в конфигурации - а именно - имя интерфейса модема, но если не создавал интерфейс, то хрен вам товарищ (для 3G модемов - только SMS юзаю, и вписываю руками wan)
+	# Г­Г Г©ГІГЁ Г±Г®Г®ГІГўГҐГІГ±ГІГўГіГѕГ№ГЁГ© Г°Г Г§Г¤ГҐГ« Гў ГЄГ®Г­ГґГЁГЈГіГ°Г Г¶ГЁГЁ - Г  ГЁГ¬ГҐГ­Г­Г® - ГЁГ¬Гї ГЁГ­ГІГҐГ°ГґГҐГ©Г±Г  Г¬Г®Г¤ГҐГ¬Г , Г­Г® ГҐГ±Г«ГЁ Г­ГҐ Г±Г®Г§Г¤Г ГўГ Г« ГЁГ­ГІГҐГ°ГґГҐГ©Г±, ГІГ® ГµГ°ГҐГ­ ГўГ Г¬ ГІГ®ГўГ Г°ГЁГ№ (Г¤Г«Гї 3G Г¬Г®Г¤ГҐГ¬Г®Гў - ГІГ®Г«ГјГЄГ® SMS ГѕГ§Г Гѕ, ГЁ ГўГЇГЁГ±Г»ГўГ Гѕ Г°ГіГЄГ Г¬ГЁ wan)
 	SEC=$(uci -q get modeminfo.@modeminfo[0].network)
 	if [ -z "$SEC" ]; then
 		getpath $DEVICE
@@ -258,7 +258,7 @@ else
 	[ "x$COPS" = "x" ] && COPS="-"
 fi
 
-# Option и ZTE modems
+# Option ГЁ ZTE modems
 if [ "$COPS_NUM" = "-" ]; then
 	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS: .,0/ {print $2}')
 	[ "x$COPS" = "x" ] && COPS="---"
@@ -276,7 +276,7 @@ if [ "$COPS_NUM" = "-" ]; then
 	fi
 fi
 
-# network mode (LTE/UMTS/WCDMA итд)
+# network mode (LTE/UMTS/WCDMA ГЁГІГ¤)
 MODE="-"
 
 # Huawei new items
