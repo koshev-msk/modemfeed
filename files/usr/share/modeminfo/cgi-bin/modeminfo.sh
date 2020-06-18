@@ -169,19 +169,11 @@ else
 
 	if [ ! -e $DEVICE ]; then
 		DEVICE=$NODEVICE
-		ICOSIG="signal-none.png"
-		STATUS="Unknowm"
 		COPS_MCC="-"
 		COPS_MNC="-"
 		COPS="-"
 		MODE="-"
 		IMEI='-'
-		CHIPTEMP='-'
-		WANIPv4='-'
-		WANIPv6='-'
-		SERIALNUMBER='-'
-
-		vars
 		exit 0
 	fi
 
