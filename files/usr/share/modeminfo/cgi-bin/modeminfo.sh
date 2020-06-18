@@ -35,7 +35,7 @@ function json_status() {
 		s!{CNNAME}!$CNNAME!g;\
 		s!{SNRNAME}!$SNRNAME!g" $TPL
 else
-	echo "Template $TEMPLATE missing!"
+	echo "Template $TPL missing!"
 	exit 0
 fi
 }
