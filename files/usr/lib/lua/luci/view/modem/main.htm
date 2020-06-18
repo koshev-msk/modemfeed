@@ -1,0 +1,157 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2011 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+
+<%+header%>
+
+<h2 name="content"><%:Modem Overview%></h2>
+
+<script type="text/javascript">//<![CDATA[
+
+
+XHR.poll(0, '<%=build_url("admin/modem/data")%>', null,
+		function(x, data)
+		{
+
+
+					var icon;
+					var t;
+					var p = (data.csq_per);
+
+					if (p < 0)
+						icon = "<%=resource%>/icons/signal-none.png";
+					else if (p == 0)
+						icon = "<%=resource%>/icons/signal-none.png";
+					else if (p < 10)
+						icon = "<%=resource%>/icons/signal-0.png";
+					else if (p < 25)
+						icon = "<%=resource%>/icons/signal-0-25.png";
+					else if (p < 50)
+						icon = "<%=resource%>/icons/signal-25-50.png";
+					else if (p < 75)
+						icon = "<%=resource%>/icons/signal-50-75.png";
+					else
+						icon = "<%=resource%>/icons/signal-75-100.png";
+
+					if (e = document.getElementById('csq_pe'))
+					if (e)
+						e.innerHTML = String.format('<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ data.csq_col +'"><b>%d%%</b></p></span>', icon, p);
+
+
+			if (e = document.getElementById('status'))
+				e.innerHTML = String.format(data.status + " " + data.reg);
+
+			if (e = document.getElementById('device'))
+			 	e.innerHTML = String.format(data.device);
+
+			if (e = document.getElementById('mccmnc'))
+			 	e.innerHTML = String.format(data.mcc  + " " + data.mnc);
+
+			if (e = document.getElementById('cops'))
+			 	e.innerHTML = String.format(data.cops);
+
+			if (e = document.getElementById('mode'))
+			 	e.innerHTML = String.format(data.mode + " / " + data.band);
+
+			if (e = document.getElementById('csq_per'))
+			 	e.innerHTML = String.format(data.csq_per+"%");
+
+			if (e = document.getElementById('lac'))
+			 	e.innerHTML = String.format(data.lac + " / " + data.lac_num);
+
+			if (e = document.getElementById('cid'))
+			 	e.innerHTML = String.format(data.cid + " / " + data.cid_num);
+
+			if (e = document.getElementById('rssi'))
+			 	e.innerHTML = String.format(data.rssi + " dBm");
+				
+			if (e = document.getElementById('sinr'))
+			 	e.innerHTML = String.format(data.sinr + " dB");
+
+			if (e = document.getElementById('rsrp'))
+			 	e.innerHTML = String.format(data.rsrp + " dBm");
+
+			if (e = document.getElementById('rsrq'))
+			 	e.innerHTML = String.format(data.rsrq + " dB");
+
+			if (e = document.getElementById('imei'))
+			 	e.innerHTML = String.format(data.imei);
+
+			if (e = document.getElementById('freq'))
+			 	e.innerHTML = String.format(data.fdl + " / " + data.ful + " MHz" );
+				
+			if (e = document.getElementById('arfcn'))
+				e.innerHTML = String.format(data.arfcn);
+			
+			if (e = document.getElementById('chname'))
+				e.innerHTML = String.format('<b>'+data.chname+':</b>');
+				
+			if (e = document.getElementById('snrname'))
+				e.innerHTML = String.format('<b>'+data.snrname+':</b>');
+
+		}
+	);
+//]]></script>
+
+
+
+
+<fieldset class="cbi-section">
+	<legend><%:Mobile network%></legend>
+	<div class="table" width="100%">
+		<div class="tr cbi-rowstyle-2">
+			<div class="td left" width="25%"><b><%:Device:%></b></div>
+			<div class="td left" width="25%" id="device">-</div>
+			<div class="td left" width="25%"><b><%:Status:%></b></div>
+			<div class="td left" width="25%" id="status">-</div>
+		</div>
+		<div class="tr cbi-rowstyle-1">
+			<div class="td left" width="25%"><b><%:MCC MNC:%></b></div>
+			<div class="td left" width="25%" id="mccmnc">-</div>
+			<div class="td left" width="25%"><b><%:Network Desc.:%></b></div>
+			<div class="td left" width="25%" id="cops">-</div>
+		</div>
+		<div class="tr cbi-rowstyle-2">
+			<div class="td left" width="25%"><b><%:Network/band:%></b></div>
+			<div class="td left" width="25%" id="mode">-</div>
+			<div class="td left" width="25%"><b><%:Signal strength:%></b></div>
+			<div class="td left" width="25%" id="csq_pe">-</div>
+		</div>
+		<div class="tr cbi-rowstyle-1">
+			<div class="td left" width="25%" id="chname"><b><%:(E/U)ARFCN:%></b></div>
+			<div class="td left" width="25%" id="arfcn">-</div>
+			<div class="td left" width="25%"><b><%:Freq. (DL/UL):%></b></div>
+			<div class="td left" width="25%" id="freq">-</div>
+		</div>
+		<div class="tr cbi-rowstyle-2"> 
+			<div class="td left" width="25%"><b><%:LAC/TAC:%></b></div>
+			<div class="td left" width="25%" id="lac">-</div>
+			<div class="td left" width="25%"><b><%:CID:%></b></div>
+			<div class="td left" width="20%" id="cid">-</div>
+		</div>
+		<div class="tr cbi-rowstyle-1">
+			<div class="td left" width="25%"><b><%:RSSI:%></b></div>
+			<div class="td left" width="25%" id="rssi">-</div>
+			<div class="td left" width="25%" id="snrname"><b><%:SINR/ECIO:%></b></div>
+			<div class="td left" width="25%" id="sinr">-</div>
+		</div>
+		<div class="tr cbi-rowstyle-2">
+			<div class="td left" width="25%"><b><%:RSRP:%></b></div>
+			<div class="td left" width="25%" id="rsrp">-</div>
+			<div class="td left" width="25%"><b><%:RSRQ:%></b></div>
+			<div class="td left" width="25%" id="rsrq">-</div>
+		</div>
+		<div class="tr cbi-rowstyle-1">
+			<div class="td left" width="50%"><b><%:IMEI:%></b></div>
+			<div class="td left" width="0%"></div>
+			<div class="td left" width="50%" id="imei"></div>
+			<div class="td left" width="0%"></div>
+		</div>
+	</div>
+</fieldset>
+
+
+<%+footer%>
