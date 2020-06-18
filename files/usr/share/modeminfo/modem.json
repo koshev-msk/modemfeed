@@ -1,7 +1,6 @@
 {
 "error": "",
 "device": "{DEVICE}",
-"status": "{STATUS}",
 "mcc": "{COPS_MCC}",
 "mnc": "{COPS_MNC}",
 "cops": "{COPS}",
