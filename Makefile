@@ -1,8 +1,3 @@
-#Owned by finbarr@Whirlpool
-#
-#Copyright GNU act.
-# See http://www.lteforum.at/mobilfunk/huawei-e3372-openwrt.1739/#post-26074
-#
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-modeminfo
