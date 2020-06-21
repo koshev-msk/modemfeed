@@ -117,6 +117,10 @@ opengt
  let $r="\^HFREQINFO"
  gosub readatcmd
 
+ let $c="AT\^CHIPTEMP?^m"
+ let $r="\^CHIPTEMP"
+ gosub readatcmd
+
 :generic
  let $c="AT\^SYSINFO^m"
  let $r="\^SYSINFO"
@@ -144,9 +148,9 @@ opengt
  let $r="+CGEQNEG"
  gosub readatcmd
 
- let $c="ATE1; +CGMM^m"
+ let $c="AT+CGMM^m"
  gosub readatcmdnr
- print "\nDEVICE:",$v," ",$s,"\n"
+ print "\nDEVICE:",$v," ",$s
 
  let $c="AT+CGSN^m"
  let $r="+CGSN"
