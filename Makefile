@@ -10,6 +10,7 @@ endef
 
 define Package/luci-app-modeminfo/postinst
 	chmod +x /usr/bin/modeminfo
+	/usr/bin/modeminfo firstinstall
 endef
 
 include ../../luci.mk
