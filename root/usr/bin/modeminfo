@@ -1,6 +1,8 @@
 #!/bin/sh
 if -r /usr/share/modeminfo/scripts/modeminfo; then
 	source . /usr/share/modeminfo/scripts/modeminfo
+else
+	exit 0
 fi
 
 case $1 in
