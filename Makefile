@@ -8,6 +8,10 @@ define Package/luci-app-modeminfo/conffiles
 	/etc/config/modeminfo
 endef
 
+define Package/luci-app-modeminfo/postinst
+	chmod +x /usr/bin/modeminfo
+endef
+
 include ../../luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
