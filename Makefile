@@ -36,6 +36,7 @@ endef
 define Package/$(PKG_NAME)/postinst
 	ln -s /usr/share/modeminfo/cgi-bin/modeminfo.sh /usr/bin/modeminfo
 	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+	sh /usr/bin/modeminfo firstinstall
 endef
 
 define Package/$(PKG_NAME)/postrm
