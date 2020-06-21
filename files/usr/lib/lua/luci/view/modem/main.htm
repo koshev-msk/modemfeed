@@ -41,7 +41,7 @@ XHR.poll(0, '<%=build_url("admin/modem/data")%>', null,
 
 
 			if (e = document.getElementById('status'))
-				e.innerHTML = String.format(data.status + " " + data.reg);
+				e.innerHTML = String.format(data.reg);
 
 			if (e = document.getElementById('device'))
 			 	e.innerHTML = String.format(data.device);
