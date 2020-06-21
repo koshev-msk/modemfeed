@@ -172,7 +172,7 @@ else
 		exit 0
 	fi
 
-	# íàéòè ñîîòâåòñòâóþùèé ðàçäåë â êîíôèãóðàöèè - à èìåííî - èìÿ èíòåðôåéñà ìîäåìà, íî åñëè íå ñîçäàâàë èíòåðôåéñ, òî õðåí âàì òîâàðèù (äëÿ 3G ìîäåìîâ - òîëüêî SMS þçàþ, è âïèñûâàþ ðóêàìè wan)
+	# найти соответствующий раздел в конфигурации - а именно - имя интерфейса модема, но если не создавал интерфейс, то хрен вам товарищ (для 3G модемов - только SMS юзаю, и вписываю руками wan)
 	SEC=$(uci -q get modeminfo.@modeminfo[0].network)
 	if [ -z "$SEC" ]; then
 		getpath $DEVICE
@@ -243,7 +243,7 @@ else
 	[ "x$COPS" = "x" ] && COPS="-"
 fi
 
-# Option è ZTE modems
+# Option и ZTE modems
 if [ "$COPS_NUM" = "-" ]; then
 	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS: .,0/ {print $2}')
 	[ "x$COPS" = "x" ] && COPS="---"
@@ -261,7 +261,7 @@ if [ "$COPS_NUM" = "-" ]; then
 	fi
 fi
 
-# network mode (LTE/UMTS/WCDMA èòä)
+# network mode (LTE/UMTS/WCDMA итд)
 MODE="-"
 
 # Huawei new items
@@ -529,7 +529,7 @@ if [ "$MODE" = "LTE" ]; then
 	fi
 	if [ ! $EARFCN ]; then
 		# for Huawei.
-		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\^HFREQINFO/ {print $5}')
+		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\^HFREQINFO/ {print $4}')
 	fi
 else
 	# for Quectel modems 2G/3G networks
@@ -540,7 +540,7 @@ else
 	fi
 	if [ ! $EARFCN ]; then
 		# for Huawei. Not fully support any models for all bands! Maybe repair it?
-		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\^HFREQINFO/ {print $5}')
+		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\^HFREQINFO/ {print $4}')
 		if [ ! $EARFCN ]; then
 			EARFCN="not support"
 		fi
