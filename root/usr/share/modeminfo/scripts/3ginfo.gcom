@@ -96,7 +96,17 @@ opengt
  goto next1
 
 :huawei
+# uppercase huawei to Huawei
  let $v=$toupper($left($v,1))+$mid($v,1,len($v)-1)
+
+ let $c="AT\^FHVER^m"
+ let $r="\^FHVER"
+ gosub readatcmd
+# remove ^FHVER:" from start of string & " from end of string
+ let $s=$mid($s,9,len($s)-10)
+ gosub strfindfspace
+ let $m=$mid($s,0,i)
+
  let $c="AT\^SYSINFOEX^m"
  let $r="\^SYSINFOEX"
  gosub readatcmd
@@ -119,6 +129,22 @@ opengt
 
  let $c="AT\^CHIPTEMP?^m"
  let $r="\^CHIPTEMP"
+ gosub readatcmd
+
+ let $c="AT+CSCA?^m"
+ let $r="+CSCA"
+ gosub readatcmd
+
+ let $c="AT\^SYSCFG?^m"
+ let $r="\^SYSCFG"
+ gosub readatcmd
+
+ let $c="AT\^SYSCFGEX?^m"
+ let $r="\^SYSCFG"
+ gosub readatcmd
+
+ let $c="AT+CGPADDR=1^m"
+ let $r="+CGPADDR"
  gosub readatcmd
 
 :generic
@@ -150,10 +176,11 @@ opengt
 
  let $c="AT+CGMM^m"
  gosub readatcmdnr
- print "\nDEVICE:",$v," ",$s
+ if $m = "" print "\nDEVICE:",$v," ",$s
+ else print "\nDEVICE:",$v," ",$m
 
  let $c="AT+CGSN^m"
- let $r="+CGSN"
+# let $r="+CGSN"
  gosub readatcmdnr
  print "\nIMEI:",$s,"\n"
 
@@ -203,3 +230,13 @@ opengt
  if i = 0 return
  let i=i-1
  goto loop3
+
+:strfindfspace
+ let i=0
+ let l=len($s)
+ if l = 0 return
+:loop6
+ if i = l return
+ if $mid($s,i,1) = " " return
+ let i=i+1
+ goto loop6
