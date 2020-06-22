@@ -241,7 +241,7 @@ function get_cops() {
 
 # Get MCC or MNC for ZTE modems
 function get_cops_zte() {
-	# Option è ZTE modems
+	# Option Ã¨ ZTE modems
 	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS: .,0/ {print $2}')
 	COPS_TMP=$(awk -F[\;] 'BEGIN {IGNORECASE = 1} /'"$COPS"'/ {print $2}' $RES/mccmnc.dat)
 	if [ "x$COPS_TMP" != "x" ]; then
@@ -393,6 +393,7 @@ function simcom_data(){
 		5*) MODE="HSDPA";;
 		6*) MODE="HSUPA";;
 		7*) MODE="HSPA";;
+		8*) MODE="LTE";;
 		 *) MODE="--";;
 	esac
 	if [ "$MODE" = "LTE" ]; then
