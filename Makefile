@@ -13,6 +13,6 @@ define Package/luci-app-modeminfo/postinst
 	/usr/bin/modeminfo firstinstall
 endef
 
-include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
