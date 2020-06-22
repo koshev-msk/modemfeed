@@ -1,0 +1,82 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: applications/luci-app-modeminfo/luasrc/controller/modem.lua:8
+msgid "Modem"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/controller/modem.lua:9
+msgid "Modem overview"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:10
+msgid "Modem Overview"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:102
+msgid "Mobile network"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:105
+msgid "Device"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:107
+msgid "Status"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:111
+msgid "MCC MNC"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:113
+msgid "Network Desc."
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:117
+msgid "Network/band"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:119
+msgid "Signal strength"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:123
+msgid "(E/U)ARFCN"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:125
+msgid "Freq. (DL/UL)"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:129
+msgid "LAC/TAC"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:131
+msgid "CID"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:135
+msgid "RSSI"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:137
+msgid "SINR/ECIO"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:141
+msgid "RSRP"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:143
+msgid "RSRQ"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:147
+msgid "IMEI"
+msgstr ""
+
