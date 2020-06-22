@@ -1,0 +1,520 @@
+# (c) 2010-2016 Cezary Jackiewicz <cezary@eko.one.pl>
+# (c) 2020 modified by Konstantine Shevlyakov  <shevlakov@132lan.ru>
+
+
+RES="/usr/share/modeminfo"
+GSCRIPT="$RES/scripts/3ginfo.gcom"
+
+function json_status() {
+	TPL=$RES/modem.json
+	if [ -e $TPL ]; then
+		sed -e "s!{DEVICE}!$DEVICE!g; \
+		s!{COPS_MCC}!$COPS_MCC!g; \
+		s!{COPS_MNC}!$COPS_MNC!g; \
+		s!{COPS}!$COPS!g; \
+		s!{MODE}!$MODE!g; \
+		s!{CSQ_PER}!$CSQ_PER!g; \
+		s!{LAC}!$LAC!g; \
+		s!{LAC_NUM}!$LAC_NUM!g; \
+		s!{CID}!$CID!g; \
+		s!{CID_NUM}!$CID_NUM!g;\
+		s!{CSQ_RSSI}!$CSQ_RSSI!g; \
+		s!{SINR}!$SINR!g; \
+		s!{RSRP}!$RSRP!g; \
+		s!{RSRQ}!$RSRQ!g; \
+		s!{IMEI}!$IMEI!g; \
+		s!{REGST}!$REGST!g; \
+		s!{CSQ_COL}!$CSQ_COL!g; \
+		s!{BAND}!$BAND!g; \
+		s!{FUL}!$FUL!g; \
+		s!{FDL}!$FDL!g; \
+		s!{EARFCN}!$EARFCN!g;\
+		s!{CNNAME}!$CNNAME!g;\
+		s!{SNRNAME}!$SNRNAME!g" $TPL
+else
+	echo "Template $TPL missing!"
+	exit 0
+fi
+}
+
+function if_null() {
+	for var in DEVICE COPS_MCC COPS_MNC COPS MODE CSQ_PER \
+				LAC LAC_NUM CID CID_NUM CSQ_RSSI SINR RSRP \
+				RSRQ IMEI REGST BAND FUL FDL EARFCN ; do
+		if [ "x$(eval echo \${$var})" = "x" ]; then
+			eval $var='--'
+		fi
+	done
+}
+
+
+function get_device_info() {
+	DEVPORT=$(uci -q get modeminfo.@modeminfo[0].device)
+	if [ "x$DEVPORT" = "x" ]; then
+		get_port
+	fi
+	O=$(gcom -d $DEVPORT -s $GSCRIPT 2>/dev/null)
+	SEC=$(uci show network | grep "/dev/"${DEV##/*/} | cut -f2 -d.)
+	if [ -z "$SEC" ]; then
+		getpath $DEVPORT
+		PORIG=$P
+		for DEV in /sys/class/tty/* /sys/class/usbmisc/*; do
+			getpath "/dev/"${DEV##/*/}
+			if [ "x$PORIG" = "x$P" ]; then
+				SEC=$(uci show network | grep "/dev/"${DEV##/*/} | cut -f2 -d.)
+				[ -n "$SEC" ] && break
+			fi
+		done
+	fi
+	IMEI=$(echo "$O" | awk -F[:] '/IMEI/ { print $2}')
+}
+
+function get_port() {
+	devices=$(ls /dev/ttyUSB* /dev/cdc-wdm* /dev/ttyACM* /dev/ttyHS* 2>/dev/null | sort -r);
+		for d in $devices; do
+			DEVPORT=$d gcom -s $RES/scripts/probeport.gcom > /dev/null 2>&1
+			if [ $? = 0 ]; then
+				uci set modeminfo.@modeminfo[0].device="$d"
+				uci commit modeminfo
+				break
+			fi
+		done
+	DEVPORT=$(uci -q get modeminfo.@modeminfo[0].device)
+	O=$(gcom -d $DEVPORT -s $GSCRIPT 2>/dev/null)
+}
+	
+function modem_family() {
+	DEVICE=$(echo "$O" | awk -F[:] '/DEVICE/ { print $2}')
+	if (echo ${DEVICE} | grep -i hua >/dev/null); then
+		FAMILY=HUAWEI
+	elif (echo ${DEVICE} | grep -i sim >/dev/null); then
+        FAMILY=SIMCOM
+	elif (echo ${DEVICE} | grep -i que >/dev/null); then
+        FAMILY=QUECTEL
+	elif (echo ${DEVICE} | grep -i zte >/dev/null); then
+		FAMILY=ZTE
+	elif (echo ${DEVICE} | grep -i opt >/dev/null); then
+		FAMILY=OPTION
+	elif (echo ${DEVICE} | grep -i sie >/dev/null); then
+		FAMILY=SIERRA
+	elif (echo ${DEVICE} | grep -i vod|ice >/dev/null); then
+		FAMILY=VODAFONE
+	else
+        FAMILY=GENERIC
+	fi
+}
+		
+function freq_band(){
+	if [ $EARFCN ] ; then
+		case $MODE in
+			LTE)
+				if [ $EARFCN -ge 0 ] && [ $EARFCN -le 599 ]; then
+					BAND="B1 FDD"
+					FDL_LOW=2110
+					FUL_LOW=1920
+					NOFFDL=0
+				elif [ $EARFCN -ge 1200 ] && [ $EARFCN -le 1949 ]; then
+					BAND="B3 FDD"
+					FDL_LOW=1805
+					FUL_LOW=1710
+					NOFFDL=1200
+				elif [ $EARFCN -ge 2750 ] && [ $EARFCN -le 3449 ]; then
+					BAND="B7 FDD"
+					FDL_LOW=2620
+					FUL_LOW=2500
+					NOFFDL=2750
+				elif [ $EARFCN -ge 6150 ] && [ $EARFCN -le 6449 ]; then
+					BAND="B20 FDD"
+					FDL_LOW=791
+					FUL_LOW=832
+					NOFFDL=6150
+				elif [ $EARFCN -ge 9870 ] && [ $EARFCN -le 9919 ]; then
+					BAND="B31 FDD"
+					FDL_LOW=452
+					FUL_LOW=462
+					NOFFDL=9870
+				elif [ $EARFCN -ge 33750 ] && [ $EARFCN -le 38249 ]; then
+					BAND="B38 TDD"
+					FDL_LOW=2570
+					FUL_LOW=2570
+					NOFFDL=33750
+				elif  [ $EARFCN -ge 38650 ] && [ $EARFCN -le 39649 ]; then
+					BAND="B40 TDD"
+					FDL_LOW=2300
+					FUL_LOW=2300
+					NOFFDL=38650
+				fi
+				if [ $FUL_LOW ] && [ $FDL_LOW ]; then
+					FDL=$(($FDL_LOW + (($EARFCN - $NOFFDL)/10)))
+					FUL=$(($FUL_LOW + (($EARFCN - $NOFFDL)/10)))
+				fi
+			;;
+			*)
+				if [ $EARFCN -ge 10562 ] && [ $EARFCN -le 10838 ]; then
+					BAND="IMT2100"
+					OFFSET=950
+					FDL=$(($EARFCN/5))
+					FUL=$((($EARFCN - $OFFSET)/5))
+				elif [ $EARFCN -ge 2937 ] && [ $EARFCN -le 3088 ]; then
+					BAND="UMTS900"
+					FUL_LOW=925
+					OFFSET=340
+					FUL=$(($OFFSET + ($EARFCN/5)))
+					FDL=$(($FUL - 45))
+				elif [ $EARFCN -ge 955 ] && [ $EARFCN -le 1023 ]; then
+					BAND="DCS900"
+					FUL_LOW=890
+					FUL=$(($FUL_LOW + ($EARFCN - 1024)/5))
+					FDL=$(($FUL + 45))
+				elif  [ $EARFCN -ge 512 ] && [ $EARFCN -le 885 ]; then
+					BAND="DSC1800"
+					FUL_LOW=1710
+					FUL=$(($FUL_LOW + ($EARFCN - 512)/5))
+					FDL=$(($FUL + 95))
+				elif [ $EARFCN -ge 1 ] && [ $EARFCN -le 124 ]; then
+					BAND="GSM900"
+					FUL_LOW=890
+					FUL=$(($FUL_LOW + ($EARFCN/5)))
+					FDL=$(($FUL + 45))
+				fi
+			;;
+		esac
+		case $MODE in
+			LTE)
+				CNNAME="EARFCN"
+				SNRNAME="SINR"
+			;;
+			UMTS|HSPA|HSUPA|HSDPA)
+				CNNAME="UARFCN"
+				SNRNAME="ECIO"
+			;;
+			*)
+				CNNAME="ARFCN"
+				SNRNAME="SINR/ECIO"
+			;;
+		esac
+	fi
+}
+
+# get path serial port modem
+function getpath() {
+	devname="$(basename "$1")"
+	case "$devname" in
+	'tty'*)
+		devpath="$(readlink -f /sys/class/tty/$devname/device)"
+		P=${devpath%/*/*}
+		;;
+	*)
+		devpath="$(readlink -f /sys/class/usbmisc/$devname/device/)"
+		P=${devpath%/*}
+		;;
+	esac
+}
+
+# get CSQ 
+function get_csq(){
+	CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CSQ/ {print $2}')
+	[ "x$CSQ" = "x" ] && CSQ=-1
+	if [ $CSQ -ge 0 -a $CSQ -le 31 ]; then
+		CSQ_PER=$(($CSQ * 100/31))
+		CSQ_COL="red"
+		[ $CSQ -ge 10 ] && CSQ_COL="red"
+		[ $CSQ -ge 15 ] && CSQ_COL="orange"
+		[ $CSQ -ge 20 ] && CSQ_COL="green"
+		CSQ_RSSI=$((2 * CSQ - 113))
+	else
+		CSQ_PER="0"
+		CSQ_COL="black"
+	fi
+}
+
+# Get MCC or MNC 
+function get_cops() {
+	# COPS
+	COPS_NUM=$(echo "$O" | awk -F[\"] '/^\+COPS: .,2/ {print $2}')
+	if [ "x$COPS_NUM" != "x" ]; then
+		COPS_MCC=${COPS_NUM:0:3}
+		COPS_MNC=${COPS_NUM:3:3}
+		COPS=$(awk -F[\;] '/'$COPS_NUM'/ {print $2}' $RES/mccmnc.dat)
+	fi
+}
+
+# Get MCC or MNC for ZTE modems
+function get_cops_zte() {
+	# Option è ZTE modems
+	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS: .,0/ {print $2}')
+	COPS_TMP=$(awk -F[\;] 'BEGIN {IGNORECASE = 1} /'"$COPS"'/ {print $2}' $RES/mccmnc.dat)
+	if [ "x$COPS_TMP" != "x" ]; then
+		COPS="$COPS_TMP"
+		COPS_NUM=$(awk -F[\;] 'BEGIN {IGNORECASE = 1} /'"$COPS"'/ {print $1}' $RES/mccmnc.dat)
+		COPS_MCC=${COPS_NUM:0:3}
+		COPS_MNC=${COPS_NUM:3:3}
+	fi
+}
+
+# Get Registarion data
+function get_reg_data(){
+	# CREG
+	CREG="+CGREG"
+	LAC=$(echo "$O" | awk -F[,] '/\'$CREG'/ {printf "%s", toupper($3)}' | sed 's/[^A-F0-9]//g')
+	if [ "x$LAC" != "x" ]; then
+		CREG="+CREG"
+		LAC=$(echo "$O" | awk -F[,] '/\'$CREG'/ {printf "%s", toupper($3)}' | sed 's/[^A-F0-9]//g')
+		LAC_NUM=$(printf %d 0x$LAC)
+	fi	
+	CID=$(echo "$O" | awk -F[,] '/\'$CREG'/ {printf "%s", toupper($4)}' | sed 's/[^A-F0-9]//g')
+	if [ "x$CID" != "x" ]; then
+		CID_NUM=$(printf %d 0x$CID)
+		if [ ${#CID} -gt 4 ]; then
+			T=$(echo "$CID" | awk '{print substr($1,length(substr($1,1,length($1)-4))+1)}')
+		else
+			T=$CID
+		fi
+	fi
+	REGST=$(echo "$O" | awk -F[,] '/^\+CREG/ {print $2}')
+	case $REGST in
+		0) REGST="Not Registered";;
+		1) REGST="Registered";;
+		2) REGST="Searching";;
+		3) REGST="Denied";;
+		4) REGST="Unknown";;
+		5) REGST="Roaming";;
+	esac
+}
+
+# Huawei modems
+function huawei_data(){
+	# Huawei any modern models
+	TECH=$(echo "$O" | awk -F[,] '/^\^SYSINFOEX/ {print $9}' | sed 's/"//g')
+	if [ "x$TECH" != "x" ]; then
+		MODE=$(echo "$TECH" | sed 's/-//g')
+	fi
+	# Huawei and older models
+	if [ "x$MODE" = "x-" ]; then
+		TECH=$(echo "$O" | awk -F[,] '/^\^SYSINFO/ {print $7}')
+		case $TECH in
+			17*) MODE="HSPA+ (64QAM)";;
+			18*) MODE="HSPA+ (MIMO)";;
+			1*) MODE="GSM";;
+			2*) MODE="GPRS";;
+			3*) MODE="EDGE";;
+			4*) MODE="UMTS";;
+			5*) MODE="HSDPA";;
+			6*) MODE="HSUPA";;
+			7*) MODE="HSPA";;
+			9*) MODE="HSPA+";;
+			*) MODE="-";;
+		esac
+	fi
+	EARFCN=$(echo "$O" | awk -F[,\ ] '/^\^HFREQINFO/ {print $4}')
+	RSRx=$(echo "$O" | awk -F[,:] '/^\^LTERSRP:/ {print $2}')
+	if [ "x$RSRx" != "x" ]; then
+		RSRP=$RSRx
+		RSRQ=$(echo "$O" | awk -F[,:] '/^\^LTERSRP:/ {print $3}')
+	fi
+	TECH=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $2}' | sed 's/[" ]//g')
+	if [ "x$TECH" != "x" ]; then
+		PARAM2=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $4}')
+		PARAM3=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $5}')
+		PARAM4=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $6}')
+	
+		case "$TECH" in
+			WCDMA*)
+				RSCP=$(awk 'BEGIN {print -121 + '$PARAM2'}')
+				ECIO=$(awk 'BEGIN {print -32.5 + '$PARAM3'/2}')
+				SINR=$ECIO
+				;;
+			LTE*)
+				RSRP=$(awk 'BEGIN {print -141 + '$PARAM2'}')
+				SINR=$(awk 'BEGIN {print -20.2 + '$PARAM3'/5}')
+				RSRQ=$(awk 'BEGIN {print -20 + '$PARAM4'/2}')
+				;;
+		esac
+	fi
+}
+
+# Option modems
+function option_data(){
+	# OPTION
+	TECH=$(echo "$O" | awk -F, '/^\+COPS: 0/ {print $4}')
+	if [ "$TECH" = 0 ]; then
+		TECH1=$(echo "$O" | awk '/^_OCTI/ {print $2}' | cut -f1 -d,)
+		case $TECH1 in
+			1*) MODE="GSM";;
+			2*) MODE="GPRS";;
+			3*) MODE="EDGE";;
+			*) MODE="--";;
+		esac
+	elif [ "$TECH" = 2 ]; then
+		TECH1=$(echo "$O" | awk '/^_OWCTI/ {print $2}')
+		case $TECH1 in
+			1*) MODE="UMTS";;
+			2*) MODE="HSDPA";;
+			3*) MODE="HSUPA";;
+			4*) MODE="HSPA";;
+			*) MODE="--";;
+		esac
+	fi
+}
+
+# Sierra Wireless modems
+function sierra_data(){
+	# Sierra
+	TECH=$(echo "$O" | awk -F[,\ ] '/^\*CNTI/ {print $3}' | sed 's|/|,|g')
+	if [ "x$TECH" != "x" ]; then
+		MODE="$TECH"
+	fi
+}
+
+# Novatel MOdems
+function novatel_data(){
+	# Novatel
+	TECH=$(echo "$O" | awk -F[,\ ] '/^\$CNTI/ {print $4}' | sed 's|/|,|g')
+	if [ "x$TECH" != "x" ]; then
+		MODE="$TECH"
+	fi
+}
+# Vodafone modems
+function icera_data(){
+	# Vodafone - icera
+	TECH=$(echo "$O" | awk -F[,\ ] '/^\%NWSTATE/ {print $4}' | sed 's|/|,|g')
+	if [ "x$TECH" != "x" ]; then
+		MODE="$TECH"
+	fi
+}
+# Simcom modems
+function simcom_data(){
+	TECH=$(echo "$O" | awk -F[,\ ] '/^\+CNSMOD/ {print $3}')
+	case "$TECH" in
+		1*) MODE="GSM";;
+		2*) MODE="GPRS";;
+		3*) MODE="EDGE";;
+		4*) MODE="UMTS";;
+		5*) MODE="HSDPA";;
+		6*) MODE="HSUPA";;
+		7*) MODE="HSPA";;
+		8*) MODE="LTE";;
+		 *) MODE="--";;
+	esac
+	if [ "$MODE" = "LTE" ]; then
+		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $9}')
+	else
+		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $11}')
+	fi
+}
+# Quectel modems
+function quectel_data(){
+		generic_data
+		if [ "$MODE" = "LTE" ]; then
+			EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $8}')
+		else
+			EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $6}')
+		fi
+}
+# Zte modems
+function zte_data(){
+	# ZTE
+	TECH=$(echo "$O" | awk -F[,\ ] '/^\+ZPAS/ {print $2}' | sed 's/"//g')
+	if [ "x$TECH" != "xNo" ]; then
+		MODE="$TECH"
+	fi
+	ECIx=$(echo "$O" | awk -F[,\ ] '/^\+ZRSSI:/ {print $3}')
+	if $ECIx; then
+		ECIO=`expr $ECIx / 2`
+		ECIO="-"$ECIO
+	fi
+	RSCx=$(echo "$O" | awk -F[,\ ] '/^\+ZRSSI:/ {print $4}')
+	if $RSCx; then
+		RSCP=`expr $RSCx / 2`
+		RSCP="-"$RSCP
+	fi
+}
+
+#generic 3GPP TS 27.007 V10.4.0
+function generic_data(){
+	TECH=$(echo "$O" | awk -F[,] '/^\+COPS/ {print $4}')
+	case "$TECH" in
+		2*) MODE="UMTS";;
+		0*|3*) MODE="EDGE";;
+		4*) MODE="HSDPA";;
+		5*) MODE="HSUPA";;
+		6*) MODE="HSPA";;
+		7*) MODE="LTE";;
+		 *) MODE="--";;
+	esac
+}
+
+function get_qmi_data(){
+	if [ "x$(uci -q get network.$SEC.proto)" = "xqmi" ]; then
+		. /usr/share/libubox/jshn.sh
+		json_init
+		json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-signal-info)" >/dev/null 2>&1
+		json_get_var T type
+		if [ "x$T" = "xlte" ]; then
+			json_get_var RSRP rsrp
+			json_get_var RSRQ rsrq
+			json_get_var SINR snr
+			json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-serving-system)" >/dev/null 2>&1
+		fi
+		if [ "x$T" = "xwcdma" ]; then
+			json_get_var ECIO ecio
+			json_get_var RSSI rssi
+			json_get_var RSCP rscp
+			SINR=$ECIO
+			if [ -z "$RSCP" ]; then
+				RSCP=$((RSSI+ECIO))
+			fi
+				json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-serving-system)" >/dev/null 2>&1
+		fi
+		if [ "x$T" = "xgsm" ]; then
+			json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-serving-system)" >/dev/null 2>&1
+		fi
+	fi
+}
+
+function get_data_in(){
+	modem_family
+	case $FAMILY in
+		HUAWEI)
+			huawei_data
+			get_reg_data
+			get_cops
+			get_csq
+			freq_band
+		;;
+		OPTION)
+			option_data
+			get_reg_data
+			get_cops
+			get_csq
+		;;
+		ZTE)
+			zte_data
+			get_reg_data
+			get_cops_zte
+			get_csq
+		;;
+		SIMCOM)
+			simcom_data
+			get_reg_data
+			get_cops
+			get_csq
+			get_qmi_data
+			freq_band
+		;;
+		QUECTEL)
+			quectel_data
+			get_reg_data
+			get_cops
+			get_csq
+			get_qmi_data
+			freq_band
+		;;
+		*)
+			generic_data
+			get_reg_data
+			get_cops
+			get_csq
+		;;
+	esac
+}

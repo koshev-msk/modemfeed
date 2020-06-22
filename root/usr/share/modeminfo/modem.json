@@ -1,6 +1,5 @@
 {
 "error": "",
-"device": "{DEVICE}",
 "mcc": "{COPS_MCC}",
 "mnc": "{COPS_MNC}",
 "cops": "{COPS}",
