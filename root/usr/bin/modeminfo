@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ -r /usr/share/modeminfo/scripts/modeminfo ]; then
-	source . /usr/share/modeminfo/scripts/modeminfo
+	. /usr/share/modeminfo/scripts/modeminfo
 else
 	exit 0
 fi

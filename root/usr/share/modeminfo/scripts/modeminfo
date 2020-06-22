@@ -31,18 +31,24 @@ function json_status() {
 		s!{EARFCN}!$EARFCN!g;\
 		s!{CNNAME}!$CNNAME!g;\
 		s!{SNRNAME}!$SNRNAME!g" $TPL
-else
-	echo "Template $TPL missing!"
-	exit 0
-fi
+	else
+		echo "Template $TPL missing!"
+		exit 0
+	fi
 }
 
 function if_null() {
 	for var in DEVICE COPS_MCC COPS_MNC COPS MODE CSQ_PER \
 				LAC LAC_NUM CID CID_NUM CSQ_RSSI SINR RSRP \
-				RSRQ IMEI REGST BAND FUL FDL EARFCN ; do
+				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME; do
 		if [ "x$(eval echo \${$var})" = "x" ]; then
 			eval $var='--'
+			if [ $var = CNNAME ]; then
+				eval $var='(E/U)ARFCN'
+			fi
+			if [ $var = SNRNAME ]; then
+				eval $var='SINR/ECIO'
+			fi
 		fi
 	done
 }
@@ -97,7 +103,7 @@ function modem_family() {
 		FAMILY=OPTION
 	elif (echo ${DEVICE} | grep -i sie >/dev/null); then
 		FAMILY=SIERRA
-	elif (echo ${DEVICE} | grep -i vod|ice >/dev/null); then
+	elif (echo ${DEVICE} | grep -Ei "vod|ice" >/dev/null); then
 		FAMILY=VODAFONE
 	else
         FAMILY=GENERIC

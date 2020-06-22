@@ -1,4 +1,4 @@
-let $d = $env("DEVICE")
+let $d = $env("DEVPORT")
 if $d = "" goto timeout
 
 open com $d
