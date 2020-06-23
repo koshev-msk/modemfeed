@@ -295,7 +295,7 @@ function huawei_data(){
 		MODE=$(echo "$TECH" | sed 's/-//g')
 	fi
 	# Huawei and older models
-	if [ "x$MODE" = "x-" ] || [ ! $TECH ]; then
+	if [ "x$MODE" = "x-" ] || [ "x$TECH" = "x" ]; then
 		TECH=$(echo "$O" | awk -F[,] '/^\^SYSINFO/ {print $7}')
 		case $TECH in
 			17*) MODE="HSPA+ (64QAM)";;
@@ -316,6 +316,9 @@ function huawei_data(){
 	if [ "x$RSRx" != "x" ]; then
 		RSRP=$RSRx
 		RSRQ=$(echo "$O" | awk -F[,:] '/^\^LTERSRP:/ {print $3}')
+	elif
+		ECIO=$(echo "$O" | awk -F[,:] '/^\^CSNR:/ {print $3}')
+		SINR=$ECIO
 	fi
 	TECH=$(echo "$O" | awk -F[,:] '/^\^HCSQ:/ {print $2}' | sed 's/[" ]//g')
 	if [ "x$TECH" != "x" ]; then
@@ -407,15 +410,17 @@ function simcom_data(){
 	else
 		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $11}')
 	fi
+	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+CPMUTEMP/ {print $2}')
 }
 # Quectel modems
 function quectel_data(){
-		generic_data
-		if [ "$MODE" = "LTE" ]; then
-			EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $8}')
-		else
-			EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $6}')
-		fi
+	generic_data
+	if [ "$MODE" = "LTE" ]; then
+		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $8}')
+	else
+		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $6}')
+	fi
+	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $2}')
 }
 # Zte modems
 function zte_data(){
