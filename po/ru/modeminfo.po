@@ -18,8 +18,8 @@ msgid "Modem Overview"
 msgstr "Информация о модеме"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:105
-msgid "Mobile network:"
-msgstr "Мобильная сеть:"
+msgid "Mobile network"
+msgstr "Мобильная сеть"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:108
 msgid "Device:"
