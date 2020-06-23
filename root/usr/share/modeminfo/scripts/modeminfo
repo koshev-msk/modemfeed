@@ -42,13 +42,11 @@ function if_null() {
 				LAC LAC_NUM CID CID_NUM CSQ_RSSI SINR RSRP \
 				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME; do
 		if [ "x$(eval echo \${$var})" = "x" ]; then
-			eval $var='--'
-			if [ $var = CNNAME ]; then
-				eval $var='(E/U)ARFCN'
-			fi
-			if [ $var = SNRNAME ]; then
-				eval $var='SINR/ECIO'
-			fi
+                      case $var in
+                                CNNAME) eval $var='SINR/ECIO' ;;
+                                SNRNAME) eval $var='(E/U)ARFCN' ;;
+                                *) eval $var='--' ;;
+			esac
 		fi
 	done
 }
