@@ -91,7 +91,7 @@ XHR.poll(0, '<%=build_url("admin/modem/data")%>', null,
 			if (e = document.getElementById('snrname'))
 				e.innerHTML = String.format('<b>'+data.snrname+':</b>');
 
-            if (e = document.getElementById('chiptemp'))
+            		if (e = document.getElementById('chiptemp'))
 			 	e.innerHTML = String.format(data.chiptemp + " &deg;C");
 
 		}
@@ -147,16 +147,10 @@ XHR.poll(0, '<%=build_url("admin/modem/data")%>', null,
 			<div class="td left" width="25%" id="rsrq">-</div>
 		</div>
 		<div class="tr cbi-rowstyle-1">
-			<div class="td left" width="50%"><b><%:IMEI:%></b></div>
-			<div class="td left" width="0%"></div>
-			<div class="td left" width="50%" id="imei"></div>
-			<div class="td left" width="0%"></div>
-		</div>
-		<div class="tr cbi-rowstyle-2">
-			<div class="td left" width="50%"><b><%:Chip Temp:%></b></div>
-			<div class="td left" width="0%"></div>
-			<div class="td left" width="50%" id="chiptemp"></div>
-			<div class="td left" width="0%"></div>
+			<div class="td left" width="25%"><b><%:IMEI:%></b></div>
+			<div class="td left" width="25%" id="imei"></div>
+			<div class="td left" width="25%"><%:Chip Temp:%></div>
+			<div class="td left" width="25%" id="chiptemp"></div>
 		</div>
 	</div>
 </fieldset>
