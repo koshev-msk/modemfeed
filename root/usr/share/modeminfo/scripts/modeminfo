@@ -184,21 +184,21 @@ function freq_band(){
 				fi
 			;;
 		esac
-		case $MODE in
-			LTE)
-				CNNAME="EARFCN"
-				SNRNAME="SINR"
-			;;
-			UMTS|HSPA|HSUPA|HSDPA)
-				CNNAME="UARFCN"
-				SNRNAME="ECIO"
-			;;
-			*)
-				CNNAME="ARFCN"
-				SNRNAME="SINR/ECIO"
-			;;
-		esac
 	fi
+	case $MODE in
+		LTE)
+			CNNAME="EARFCN"
+			SNRNAME="SINR"
+		;;
+		UMTS|HSPA|HSUPA|HSDPA)
+			CNNAME="UARFCN"
+			SNRNAME="ECIO"
+		;;
+		*)
+			CNNAME="ARFCN"
+			SNRNAME="SINR/ECIO"
+		;;
+	esac
 }
 
 # get path serial port modem
