@@ -9,3 +9,5 @@ Fully work with Quectel, SimCom and Huawei mPCI-E modems.
 Compatible with Huawei USB modems in LTE networks.
 
 ![](https://raw.githubusercontent.com/koshev-msk/luci-app-modeminfo/master/screenshot.png)
+
+![](https://raw.githubusercontent.com/koshev-msk/luci-app-modeminfo/master/huawei.png)
