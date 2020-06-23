@@ -316,7 +316,7 @@ function huawei_data(){
 	if [ "x$RSRx" != "x" ]; then
 		RSRP=$RSRx
 		RSRQ=$(echo "$O" | awk -F[,:] '/^\^LTERSRP:/ {print $3}')
-	elif
+	elif [ "x$RSRx" = "x" ]; then
 		ECIO=$(echo "$O" | awk -F[,:] '/^\^CSNR:/ {print $3}')
 		SINR=$ECIO
 	fi
