@@ -1,22 +1,22 @@
 msgid ""
 msgstr ""
-"Language: ru\n"
+"Language: pl\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Andrew Freeman <labz56@gmail.com>\n"
 
 #: applications/luci-app-modeminfo/luasrc/controller/modem.lua:8
 msgid "Modem"
-msgstr "Модем"
+msgstr "Modem"
 
 #: applications/luci-app-modeminfo/luasrc/controller/modem.lua:9
 msgid "Modem overview"
-msgstr "Информация о модеме"
+msgstr "Informacje o modemie"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:10
 msgid "Modem Overview"
-msgstr "Информация о модеме"
+msgstr "Informacje o modemie"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:102
 msgid "Mobile network"
-msgstr "Мобильная сеть"
+msgstr "Sieć mobilna"
