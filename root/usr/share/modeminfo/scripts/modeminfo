@@ -44,7 +44,7 @@ function if_null() {
 		if [ "x$(eval echo \${$var})" = "x" ]; then
                       case $var in
                                 CNNAME) eval $var='SINR/ECIO' ;;
-                                SNRNAME) eval $var='(E/U)ARFCN' ;;
+                                SNRNAME) eval $var='E/U/ARFCN' ;;
                                 *) eval $var='--' ;;
 			esac
 		fi
