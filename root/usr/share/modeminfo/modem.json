@@ -22,5 +22,6 @@
 "fdl": "{FDL}",
 "arfcn": "{EARFCN}",
 "chname": "{CNNAME}",
-"snrname": "{SNRNAME}"
+"snrname": "{SNRNAME}",
+"chiptemp": "{CHIPTEMP}"
 }
