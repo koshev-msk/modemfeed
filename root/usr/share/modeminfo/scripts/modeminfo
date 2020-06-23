@@ -44,8 +44,8 @@ function if_null() {
 				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME CHIPTEMP; do
 		if [ "x$(eval echo \${$var})" = "x" ]; then
                       case $var in
-                                CNNAME) eval $var='SINR/ECIO' ;;
-                                SNRNAME) eval $var='E/U/ARFCN' ;;
+                                CNNAME) eval $var='E/U/ARFCN' ;;
+                                SNRNAME) eval $var='SINR/ECIO' ;;
                                 *) eval $var='--' ;;
 			esac
 		fi
@@ -184,21 +184,21 @@ function freq_band(){
 				fi
 			;;
 		esac
-		case $MODE in
-			LTE)
-				CNNAME="EARFCN"
-				SNRNAME="SINR"
-			;;
-			UMTS|HSPA|HSUPA|HSDPA)
-				CNNAME="UARFCN"
-				SNRNAME="ECIO"
-			;;
-			*)
-				CNNAME="ARFCN"
-				SNRNAME="SINR/ECIO"
-			;;
-		esac
 	fi
+	case $MODE in
+		LTE)
+			CNNAME="EARFCN"
+			SNRNAME="SINR"
+		;;
+		UMTS|HSPA|HSUPA|HSDPA)
+			CNNAME="UARFCN"
+			SNRNAME="ECIO"
+		;;
+		*)
+			CNNAME="ARFCN"
+			SNRNAME="SINR/ECIO"
+		;;
+	esac
 }
 
 # get path serial port modem
@@ -295,7 +295,7 @@ function huawei_data(){
 		MODE=$(echo "$TECH" | sed 's/-//g')
 	fi
 	# Huawei and older models
-	if [ "x$MODE" = "x-" ]; then
+	if [ "x$MODE" = "x-" ] || [ ! $TECH ]; then
 		TECH=$(echo "$O" | awk -F[,] '/^\^SYSINFO/ {print $7}')
 		case $TECH in
 			17*) MODE="HSPA+ (64QAM)";;
