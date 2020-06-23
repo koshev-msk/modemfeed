@@ -30,7 +30,8 @@ function json_status() {
 		s!{FDL}!$FDL!g; \
 		s!{EARFCN}!$EARFCN!g;\
 		s!{CNNAME}!$CNNAME!g;\
-		s!{SNRNAME}!$SNRNAME!g" $TPL
+		s!{SNRNAME}!$SNRNAME!g;\
+		s!{CHIPTEMP}!$CHIPTEMP!g" $TPL
 	else
 		echo "Template $TPL missing!"
 		exit 0
@@ -40,7 +41,7 @@ function json_status() {
 function if_null() {
 	for var in DEVICE COPS_MCC COPS_MNC COPS MODE CSQ_PER \
 				LAC LAC_NUM CID CID_NUM CSQ_RSSI SINR RSRP \
-				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME; do
+				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME CHIPTEMP; do
 		if [ "x$(eval echo \${$var})" = "x" ]; then
                       case $var in
                                 CNNAME) eval $var='E/U/ARFCN' ;;
@@ -245,7 +246,7 @@ function get_cops() {
 
 # Get MCC or MNC for ZTE modems
 function get_cops_zte() {
-	# Option è ZTE modems
+	# Option & ZTE modems
 	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS: .,0/ {print $2}')
 	COPS_TMP=$(awk -F[\;] 'BEGIN {IGNORECASE = 1} /'"$COPS"'/ {print $2}' $RES/mccmnc.dat)
 	if [ "x$COPS_TMP" != "x" ]; then
@@ -335,6 +336,7 @@ function huawei_data(){
 				;;
 		esac
 	fi
+	CHIPTEMP=$(echo "$O" | awk -F[,] '/^\^CHIPTEMP/ {print $4}')
 }
 
 # Option modems
