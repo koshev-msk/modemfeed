@@ -43,8 +43,8 @@ function if_null() {
 				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME; do
 		if [ "x$(eval echo \${$var})" = "x" ]; then
                       case $var in
-                                CNNAME) eval $var='SINR/ECIO' ;;
-                                SNRNAME) eval $var='E/U/ARFCN' ;;
+                                CNNAME) eval $var='E/U/ARFCN' ;;
+                                SNRNAME) eval $var='SINR/ECIO' ;;
                                 *) eval $var='--' ;;
 			esac
 		fi
@@ -294,7 +294,7 @@ function huawei_data(){
 		MODE=$(echo "$TECH" | sed 's/-//g')
 	fi
 	# Huawei and older models
-	if [ "x$MODE" = "x-" ]; then
+	if [ "x$MODE" = "x-" ] || [ ! $TECH ]; then
 		TECH=$(echo "$O" | awk -F[,] '/^\^SYSINFO/ {print $7}')
 		case $TECH in
 			17*) MODE="HSPA+ (64QAM)";;
