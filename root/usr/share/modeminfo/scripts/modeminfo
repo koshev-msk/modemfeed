@@ -43,7 +43,7 @@ function if_null() {
 				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME; do
 		if [ "x$(eval echo \${$var})" = "x" ]; then
                       case $var in
-                                CNNAME) eval $var='SINR/ECIO'ECIO' ;;
+                                CNNAME) eval $var='SINR/ECIO' ;;
                                 SNRNAME) eval $var='(E/U)ARFCN' ;;
                                 *) eval $var='--' ;;
 			esac
