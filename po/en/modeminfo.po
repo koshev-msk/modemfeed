@@ -16,67 +16,70 @@ msgstr ""
 msgid "Modem Overview"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:102
-msgid "Mobile network"
-msgstr ""
-
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:105
-msgid "Device"
+msgid "Mobile network:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:107
-msgid "Status"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:108
+msgid "Device:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:111
-msgid "MCC MNC"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:110
+msgid "Status:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:113
-msgid "Network Desc."
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:114
+msgid "MCC MNC:"
+msgstr "MCC MNC:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:116
+msgid "Network Desc.:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:117
-msgid "Network/band"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:120
+msgid "Network/band:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:119
-msgid "Signal strength"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:122
+msgid "Signal strength:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:123
-msgid "(E/U)ARFCN"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:126
+msgid "E/U/ARFCN:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:125
-msgid "Freq. (DL/UL)"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:128
+msgid "Freq. (DL/UL):"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:129
-msgid "LAC/TAC"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:132
+msgid "LAC/TAC:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:131
-msgid "CID"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:134
+msgid "CID:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:135
-msgid "RSSI"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:138
+msgid "RSSI:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:137
-msgid "SINR/ECIO"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:140
+msgid "SINR/ECIO:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:141
-msgid "RSRP"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:144
+msgid "RSRP:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:143
-msgid "RSRQ"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:146
+msgid "RSRQ:"
 msgstr ""
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:147
-msgid "IMEI"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:150
+msgid "IMEI:"
 msgstr ""
 
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:150
+msgid "Chip Temp:"
+msgstr ""

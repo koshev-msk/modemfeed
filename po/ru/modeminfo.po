@@ -11,12 +11,76 @@ msgstr "Модем"
 
 #: applications/luci-app-modeminfo/luasrc/controller/modem.lua:9
 msgid "Modem overview"
-msgstr "Информация о модеме"
+msgstr "Обзор"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:10
 msgid "Modem Overview"
 msgstr "Информация о модеме"
 
-#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:102
-msgid "Mobile network"
-msgstr "Мобильная сеть"
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:105
+msgid "Mobile network:"
+msgstr "Мобильная сеть:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:108
+msgid "Device:"
+msgstr "Устройство:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:110
+msgid "Status:"
+msgstr "Состояние:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:114
+msgid "MCC MNC:"
+msgstr "MCC MNC:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:116
+msgid "Network Desc.:"
+msgstr "Имя сети:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:120
+msgid "Network/band:"
+msgstr "Сеть/Диапазон:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:122
+msgid "Signal strength:"
+msgstr "Уровень сигнала:"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:126
+msgid "E/U/ARFCN:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:128
+msgid "Freq. (DL/UL):"
+msgstr "Частота (Вх/Исх):"
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:132
+msgid "LAC/TAC:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:134
+msgid "CID:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:138
+msgid "RSSI:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:140
+msgid "SINR/ECIO:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:144
+msgid "RSRP:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:146
+msgid "RSRQ:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:150
+msgid "IMEI:"
+msgstr ""
+
+#: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:150
+msgid "Chip Temp:"
+msgstr "Температура:"
