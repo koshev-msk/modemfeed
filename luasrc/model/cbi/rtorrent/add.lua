@@ -8,12 +8,12 @@ local xmlrpc = require "xmlrpc"
 local common = require "luci.model.cbi.rtorrent.common"
 require "luci.model.cbi.rtorrent.string"
 
-f = SimpleForm("rtorrent", "Add Torrent")
+f = SimpleForm("rtorrent", translate("Add Torrent"))
 f.submit = "Add"
 
 local torrent
 
-uri = f:field(TextValue, "uri", "Torrent<br />or magnet URI")
+uri = f:field(TextValue, "uri", translate("Torrent<br />or magnet URI"))
 uri.rows = 1
 
 function uri.validate(self, value, section)
@@ -29,7 +29,7 @@ function uri.validate(self, value, section)
 	return value
 end
 
-file = f:field(FileUpload, "file", "Upload torrent file")
+file = f:field(FileUpload, "file", translate("Upload torrent file"))
 
 function file.validate(self, value, section)
 	torrent = nixio.fs.readfile(value)
@@ -39,17 +39,17 @@ function file.validate(self, value, section)
 	return value
 end
 
-dir = f:field(Value, "dir", "Download directory")
+dir = f:field(Value, "dir", translate("Download directory"))
 dir.default = rtorrent.call("directory.default")
 dir.datatype = "directory"
 dir.rmempty = false
 
-tags = f:field(Value, "tags", "Tags")
+tags = f:field(Value, "tags", translate("Tags"))
 local user =  luci.dispatcher.context.authuser
 tags.default = "all" .. (user ~= "root" and " " .. user or "")
 tags.rmempty = false
 
-start = f:field(Flag, "start", "Start now")
+start = f:field(Flag, "start", translate("Start now"))
 start.default  = "1"
 start.rmempty  = false
 
@@ -71,4 +71,3 @@ function f.handle(self, state, data)
 end
 
 return f
-

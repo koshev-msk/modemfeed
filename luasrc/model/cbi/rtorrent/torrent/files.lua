@@ -54,7 +54,7 @@ end
 
 function add_summary(list)
  	table.insert(list, {
- 		["name"] = "TOTAL: " .. total["name"] .. " pcs.",
+ 		["name"] = (translate("TOTAL").. ": ".. total["name"]),
  		["size_bytes"] = common.human_size(total["size_bytes"]),
 		["priority"] = "%hidden%"
  	})
@@ -105,10 +105,10 @@ t.page = "File List"
 
 AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
-t:option(DummyValue, "name", "Name").rawhtml = true
-t:option(DummyValue, "size_bytes", "Size")
-t:option(DummyValue, "chunks_percent", "Done"):tooltip("Download done percent").rawhtml = true
-prio = t:option(ListValue, "priority", "Priority"):tooltip("Rotate priority")
+t:option(DummyValue, "name", translate("Name")).rawhtml = true
+t:option(DummyValue, "size_bytes", translate("Size"))
+t:option(DummyValue, "chunks_percent", translate("Done")):tooltip("Download done percent").rawhtml = true
+prio = t:option(ListValue, "priority", translate("Priority")):tooltip("Rotate priority")
 prio.template = "rtorrent/lvalue"
 prio.onclick = [[
 	var inputs = document.getElementsByClassName("cbi-input-select");

@@ -10,8 +10,8 @@ function index()
 	entry({"admin", "rtorrent"},  firstchild(), translate("Torrent"), 45).dependent = false
 	entry({"admin", "rtorrent", "main"}, form("rtorrent/main"), translate("Torrent List"), 10).leaf = true
 	entry({"admin", "rtorrent", "add"}, form("rtorrent/add", {autoapply=true}), translate("Add Torrent"), 20)
-	entry({"admin", "rtorrent", "rss"}, arcombine(cbi("rtorrent/rss"), cbi("rtorrent/rss-rule")), "RSS Downloader", 30).leaf = true
-	entry({"admin", "rtorrent", "admin"}, form("rtorrent/admin/rtorrent"), translate("Admin"), 40)
+	entry({"admin", "rtorrent", "rss"}, arcombine(cbi("rtorrent/rss"), cbi("rtorrent/rss-rule")), translate("RSS Downloader"), 30).leaf = true
+	entry({"admin", "rtorrent", "admin"}, form("rtorrent/admin/rtorrent"), translate("Torrent Settings"), 40)
 
 	entry({"admin", "rtorrent", "info"}, form("rtorrent/torrent/info"), nil).leaf = true
 	entry({"admin", "rtorrent", "files"}, form("rtorrent/torrent/files"), nil).leaf = true

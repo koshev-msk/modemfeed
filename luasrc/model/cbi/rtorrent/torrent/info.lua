@@ -15,22 +15,22 @@ t.template = "rtorrent/list"
 t.pages = common.get_torrent_pages(hash)
 t.page = "Info"
 
-hash_id = f:field(DummyValue, "hash", "Hash")
+hash_id = f:field(DummyValue, "hash", translate("Hash"))
 function hash_id.cfgvalue(self, section)
 	return hash
 end
 
-started = f:field(DummyValue, "started", "Download started")
+started = f:field(DummyValue, "started", translate("Download started"))
 started.value = details["timestamp.started"] == 0
 	and "not yet started"
 	or os.date("!%Y-%m-%d %H:%M:%S", details["timestamp.started"])
 
-finished = f:field(DummyValue, "finished", "Download finished")
+finished = f:field(DummyValue, "finished", translate("Download finished"))
 finished.value = details["timestamp.finished"] == 0
 	and "not yet finished"
 	or os.date("!%Y-%m-%d %H:%M:%S", details["timestamp.finished"])
 
-tags = f:field(Value, "tags", "Tags")
+tags = f:field(Value, "tags", translate("Tags"))
 tags.default = details["custom1"]
 tags.rmempty = false
 
@@ -46,4 +46,3 @@ function f.handle(self, state, data)
 end
 
 return f
-

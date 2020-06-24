@@ -26,7 +26,7 @@ end
 			<div class="tr cbi-rowstyle-2">
 			<%- for i, k in pairs(self.children) do -%>
 				<div class="td <% if i ~= (self.headcol or 1) then %> center nowrap<% else %> wrap<% end -%>
-				"<%=ifattr(k.hint, "title", k.hint)%><%=ifattr(k.onclick, "onclick", k.onclick)%>><%=k.title%></div>
+				"<%=ifattr(k.hint, "title", k.hint)%><%=ifattr(k.onclick, "onclick", k.onclick)%>><b><%=k.title%></b></div>
 			<%- end -%>
 			</div>
 
@@ -44,7 +44,7 @@ end
 						<div id="cbip-<%=node.config.."-"..section.."-"..node.option%>"></div>
 					</div>
 				<%- end -%>
-				<div>
+				</div>
 			<%- end -%>
 		</div>
 	</div>

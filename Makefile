@@ -11,12 +11,17 @@ LUCI_DEPENDS:=+rtorrent-rpc +luaexpat +luasocket +luasec +screen
 
 PKG_LICENSE:=GPLv3
 
+define Package//luci-app-rtorrent/conffiles
+	/etc/config/rtorrent
+	/etc/rtorrent.conf
+endef
+
 define Package/luci-app-rtorrent/postinst
-	rm -f /tmp/luci-indexcache /tmp/luci-modulecache
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 endef
 
 define Package/luci-app-rtorrent/postrm
-	rm -f /tmp/luci-indexcache /tmp/luci-modulecache
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk

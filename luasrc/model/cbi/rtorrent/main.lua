@@ -76,7 +76,7 @@ function get_tags(details)
 		end
 	end
 	if has_incomplete then
-		table.insert(l, {name = "Incomplete", link = luci.dispatcher.build_url("admin/rtorrent/main/incomplete")})
+		table.insert(l, {name = translate("Incomplete"), link = luci.dispatcher.build_url("admin/rtorrent/main/incomplete")})
 	end
 	return l
 end
@@ -135,11 +135,11 @@ end
 
 function format.eta(d, v)
 	local download_started = d["timestamp_started"] == 0
-		and "not yet started" or os.date("!%Y-%m-%d %H:%M:%S", d["timestamp_started"])
+		and translate("not yet started") or os.date("!%Y-%m-%d %H:%M:%S", d["timestamp_started"])
 	local download_finished = d["timestamp_finished"] == 0
-		and "not yet finished" or os.date("!%Y-%m-%d %H:%M:%S", d["timestamp_finished"])
-	return "<div title=\"Download started: %s&#13;Download finished: %s\">%s</div>" % {
-		download_started, download_finished, v }
+		and translate("not yet finished") or os.date("!%Y-%m-%d %H:%M:%S", d["timestamp_finished"])
+	return "<div title=\"Download started: %s&#13;Download finished: %s\">%s</div>" % 
+		{download_started, download_finished, v }
 end
 
 function add_custom(details)
@@ -179,7 +179,7 @@ function html_format(details)
 	end
 end
 
-f = SimpleForm("rtorrent", "Torrent List")
+f = SimpleForm("rtorrent", translate("Torrent List"))
 f.reset = false
 f.submit = false
 
@@ -201,16 +201,16 @@ t.headcol = 2
 AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
 t:option(DummyValue, "icon").rawhtml = true
-t:option(DummyValue, "name", "Name").rawhtml = true
-t:option(DummyValue, "size_bytes", "Size"):tooltip("Full size of torrent").rawhtml = true
-t:option(DummyValue, "done_percent", "Done"):tooltip("Download done percent").rawhtml = true
-t:option(DummyValue, "status", "Status").rawhtml = true
+t:option(DummyValue, "name", translate("Name")).rawhtml = true
+t:option(DummyValue, "size_bytes", translate("Size")):tooltip("Full size of torrent").rawhtml = true
+t:option(DummyValue, "done_percent", translate("Done")):tooltip("Download done percent").rawhtml = true
+t:option(DummyValue, "status", translate("Status")).rawhtml = true
 t:option(DummyValue, "peers_accounted", "&uarr;"):tooltip("Seeder count").rawhtml = true
 t:option(DummyValue, "peers_complete", "&darr;"):tooltip("Leecher count").rawhtml = true
-t:option(DummyValue, "down_rate", "Down<br />Speed"):tooltip("Download speed in kb/s").rawhtml = true
-t:option(DummyValue, "up_rate", "Up<br />Speed"):tooltip("Upload speed in kb/s").rawhtml = true
-t:option(DummyValue, "ratio", "Ratio"):tooltip("Download/upload ratio").rawhtml = true
-t:option(DummyValue, "eta", "ETA"):tooltip("Estimated Time of Arrival").rawhtml = true
+t:option(DummyValue, "down_rate", translate("Down<br />Speed")):tooltip("Download speed in kb/s").rawhtml = true
+t:option(DummyValue, "up_rate", translate("Up<br />Speed")):tooltip("Upload speed in kb/s").rawhtml = true
+t:option(DummyValue, "ratio", translate("Ratio")):tooltip("Download/upload ratio").rawhtml = true
+t:option(DummyValue, "eta", translate("ETA")):tooltip("Estimated Time of Arrival").rawhtml = true
 
 select = t:option(Flag, "select")
 select.template = "rtorrent/fvalue"
@@ -223,7 +223,7 @@ s = f:section(SimpleSection)
 s.template = "rtorrent/buttonsection"
 s.style = "float: right;"
 
-start = s:option(Button, "start", "start")
+start = s:option(Button, "start", translate("Start"))
 start.template = "rtorrent/button"
 start.inputstyle = "apply"
 
@@ -237,7 +237,7 @@ function start.write(self, section, value)
 	end
 end
 
-stop = s:option(Button, "stop", "stop")
+stop = s:option(Button, "stop", translate("Stop"))
 stop.template = "rtorrent/button"
 stop.inputstyle = "reset"
 
@@ -251,7 +251,7 @@ function stop.write(self, section, value)
 	end
 end
 
-remove = s:option(Button, "remove", "remove")
+remove = s:option(Button, "remove", translate("Remove"))
 remove.template = "rtorrent/button"
 remove.inputstyle = "remove"
 
@@ -269,7 +269,7 @@ r = f:section(SimpleSection)
 r.template = "rtorrent/buttonsection"
 r.style = "float: right;"
 
-delete = r:option(Button, "delete", "remove and delete data")
+delete = r:option(Button, "delete", translate("Remove and delete data"))
 delete.template = "rtorrent/button"
 delete.inputstyle = "remove"
 

@@ -30,7 +30,8 @@ function format.address(r, v)
 	local map = map.googlemap(r.latitude, r.longitude, 11)
 	-- local map = map.openstreetmap(r.latitude, r.longitude, 11)
 	-- local flag = "<img src=\"http://www.iplocation.net/images/flags/%s.gif\" />" % r.country_code:lower()
-	local flag = "<img src=\"http://static.hltv.org/images/flag/%s.gif\" />" % r.country_code:lower()
+	-- local flag = "<img src=\"http://static.hltv.org/images/flag/%s.gif\" />" % r.country_code:lower()
+	local flag = "<img src=\"https://raw.githubusercontent.com/stevenrskelton/flag-icon/master/gif/%s.gif\" />" % r.country_code:lower()
 	return "%s <a href=\"%s\" target=\"_blank\">%s</a>" % {flag, map, v}
 end
 
@@ -76,7 +77,7 @@ end
 
 function add_summary(list)
  	table.insert(list, {
- 		["address"] = "TOTAL: " .. total["address"] .. " pcs.",
+ 		["address"] = (translate("TOTAL").. ": "  .. total["address"]),
  		["down_rate"] = string.format("%.2f", total["down_rate"] / 1000),
  		["up_rate"] = string.format("%.2f", total["up_rate"] / 1000)
  	})
@@ -105,14 +106,14 @@ t.page = "Peer List"
 
 AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
-t:option(DummyValue, "address", "Address"):tooltip("Peer IP address").rawhtml = true
-t:option(DummyValue, "client_version", "Client"):tooltip("Client version")
-t:option(DummyValue, "location", "Location"):tooltip("Location: country/region/city").rawhtml = true
-t:option(DummyValue, "completed_percent", "Done"):tooltip("Download done percent")
-t:option(DummyValue, "down_rate", "Down<br />Speed"):tooltip("Download speed in kb/s")
-t:option(DummyValue, "up_rate", "Up<br />Speed"):tooltip("Upload speed in kb/s")
-t:option(DummyValue, "down_total", "Downloaded"):tooltip("Total downloaded").rawhtml = true
-t:option(DummyValue, "up_total", "Uploaded"):tooltip("Total uploaded").rawhtml = true
+t:option(DummyValue, "address", translate("Address")):tooltip("Peer IP address").rawhtml = true
+t:option(DummyValue, "client_version", translate("Client")):tooltip("Client version")
+t:option(DummyValue, "location", translate("Location")):tooltip("Location: country/region/city").rawhtml = true
+t:option(DummyValue, "completed_percent", translate("Done")):tooltip("Download done percent")
+t:option(DummyValue, "down_rate", translate("Down<br />Speed")):tooltip("Download speed in kb/s")
+t:option(DummyValue, "up_rate", translate("Up<br />Speed")):tooltip("Upload speed in kb/s")
+t:option(DummyValue, "down_total", translate("Downloaded")):tooltip("Total downloaded").rawhtml = true
+t:option(DummyValue, "up_total", translate("Uploaded")):tooltip("Total uploaded").rawhtml = true
 
 return f
 

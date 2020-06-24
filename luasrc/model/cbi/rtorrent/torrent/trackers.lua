@@ -34,7 +34,7 @@ end
 
 function add_summary(list)
  	table.insert(list, {
- 		["url"] = "TOTAL: " .. total["url"] .. " pcs.",
+ 		["url"] = (translate("TOTAL").. ": " .. total["url"]),
 		["scrape_downloaded"] = tostring(total["scrape_downloaded"]),
 		["scrape_complete"] = tostring(total["scrape_complete"]),
 		["scrape_incomplete"] = tostring(total["scrape_incomplete"]),
@@ -62,13 +62,13 @@ t.page = "Tracker List"
 
 AbstractValue.tooltip = function(self, s) self.hint = s return self end
 
-t:option(DummyValue, "url", "Url")
-t:option(DummyValue, "scrape_downloaded", "D"):tooltip("Downloaded")
-t:option(DummyValue, "scrape_complete", "S"):tooltip("Seeders")
-t:option(DummyValue, "scrape_incomplete", "L"):tooltip("Leechers")
-t:option(DummyValue, "scrape_time_last", "Updated"):tooltip("Last update time").rawhtml = true
+t:option(DummyValue, "url", translate("Url"))
+t:option(DummyValue, "scrape_downloaded", translate("D")):tooltip("Downloaded")
+t:option(DummyValue, "scrape_complete", translate("S")):tooltip("Seeders")
+t:option(DummyValue, "scrape_incomplete", translate("L")):tooltip("Leechers")
+t:option(DummyValue, "scrape_time_last", translate("Updated")):tooltip("Last update time").rawhtml = true
 
-enabled = t:option(Flag, "is_enabled", "Enabled")
+enabled = t:option(Flag, "is_enabled", translate("Enabled"))
 enabled.template = "rtorrent/fvalue"
 enabled.rmempty = false
 enabled.rawhtml = true
@@ -80,11 +80,10 @@ function enabled.write(self, section, value)
 	end
 end
 
-add = f:field(Value, "add_tracker", "Add tracker")
+add = f:field(Value, "add_tracker", translate("Add tracker"))
 function add.write(self, section, value)
 	rtorrent.call("d.tracker.insert", hash, table.getn(list), value)
 	luci.http.redirect(luci.dispatcher.build_url("admin/rtorrent/trackers/%s" % hash))
 end
 
 return f
-
