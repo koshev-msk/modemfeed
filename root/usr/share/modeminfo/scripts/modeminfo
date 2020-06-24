@@ -505,6 +505,7 @@ function get_data_in(){
 			get_reg_data
 			get_cops_zte
 			get_csq
+			freq_band
 		;;
 		SIMCOM)
 			simcom_data
