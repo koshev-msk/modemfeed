@@ -20,3 +20,5 @@ define Package/luci-app-rtorrent/postrm
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
+
+# call BuildPackage - OpenWrt buildroot signature
