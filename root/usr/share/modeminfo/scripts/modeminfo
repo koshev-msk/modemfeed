@@ -190,7 +190,7 @@ function freq_band(){
 			CNNAME="EARFCN"
 			SNRNAME="SINR"
 		;;
-		UMTS|HSPA|HSUPA|HSDPA)
+		3G|UMTS|HSPA|HSUPA|HSDPA)
 			CNNAME="UARFCN"
 			SNRNAME="ECIO"
 		;;
