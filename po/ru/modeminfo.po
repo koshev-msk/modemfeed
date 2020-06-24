@@ -11,7 +11,7 @@ msgstr "Модем"
 
 #: applications/luci-app-modeminfo/luasrc/controller/modem.lua:9
 msgid "Modem overview"
-msgstr "Обзор"
+msgstr "Обзор модема"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:10
 msgid "Modem Overview"
