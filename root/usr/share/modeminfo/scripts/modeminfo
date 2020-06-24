@@ -247,7 +247,7 @@ function get_cops() {
 # Get MCC or MNC for ZTE modems
 function get_cops_zte() {
 	# Option & ZTE modems
-	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS: .,0/ {print $2}')
+	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS:/ {print $2}')
 	COPS_TMP=$(awk -F[\;] 'BEGIN {IGNORECASE = 1} /'"$COPS"'/ {print $2}' $RES/mccmnc.dat)
 	if [ "x$COPS_TMP" != "x" ]; then
 		COPS="$COPS_TMP"
@@ -430,12 +430,13 @@ function zte_data(){
 		MODE="$TECH"
 	fi
 	ECIx=$(echo "$O" | awk -F[,\ ] '/^\+ZRSSI:/ {print $3}')
-	if $ECIx; then
+	if [ $ECIx ]; then
 		ECIO=`expr $ECIx / 2`
 		ECIO="-"$ECIO
+		SINR=$ECIO
 	fi
 	RSCx=$(echo "$O" | awk -F[,\ ] '/^\+ZRSSI:/ {print $4}')
-	if $RSCx; then
+	if [ $RSCx ]; then
 		RSCP=`expr $RSCx / 2`
 		RSCP="-"$RSCP
 	fi
