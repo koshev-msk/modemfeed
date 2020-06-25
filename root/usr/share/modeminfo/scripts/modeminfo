@@ -409,7 +409,8 @@ function simcom_data(){
 		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $9}')
 		RSRx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $13}')
 		RSRP=$(($RSRx/10))
-		RSRQ=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $12}')
+		RSQx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $12}')
+		RSRQ=$(($RSQx/10))
 		SINx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $15}')
 		SINR=$(($SINx*2 - 20))
 	else
