@@ -407,8 +407,16 @@ function simcom_data(){
 	esac
 	if [ "$MODE" = "LTE" ]; then
 		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $9}')
+		RSRx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $13}')
+		RSRP=$(($RSRx/10))
+		RSRQ=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $12}')
+		SINx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $15}')
+		SINR=$(($SINx*2 - 20))
 	else
 		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $11}')
+		ECIx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $13}')
+		ECIO=$(echo $ECIx |awk '{printf"%.0f\n",$1}')
+		SINR="-"$ECIO
 	fi
 	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+CPMUTEMP/ {print $2}')
 }
@@ -417,8 +425,14 @@ function quectel_data(){
 	generic_data
 	if [ "$MODE" = "LTE" ]; then
 		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $8}')
+		RSRP=$(echo "$O" |awk -F[,\ ] '/^\+QCSQ/ {print $4}')
+		SINx=$(echo "$O" |awk -F[,\ ] '/^\+QCSQ/ {print $5}')
+		SINR=$(($SINx/5 - 20))
+		RSRQ=$(echo "$O" |awk -F[,\ ] '/^\+QCSQ/ {print $6}')
 	else
 		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QNWINFO/ {print $6}')
+		ECIO=$(echo "$O" |awk -F[,\ ] '/^\+QCSQ/ {print $5}')
+		SINR=$ECIO
 	fi
 	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $2}')
 }
@@ -456,34 +470,6 @@ function generic_data(){
 	esac
 }
 
-function get_qmi_data(){
-	if [ "x$(uci -q get network.$SEC.proto)" = "xqmi" ]; then
-		. /usr/share/libubox/jshn.sh
-		json_init
-		json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-signal-info)" >/dev/null 2>&1
-		json_get_var T type
-		if [ "x$T" = "xlte" ]; then
-			json_get_var RSRP rsrp
-			json_get_var RSRQ rsrq
-			json_get_var SINR snr
-			json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-serving-system)" >/dev/null 2>&1
-		fi
-		if [ "x$T" = "xwcdma" ]; then
-			json_get_var ECIO ecio
-			json_get_var RSSI rssi
-			json_get_var RSCP rscp
-			SINR=$ECIO
-			if [ -z "$RSCP" ]; then
-				RSCP=$((RSSI+ECIO))
-			fi
-				json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-serving-system)" >/dev/null 2>&1
-		fi
-		if [ "x$T" = "xgsm" ]; then
-			json_load "$(uqmi -d "$(uci -q get network.$SEC.device)" --get-serving-system)" >/dev/null 2>&1
-		fi
-	fi
-}
-
 function get_data_in(){
 	modem_family
 	case $FAMILY in
@@ -512,7 +498,6 @@ function get_data_in(){
 			get_reg_data
 			get_cops
 			get_csq
-			get_qmi_data
 			freq_band
 		;;
 		QUECTEL)
@@ -520,7 +505,6 @@ function get_data_in(){
 			get_reg_data
 			get_cops
 			get_csq
-			get_qmi_data
 			freq_band
 		;;
 		*)

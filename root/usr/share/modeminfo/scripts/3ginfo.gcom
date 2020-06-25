@@ -74,6 +74,10 @@ opengt
  let $r="+COPS"
  gosub readatcmd
 
+ let $c="AT+QCSQ^m"
+ let $r="+QCSQ"
+ gosub readatcmd
+
  let $c="AT+QNWINFO^m"
  let $r="+QNWINFO"
  gosub readatcmd
