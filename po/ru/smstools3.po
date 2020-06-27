@@ -1,0 +1,183 @@
+msgid ""
+msgstr ""
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Konstantine Shevlyakov <shevlakov@132lan.ru>\n"
+
+#: applications/luci-app-smstools3/luasrc/controller/sms.lua:9
+msgid "SMS"
+msgstr "SMS"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:82
+msgid "Short Message Service"
+msgstr "Служба коротких сообщений"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:85
+msgid "Incoming"
+msgstr "Входяшие"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:86
+msgid "Sent"
+msgstr "Отправленные"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:87
+msgid "New"
+msgstr "Новое"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:91
+msgid "From"
+msgstr "От"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:92
+msgid "Send"
+msgstr "Отправлено"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:93
+msgid "Recieve"
+msgstr "Принято"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:94
+msgid "Message"
+msgstr "Текст сообщения"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:99
+msgid "Remove All"
+msgstr "Удалить все"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in.htm:99
+msgid "Delete All incoming Messages"
+msgstr "Удалить все входищие сообщения"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:74
+msgid "Short Message Service"
+msgstr "Служба коротких сообщений"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:77
+msgid "Incoming"
+msgstr "Входяшие"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:78
+msgid "Sent"
+msgstr "Отправленные"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:79
+msgid "New"
+msgstr "Новое"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:83
+msgid "To"
+msgstr "Кому"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:84
+msgid "Send"
+msgstr "Отправлено"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:85
+msgid "Send Time"
+msgstr "Время отправки (сек)"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:86
+msgid "Message"
+msgstr "Текст сообщения"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:90
+msgid "Remove All"
+msgstr "Удалить все"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out.htm:90
+msgid "Delete All Sent Messages"
+msgstr "Удалить все исходящие сообщения"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:16
+msgid "You must enter a phone number!"
+msgstr ""
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:22
+msgid "Invalid phone number!"
+msgstr "Это не номер телефона!"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:31
+msgid "Message is blank!"
+msgstr "Пустое сообщение"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:43
+msgid "Message sent"
+msgstr "Сообщение отправлено"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:63
+msgid "Incoming"
+msgstr "Входяшие"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:64
+msgid "Sent"
+msgstr "Отправленные"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:65
+msgid "New"
+msgstr "Новое"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:69
+msgid "Send To"
+msgstr "Номер телефона"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/send.htm:85
+msgid "Send"
+msgstr "Отправить"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in_erase.htm:28
+msgid "Short Message Service%"
+msgstr "Служба коротких сообщений"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in_erase.htm:31
+msgid "Incoming"
+msgstr "Входяшие"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in_erase.htm:32
+msgid "Sent"
+msgstr "Отправленные"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in_erase.htm:33
+msgid "New"
+msgstr "Новое"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in_erase.htm:37
+msgid "All incoming messages are deleted!"
+msgstr "Удалены все входищие сообщения!"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in_erase.htm:40
+msgid "Overview"
+msgstr "Назад"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/in_erase.htm:40
+msgid "Back to overview"
+msgstr "Вернуться во входищие"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out_erase.htm:28
+msgid "Short Message Service%"
+msgstr "Служба коротких сообщений"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out_erase.htm:31
+msgid "Incoming"
+msgstr "Входяшие"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out_erase.htm:32
+msgid "Sent"
+msgstr "Отправленные"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out_erase.htm:33
+msgid "New"
+msgstr "Новое"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out_erase.htm:37
+msgid "All incoming messages are deleted!"
+msgstr "Удалены все исходящие сообщения!"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out_erase.htm:40
+msgid "Overview"
+msgstr "Назад"
+
+#: applications/ luci-app-smstools3/luasrc/view/modem/sms/out_erase.htm:40
+msgid "Back to overview"
+msgstr "Вернуться в исходящие"
+

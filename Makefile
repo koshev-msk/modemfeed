@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=Web UI for smstools3
-LUCI_DEPENDS:=+smstools3
+LUCI_DEPENDS:=+smstools3 +iconv
 PKG_LICENSE:=GPLv3
 
 define Package/luci-app-modeminfo/postrm
