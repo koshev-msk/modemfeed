@@ -1,0 +1,45 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2011 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+<%
+local fs     = require("nixio.fs")
+local http   = require("luci.http")
+local util   = require("luci.util")
+local sys	 = require("luci.sys")
+
+local dir = '/var/spool/sms/incoming/'
+msg = {}
+
+function erase_all(dir)
+  luci.sys.exec('rm -rf "'..dir..'"/*' )
+end
+%>
+
+<script type="text/javascript">//<![CDATA[
+	function delallsms()
+	{
+	
+	}
+//]]></script>
+
+<%+header%>
+<h2 name="content"><%:Short Message Service%></h2>
+<fieldset class="cbi-section">
+	<ul class="cbi-tabmenu">
+		<li id="incoming" class="cbi-tab"><a href="in_sms"><%:Incoming%></a></li>
+		<li id="outcoming" class="cbi-tab-disabled"><a href="smso"><%:Sent%></a></li>
+		<li id="outcoming" class="cbi-tab-disabled"><a href="send"><%:New%></a></li>
+	</ul>
+		<div class="table" width="100%">
+			<div class="tr">
+				<h5><%:All incoming messages are deleted!%></h5>
+			</div>
+			<div class="tr">
+				<a href="in_sms"><div class="td left" width="100%"><input class="cbi-button cbi-button-link" type="submit" value="Overview" title="<%:All incoming Messages Are Deleted%>" onclick=""/></div></a>
+			</div>
+		</div>
+</fieldset>
+<%erase_all(dir)%>
+<%+footer%>
