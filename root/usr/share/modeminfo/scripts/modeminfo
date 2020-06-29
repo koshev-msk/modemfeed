@@ -6,36 +6,17 @@ RES="/usr/share/modeminfo"
 GSCRIPT="$RES/scripts/3ginfo.gcom"
 
 function json_status() {
-	TPL=$RES/modem.json
-	if [ -e $TPL ]; then
-		sed -e "s!{DEVICE}!$DEVICE!g; \
-		s!{COPS_MCC}!$COPS_MCC!g; \
-		s!{COPS_MNC}!$COPS_MNC!g; \
-		s!{COPS}!$COPS!g; \
-		s!{MODE}!$MODE!g; \
-		s!{CSQ_PER}!$CSQ_PER!g; \
-		s!{LAC}!$LAC!g; \
-		s!{LAC_NUM}!$LAC_NUM!g; \
-		s!{CID}!$CID!g; \
-		s!{CID_NUM}!$CID_NUM!g;\
-		s!{CSQ_RSSI}!$CSQ_RSSI!g; \
-		s!{SINR}!$SINR!g; \
-		s!{RSRP}!$RSRP!g; \
-		s!{RSRQ}!$RSRQ!g; \
-		s!{IMEI}!$IMEI!g; \
-		s!{REGST}!$REGST!g; \
-		s!{CSQ_COL}!$CSQ_COL!g; \
-		s!{BAND}!$BAND!g; \
-		s!{FUL}!$FUL!g; \
-		s!{FDL}!$FDL!g; \
-		s!{EARFCN}!$EARFCN!g;\
-		s!{CNNAME}!$CNNAME!g;\
-		s!{SNRNAME}!$SNRNAME!g;\
-		s!{CHIPTEMP}!$CHIPTEMP!g" $TPL
-	else
-		echo "Template $TPL missing!"
-		exit 0
-	fi
+        . /usr/share/libubox/jshn.sh
+        json_init
+	IFS=$'\n'
+        for jvar in device,$DEVICE mcc,$COPS_MCC mnc,$COPS_MNC cops,$COPS mode,$MODE csq_per,$CSQ_PER lac,$LAC lac_num,$LAC_NUM \
+                        cid,$CID cid_num,$CID_NUM rssi,$CSQ_RSSI sinr,$SINR rsrp,$RSRP rsrq,$RSRQ imei,$IMEI \
+                        reg,$REGST csq_col,$CSQ_COL band,$BAND ful,$FUL fdl,$FDL arfcn,$EARFCN chname,$CNNAME \
+                        chiptemp,$CHIPTEMP snrname,$SNRNAME; do
+                json_add_string ${jvar%,*} ${jvar#*,}
+        done
+        json_close_object
+        json_dump
 }
 
 function if_null() {
