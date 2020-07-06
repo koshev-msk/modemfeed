@@ -66,8 +66,8 @@ msgid "Network Desc.:"
 msgstr "Nazwa sieci:"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:140
-msgid "Sieć/pasmo:"
-msgstr ""
+msgid "Network/band:"
+msgstr "Sieć/pasmo:"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:142
 msgid "Signal strength:"
