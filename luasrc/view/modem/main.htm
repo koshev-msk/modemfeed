@@ -39,6 +39,26 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 					if (e)
 						e.innerHTML = String.format('<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ data.csq_col +'"><b>%d%%</b></p></span>', icon, p);
 
+			var reg;
+			var rg = (data.reg)
+				if (rg == 0)
+					reg = "<%:No Registration%>";
+				else if (rg == 1)
+					reg = "<%:Registered%>";
+				else if (rg == 2)
+					reg = "<%:Searching%>";
+				else if (rg == 3)
+					reg = "<%:Denied%>";
+				else if (rg == 4)
+					reg = "<%:Unknown%>";
+				else if (rg == 5)
+					reg = "<%:Roaming%>";
+				else
+					reg = "<%:No Data%>";
+
+				if (e = document.getElementById('statu'))
+				if (e)
+					e.innerHTML = String.format(reg);
 
 			if (e = document.getElementById('status'))
 				e.innerHTML = String.format(data.reg);
@@ -108,7 +128,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 			<div class="td left" width="25%"><b><%:Device:%></b></div>
 			<div class="td left" width="25%" id="device">-</div>
 			<div class="td left" width="25%"><b><%:Status:%></b></div>
-			<div class="td left" width="25%" id="status">-</div>
+			<div class="td left" width="25%" id="statu">-</div>
 		</div>
 		<div class="tr cbi-rowstyle-1">
 			<div class="td left" width="25%"><b><%:MCC MNC:%></b></div>

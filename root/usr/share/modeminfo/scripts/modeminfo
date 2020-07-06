@@ -258,14 +258,6 @@ function get_reg_data(){
 		fi
 	fi
 	REGST=$(echo "$O" | awk -F[,] '/^\+CREG/ {print $2}')
-	case $REGST in
-		0) REGST="Not Registered";;
-		1) REGST="Registered";;
-		2) REGST="Searching";;
-		3) REGST="Denied";;
-		4) REGST="Unknown";;
-		5) REGST="Roaming";;
-	esac
 }
 
 # Huawei modems
