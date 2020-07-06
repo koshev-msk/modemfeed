@@ -38,7 +38,7 @@ msgid "Network Desc.:"
 msgstr "Nazwa sieci:"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:120
-msgid "Network/band:"
+msgid "Sieć/pasmo:"
 msgstr ""
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:122
@@ -83,4 +83,4 @@ msgstr ""
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:150
 msgid "Chip Temp:"
-msgstr "Temp. wiórów:"
+msgstr "Temp. układu:"
