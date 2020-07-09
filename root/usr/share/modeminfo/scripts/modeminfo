@@ -11,8 +11,7 @@ function json_status() {
 	IFS=$'\n'
         for jvar in device,$DEVICE mcc,$COPS_MCC mnc,$COPS_MNC cops,$COPS mode,$MODE csq_per,$CSQ_PER lac,$LAC lac_num,$LAC_NUM \
                         cid,$CID cid_num,$CID_NUM rssi,$CSQ_RSSI sinr,$SINR rsrp,$RSRP rsrq,$RSRQ imei,$IMEI \
-                        reg,$REGST csq_col,$CSQ_COL band,$BAND ful,$FUL fdl,$FDL arfcn,$EARFCN chname,$CNNAME \
-                        chiptemp,$CHIPTEMP snrname,$SNRNAME; do
+                        reg,$REGST csq_col,$CSQ_COL arfcn,$EARFCN chiptemp,$CHIPTEMP; do
                 json_add_string ${jvar%,*} ${jvar#*,}
         done
         json_close_object
@@ -21,14 +20,10 @@ function json_status() {
 
 function if_null() {
 	for var in DEVICE COPS_MCC COPS_MNC COPS MODE CSQ_PER \
-				LAC LAC_NUM CID CID_NUM CSQ_RSSI SINR RSRP \
-				RSRQ IMEI REGST BAND FUL FDL EARFCN CNNAME SNRNAME CHIPTEMP; do
+			LAC LAC_NUM CID CID_NUM CSQ_RSSI SINR RSRP \
+			RSRQ IMEI REGST EARFCN CHIPTEMP; do
 		if [ "x$(eval echo \${$var})" = "x" ]; then
-                      case $var in
-                                CNNAME) eval $var='E/U/ARFCN' ;;
-                                SNRNAME) eval $var='SINR/ECIO' ;;
-                                *) eval $var='--' ;;
-			esac
+			eval $var='--'
 		fi
 	done
 }
@@ -88,98 +83,6 @@ function modem_family() {
 	else
         FAMILY=GENERIC
 	fi
-}
-		
-function freq_band(){
-	if [ $EARFCN ] ; then
-		case $MODE in
-			LTE)
-				if [ $EARFCN -ge 0 ] && [ $EARFCN -le 599 ]; then
-					BAND="B1 FDD"
-					FDL_LOW=2110
-					FUL_LOW=1920
-					NOFFDL=0
-				elif [ $EARFCN -ge 1200 ] && [ $EARFCN -le 1949 ]; then
-					BAND="B3 FDD"
-					FDL_LOW=1805
-					FUL_LOW=1710
-					NOFFDL=1200
-				elif [ $EARFCN -ge 2750 ] && [ $EARFCN -le 3449 ]; then
-					BAND="B7 FDD"
-					FDL_LOW=2620
-					FUL_LOW=2500
-					NOFFDL=2750
-				elif [ $EARFCN -ge 6150 ] && [ $EARFCN -le 6449 ]; then
-					BAND="B20 FDD"
-					FDL_LOW=791
-					FUL_LOW=832
-					NOFFDL=6150
-				elif [ $EARFCN -ge 9870 ] && [ $EARFCN -le 9919 ]; then
-					BAND="B31 FDD"
-					FDL_LOW=452
-					FUL_LOW=462
-					NOFFDL=9870
-				elif [ $EARFCN -ge 33750 ] && [ $EARFCN -le 38249 ]; then
-					BAND="B38 TDD"
-					FDL_LOW=2570
-					FUL_LOW=2570
-					NOFFDL=33750
-				elif  [ $EARFCN -ge 38650 ] && [ $EARFCN -le 39649 ]; then
-					BAND="B40 TDD"
-					FDL_LOW=2300
-					FUL_LOW=2300
-					NOFFDL=38650
-				fi
-				if [ $FUL_LOW ] && [ $FDL_LOW ]; then
-					FDL=$(($FDL_LOW + (($EARFCN - $NOFFDL)/10)))
-					FUL=$(($FUL_LOW + (($EARFCN - $NOFFDL)/10)))
-				fi
-			;;
-			*)
-				if [ $EARFCN -ge 10562 ] && [ $EARFCN -le 10838 ]; then
-					BAND="IMT2100"
-					OFFSET=950
-					FDL=$(($EARFCN/5))
-					FUL=$((($EARFCN - $OFFSET)/5))
-				elif [ $EARFCN -ge 2937 ] && [ $EARFCN -le 3088 ]; then
-					BAND="UMTS900"
-					FUL_LOW=925
-					OFFSET=340
-					FUL=$(($OFFSET + ($EARFCN/5)))
-					FDL=$(($FUL - 45))
-				elif [ $EARFCN -ge 955 ] && [ $EARFCN -le 1023 ]; then
-					BAND="DCS900"
-					FUL_LOW=890
-					FUL=$(($FUL_LOW + ($EARFCN - 1024)/5))
-					FDL=$(($FUL + 45))
-				elif  [ $EARFCN -ge 512 ] && [ $EARFCN -le 885 ]; then
-					BAND="DSC1800"
-					FUL_LOW=1710
-					FUL=$(($FUL_LOW + ($EARFCN - 512)/5))
-					FDL=$(($FUL + 95))
-				elif [ $EARFCN -ge 1 ] && [ $EARFCN -le 124 ]; then
-					BAND="GSM900"
-					FUL_LOW=890
-					FUL=$(($FUL_LOW + ($EARFCN/5)))
-					FDL=$(($FUL + 45))
-				fi
-			;;
-		esac
-	fi
-	case $MODE in
-		LTE)
-			CNNAME="EARFCN"
-			SNRNAME="SINR"
-		;;
-		3G|UMTS|HSPA|HSUPA|HSDPA)
-			CNNAME="UARFCN"
-			SNRNAME="ECIO"
-		;;
-		*)
-			CNNAME="ARFCN"
-			SNRNAME="SINR/ECIO"
-		;;
-	esac
 }
 
 # get path serial port modem
@@ -452,7 +355,6 @@ function get_data_in(){
 			get_reg_data
 			get_cops
 			get_csq
-			freq_band
 		;;
 		OPTION)
 			option_data
@@ -465,21 +367,18 @@ function get_data_in(){
 			get_reg_data
 			get_cops_zte
 			get_csq
-			freq_band
 		;;
 		SIMCOM)
 			simcom_data
 			get_reg_data
 			get_cops
 			get_csq
-			freq_band
 		;;
 		QUECTEL)
 			quectel_data
 			get_reg_data
 			get_cops
 			get_csq
-			freq_band
 		;;
 		*)
 			generic_data
