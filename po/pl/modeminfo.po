@@ -19,31 +19,31 @@ msgstr "Informacje o modemie"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:45
 msgid "No Registration"
-msgstr ""
+msgstr "Brak rejestracji"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:47
 msgid "Registered"
-msgstr ""
+msgstr "Zarejestrowany"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:49
 msgid "Searching"
-msgstr ""
+msgstr "Wyszukiwanie"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:51
 msgid "Denied"
-msgstr ""
+msgstr "Odmowa rejestracji"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:53
 msgid "Unknown"
-msgstr ""
+msgstr "Nieznany"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:55
 msgid "Roaming"
-msgstr ""
+msgstr "Roaming"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:57
 msgid "No Data"
-msgstr ""
+msgstr "Brak danych"
 
 #: applications/luci-app-modeminfo/luasrc/view/modem/main.htm:125
 msgid "Mobile network"
