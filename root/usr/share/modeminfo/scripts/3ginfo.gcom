@@ -57,6 +57,10 @@ opengt
  let $c="AT*CNTI=0^m"
  let $r="*CNTI"
  gosub readatcmd
+
+ send "AT!GSTATUS?^m"
+ get 1 "" $s
+ print $s
  goto next
 
 :option

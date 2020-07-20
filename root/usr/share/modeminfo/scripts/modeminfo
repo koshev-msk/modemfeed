@@ -9,10 +9,10 @@ function json_status() {
         . /usr/share/libubox/jshn.sh
         json_init
 	IFS=$'\n'
-        for jvar in device,$DEVICE mcc,$COPS_MCC mnc,$COPS_MNC cops,$COPS mode,$MODE csq_per,$CSQ_PER lac,$LAC lac_num,$LAC_NUM \
-                        cid,$CID cid_num,$CID_NUM rssi,$CSQ_RSSI sinr,$SINR rsrp,$RSRP rsrq,$RSRQ imei,$IMEI \
-                        reg,$REGST csq_col,$CSQ_COL arfcn,$EARFCN chiptemp,$CHIPTEMP; do
-                json_add_string ${jvar%,*} ${jvar#*,}
+        for jvar in device=$DEVICE mcc=$COPS_MCC mnc=$COPS_MNC cops=$COPS mode=$MODE csq_per=$CSQ_PER lac=$LAC lac_num=$LAC_NUM \
+                        cid=$CID cid_num=$CID_NUM rssi=$CSQ_RSSI sinr=$SINR rsrp=$RSRP rsrq=$RSRQ imei=$IMEI \
+                        reg=$REGST csq_col=$CSQ_COL arfcn=$EARFCN chiptemp=$CHIPTEMP; do
+                json_add_string ${jvar%=*} ${jvar#*=}
         done
         json_close_object
         json_dump
@@ -69,7 +69,7 @@ function modem_family() {
 	if (echo ${DEVICE} | grep -i hua >/dev/null); then
 		FAMILY=HUAWEI
 	elif (echo ${DEVICE} | grep -i sim >/dev/null); then
-        FAMILY=SIMCOM
+		FAMILY=SIMCOM
 	elif (echo ${DEVICE} | grep -i que >/dev/null); then
         FAMILY=QUECTEL
 	elif (echo ${DEVICE} | grep -i zte >/dev/null); then
@@ -81,7 +81,7 @@ function modem_family() {
 	elif (echo ${DEVICE} | grep -Ei "vod|ice" >/dev/null); then
 		FAMILY=VODAFONE
 	else
-        FAMILY=GENERIC
+	        FAMILY=GENERIC
 	fi
 }
 
@@ -147,10 +147,15 @@ function get_reg_data(){
 	CREG="+CGREG"
 	LAC=$(echo "$O" | awk -F[,] '/\'$CREG'/ {printf "%s", toupper($3)}' | sed 's/[^A-F0-9]//g')
 	if [ "x$LAC" != "x" ]; then
-		CREG="+CREG"
+		if [ $MODE = "LTE" ]; then
+			CREG="+CEREG"
+		else
+			CREG="+CGREG"
+		fi
 		LAC=$(echo "$O" | awk -F[,] '/\'$CREG'/ {printf "%s", toupper($3)}' | sed 's/[^A-F0-9]//g')
 		LAC_NUM=$(printf %d 0x$LAC)
-	fi	
+	fi
+	CREG="+CGREG"
 	CID=$(echo "$O" | awk -F[,] '/\'$CREG'/ {printf "%s", toupper($4)}' | sed 's/[^A-F0-9]//g')
 	if [ "x$CID" != "x" ]; then
 		CID_NUM=$(printf %d 0x$CID)
@@ -249,6 +254,21 @@ function sierra_data(){
 	if [ "x$TECH" != "x" ]; then
 		MODE="$TECH"
 	fi
+	if [ $MODE = "LTE" ]; then
+		# Sierra 73XX series
+		EARFCN=$(echo "$O" | awk '/LTE Rx chan:/{print $4}')
+		RSRP=$(echo "$O" |  awk '/RSRP/{print $3}' | head -1)
+		RSRQ=$(echo "$O" | awk '/RSRQ/{print $3}' |head -1)
+		SINR=$(echo "$O" | awk '/SINR/{print $6}' |head -1)
+		# Sierra 74XX series
+		if [ "x$SINR" = "x" ]; then
+			SINR=$(echo "$O" | awk '/SINR/{print $3}' |head -1)
+			RSRP=$(echo "$O" |  awk '/RSRP/{print $7}' | head -1)
+		fi
+	else
+		EARFCN=$(echo "$O" | awk '/channel:/{print $3}')
+	fi
+	CHIPTEMP=$(echo "$O" | awk '/Temperature:/{print $5}')
 }
 
 # Novatel MOdems
@@ -351,34 +371,41 @@ function get_data_in(){
 	modem_family
 	case $FAMILY in
 		HUAWEI)
+			get_cops
+			get_csq
 			huawei_data
 			get_reg_data
-			get_cops
-			get_csq
 		;;
 		OPTION)
-			option_data
-			get_reg_data
 			get_cops
 			get_csq
+			option_data
+			get_reg_data
 		;;
 		ZTE)
-			zte_data
 			get_reg_data
 			get_cops_zte
 			get_csq
+			zte_data
+			get_reg_data
 		;;
 		SIMCOM)
+			get_cops
+			get_csq
 			simcom_data
 			get_reg_data
-			get_cops
-			get_csq
 		;;
 		QUECTEL)
-			quectel_data
-			get_reg_data
 			get_cops
 			get_csq
+			quectel_data
+			get_reg_data
+		;;
+		SIERRA)
+			get_cops
+			get_csq
+			sierra_data
+			get_reg_data
 		;;
 		*)
 			generic_data

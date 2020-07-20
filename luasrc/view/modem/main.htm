@@ -100,6 +100,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 					var offset = 38650;
 					var band = "B40 TDD";
 				} else {
+					var offset = 0;
 					var frdl = 0;
 					var frul = 0;
 					var rfcn = 0;
@@ -145,9 +146,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 			if (netmode == "LTE") {
 				var namech = "EARFCN";
 				var namesnr = "SINR";
-				if (e = document.getElementById('netmode'))
-					e.style.display = 'block';
-			} else if (netmode == "3G" || netmode == "UMTS" || netmode == "HSPA" || netmode == "HSUPA" || netmode == "HSDPA") {
+			} else if (netmode == "3G" || netmode == "UMTS" || netmode == "HSPA" || netmode == "HSUPA" || netmode == "HSDPA" || netmode == "HSPA+" || netmode == "WCDMA" || netmode == "DC-HSPA+") {
 				var namech = "UARFCN";
 				var namesnr = "ECIO";
 			} else {
