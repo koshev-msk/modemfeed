@@ -6,7 +6,7 @@ luci-app-modeminfo is fork from https://github.com/IceG2020/luci-app-3ginfo
 
 Fully work with Quectel, SimCom and Huawei mPCI-E modems.
 
-Compatible with Huawei USB modems in LTE networks.
+Compatible with Huawei USB modems and Sierra Wireless modems in LTE networks.
 
 Сompiled version https://inf.labz.ru/repo/
 
