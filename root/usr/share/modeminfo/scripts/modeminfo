@@ -267,6 +267,7 @@ function sierra_data(){
 		fi
 	else
 		EARFCN=$(echo "$O" | awk '/channel:/{print $3}')
+		SINR=$(echo "$O" | awk '/RSSI/{print $4-$8}' |head -1)
 	fi
 	CHIPTEMP=$(echo "$O" | awk '/Temperature:/{print $5}')
 }
