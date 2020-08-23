@@ -8,11 +8,6 @@ define Package/luci-app-modeminfo/conffiles
 	/etc/config/modeminfo
 endef
 
-define Package/luci-app-modeminfo/postinst
-	chmod +x /usr/bin/modeminfo
-	/usr/bin/modeminfo firstinstall
-endef
-
 define Package/luci-app-modeminfo/postrm
 	rm -f /tmp/luci-indexcache
 endef
