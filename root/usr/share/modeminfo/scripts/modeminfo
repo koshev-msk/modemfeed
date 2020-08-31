@@ -31,6 +31,12 @@ function if_null() {
 
 function get_device_info() {
 	DEVPORT=$(uci -q get modeminfo.@modeminfo[0].device)
+	for port in $(ls /dev/cdc-wdm*); do
+                if [ $DEVPORT == $port ]; then
+                        logger -t "luci-app-modeminfo" "device port is NOT serial. Check port or config!"
+                        exit 0
+                fi
+        done
 	if [ "x$DEVPORT" = "x" ]; then
 		get_port
 	fi

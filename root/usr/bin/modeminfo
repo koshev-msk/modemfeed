@@ -1,20 +1,55 @@
 #!/bin/sh
-if [ -r /usr/share/modeminfo/scripts/modeminfo ]; then
-	. /usr/share/modeminfo/scripts/modeminfo
-else
-	exit 0
-fi
 
-case $1 in
-	firstinstall)
-		get_device_info
-	;;
-	*)
-		get_device_info
-		get_data_in
-		if_null
-		json_status
-	;;
+function json_status() {
+        . /usr/share/libubox/jshn.sh
+        json_init
+        IFS=$'\n'
+        for jvar in device=$DEVICE mcc=$COPS_MCC mnc=$COPS_MNC cops=$COPS mode=$MODE csq_per=$CSQ_PER lac=$LAC lac_num=$LAC_NUM \
+                        cid=$CID cid_num=$CID_NUM rssi=$CSQ_RSSI sinr=$SINR rsrp=$RSRP rsrq=$RSRQ imei=$IMEI \
+                        reg=$REGST csq_col=$CSQ_COL arfcn=$EARFCN chiptemp=$CHIPTEMP; do
+                json_add_string ${jvar%=*} ${jvar#*=}
+        done
+        json_close_object
+        json_dump
+}
+
+function if_null() {
+        for var in DEVICE COPS_MCC COPS_MNC COPS MODE CSQ_PER \
+                        LAC LAC_NUM CID CID_NUM CSQ_RSSI SINR RSRP \
+                        RSRQ IMEI REGST EARFCN CHIPTEMP; do
+                if [ "x$(eval echo \${$var})" = "x" ]; then
+                        eval $var='--'
+                fi
+        done
+}
+
+PROTO=$(uci -q get modeminfo.@modeminfo[0].proto)
+
+case $PROTO in
+        qmi)
+                if [ -r /usr/share/modeminfo/scripts/modeminfo-qmi ]; then
+                        . /usr/share/modeminfo/scripts/modeminfo-qmi
+                else
+                        exit 0
+                fi
+        ;;
+        serial)
+                if [ -r /usr/share/modeminfo/scripts/modeminfo ]; then
+                        . /usr/share/modeminfo/scripts/modeminfo
+                else
+                        exit 0
+                fi
+        ;;
+        *)
+                logger -t "luci-app-modeminfo" "no proto specified! Please use 'serial' or 'qmi' proto!"
+                exit 0
+        ;;
 esac
+
+
+get_device_info
+get_data_in
+if_null
+json_status
 
 exit 0
