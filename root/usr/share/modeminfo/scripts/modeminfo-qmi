@@ -47,7 +47,7 @@ get_signal_info(){
         fi
 
         RSSI_INV=$(echo $CSQ_RSSI | sed "s/-//g")
-        CSQ_PER=$(((100${CSQ_RSSI})*2))
+        CSQ_PER=$(echo $CSQ_RSSI |awk '{printf "%d\n", (100*(1-(-50 - $1)/(-50 - -120)))}')
         [ $CSQ_RSSI -ge -100 ] && CSQ_COL="black"
         [ $CSQ_RSSI -ge -90 ] && CSQ_COL="red"
         [ $CSQ_RSSI -ge -80 ] && CSQ_COL="orange"
