@@ -1,3 +1,2 @@
 
 config modeminfo
-	option proto 'serial'

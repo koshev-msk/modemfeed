@@ -23,28 +23,11 @@ function if_null() {
         done
 }
 
-PROTO=$(uci -q get modeminfo.@modeminfo[0].proto)
-
-case $PROTO in
-        qmi)
-                if [ -r /usr/share/modeminfo/scripts/modeminfo-qmi ]; then
-                        . /usr/share/modeminfo/scripts/modeminfo-qmi
-                else
-                        exit 0
-                fi
-        ;;
-        serial)
-                if [ -r /usr/share/modeminfo/scripts/modeminfo ]; then
-                        . /usr/share/modeminfo/scripts/modeminfo
-                else
-                        exit 0
-                fi
-        ;;
-        *)
-                logger -t "luci-app-modeminfo" "no proto specified! Please use 'serial' or 'qmi' proto!"
-                exit 0
-        ;;
-esac
+if [ -r /usr/share/modeminfo/scripts/modeminfo ]; then
+	. /usr/share/modeminfo/scripts/modeminfo
+else
+	exit 0
+fi
 
 
 get_device_info

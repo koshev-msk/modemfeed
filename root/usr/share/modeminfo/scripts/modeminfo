@@ -53,7 +53,7 @@ function modem_family() {
 	elif (echo ${DEVICE} | grep -i sim >/dev/null); then
 		FAMILY=SIMCOM
 	elif (echo ${DEVICE} | grep -i que >/dev/null); then
-        FAMILY=QUECTEL
+	        FAMILY=QUECTEL
 	elif (echo ${DEVICE} | grep -i zte >/dev/null); then
 		FAMILY=ZTE
 	elif (echo ${DEVICE} | grep -i opt >/dev/null); then
@@ -62,6 +62,8 @@ function modem_family() {
 		FAMILY=SIERRA
 	elif (echo ${DEVICE} | grep -Ei "vod|ice" >/dev/null); then
 		FAMILY=VODAFONE
+	elif (echo ${DEVICE} | grep -i qua >/dev/null); then
+		FAMILY=QUALCOMM
 	else
 	        FAMILY=GENERIC
 	fi
@@ -341,6 +343,21 @@ function zte_data(){
 	fi
 }
 
+# Qualcomm Modems (FoxConn TW77XX, Telit LN9XX, HP LT4XXX)
+function qualcomm_data(){
+        generic_data
+        if [ "$MODE" = "LTE" ]; then
+                EARFCN=$(echo "$O" |sed "s/\"//g" |awk -F [,] '/QCRSRP:/{print $2}')
+                RSRP=$(echo "$O" |sed "s/\"//g" | awk -F [,] '/QCRSRP:/{printf "%.0f\n",$3}')
+                RSRQ=$(echo "$O" |sed "s/\"//g" | awk -F [,] '/QCRSRQ:/{printf "%.0f\n",$3}')
+                SINR=$(echo "$O" |awk -F [,] '/QCSQ/{print $3}')
+        else
+                SINR=$(echo "$O" |awk -F [,] '/QCSQ/{print $2}')
+        fi
+        CHIPTEMP=$(echo "$O" | awk -F [:] '/tsens_tz_sensor0:/{print $2}')
+        EARFCN=$(echo "$O" |awk -F[:] '/Active channel:/{print $2}')
+}
+
 #generic 3GPP TS 27.007 V10.4.0
 function generic_data(){
 	TECH=$(echo "$O" | awk -F[,] '/^\+COPS/ {print $4}')
@@ -394,6 +411,12 @@ function get_data_in(){
 			get_csq
 			sierra_data
 			get_reg_data
+		;;
+		QUALCOMM)
+                        get_cops
+                        get_csq
+                        qualcomm_data
+                        get_reg_data
 		;;
 		*)
 			generic_data
