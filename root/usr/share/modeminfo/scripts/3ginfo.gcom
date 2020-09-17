@@ -99,7 +99,7 @@ opengt
  send "AT+TEMP^m"
  get 1 "" $s
  print $s
- goto next1
+ goto next
 
 :zte
  let $c="AT+COPS?^m"
