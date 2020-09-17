@@ -92,27 +92,11 @@ opengt
  goto next1
  
 :qualcomm
- let $c="AT+COPS?^m"
- let $r="+COPS"
- gosub readatcmd
-
- let $c="AT$QCSQ^m"
- let $r="$QCSQ"
- gosub readatcmd
-
- let $c="AT$QCRSRQ?^m"
- let $r="$QCRSRQ"
- gosub readatcmd
-
- let $c="AT$QCRSRP?^m"
- let $r="$QCRSRP"
+ let $c="AT\^RFSTS?^m"
+ let $r="\^RFSTS"
  gosub readatcmd
 
  send "AT+TEMP^m"
- get 1 "" $s
- print $s
-
- send "AT\^ABAND?^m"
  get 1 "" $s
  print $s
  goto next1

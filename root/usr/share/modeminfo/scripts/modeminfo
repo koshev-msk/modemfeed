@@ -346,16 +346,17 @@ function zte_data(){
 # Qualcomm Modems (FoxConn TW77XX, Telit LN9XX, HP LT4XXX)
 function qualcomm_data(){
         generic_data
+	RADIODATA=$(echo "$O" |grep -A2 RFSTS: | awk 'NR ==2{print $0}')
+	EARFCN=$(echo "$RADIODATA" |awk -F [,] '{print $2}')
         if [ "$MODE" = "LTE" ]; then
-                EARFCN=$(echo "$O" |sed "s/\"//g" |awk -F [,] '/QCRSRP:/{print $2}')
-                RSRP=$(echo "$O" |sed "s/\"//g" | awk -F [,] '/QCRSRP:/{printf "%.0f\n",$3}')
-                RSRQ=$(echo "$O" |sed "s/\"//g" | awk -F [,] '/QCRSRQ:/{printf "%.0f\n",$3}')
-                SINR=$(echo "$O" |awk -F [,] '/QCSQ/{print $3}')
+                RSRP=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$3}')
+                RSRQ=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$5}')
+                SINR=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$16}')
         else
-                SINR=$(echo "$O" |awk -F [,] '/QCSQ/{print $2}')
+                ECIO=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$4}')
+                SINR=$ECIO
         fi
         CHIPTEMP=$(echo "$O" | awk -F [:] '/tsens_tz_sensor0:/{print $2}')
-        EARFCN=$(echo "$O" |awk -F[:] '/Active channel:/{print $2}')
 }
 
 #generic 3GPP TS 27.007 V10.4.0
