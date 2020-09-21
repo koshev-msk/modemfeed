@@ -149,7 +149,7 @@ function get_reg_data(){
 			T=$CID
 		fi
 	fi
-	REGST=$(echo "$O" | awk -F[,] '/^\+CREG/ {print $2}')
+	REGST=$(echo "$O" | awk -F[,] '/^\+CGREG/ {print $2}')
 }
 
 # Huawei modems
