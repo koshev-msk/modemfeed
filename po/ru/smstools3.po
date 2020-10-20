@@ -15,7 +15,7 @@ msgstr "Служба коротких сообщений"
 
 #: applications/luci-app-smstools3/luasrc/view/modem/sms/in.htm:85
 msgid "Incoming"
-msgstr "Входяшие"
+msgstr "Входящие"
 
 #: applications/luci-app-smstools3/luasrc/view/modem/sms/in.htm:86
 msgid "Sent"
