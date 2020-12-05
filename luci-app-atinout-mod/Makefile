@@ -1,7 +1,8 @@
 include $(TOPDIR)/rules.mk
 	
 LUCI_TITLE:=Web UI for atinout
-LUCI_DEPENDS:=+atinout
+LUCI_DEPENDS:=+atinout +luci-compat
+PKG_VERSION:=1.1
 PKG_LICENSE:=GPLv3
 	
 define Package/luci-app-atinout-mod/postrm
