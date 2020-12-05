@@ -10,6 +10,6 @@ My luci-app-atinout-mod is modyfication of https://github.com/koshev-msk/luci-ap
 
 ## Screenshots / Zrzuty ekranu
 
-![](https://raw.githubusercontent.com/4IceG/luci-app-atinout-mod/main/sc/atc.png)
+![](https://raw.githubusercontent.com/4IceG/luci-app-atinout-mod/main/sc/atc1.1.png)
 
 ![](https://raw.githubusercontent.com/4IceG/luci-app-atinout-mod/main/sc/atc_atconfig.png)
