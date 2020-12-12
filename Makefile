@@ -17,7 +17,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/3proxy
+define Package/$(PKG_NAME)
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
@@ -25,19 +25,19 @@ define Package/3proxy
   DEPENDS:=+libpthread +libopenssl
 endef
 
-define Package/lib3proxy
+define Package/lib$(PKG_NAME)
   SUBMENU:=Web Servers/Proxies
   DEPENDS:=+3proxy
   TITLE:=3proxy libraries
 endef
 
-define Package/3proxy-servers
+define Package/$(PKG_NAME)-common
   SUBMENU:=Web Servers/Proxies
   DEPENDS:=+3proxy
   TITLE:=3proxy addional servers
 endef
 
-define Package/3proxy-sql
+define Package/$(PKG_NAME)-sql
   PKGARCH:=all
   DEPENDS:=+3proxy
   TITLE:=3proxy sql template
@@ -69,7 +69,7 @@ define Package/lib$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/*.so $(1)/usr/lib/3proxy
 endef
 
-define Package/$(PKG_NAME)-servers/install
+define Package/$(PKG_NAME)-common/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/ftppr \
 	$(PKG_BUILD_DIR)/bin/mycrypt \
@@ -87,6 +87,6 @@ endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
 $(eval $(call BuildPackage,lib$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)-servers))
+$(eval $(call BuildPackage,$(PKG_NAME)-common))
 $(eval $(call BuildPackage,$(PKG_NAME)-sql))
 
