@@ -171,16 +171,24 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				var namesnr = "SINR";
 				if (e = document.getElementById('arfcn'))
 	                                e.innerHTML = String.format(data.arfcn + " " + bw);
+				if (e = document.getElementById('mode'))
+	                               e.innerHTML = String.format(data.mode + "" + carrier + " / " + band);
+                                if (e = document.getElementById('arfcn'))
 			} else if (netmode == "3G" || netmode == "UMTS" || netmode == "HSPA" || netmode == "HSUPA" || netmode == "HSDPA" || netmode == "HSPA+" || netmode == "WCDMA" || netmode == "DC-HSPA+") {
 				var namech = "UARFCN";
 				var namesnr = "ECIO";
 				if (e = document.getElementById('arfcn'))
 	                                e.innerHTML = String.format(data.arfcn);
+				if (e = document.getElementById('mode'))
+	                                e.innerHTML = String.format(data.mode + " / " + band);
 			} else {
 				var namech = "ARFCN";
 				var namesnr = "SINR/ECIO";
 				if (e = document.getElementById('arfcn'))
 	                                e.innerHTML = String.format(data.arfcn);
+				if (e = document.getElementById('mode'))
+                                	e.innerHTML = String.format(data.mode + " / " + band);
+
 			}
 
 			// stuff
