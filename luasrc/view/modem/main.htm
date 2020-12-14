@@ -205,9 +205,6 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 			if (e = document.getElementById('cops'))
 			 	e.innerHTML = String.format(data.cops);
 
-			if (e = document.getElementById('mode'))
-			 	e.innerHTML = String.format(data.mode + "" + carrier + " / " + band);
-
 			if (e = document.getElementById('csq_pe'))
 			if (e)
 				e.innerHTML = String.format('<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ data.csq_col +'"><b>%d%%</b></p></span>', icon, p);
