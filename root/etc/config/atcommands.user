@@ -1,0 +1,22 @@
+Check signal strength > AT+CSQ;AT+CSQ
+Get the temperature of MT > AT+QTEMP;AT+QTEMP
+Current band in use > AT+QNWINFO;AT+QNWINFO
+Carrier Agregation Info > AT+QCAINFO;AT+QCAINFO
+Band 1+3+7  >  AT+QCFG="band",0,45;AT+QCFG="band",0,45
+Band 1+7+20  >  AT+QCFG="band",0,80041;AT+QCFG="band",0,80041
+Band 3+7+8  >  AT+QCFG="band",0,c4;AT+QCFG="band",0,c4
+Band 3+7+7  >  AT+QCFG="band",0,84;AT+QCFG="band",0,84
+Band 7+7+20 >  AT+QCFG="band",0,80080;AT+QCFG="band",0,80080
+Band 3+7+20  >  AT+QCFG="band",0,80044;AT+QCFG="band",0,80044
+All bands  >  AT+QCFG="band",0,42000000003300185a,1;AT+QCFG="band",0,42000000003300185a,1
+SIM Preferred Message Storage  >  AT+CPMS="SM","SM","SM";AT+CPMS="SM","SM","SM"
+Save SMS Settings  >  AT+CSAS;AT+CSAS
+Reboot the modem  >  AT+CFUN=1,1;AT+CFUN=1,1
+Reset the modem  >  AT+CFUN=1;AT+CFUN=1
+QMI/PPP/Default > AT+QCFG="usbnet",0;AT+QCFG="usbnet",0
+ECM > AT+QCFG="usbnet",1;AT+QCFG="usbnet",1
+MBIM > AT+QCFG="usbnet",2;AT+QCFG="usbnet",2
+4G-LTE only > AT+QCFG="nwscanmode",3,1;AT+QCFG="nwscanmode",3,1
+WCDMA only > AT+QCFG="nwscanmode",2,1;AT+QCFG="nwscanmode",2,1
+GSM only > AT+QCFG="nwscanmode",1,1;AT+QCFG="nwscanmode",1,1
+Scan all modes > AT+QCFG="nwscanmode",0,1;AT+QCFG="nwscanmode",0,11
