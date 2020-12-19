@@ -4,7 +4,7 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 "Language: pl\n"
 "Last-Translator: Rafał Wabik (IceG) - From eko.one.pl forum\n"
 
-msgid "AT Command"
+msgid "AT Commands"
 msgstr "Komendy AT"
 
 msgid "AT Commands Terminal"

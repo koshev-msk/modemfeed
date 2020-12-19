@@ -15,8 +15,8 @@ module("luci.controller.modem.atc", package.seeall)
 
 function index()
 	entry({"admin", "modem"}, firstchild(), "Modem", 30).dependent=false
-	entry({"admin", "modem", "atc"}, alias("admin", "modem", "atc", "atcommand"), translate("AT Command"), 10)
- 	entry({"admin", "modem", "atc", "atcommand"},template("modem/atcommand"),translate("AT Command"), 10)
+	entry({"admin", "modem", "atc"}, alias("admin", "modem", "atc", "atcommand"), translate("AT Commands"), 10)
+ 	entry({"admin", "modem", "atc", "atcommand"},template("modem/atcommand"),translate("AT Commands"), 10)
 	entry({"admin", "modem", "atc", "atconfig"},cbi("modem/atconfig"),translate("Configuration"), 20)
 	entry({"admin", "modem", "webcmd"}, call("webcmd"))
 	entry({"admin", "modem", "atc", "user_atc"}, call("useratc"), nil).leaf = true
