@@ -11,9 +11,3 @@ My luci-app-atinout-mod is modyfication of https://github.com/koshev-msk/luci-ap
 ### Preview and quick configuration (modem Quectel EM12-G) / Podgląd oraz szybka konfiguracja (modem Quectel EM12-G)
 
 ![](https://raw.githubusercontent.com/4IceG/Personal_data/master/atcommands.gif)
-
-## Screenshots / Zrzuty ekranu
-
-![](https://raw.githubusercontent.com/4IceG/luci-app-atinout-mod/main/sc/atc_atcommand_1.2.png)
-
-![](https://raw.githubusercontent.com/4IceG/luci-app-atinout-mod/main/sc/atc_atconfig_1.2.png)
