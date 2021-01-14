@@ -390,6 +390,7 @@ function qualcomm_data(){
 		esac
         else
                 ECIO=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$4}')
+		CSQ_RSSI=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$6}')
                 SINR=$ECIO
         fi
         CHIPTEMP=$(echo "$O" | awk -F [:] '/tsens_tz_sensor0:/{print $2}')
