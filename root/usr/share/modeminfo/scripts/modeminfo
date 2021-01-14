@@ -336,6 +336,7 @@ function quectel_data(){
 		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $10}')
 		RSRP=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $15}')
 		SINR=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $18}')
+		CSQ_RSSI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $17}')
 		RSRQ=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $16}')
 		BWUL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $12}')
                 BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
