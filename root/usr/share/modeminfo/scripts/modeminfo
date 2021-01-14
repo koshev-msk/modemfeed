@@ -313,7 +313,7 @@ function simcom_data(){
 	esac
 	if [ "$MODE" = "LTE" ]; then
 		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $9}')
-		CSQ_RSSI=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ '{printf "%.0f\n", $14/10}'
+		CSQ_RSSI=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", $14/10}')
 		RSRP=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", $13/10}')
 		RSRQ=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", $12/10}')
 		SINx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", ($15*2)-20}')
