@@ -313,18 +313,15 @@ function simcom_data(){
 	esac
 	if [ "$MODE" = "LTE" ]; then
 		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $9}')
-		RSRx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $13}')
-		RSRP=$(($RSRx/10))
-		RSQx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $12}')
-		RSRQ=$(($RSQx/10))
-		SINx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $15}')
-		SINR=$(($SINx*2 - 20))
+		CSQ_RSSI=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ '{printf "%.0f\n", $14/10}'
+		RSRP=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", $13/10}')
+		RSRQ=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", $12/10}')
+		SINx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", ($15*2)-20}')
 		BWDL=$(echo "$O" |awk -F[,\ ] '/^\+CPSI/ {print $10}')
 		BWUL=$(echo "$O" |awk -F[,\ ] '/^\+CPSI/ {print $11}')
 	else
 		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $11}')
-		ECIx=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $13}')
-		ECIO=$(echo $ECIx |awk '{printf"%.0f\n",$1}')
+		ECIO=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf"%.0f\n", $13}')
 		SINR="-"$ECIO
 	fi
 	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+CPMUTEMP/ {print $2}')
