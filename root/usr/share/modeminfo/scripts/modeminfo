@@ -377,6 +377,7 @@ function qualcomm_data(){
 	EARFCN=$(echo "$RADIODATA" |awk -F [,] '{print $2}')
         if [ "$MODE" = "LTE" ]; then
                 RSRP=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$3}')
+		CSQ_RSSI=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$4}')
                 RSRQ=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$5}')
                 SINR=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$16}')
 		BWDx=$(echo "$BW" | awk '{printf "%.0f\n",$8}')
