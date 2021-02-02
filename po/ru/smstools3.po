@@ -177,6 +177,10 @@ msgstr "По-умолчанию: 10<br />Время активной работ�
 msgid "SMS Storage"
 msgstr "Хранилище SMS"
 
+#: applications/luci-app-smstools3/luasrc/model/cbi/modem/sms.lua:28
+msgid "Select storage to save SMS."
+msgstr "Выберите тип храниния SMS сообщений."
+
 #: applications/luci-app-smstools3/luasrc/model/cbi/modem/sms.lua:29
 msgid "Temporary"
 msgstr "Временное"
@@ -217,8 +221,8 @@ msgstr "Включить индикацию LED для входящих сооб
 msgid "Select LED"
 msgstr "Выбрать светодиод"
 
-#: applications/luci-app-smstools3/luasrc/model/cbi/modem/sms.lua:62
-msgid "LED indicate to Incoming messages.<br />To revert, setup led \"System - LED Configuration\" again."
+#: applications/luci-app-smstools3/luasrc/model/cbi/modem/sms.lua:63
+msgid "LED indicate to Incoming messages.<br />To revert, setup led \"System -> LED Configuration\" again."
 msgstr "Светодиод для индикации входящих сообщений. Для возврата поведения светодиода, настройте его заново<br > в \"Система - Настройка LED индикации\""
 
 
