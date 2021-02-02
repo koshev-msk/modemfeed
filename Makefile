@@ -14,13 +14,6 @@ define Package/luci-app-smstools3/conffiles
 	/etc/config/smstools3
 endef
 
-define Package/luci-app-smstools3/postinst
-	if [ -f /etc/init.d/smstools3 ]; then
-		mv /etc/init.d/smstools3 /usr/share/luci-app-smstools3/smstools3.init.orig
-		cp /usr/share/luci-app-smstools3/smstools3 /etc/init.d/
-	fi
-endef
-
 define Package/luci-app-smstools3/prerm
 	mv /usr/share/luci-app-smstools3/smstools3.init.orig /etc/init.d/smstools3
 endef

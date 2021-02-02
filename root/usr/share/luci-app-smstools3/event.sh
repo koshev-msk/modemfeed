@@ -10,6 +10,18 @@ LOG=$(uci -q get smstools3.@sms[0].loglevel)
 PIN=$(uci -q get smstools3.@sms[0].pin)
 LED_EN=$(uci -q get smstools3.@sms[0].led_enable)
 
+if [ ! -d /root/sms ]; then
+	mkdir /root/sms
+	for d in checked failed incoming outgoing sent; do
+		mkdir /root/sms/${d}
+	done
+fi
+
+if [ ! -f /usr/share/luci-app-smstools3/smstools3.old.init ]; then
+	mv /etc/init.d/smstools3 /usr/share/luci-app-smstools3/smstools3.init.orig
+	cp /usr/share/luci-app-smstools3/smstools3 /etc/init.d/
+fi
+
 case $STORAGE in
 	persistent)
 		if [ -d  /var/spool/sms ]; then
