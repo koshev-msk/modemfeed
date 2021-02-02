@@ -18,8 +18,8 @@ msgid "Outcoming"
 msgstr "Исходящие"
 
 #: applications/luci-app-smstools3/luasrc/controller/sms.lua:12
-msgid "Send"
-msgstr "Новое"
+msgid "Push"
+msgstr "Отправить"
 
 #: applications/luci-app-smstools3/luasrc/controller/sms.lua:13
 msgid "Setup"

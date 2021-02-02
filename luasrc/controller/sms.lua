@@ -9,7 +9,7 @@ function index()
 	entry({"admin", "modem", "sms"}, alias ("admin", "modem", "sms", "in_sms"), translate("SMS"), 11)
 	entry({"admin", "modem", "sms", "in_sms"}, template("modem/sms/in"), translate("Incoming"), 22)
 	entry({"admin", "modem", "sms", "out_sms"}, template("modem/sms/out"), translate("Outcoming"),23)
-	entry({"admin", "modem", "sms", "send_sms"}, template("modem/sms/send"), translate("Send"), 24)
+	entry({"admin", "modem", "sms", "send_sms"}, template("modem/sms/send"), translate("Push"), 24)
 	entry({"admin", "modem", "sms", "setup_sms"}, cbi("modem/sms"), translate("Setup"), 25)
 	entry({"admin", "modem", "sms", "in_erase"}, template("modem/sms/in_erase"), nil).leaf = true
 	entry({"admin", "modem", "sms", "out_erase"}, template("modem/sms/out_erase"), nil).leaf = true
