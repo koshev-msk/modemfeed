@@ -25,7 +25,9 @@ start_service() {
 	mkdir -p $WRT_SPOOL/sms/failed
 	mkdir -p $WRT_SPOOL/sms/sent
 	sleep 1
-	/usr/share/luci-app-smstools3/event.sh > /tmp/smsd.conf
+	if [ -f /usr/share/luci-app-smstools3/event.sh ]; then
+		/usr/share/luci-app-smstools3/event.sh > /tmp/smsd.conf
+	fi
 	if [ -f /etc/smsd.conf ]; then
 		rm /etc/smsd.conf
 		ln -s /tmp/smsd.conf /etc
