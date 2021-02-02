@@ -79,13 +79,8 @@ end
 //]]></script>
 
 <%+header%>
-<h2 name="content"><%:Short Message Service%></h2>
+<h2 name="content"><%:Incoming Short Messages%></h2>
 <fieldset class="cbi-section">
-	<ul class="cbi-tabmenu">
-		<li id="incoming" class="cbi-tab"><a href="in_sms"><%:Incoming%></a></li>
-		<li id="outcoming" class="cbi-tab-disabled"><a href="out_sms"><%:Sent%></a></li>
-		<li id="outcoming" class="cbi-tab-disabled"><a href="send_sms"><%:New%></a></li>
-	</ul>
 		<div class="table" width="100%">
 			<div class="tr cbi-rowstyle-2">
 				<div class="td left" width="25%"><b><%:From%></b></div>
@@ -93,7 +88,8 @@ end
 				<div class="td left" width="25%"><b><%:Recieve%></b></div>
 				<div class="td left" width="25%"><b><%:Message%></b></div>
 			</div>
-			<% exist(dir) %>
+			<% exist(dir)
+			luci.sys.exec('/usr/share/luci-app-smstools3/led.sh off') %>
 		</div>
 		<div class="table" width="100%">
 			<a href="in_erase"><div class="td left" width="100%"><input class="cbi-button cbi-button-remove" type="submit" value="<%:Remove All%>" title="<%:Delete All incoming Messages%>" onclick="location.href=""/></div></a>

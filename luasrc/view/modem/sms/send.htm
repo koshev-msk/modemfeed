@@ -1,6 +1,6 @@
 <%+header%>
-<h2 name="content"><%:Short Message Service%></h2>
-<script type="text/javascript" src="<%=resource%>/xhr.js"></script>
+<h2 name="content"><%:Send Short Message%></h2>
+<script type="text/javascript" src="<%=resource%>/xhr.js?v=git-20.294.76110-ad9a60a"></script>
 <script type="text/javascript">//<![CDATA[
 	reading = 0;
 	function sendsms()
@@ -59,11 +59,6 @@
 	}
 	//]]></script>
 <fieldset class="cbi-section">
-<ul class="cbi-tabmenu">
-		<li id="incoming" class="cbi-tab-disabled"><a href="in_sms"><%:Incoming%></a></li>
-		<li id="outcoming" class="cbi-tab-disabled"><a href="out_sms"><%:Sent%></a></li>
-		<li id="outcoming" class="cbi-tab"><a href="send_sms"><%:New%></a></li>
-	</ul>
 		<table id="sendmsg" width="600"  border="0" style="display:table;">
   	<tr>
     		<td width="15%"><div align="left"><strong><%:Send To%> :</strong></div></td>
@@ -71,7 +66,7 @@
     		<td width="15%">&nbsp;</td>
   	</tr>
 	</table>
-
+	<br />
 	<table id="sendtxt" width="700"  border="0" style="display:table;">
   	<tr>
     		<td width="100%">
@@ -82,7 +77,7 @@
 
 	<table id="sendbtn" width="550"  border="0" style="display:table;">
 	<tr>
-    		<td width="17%"><input type="button" id="sendbtn" class="cbi-button cbi-button-apply" value="<%:Send%>" onclick="return sendsms()" /></td>
+    		<td width="17%"><br /><input type="button" id="sendbtn" class="cbi-button cbi-button-apply" value="<%:Push%>" onclick="return sendsms()" /></td>
 		<td width="13%">&nbsp;</td>
     		<td width="70%">&nbsp;</td>
   	</tr>

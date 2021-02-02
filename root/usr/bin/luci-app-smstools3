@@ -1,0 +1,7 @@
+#!/bin/sh
+
+sleep 10 && \
+	/etc/init.d/smstools3 stop && \
+	sleep 3 && \
+	/etc/init.d/smstools3 start &
+
