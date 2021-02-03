@@ -40,11 +40,8 @@ esac
 # template config
 echo -e "devices = GSM1\nincoming = /var/spool/sms/incoming\noutgoing = /var/spool/sms/outgoing"
 echo -e "checked = /var/spool/sms/checked\nfailed = /var/spool/sms/failed\nsent = /var/spool/sms/sent"
-echo -e "receive_before_send = no"
-
-if [ $LED_EN ]; then
-	echo "eventhandler = /usr/share/luci-app-smstools3/led.sh"
-fi
+echo -e "receive_before_send = no\ndate_filename = 1\ndate_filename_format = %s"
+echo "eventhandler = /usr/share/luci-app-smstools3/led.sh"
 
 if [ "$DECODE" ]; then
         echo "decode_unicode_text = yes"
