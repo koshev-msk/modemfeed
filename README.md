@@ -11,6 +11,7 @@ make -j $(($(nproc)+1)) package/feeds/luci/luci-app-smstools3/compile
 ```
 <details>
    <summary>Screenshots</summary>
+   
    ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/incoming.png)
    
    ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/outcoming.png)
@@ -18,4 +19,5 @@ make -j $(($(nproc)+1)) package/feeds/luci/luci-app-smstools3/compile
    ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/push.png)
    
    ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/setup.png)
+   
 </details>
