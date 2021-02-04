@@ -14,6 +14,8 @@ function index()
 	entry({"admin", "modem", "sms", "in_erase"}, template("modem/sms/in_erase"), nil).leaf = true
 	entry({"admin", "modem", "sms", "out_erase"}, template("modem/sms/out_erase"), nil).leaf = true
 	entry({"admin", "modem", "push_sms"}, call("action_send_sms"))
+	entry({"admin", "modem", "erase_in_sms"}, call("action_in_erase_sms"))
+	entry({"admin", "modem", "erase_out_sms"}, call("action_out_erase_sms"))
 end
 
 
@@ -23,4 +25,14 @@ function action_send_sms()
 	txt = string.sub(set, 21)
 	message = string.gsub(txt, "\n", " ")
 	os.execute("/usr/bin/sendsms " ..number.." '"..message.."'")
+end
+
+function action_in_erase_sms()
+	local set = luci.http.formvalue("erase_in_sms")
+	os.execute("rm -f /var/spool/sms/incoming/*")
+end
+
+function action_out_erase_sms()
+        local set = luci.http.formvalue("erase_out_sms")
+        os.execute("rm -f /var/spool/sms/sent/*")
 end

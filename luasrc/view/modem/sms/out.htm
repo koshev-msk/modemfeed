@@ -70,6 +70,14 @@ function exist(dir)
 end
 %>
 
+<script type="text/javascript">//<![CDATA[
+    function erase_out_sms(){
+	    alert("<%:Delete all outgoing messages!%>");
+	    location.reload();
+	    XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "erase_out_sms")%>');
+    }
+//]]></script>
+
 <%+header%>
 <h2 name="content"><%:Outcoming Short Messages%></h2>
 <fieldset class="cbi-section">
@@ -83,7 +91,7 @@ end
 			<% exist(dir) %>
 		</div>
 		<div class="table" width="100%">
-			<a href="out_erase"><div class="td left" width="100%"><input class="cbi-button cbi-button-remove" type="submit" value="<%:Remove All%>" title="<%:Delete All Sent Messages%>" onclick="location.href=""/></div></a>
+			<div class="td left" width="100%"><input class="cbi-button cbi-button-remove" type="submit" value="<%:Remove All%>" title="<%:Delete All Sent Messages%>" onclick="return erase_out_sms()"/></div>
 		</div>
 </fieldset>
 <%+footer%>

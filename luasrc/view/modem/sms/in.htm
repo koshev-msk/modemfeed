@@ -72,11 +72,12 @@ end
 %>
 
 <script type="text/javascript">//<![CDATA[
-	function delallsms()
-	{
-	
-	}
-//]]></script>
+    function erase_in_sms(){
+    	alert("<%:Delete all incoming messages!%>");
+    		location.reload();
+    		XHR.get('<%=luci.dispatcher.uild_url("admin", "modem", "erase_in_sms")%>');
+    	}
+//]]></script>	
 
 <%+header%>
 <h2 name="content"><%:Incoming Short Messages%></h2>
@@ -92,7 +93,7 @@ end
 			luci.sys.exec('/usr/share/luci-app-smstools3/led.sh off') %>
 		</div>
 		<div class="table" width="100%">
-			<a href="in_erase"><div class="td left" width="100%"><input class="cbi-button cbi-button-remove" type="submit" value="<%:Remove All%>" title="<%:Delete All incoming Messages%>" onclick="location.href=""/></div></a>
+			<div class="td left" width="100%"><input class="cbi-button cbi-button-remove" type="submit" value="<%:Remove All%>" title="<%:Delete All incoming Messages%>" onclick="return erase_in_sms()"/></div>
 		</div>
 </fieldset>
 <%+footer%>
