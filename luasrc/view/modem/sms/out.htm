@@ -72,14 +72,14 @@ end
 
 <script type="text/javascript">//<![CDATA[
     function erase_out_sms(){
-	    alert("<%:Delete all outgoing messages!%>");
+	    alert("<%:All outgoing messages are deleted!%>");
 	    location.reload();
 	    XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "erase_out_sms")%>');
     }
 //]]></script>
 
 <%+header%>
-<h2 name="content"><%:Outcoming Short Messages%></h2>
+<h2 name="content"><%:Smstools3: Outcoming Messages%></h2>
 <fieldset class="cbi-section">
 		<div class="table" width="100%">
 			<div class="tr cbi-rowstyle-2">
