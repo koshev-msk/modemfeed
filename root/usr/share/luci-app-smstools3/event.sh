@@ -59,4 +59,14 @@ if [ ! "$UI" ]; then
         echo -e "detect_unexpected_input = no"
 fi
 echo "incoming = yes"
+case $PIN in
+        ''|*[!0-9]*) logger -t luci-app-smstools3 "invalid pin" ;;
+        *)
+        if  [ "$(echo "$PIN" | awk '{print length}')" -lt "4" ] || [ "$(echo "$PIN" | awk '{print length}')" -gt "4" ]; then
+                logger -t luci-app-smstools3 "invalid pin"
+        else
+                echo "pin = $PIN"
+        fi
+        ;;
+esac
 echo "baudrate = 115200"
