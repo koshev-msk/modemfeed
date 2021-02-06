@@ -13,8 +13,9 @@ case $1 in
 		if [ $LED_EN ]; then
 			echo timer > /sys/class/leds/${LED}/trigger 
 		fi
-		if [ -r /usr/share/luci-app-smstools3/incoming.user ]; then
-			. /usr/share/luci-app-smstools3/incoming.user
-		fi
 	;;
 esac
+
+if [ -r /etc/smstools3.user ]; then
+	. /etc/smstools3.user
+fi
