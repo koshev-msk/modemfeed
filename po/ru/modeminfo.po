@@ -13,6 +13,14 @@ msgstr "Модем"
 msgid "Signal Overview"
 msgstr "Состояние сети"
 
+#: applications/luci-app-modeminfo/luasrc/controller/modem/modeminfo.lua:10
+msgid "Overview"
+msgstr "Обзор"
+
+#: applications/luci-app-modeminfo/luasrc/controller/modem/modeminfo.lua:11
+msgid "Setup"
+msgstr "Настройка"
+
 #: applications/luci-app-modeminfo/luasrc/view/modem/modeminfo.htm:10
 msgid "Modeminfo: Signal Overview"
 msgstr "Modeminfo: Уровень сигнала"
@@ -80,6 +88,11 @@ msgstr "Температура:"
 #: applications/luci-app-modeminfo/luasrc/model/cbi/modem/modeminfo.lua:11
 msgid "Modeminfo: Configuration"
 msgstr "Modeminfo: Конфигурация"
+
+#: applications/luci-app-modeminfo/luasrc/model/cbi/modem/modeminfo.lua:12
+msgid "Configuration panel of Мodeminfo."
+msgstr "Панель конфигурации Modeminfo."
+
 
 #: applications/luci-app-modeminfo/luasrc/model/cbi/modem/modeminfo.lua:17
 msgid "Modeminfo AT-port"

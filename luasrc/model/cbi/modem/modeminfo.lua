@@ -9,7 +9,7 @@ local dev
 local try_port = nixio.fs.glob("/dev/ttyUSB*") or nixio.fs.glob("/dev/ttyACM*")
 
 m = Map("modeminfo", translate("Modeminfo: Configuration"),
-	translate("Configuration panel for modeminfo."))
+	translate("Configuration panel of Мodeminfo."))
 
 s = m:section(TypedSection, "modeminfo")
 s.anonymous = true
