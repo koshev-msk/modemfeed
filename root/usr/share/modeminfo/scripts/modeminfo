@@ -350,10 +350,11 @@ function quectel_data(){
 		CSQ_RSSI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $17}')
 		RSRQ=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $16}')
 		BWUL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $12}')
-        BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
+	        BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
 		LTE_CA=$(echo "$O" | awk '/^\+QCAINFO/{print $0}' | wc -l)
 		if [ $LTE_CA -ge 2 ]; then
 			CA_INFO=$(echo "$O" | awk '/^\+QCAINFO/{print $0}' | awk '/scc/{print $0}')
+			CA=$(echo "$CA_INFO" | awk -F [\,] '{print $4}' | awk '{print $3}' | sed 's/\"//g')
 			BWC=$(echo "$CA_INFO" | awk -F [\,] '{print $3}')
 			for cc in $CA; do
 				SC=$cc
