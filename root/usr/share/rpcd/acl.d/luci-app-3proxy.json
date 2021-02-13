@@ -1,0 +1,11 @@
+{
+	"luci-app-3proxy": {
+		"description": "Grant UCI access for luci-app-3proxy",
+		"read": {
+			"uci": [ "telegrambot" ]
+		},
+		"write": {
+			"uci": [ "telegrambot" ]
+		}
+	}
+}
