@@ -6,7 +6,7 @@ START=99
 start() {
 	if [ ! -f "/var/run/telegrambot.pid" ]; then
 		echo "1" > /var/run/telegrambot.pid
-		/usr/lib/telegram-bot/telegrambot >/dev/null 2>&1 &
+		/usr/lib/telegrambot/telegrambot >/dev/null 2>&1 &
 	fi
 	return 0
 }
