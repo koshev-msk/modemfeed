@@ -2,13 +2,15 @@
 
 PATH='/usr/bin:/usr/sbin:/bin:/sbin'
 
-token=$(uci get telegram_bot.config.bot_token 2>/dev/nul)
-chat_id=$(uci get telegram_bot.config.chat_id 2>/dev/nul)
-server=$(uci get telegram_bot.config.server 2>/dev/nul)
-timeout=$(uci get telegram_bot.config.timeout 2>/dev/nul)
-polling_time=$(uci get telegram_bot.config.polling_time 2>/dev/nul)
+for v in bot_token chat_id server timeout polling_time enabled log_file plugins; do
+	eval $v=$(uci -q get telegrambot.@telegram_bot[0].${v} 2>/dev/nul)
+done
 
-if [ -z "$token" ]; then
+if [ $enabled -eq 0 ]; then
+	exit 0
+fi
+
+if [ -z "$bot_token" ]; then
 	echo "token is empty"
 	exit 2
 fi
@@ -30,16 +32,22 @@ if [ -z "$polling_time" ]; then
 	polling_time=1
 fi
 
-api="${server}/bot${token}"
+api="${server}/bot${bot_token}"
 
-if [ ! -d "/tmp/telegram-bot" ]; then
-  mkdir /tmp/telegram-bot
+if [ ! -d "/tmp/telegrambot" ]; then
+  mkdir /tmp/telegrambot
+fi
+if [ "x$plugins" = "x" ]; then
+	plugins="/usr/lib/telegrambot/plugins"
+fi
+#telegram_log_file=/tmp/telegram-bot/telegram.log
+if [ "x$log_file" = "x" ]; then
+	logfile=/dev/null
+else
+	log_file=${log_file}
 fi
 
-plugins="/usr/lib/telegram-bot/plugins"
-#telegram_log_file=/tmp/telegram-bot/telegram.log
-telegram_log_file=/dev/null
-offset_file=/tmp/telegram-bot/telegram_offset
+offset_file=/tmp/telegrambot/telegram_offset
 
 command_not_found="Sorry,
 I only recognize *commands*.
@@ -54,9 +62,9 @@ command_start="*/memory* return RAM info
 */reboot* reboot the device
 */wol <mac_address>* wake on lan over the Internet
 */wanip* WAN ip address
-*/<script_name>* any scripts in the \`plugins\` directory"
+*/plugins* aviable commands"
 
-curl -k -s -X POST $api/sendMessage -d chat_id=$chat_id -d parse_mode=Markdown --data-urlencode text="Router started." &> $telegram_log_file
+curl -k -s -X POST $api/sendMessage -d chat_id=$chat_id -d parse_mode=Markdown --data-urlencode text="$(uci -q get system.@system[0].hostname). TelegramBot started." &> $log_file
 
 if [ -f "$offset_file" ] ; then
 	offset=$( cat $offset_file )
@@ -69,7 +77,7 @@ reply_to_msg () {
 	local msg_id=$1
 	local origin=$2
 	eval local text="$3"
-        curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode text="$text" &> $telegram_log_file
+        curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode text="$text" &> $log_file
 }
 
 while [ true ]
@@ -90,7 +98,7 @@ do
 			origin_ans=$(jsonfilter -s "$updates"  -e "$.result[@.update_id=$update_id].callback_query.message.chat.id")
 			if [[ "$origin" != "$chat_id" && "$origin_ans" != "$chat_id" ]];then
 				curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode \
-					text="This is a Private bot. If you want to implement one for you, check this out https://github.com/ixiumu/openwrt-telegram-bot" &> $telegram_log_file
+					text="This is a Private bot. If you want to implement one for you, check this out https://github.com/ixiumu/openwrt-telegram-bot" &> $log_file
 				curl -k -s -X POST $api/leaveChat -d chat_id=$origin  &> $telegram_log_file
 			else
 				if [ $(echo "$is_a_cmd" | grep "bot_command") != "" ]; then
@@ -100,8 +108,12 @@ do
 					parms=${prms//[\"\&\;\\\>\<\|]/}
 					DATE=`date +%Y-%m-%d_%H:%M:%S`
 					RETURN_TEXT=""
+					if [ $send_hotname == 1 ]; then
+						RETURN_TEXT="$hostname ${RETURN_TEXT}"
+					fi
+					
 					case "$cmd" in
-						("/start")
+						("/start"|"/help")
 							reply_to_msg $msg_id $origin "\${command_start}"
 							;;
 						("/reboot")
