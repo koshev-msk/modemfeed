@@ -56,9 +56,8 @@ Try it !
 Send [/start](/start) to get my commands list."
 
 command_start="*/memory* return RAM info
-*/clients* connected clients
+*/leases* current dhcp leases
 */wll_list* wifi clients
-*/wifi_list* wifi info
 */reboot* reboot the device
 */wol <mac_address>* wake on lan over the Internet
 */wanip* WAN ip address
