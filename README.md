@@ -9,6 +9,9 @@ cd ../../..
 ./scripts feeds update -a; ./scripts/feeds install -a
 make -j $(($(nproc)+1)) package/feeds/luci/luci-app-smstools3/compile
 ```
+
+Note: If you use this app with modemmanager, please move or remove /etc/hotplug.d/tty/25-modemmanager-tty
+
 <details>
    <summary>Screenshots</summary>
    
