@@ -74,6 +74,7 @@ define KernelPackage/ipt-ndpi
   FILES:= \
 	$(PKG_BUILD_DIR)/ndpi-netfilter/src/xt_ndpi.ko
   AUTOLOAD:=$(call AutoProbe,xt_ndpi)
+  MODPARAMS.xt_ndpi:=ndpi_enable_flow=1
 endef
 
 $(eval $(call BuildPackage,iptables-mod-ndpi))
