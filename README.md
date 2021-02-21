@@ -29,7 +29,7 @@ Second prerequisite is to have `curl` package installed. You can do this with co
 
 ### Step two:
 
-Install Package  [luci-app-telegrambot_0.0.2-3_all.ipk](http://openwrt.132lan.ru/packages/packages-19.07/mipsel_24kc/packages/telegrambot_0.0.2-3_all.ipk) of your Lede/Openwrt system.
+Install Package  [telegrambot_0.0.2-3_all.ipk](http://openwrt.132lan.ru/packages/packages-19.07/mipsel_24kc/packages/telegrambot_0.0.2-3_all.ipk) of your Lede/Openwrt system.
 
 ### Step three:
 
