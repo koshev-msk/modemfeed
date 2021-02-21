@@ -29,15 +29,7 @@ Second prerequisite is to have `curl` package installed. You can do this with co
 
 ### Step two:
 
-Copy the files of this repo under `/` directory of your Lede/Openwrt system.
-
-Set files as executable with commands:
-
-```sh
-chmod +x -R /usr/lib/telegram-bot/* /usr/lib/telegram-bot/functions/*
-chmod +x /etc/init.d/telegram_bot
-service telegram_bot enable
-```
+Install Package  [luci-app-telegrambot_0.0.2-3_all.ipk](http://openwrt.132lan.ru/packages/packages-19.07/mipsel_24kc/packages/telegrambot_0.0.2-3_all.ipk) of your Lede/Openwrt system.
 
 ### Step three:
 
