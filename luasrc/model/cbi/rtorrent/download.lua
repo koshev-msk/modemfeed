@@ -4,7 +4,7 @@
 local nixio = require "nixio"
 local http = require "luci.http"
 local ltn12 = require "luci.ltn12"
-local sys = require "luci.controller.admin.system"
+local sys = require "luci.sys"
 local common = require "luci.model.cbi.rtorrent.common"
 require "luci.model.cbi.rtorrent.string"
 

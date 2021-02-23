@@ -30,6 +30,7 @@ function uri.validate(self, value, section)
 end
 
 file = f:field(FileUpload, "file", translate("Upload torrent file"))
+file.root_directory = "/etc/luci-uploads"
 
 function file.validate(self, value, section)
 	torrent = nixio.fs.readfile(value)
