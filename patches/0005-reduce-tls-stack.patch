@@ -1,0 +1,11 @@
+--- a/src/lib/protocols/tls.c
++++ b/src/lib/protocols/tls.c
+@@ -872,7 +872,7 @@ static void ndpi_int_tls_add_connection(
+ /* https://engineering.salesforce.com/tls-fingerprinting-with-ja3-and-ja3s-247362855967 */
+ 
+ #define JA3_STR_LEN 1024
+-#define MAX_NUM_JA3  512
++#define MAX_NUM_JA3  256
+ 
+ struct ja3_info {
+   u_int16_t tls_handshake_version;

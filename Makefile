@@ -8,15 +8,16 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ndpi-netfilter
-PKG_VERSION:=flow_info-6e6cdf0-3.2
+PKG_VERSION:=flow_info-26911075-3.4
 PKG_RELEASE:=1
-PKG_REV:=6e6cdf0
+PKG_REV:=26911075
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/vel21ripn/nDPI.git
 PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_MIRROR_HASH:=d51a243918f401170a3b797beacd8caba4cd9fd08b96763373382b58e14ca395
 
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -74,6 +75,7 @@ define KernelPackage/ipt-ndpi
   FILES:= \
 	$(PKG_BUILD_DIR)/ndpi-netfilter/src/xt_ndpi.ko
   AUTOLOAD:=$(call AutoProbe,xt_ndpi)
+  MODPARAMS.xt_ndpi:=ndpi_enable_flow=1
 endef
 
 $(eval $(call BuildPackage,iptables-mod-ndpi))
