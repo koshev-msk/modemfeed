@@ -61,7 +61,7 @@ help_(){
 	\t\trun-upgrade - run upgrade upgradable packages\n\
 	\t\thelp - this help."
 }
-`
+
 case ${ACTION} in
 	update)
 		update_
