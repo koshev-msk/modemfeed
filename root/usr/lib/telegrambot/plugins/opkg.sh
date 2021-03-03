@@ -18,6 +18,15 @@ list_(){
 	fi
 }
 
+listpkg_(){
+	PKGS="$(opkg ${ACTION} ${PKG})"
+	if [ "$PKGS" ]; then
+		MSG="\`\`\`\n$PKGS\`\`\`"
+	else
+		MSG="Package $2 not found."
+	fi
+}
+
 upgrade_(){
 	PKGS="$(opkg list-upgradable | awk '{print $1}')"
 	opkg upgrade $(echo ${PKGS}) > /dev/null 2>&1
@@ -44,6 +53,7 @@ help_(){
 	MSG="Usage: */opkg command [argument]*\n\
 	Aviable opkg commands:\n\
 	\t\tupdate - update packages list\n\
+	\t\tlist pkgmane - show package\n\
 	\t\tinstall pkgname - install packages (max 5 package names)\n\
 	\t\tremove pkgname - remove packages (max 5 package names)\n\
 	\t\tlist-installed [pkgname] - list installed packages [package]\n\
@@ -55,6 +65,10 @@ help_(){
 case ${ACTION} in
 	update)
 		update_
+		echo -en "$MSG"
+	;;
+	list)
+		listpkg_
 		echo -en "$MSG"
 	;;
 	list-upgrade)
