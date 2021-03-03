@@ -30,7 +30,7 @@ listpkg_(){
 upgrade_(){
 	PKGS="$(opkg list-upgradable | awk '{print $1}')"
 	opkg upgrade $(echo ${PKGS}) > /dev/null 2>&1
-	MSG="Upgraded package(s):\`\`\`\n${PKGS}\`\`\`"
+	MSG="Upgraded package(s):\n\`\`\`\n${PKGS}\`\`\`"
 }
 
 install_(){
@@ -61,7 +61,7 @@ help_(){
 	\t\trun-upgrade - run upgrade upgradable packages\n\
 	\t\thelp - this help."
 }
-
+`
 case ${ACTION} in
 	update)
 		update_
