@@ -1,0 +1,78 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+USE_PROCD=1
+
+DIR=/sbin
+PROG=simman2
+
+error(){
+	echo "${initscript}:" "$@" 1>&2
+}
+
+xappend() {
+	local filename="$1"
+	local value="$2"
+	echo "${value#--}" >> "$filename"
+}
+
+section_enabled(){
+	config_get_bool enabled "$1" 'enabled' 0
+	[ $enabled -gt 0 ]
+}
+
+start_service_daemon(){
+	local s="$1"
+
+	section_enabled "$s" || return 1
+	if [[ -e "/tmp/simman2" ]]; then
+		rm /tmp/simman2/* &>/dev/null
+	else
+		mkdir /tmp/simman2
+		echo "0" > /tmp/simman2/sim
+		echo "NONE" > /tmp/simman2/imei
+	fi
+
+	uci set simman2.core.sim='0'
+	uci set simman2.core.imei='NONE'
+	uci set simman2.core.ccid='NONE'
+	uci set simman2.info.iface='wan2'
+	uci set simman2.info.sim='NONE'
+	uci set simman2.info.imei='NONE'
+	uci set simman2.info.ccid='NONE'
+	uci set simman2.info.pincode_stat='NONE'
+	uci set simman2.info.sig_lev='NONE'
+	uci set simman2.info.reg_stat='NONE'
+	uci set simman2.info.base_st_id='NONE'
+	uci set simman2.info.base_st_bw='NONE'
+	uci set simman2.info.net_type='NONE'
+	uci set simman2.info.gprs_reg_stat='NONE'
+	uci set simman2.info.pack_type='NONE'
+	uci commit simman2
+	
+	procd_open_instance
+	procd_set_param command "$DIR/$PROG"
+	procd_set_param respawn ${respawn_threshold:-360} ${respawn_timeout:-5} ${respawn_retry:-0}
+	procd_close_instance
+}
+
+start_service(){
+	config_load 'simman2'
+	config_foreach start_service_daemon 'simman2'
+}
+
+service_triggers()
+{
+        procd_add_reload_trigger "simman2"
+}
+
+stop(){
+	service_stop $DIR/$PROG
+}
+
+reload_service() {
+	service_stop $DIR/$PROG
+	config_load 'simman2'
+	config_foreach start_service_daemon 'simman2'
+}
