@@ -3,16 +3,15 @@ CC = gcc
 CFLAGS = -Os -Wall -Wmissing-declarations -g3
 CPPFLAGS = -I../inc -I./ -I$(STAG_DIR)/usr/include
 LDFLAGS  = -L$(STAG_DIR)/usr/lib -L./
-LDLIBS = -luci -lpthread
+LDLIBS = -luci -lpthread -lubox
 
 PROGRAMS=pollmydevice
 
 all: $(PROGRAMS)
 
-pollmydevice: pollmydevice.o crc16.o modbus.o
+pollmydevice: pollmydevice.o crc16.o modbus.o client_list.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) 
 
 clean:
 	rm -f *.o $(PROGRAMS)  
-
 

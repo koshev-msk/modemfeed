@@ -27,7 +27,7 @@
 #include "modbus.h"
 #include "crc16.h"
 
-
+#include "client_list.h"
 
 
 #define MODE_DISABLED       0
@@ -43,9 +43,9 @@
 #define FC_RTSCTS       2
 
 #define EPOLL_RUN_TIMEOUT       -1
-#define MAX_CLIENTS_IN_QUEUE    10
+#define MAX_CLIENTS_IN_QUEUE    64
 
-#define MAX_EPOLL_EVENTS        MAX_CLIENTS_IN_QUEUE + 3  // + timer + listen socket + com-port
+#define MAX_EPOLL_EVENTS        MAX_CLIENTS_IN_QUEUE + 4  // + timer + listen socket + com-port
 #define NUM_OF_DEVICES          7  // num of services (e.g. RS232, RS485 means 2)
 
 #define MAX_TCP_BUF_SIZE        1024
@@ -80,6 +80,7 @@ typedef struct
     int flowcontrol;
     int stopBits;
     int serverPort;
+    int connection_mode;
     int holdConnTime;
     char clientHost[DOMAIN_NAME_LENGTH];
     int clientPort;
@@ -130,9 +131,10 @@ uint16_t Crc16Block(uint8_t* block, uint16_t len);
 //Modbus
 int SendModbusRTU(struct fdStructType *threadFD,char *pBuf, int len, int ascii_rtu, int quiet);
 void SendModbusTCP(struct fdStructType *threadFD,char *pBuf, int len, int quiet);
-void SendModbusASCIItoTCP(struct fdStructType *threadFD,char *pBuf, int len, uint8_t server, int quiet);
-void EndTimeoutModbusTCP(struct fdStructType *threadFD, uint8_t server, int ascii_rtu, int quiet);
+void SendModbusASCIItoTCP(struct fdStructType *threadFD,char *pBuf, int len, uint8_t server, uint8_t connection_mode, int quiet);
+void EndTimeoutModbusTCP(struct fdStructType *threadFD, uint8_t server, int ascii_rtu, uint8_t connection_mode, int quiet);
 void ClearModbus(struct fdStructType *threadFD);
+void send_all(const void *dataBuffer, size_t numOfReadBytes, int flags);
 
 /*****************************************/
 /*************** MAIN FUNC ***************/
@@ -554,6 +556,11 @@ void *ServerThreadFunc(void *args)
                 {
                     if (!deviceConfig.quiet)
                         LOG("Epoll connection addition error %d\n", result);
+                } else {
+                    if(deviceConfig.connection_mode == 1)
+                    {
+                        client_insert(lastActiveConnSocket);
+                    }
                 }
             }
 
@@ -566,26 +573,34 @@ void *ServerThreadFunc(void *args)
                         if (!deviceConfig.quiet)
                 		    LOG("Receive modbus ASCII data %d\n", numOfReadBytes);
                 		threadFD->mb_tcp.sock = lastActiveConnSocket;
-                		SendModbusASCIItoTCP(threadFD, dataBuffer, numOfReadBytes, 1, deviceConfig.quiet);
+                		SendModbusASCIItoTCP(threadFD, dataBuffer, numOfReadBytes, 1, deviceConfig.connection_mode, deviceConfig.quiet);
                 	}else{
                         if (!deviceConfig.quiet)
                 		    LOG("Receive modbus RTU data %d\n", numOfReadBytes);
                 		SendModbusTCP(threadFD, dataBuffer, numOfReadBytes, deviceConfig.quiet);
                 	}
                 }else{
-                	send(lastActiveConnSocket, dataBuffer, numOfReadBytes, 0);
+                    if(deviceConfig.connection_mode == 0)
+                    {
+                        send(lastActiveConnSocket, dataBuffer, numOfReadBytes, 0);
+                    } else {
+                        send_all(dataBuffer, numOfReadBytes, 0);
+                    }
                 }
             }else
             // timer modbus tcp for forming packets
 			if(eventSource == threadFD->mb_tcp.timer){
 				threadFD->mb_tcp.sock = lastActiveConnSocket;
-				EndTimeoutModbusTCP(threadFD, 1, deviceConfig.modbus_gateway, deviceConfig.quiet);
+				EndTimeoutModbusTCP(threadFD, 1, deviceConfig.modbus_gateway, deviceConfig.connection_mode, deviceConfig.quiet);
 			}
 
-            else if(eventSource == threadFD->TCPtimer) 
+            else if(eventSource == threadFD->TCPtimer)
             {
-                blockOther = 0; // free access for all clients
-                LOG("Connection hold time is up. Free access for all clients\n");
+                if(deviceConfig.connection_mode == 0)
+                {
+                    blockOther = 0; // free access for all clients
+                    LOG("Connection hold time is up. Free access for all clients\n");
+                }
             }
 
             // data from TCP on existing connection
@@ -598,13 +613,16 @@ void *ServerThreadFunc(void *args)
                     if(blockOther == 0 || blockSource == eventSource)
                     {
                         // close access for other untill (last activity timer will signalize) or (our TCP will close)
-                        blockOther = 1;
+                        
                         blockSource = eventSource;
-                        result = timerfd_settime(threadFD->TCPtimer, 0, &newValue, &oldValue);
-                        if(result < 0)
-                        {
-                            if (!deviceConfig.quiet)
-                                LOG("Error while timer setup \n");
+                        if(deviceConfig.connection_mode == 0){
+                            blockOther = 1;
+                            result = timerfd_settime(threadFD->TCPtimer, 0, &newValue, &oldValue);
+                            if(result < 0)
+                            {
+                                if (!deviceConfig.quiet)
+                                    LOG("Error while timer setup \n");
+                            }
                         }
                         dataBuffer[numOfReadBytes] = 0;
                         if(!deviceConfig.modbus_gateway){
@@ -635,6 +653,10 @@ void *ServerThreadFunc(void *args)
                     close(eventSource);
                     epollConfig.data.fd = eventSource;
                     epoll_ctl(threadFD->epollFD, EPOLL_CTL_DEL, eventSource, &epollConfig);
+                    if(deviceConfig.connection_mode == 1)
+                    {
+                        remove_descr(eventSource);
+                    }
                     // if block source wanted to close connection, we free access for all
                     if(blockSource == eventSource) 
                     {
@@ -1203,7 +1225,7 @@ void *ClientThreadFunc(void *args)
                     }else
                     if(deviceConfig.modbus_gateway == 2){
                     	threadFD->mb_tcp.sock = threadFD->mainSocket;
-                    	SendModbusASCIItoTCP(threadFD, dataBuffer, numOfReadBytes, 0, deviceConfig.quiet);
+                    	SendModbusASCIItoTCP(threadFD, dataBuffer, numOfReadBytes, 0, deviceConfig.connection_mode, deviceConfig.quiet);
                     }else {
                     	send(threadFD->mainSocket, dataBuffer, numOfReadBytes, 0);
                     }
@@ -1268,7 +1290,7 @@ void *ClientThreadFunc(void *args)
             // timer modbus tcp for forming packets
             if(eventSource == threadFD->mb_tcp.timer){
             	threadFD->mb_tcp.sock = threadFD->mainSocket;
-            	EndTimeoutModbusTCP(threadFD, 0, deviceConfig.modbus_gateway, deviceConfig.quiet);
+            	EndTimeoutModbusTCP(threadFD, 0, deviceConfig.modbus_gateway, deviceConfig.connection_mode, deviceConfig.quiet);
             }
 
             else
@@ -1389,7 +1411,7 @@ void InsertByteModbusTCP(t_mb_tcp *pTCP, char symbole){
 	pTCP->offset++;
 	return;
 }
-void SendModbusASCIItoTCP(struct fdStructType *threadFD,char *pBuf, int len, uint8_t server, int quiet){
+void SendModbusASCIItoTCP(struct fdStructType *threadFD,char *pBuf, int len, uint8_t server, uint8_t connection_mode, int quiet){
 	int count=0;
 	uint32_t i;
 	uint8_t calculate_crc=0;
@@ -1451,8 +1473,17 @@ void SendModbusASCIItoTCP(struct fdStructType *threadFD,char *pBuf, int len, uin
 					pTCP->offset--;
 					memcpy(pTCP->packet,threadFD->state_rtu.header, MB_TCP_HEADER_SIZE);
 					pTCP->packet[MB_TCP_HEADER_LEN] = (uint8_t)pTCP->offset;
-					if(server)send(pTCP->sock, pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
-					else{
+					if(server)
+                    {
+                        if(connection_mode == 0)
+                        {
+                            send(pTCP->sock, pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
+                        } else {
+                            send_all(pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
+                        }
+                    }
+					else
+                    {
 						pTCP->packet[1]++;		//Increment ID packet
 						send(pTCP->sock, pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
 					}
@@ -1506,7 +1537,7 @@ void SendModbusTCP(struct fdStructType *threadFD,char *pBuf, int len, int quiet)
 	;
 }
 
-void EndTimeoutModbusTCP(struct fdStructType *threadFD, uint8_t server, int ascii_rtu, int quiet){
+void EndTimeoutModbusTCP(struct fdStructType *threadFD, uint8_t server, int ascii_rtu, uint8_t connection_mode, int quiet){
 	uint16_t crc1, crc2;
 	uint8_t low_byte, high_byte;
 	if(threadFD == NULL)return;
@@ -1531,8 +1562,15 @@ void EndTimeoutModbusTCP(struct fdStructType *threadFD, uint8_t server, int asci
 		pTCP->offset -= 2;
 		memcpy(pTCP->packet,threadFD->state_rtu.header, MB_TCP_HEADER_SIZE);
 		pTCP->packet[MB_TCP_HEADER_LEN] = (uint8_t)pTCP->offset;
-		if(server)send(pTCP->sock, pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
-		else{
+		if(server)
+        {
+            if(connection_mode == 0)
+            {
+                send(pTCP->sock, pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
+            } else {
+                send_all(pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
+            }
+        } else {
 			pTCP->packet[1]++;		//Increment ID packet
 			send(pTCP->sock, pTCP->packet, pTCP->offset + MB_TCP_HEADER_SIZE, 0);
 		}
@@ -1565,6 +1603,7 @@ device_config_t GetFullDeviceConfig(int deviceID)
     char UCIpathFlowControl[MAX_CHARS_IN_UCIPATH]   = ".flowcontrol";
     char UCIpathStopBits[MAX_CHARS_IN_UCIPATH]      = ".stopbits";
     char UCIpathServerPort[MAX_CHARS_IN_UCIPATH]    = ".server_port";
+    char UCIpathConnectionMode[MAX_CHARS_IN_UCIPATH]  = ".connection_mode";
     char UCIpathHoldConnTime[MAX_CHARS_IN_UCIPATH]  = ".holdconntime";
     char UCIpathClientHost[MAX_CHARS_IN_UCIPATH]    = ".client_host";
     char UCIpathClientPort[MAX_CHARS_IN_UCIPATH]    = ".client_port";
@@ -1704,6 +1743,18 @@ device_config_t GetFullDeviceConfig(int deviceID)
     }
     if(UCIptr.flags & UCI_LOOKUP_COMPLETE)
         deviceConfig.serverPort = atoi(UCIptr.o->v.string);
+
+    memcpy(UCIpath , UCIpathBegin, MAX_CHARS_IN_UCIPATH);
+    strncat(UCIpath, UCIpathNumber, MAX_DIGITS_IN_DEV_NUM-2);
+    strncat(UCIpath, UCIpathConnectionMode, TMP_PATH_LENGTH);
+    if ((uci_lookup_ptr(UCIcontext, &UCIptr, UCIpath, true) != UCI_OK)||
+        (UCIptr.o==NULL || UCIptr.o->v.string==NULL)) 
+    {
+        LOG("No UCI field %s \n", UCIpathConnectionMode);
+        deviceConfig.connection_mode = 0;
+    }
+    if(UCIptr.flags & UCI_LOOKUP_COMPLETE)
+        deviceConfig.connection_mode = atoi(UCIptr.o->v.string);
 
     // holdconntime
     memcpy(UCIpath , UCIpathBegin, MAX_CHARS_IN_UCIPATH);
@@ -1948,3 +1999,10 @@ uint16_t Crc16Block(uint8_t* block, uint16_t len)
     return crc;
 }
 
+void send_all(const void *dataBuffer, size_t numOfReadBytes, int flags){
+    int descr=-1;
+    start_request_descr();
+    while(get_next_descr(&descr)==0) {
+        send(descr, dataBuffer, numOfReadBytes, flags);
+    }
+}
