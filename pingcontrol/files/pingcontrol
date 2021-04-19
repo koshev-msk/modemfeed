@@ -1,0 +1,73 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+if [ -e /var/run/pingcontrol.pid ] ; then
+	kill $(cat /var/run/pingcontrol.pid) &> /dev/null
+	rm /var/run/pingcontrol.pid &> /dev/null
+fi
+
+echo "$$" > /var/run/pingcontrol.pid
+
+IFACE=$1
+CHECK_PERIOD=$2
+TESTIP=$3
+SW_BEFORE_MODRES=$4
+SW_BEFORE_SYSRES=$5
+
+host_up_count=0
+lost1=0
+lost2=0
+IP_COUNT=$(echo $TESTIP | wc -w)
+let SW_BEFORE_MODRES=SW_BEFORE_MODRES*IP_COUNT
+let SW_BEFORE_SYSRES=SW_BEFORE_SYSRES*IP_COUNT
+
+ubus call network.interface.$IFACE up
+while [[ -z "$IFNAME" ]]; do
+	json_load "$(ubus call network.interface.$IFACE status)"
+	json_get_var IFNAME l3_device
+	sleep $2
+done
+
+while true; do
+	for IP in $TESTIP
+	do
+		/bin/ping -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null
+		if [[ "$?" -eq "0" ]]; then
+			let host_up_count++
+		else
+			logger -t pingcontrol "Ping to host $IP lost"
+			let lost1++
+			let lost2++
+		fi
+	done
+
+	if [[ "$host_up_count" -gt 0 ]]; then
+		logger -t pingcontrol "Ping OK, reset counters"
+		host_up_count=0
+		lost1=0
+		lost2=0
+	fi
+
+	if [[ "$lost1" -gt "0" ]]; then
+		if [[ "$SW_BEFORE_MODRES" -ne "0" ]]; then
+			if [[ "$lost1" -ge "$SW_BEFORE_MODRES" ]]; then
+				logger -t pingcontrol "Ifup/ifdown $IFACE"
+				ubus call network.interface.$IFACE down
+				sleep 1
+				ubus call network.interface.$IFACE up
+				lost1=0
+			fi
+		fi
+		if [[ "$SW_BEFORE_SYSRES" -ne "0" ]]; then
+			if [[ "$lost2" -ge "$SW_BEFORE_SYSRES" ]]; then
+				logger -t pingcontrol "Reboot now!"
+				reboot
+			fi
+		fi
+	fi	
+
+	#logger -t pingcontrol "args: $1 $2 $3 $4 $5"
+
+	sleep $2
+done
