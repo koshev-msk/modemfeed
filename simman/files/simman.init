@@ -26,6 +26,13 @@ start_service_daemon(){
 	local s="$1"
 
 	section_enabled "$s" || return 1
+	if [[ -e "/tmp/simman" ]]; then
+		rm /tmp/simman/* &>/dev/null
+	else
+		mkdir /tmp/simman
+		echo "0" > /tmp/simman/sim
+		echo "NONE" > /tmp/simman/imei
+	fi
 
 	uci set simman.core.sim='0'
 	uci set simman.core.imei='NONE'

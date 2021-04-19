@@ -15,10 +15,6 @@ opengt
 :request
  get 1 "^m" $s
  print $s
- send "AT+CIMI^m"
- waitfor 3 "MI^m"
- get 15 "^m" $n
- print $n
  exit 0
 
 :continue

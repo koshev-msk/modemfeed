@@ -127,11 +127,11 @@ iface=$(uci show network | awk "/proto='3g'|proto='qmi'/" | awk -F'.' '{print $2
 # Check if SIM card placed in holder
 sim1=$(cat $GPIO_PATH/gpio$SIMDET0_PIN/value)
 sim2=$(cat $GPIO_PATH/gpio$SIMDET1_PIN/value)
-ac_sim=$(uci -q get simman.core.sim)
+ac_sim=$(cat /tmp/simman/sim)
 
 if [ "$sim1" == "1" ] && [ "$sim2" == "1" ]; then
 	logger -t $tag "Both SIM cards are not inserted"
-	[ "$ac_sim" != "0" ] && uci -q set simman.core.sim=0
+	[ "$ac_sim" != "0" ] && echo 0 > /tmp/simman/sim
 	# release SIM_DET pin
 	echo "0" > $GPIO_PATH/gpio$SIMDET_PIN/value
 	ubus call network.interface.$iface down
@@ -272,10 +272,10 @@ fi
 
 if [ "$sim" == "1" ]; then
  echo "1" > $GPIO_PATH/gpio$SIMADDR_PIN/value
- uci -q set simman.core.sim=2 
+ echo "2" > /tmp/simman/sim
 else
  echo "0" > $GPIO_PATH/gpio$SIMADDR_PIN/value
- uci -q set simman.core.sim=1 
+ echo "1" > /tmp/simman/sim
 fi
 
 sleep 1

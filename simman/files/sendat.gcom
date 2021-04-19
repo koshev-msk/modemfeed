@@ -5,8 +5,8 @@ opengt
  flash 0.1
 
 :start
- send "AT+CGSN=1^m"
- waitfor 1 "+CGSN:"
+ send "AT^m"
+ waitfor 1 "OK"
  if % = -1 goto error
  if % = 0 goto continue
 
