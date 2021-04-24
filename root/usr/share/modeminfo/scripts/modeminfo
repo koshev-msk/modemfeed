@@ -277,7 +277,7 @@ function sierra_data(){
 		fi
 		case $BWDx in
 			3) BWDL=1 ;;
-			i5) BWDL=2 ;;
+			5) BWDL=2 ;;
 			10) BWDL=3 ;;
 			15) BWDL=4 ;;
 			20) BWDL=5 ;;
