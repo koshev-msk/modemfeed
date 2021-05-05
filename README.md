@@ -25,6 +25,8 @@ Tested devices:
  - HP LT4220
 
  - Dell DW5821e
+ 
+ - MikroTik R11e-LTE
 
 Сompiled old version https://inf.labz.ru/repo/
 
