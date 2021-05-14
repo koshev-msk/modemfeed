@@ -7,7 +7,7 @@ get_device_info(){
                         QMI_DEVICE=$qmi
                         if [ -n $(which qmicli) ]; then
                                 export QMICTL="qmicli -p -d ${QMI_DEVICE}"
-                        else i
+                        else
                                 logger -t "luci-app-modeminfo" "qmi-utils not found or installed!"
                                 exit 0
                         fi
