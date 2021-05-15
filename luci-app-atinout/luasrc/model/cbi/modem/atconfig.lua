@@ -15,7 +15,7 @@ local ATC_FILE_PATH = "/etc/config/atcommands.user"
 local m
 local s
 local dev1
-local try_devices1 = nixio.fs.glob("/dev/ttyUSB*") or nixio.fs.glob("/dev/ttyACM*") or nixio.fs.glob("/dev/cdc*")
+local try_devices1 = nixio.fs.glob("/dev/tty[A-Z][A-Z]*")
 
 m = Map("atinout", translate("Atinout Configuration"),
 	translate("Configuration panel for atinout."))
