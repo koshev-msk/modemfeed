@@ -5,7 +5,7 @@ require("nixio.fs")
 
 local m
 local s
-local try_devices = nixio.fs.glob("/dev/ttyUSB*")
+local try_devices = nixio.fs.glob("/dev/tty[A-Z][A-Z]*")
 local try_leds = nixio.fs.glob("/sys/class/leds/*")
 
 m = Map("smstools3", translate("Setup smstools3"),
