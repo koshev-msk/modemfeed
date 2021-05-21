@@ -1,0 +1,11 @@
+{
+	"luci-app-strongswan": {
+		"description": "Grant UCI access for luci-app-strongswan",
+		"read": {
+			"uci": [ "ipsec" ]
+		},
+		"write": {
+			"uci": [ "ipsec" ]
+		}
+	}
+}

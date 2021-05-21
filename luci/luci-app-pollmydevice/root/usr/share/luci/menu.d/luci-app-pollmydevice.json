@@ -1,0 +1,13 @@
+{
+        "admin/services/pollmydevice": {
+                "title": "Pollmydevice",
+                "action": {
+                        "type": "view",
+                        "path": "pollmydevice/pollmydevice"
+                },
+                "depends": {
+                        "acl": [ "luci-app-pollmydevice" ],
+                        "uci": { "pollmydevice": true }
+                }
+        }
+}

@@ -1,0 +1,18 @@
+msgid ""
+msgstr ""
+
+msgid "Report"
+msgstr "Report"
+
+msgid "Create report"
+msgstr "Create report"
+
+msgid "Click \"Generate archive\" to download a tar archive of the selected options. It may take several minutes."
+msgstr "Click \"Generate archive\" to download a tar archive of the selected options. It may take several minutes."
+
+msgid "Select the required options"
+msgstr "Select the required options"
+
+msgid "Download report"
+msgstr "Download report"
+

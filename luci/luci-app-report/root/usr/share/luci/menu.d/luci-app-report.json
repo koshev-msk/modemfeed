@@ -1,0 +1,12 @@
+{
+        "admin/status/report": {
+                "title": "Report",
+                "action": {
+                        "type": "view",
+                        "path": "report/report"
+                },
+                "depends": {
+                        "acl": [ "luci-app-report" ]
+                }
+        }
+}

@@ -1,0 +1,137 @@
+msgid "IPsec Configuration"
+msgstr "Конфигурация IPsec"
+
+msgid "Enable IPsec (Internet Protocol Security)"
+msgstr "Включить IPsec (Internet Protocol Security)"
+
+msgid "IKE version"
+msgstr "Версия IKE"
+
+msgid "Method of key exchange"
+msgstr "Протокол обмена ключами"
+
+msgid "ISAKMP (Internet Security Association and Key Management Protocol) phase 1 exchange mode"
+msgstr "ISAKMP (Internet Security Association and Key Management Protocol) режим обмена первой фазы"
+
+msgid "My identifier type"
+msgstr "Тип локального идентификатора"
+
+msgid "Choose one accordingly to your IPSec configuration"
+msgstr "Выберите в соответствии с вашей конфигурацией IPsec"
+
+msgid "My identifier"
+msgstr "Локальный идентификатор"
+
+msgid "Set the device identifier for IPSec tunnel"
+msgstr "Укажите локальный идентификатор для IPsec туннеля"
+
+msgid "Remote identifier type"
+msgstr "Тип удаленного идентификатора"
+
+msgid "Choose one accordingly to your IPSec configuration"
+msgstr "Выберите в соответствии с вашей конфигурацией IPsec"
+
+msgid "Remote identifier"
+msgstr "Удаленный идентификатор"
+
+msgid "Set the remote identifier for IPSec tunnel"
+msgstr "Укажите удаленный идентификатор для IPsec туннеля"
+
+msgid "The values clear, hold, and restart all activate DPD."
+msgstr "Использовать DPD"
+
+msgid "Dead Peer Detection"
+msgstr "Dead Peer Detection"
+
+msgid "Pre shared key"
+msgstr "Общий ключ"
+
+msgid "A shared password to authenticate between the peers."
+msgstr "Общий ключ для идентификации между участниками"
+
+msgid "Remote VPN endpoint"
+msgstr "Удаленная точка туннеля"
+
+msgid "Domain name or IP address. Leave empty for any"
+msgstr "Доменное имя или IP адрес. Оставьте пустым для любых входящих соединений"
+
+msgid "Local IP address/Subnet mask"
+msgstr "Локальная подсеть/маска подсети"
+
+msgid "Remote IP address/Subnet mask"
+msgstr "Удаленная подсеть/маска подсети"
+
+msgid "Remote network secure group IP address and mask used to determine to what subnet an IP address belongs to. Range [0 - 32]. IP should differ from device LAN IP"
+msgstr "Подсеть и маска на удаленном устройстве. Диапазон [0-32]. Подсети на локальном и удаленном устройстве не должны совпадать"
+
+msgid "Enable keepalive"
+msgstr "Включить поддержку активности"
+
+msgid "Enable tunnel keep alive"
+msgstr "Включить поддержку активности туннеля"
+
+msgid "A host address to which ICMP (Internet Control Message Protocol) echo requests will be sent"
+msgstr "Адрес хоста, на который будут отправляться эхо-запросы ICMP (Internet Control Message Protocol) "
+
+msgid "Ping period (sec)"
+msgstr "Период отправки ping-запроса (сек)"
+
+msgid "Send ICMP (Internet Control Message Protocol) echo request every x seconds. Range [0 - 9999999]"
+msgstr "Отправлять ICMP (Internet Control Message Protocol) эхо-запросы каждые x секунд. Диапазон [0 - 9999999]"
+
+msgid "The phase must match with another incoming connection to establish IPSec"
+msgstr "Фаза должна совпадать с другим входящим подключением для установки IPSec"
+
+msgid "Encryption algorithm"
+msgstr "Алгоритм шифрования"
+
+msgid "The encryption algorithm must match with another incoming connection to establish IPSec"
+msgstr "Алгоритм шифрования должен совпадать с другим входящим подключением для установки IPSec"
+
+msgid "The authentication algorithm must match with another incoming connection to establish IPSec"
+msgstr "Аутентификационный алгоритм должен совпадать с другим входящим подключением для установки IPSec"
+
+msgid "DH group"
+msgstr "Группа Диффи-Хелмана"
+
+msgid "Lifetime"
+msgstr "Время жизни"
+
+msgid "in"
+msgstr "в"
+
+msgid "The DH (Diffie-Hellman) group must match with another incoming connection to establish IPSec"
+msgstr "Группа Диффи-Хелмана должна совпадать с другим входящим подключением для установки IPSec"
+
+msgid "The time duration for phase 1"
+msgstr "Продолжительность фазы 1"
+
+msgid "Phase"
+msgstr "Фаза"
+
+msgid "Phase 1"
+msgstr "Фаза 1"
+
+msgid "Phase 2"
+msgstr "Фаза 2"
+
+msgid "Hash algorithm"
+msgstr "Алгоритм хэширования"
+
+msgid "The hash algorithm must match with another incoming connection to establish IPSec"
+msgstr "Алгоритм хиширования должен совпадать с другим входящим подключением для установки IPSec"
+
+msgid "PFS group"
+msgstr "Группа PFS"
+
+msgid "The PFS (Perfect Forward Secrecy) group must match with another incoming connection to establish IPSec"
+msgstr "Группа PFS должна совпадать с другим входящим подключением для установки IPSec"
+
+msgid "The time duration for phase 2"
+msgstr "Продолжительность фазы 2"
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "There are no IPsec configurations yet"
+msgstr "Конфигурации IPsec отсутствуют"

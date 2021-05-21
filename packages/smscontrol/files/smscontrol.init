@@ -1,0 +1,130 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+DIR="/var/spool/smscontrol"
+COMMANDS="/var/spool/smscontrol/commands"
+CALLS="/var/spool/smscontrol/calls"
+CLI="/var/spool/smscontrol/cli"
+OUT_DIR="/var/spool/sms/outgoing"
+
+generate_pass() {
+	config_get PASS common pass
+	if [ -z "$PASS" ]; then
+		. /usr/share/libubox/jshn.sh
+		json_load "$(ubus call system board)"
+		json_get_var MODEL model
+		case "$MODEL" in
+			"TELEOFIS LT70")
+				PASS=$(head -c 1000 /dev/urandom | tr -dc '0-9' | cut -c -15)
+			;;
+		esac
+		uci_set smscontrol common pass "$PASS"
+		uci_commit smscontrol
+	fi
+}
+
+add_comm() {
+	config_get enabled "$1" "enabled"
+	[ "$enabled" = "0" ] && continue
+
+	config_get ack "$1" "ack"
+	config_get received "$1" "received"
+	config_get command "$1" "command"
+
+	echo "	\"$received\")" >> "$COMMANDS"
+
+	if [ "$ack" = "1" ]; then
+		echo "		REPLY=\$($command)" >> "$COMMANDS"
+		echo "		if [ -n \"\$REPLY\" ]; then"  >> "$COMMANDS"
+		echo "			DATE=\$(date +%s)" >> "$COMMANDS"
+		echo "			touch /tmp/sms\$DATE.sms" >> "$COMMANDS"
+		echo "			echo \"To: \$2\" >> /tmp/sms\$DATE.sms" >> "$COMMANDS"
+		echo "			echo \"\" >> /tmp/sms\$DATE.sms" >> "$COMMANDS"
+		echo "			echo \"\$REPLY\" >> /tmp/sms\$DATE.sms" >> "$COMMANDS"
+		echo "			cp /tmp/sms\$DATE.sms $OUT_DIR/sms\$DATE.sms" >> "$COMMANDS"
+		echo "			rm /tmp/sms\$DATE.sms" >> "$COMMANDS"
+		echo "		fi" >> "$COMMANDS"
+	else
+		echo "		$command" >> "$COMMANDS"
+	fi
+	echo "	;;" >> "$COMMANDS"
+	echo "	" >> "$COMMANDS"
+
+}
+
+add_call() {
+	config_get enabled "$1" "enabled"
+	[ "$enabled" = "0" ] && continue
+
+	config_get ack "$1" "ack"
+	config_get command "$1" "command"
+
+	if [ "$ack" = "1" ]; then
+		echo "		REPLY=\$($command)" >> "$CALLS"
+		echo "		if [ -n \"\$REPLY\" ]; then"  >> "$CALLS"
+		echo "			DATE=\$(date +%s)" >> "$CALLS"
+		echo "			touch /tmp/sms\$DATE.sms" >> "$CALLS"
+		echo "			echo \"To: \$1\" >> /tmp/sms\$DATE.sms" >> "$CALLS"
+		echo "			echo \"\" >> /tmp/sms\$DATE.sms" >> "$CALLS"
+		echo "			echo \"\$REPLY\" >> /tmp/sms\$DATE.sms" >> "$CALLS"
+		echo "			cp /tmp/sms\$DATE.sms $OUT_DIR/sms\$DATE.sms" >> "$CALLS"
+		echo "			rm /tmp/sms\$DATE.sms" >> "$CALLS"
+		echo "		fi" >> "$CALLS"
+	else
+		echo "		$command" >> "$CALLS"
+	fi
+}
+
+add_cli() {
+	config_get enabled "$1" "enabled"
+	[ "$enabled" = "0" ] && continue
+
+	config_get ack "$1" "ack"
+	if [ "$ack" = "1" ]; then
+		echo "		REPLY=\$(eval \$1)" >> "$CLI"
+		echo "		if [ -n \"\$REPLY\" ]; then"  >> "$CLI"
+		echo "			DATE=\$(date +%s)" >> "$CLI"
+		echo "			touch /tmp/sms\$DATE.sms" >> "$CLI"
+		echo "			echo \"To: \$2\" >> /tmp/sms\$DATE.sms" >> "$CLI"
+		echo "			echo \"\" >> /tmp/sms\$DATE.sms" >> "$CLI"
+		echo "			echo \"\$REPLY\" >> /tmp/sms\$DATE.sms" >> "$CLI"
+		echo "			cp /tmp/sms\$DATE.sms $OUT_DIR/sms\$DATE.sms" >> "$CLI"
+		echo "			rm /tmp/sms\$DATE.sms" >> "$CLI"
+		echo "		fi" >> "$CLI"
+	else
+		echo "		eval \$1" >> "$CLI"
+	fi
+}
+
+stop() {
+	rm "$COMMANDS" 2>/dev/null
+	rm "$CALLS" 2>/dev/null
+	rm "$CLI" 2>/dev/null
+	/etc/init.d/smstools3 stop
+}
+
+start() {
+	config_load smscontrol
+	generate_pass
+	enabled=$(uci get smscontrol.common.enabled)
+	if [ "$enabled" -eq "1" ]; then
+		mkdir "$DIR"
+		touch "$COMMANDS"
+		chmod +x "$COMMANDS"
+		touch "$CALLS"
+		chmod +x "$CALLS"
+		touch "$CLI"
+		chmod +x "$CLI"
+		config_foreach add_call call
+		config_foreach add_cli cli
+		echo "case \"\$1\" in" >> "$COMMANDS"
+		config_foreach add_comm remote
+		echo "esac" >> "$COMMANDS"
+		/etc/init.d/smstools3 start
+	fi
+}
+
+restart() {
+	stop
+	start
+}

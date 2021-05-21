@@ -1,0 +1,13 @@
+{
+        "admin/vpn/strongswan": {
+                "title": "IPsec",
+                "action": {
+                        "type": "view",
+                        "path": "strongswan/strongswan"
+                },
+                "depends": {
+                        "acl": [ "luci-app-strongswan" ],
+                        "uci": { "ipsec": true }
+                }
+        }
+}

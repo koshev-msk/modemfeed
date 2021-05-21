@@ -1,0 +1,13 @@
+{
+        "admin/services/simman2": {
+                "title": "Simman2",
+                "action": {
+                        "type": "view",
+                        "path": "simman2/simman2"
+                },
+                "depends": {
+                        "acl": [ "luci-app-simman2" ],
+                        "uci": { "simman2": true }
+                }
+        }
+}

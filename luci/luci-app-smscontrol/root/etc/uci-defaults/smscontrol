@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@smscontrol[-1]
+	add ucitrack smscontrol
+	set ucitrack.@smscontrol[-1].init=smscontrol
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0

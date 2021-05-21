@@ -1,0 +1,62 @@
+#!/bin/ash
+DIR="/var/spool/smscontrol"
+ENABLED=$(uci get smscontrol.common.enabled)
+
+if [ "$ENABLED" -eq "1" ]; then
+    case "$1" in
+    RECEIVED)
+        PASS=$(uci get smscontrol.common.pass)
+        [ -z "$PASS" ] && exit
+        PASSLENGTH=$(echo $PASS | wc -c)
+        MESSAGE=$(cat "$2")
+        FROM=$(echo "${MESSAGE}"|grep -e '^From\:'|cut -d' ' -f2)
+        DATE=$(echo "${MESSAGE}"|grep -e '^Received\:'|cut -d' ' -f2,3)
+        BODY=$(echo "${MESSAGE}"|sed -e '1,/^$/d')
+        [ "$PASS;" != "${BODY::$PASSLENGTH}" ] && exit
+        ADMINPHONES=$(uci get smscontrol.common.whitelist)
+        COUNTPHONES=$(echo $ADMINPHONES | wc -w)   
+        COUNT="0"
+        while [ "$COUNT" -ne "$COUNTPHONES" ]; do
+            COUNT=$(($COUNT + 1))
+            ADMPH=$(echo $ADMINPHONES | awk -v var=$COUNT -F ' ' '{print $var}')
+            if [ "$ADMPH" -eq "$FROM" ]; then
+                BODY=${BODY:$PASSLENGTH}
+                if [ "${BODY::4}" != "CLI\$" ]; then                    
+                    $DIR/commands "$BODY" "$FROM" &
+                    break
+                else
+                    BODY=${BODY:4}
+                    $DIR/cli  "$BODY" "$FROM" &
+                    break
+                fi
+            fi
+        done    
+    ;;
+
+    USSD)
+    ;;
+
+    CALL)
+        MESSAGE=$(cat "$2")
+        FROM=$(echo "${MESSAGE}"|grep -e '^From\:'|cut -d' ' -f2)
+        ADMINPHONES=$(uci get smscontrol.common.whitelist)
+        COUNTPHONES=$(echo $ADMINPHONES | wc -w)   
+        COUNT="0"
+        while [ "$COUNT" -ne "$COUNTPHONES" ]; do
+            COUNT=$(($COUNT + 1))
+            ADMPH=$(echo $ADMINPHONES | awk -v var=$COUNT -F ' ' '{print $var}')
+            if [ "$ADMPH" -eq "$FROM" ]; then
+                $DIR/calls "$FROM" &
+                break
+            fi
+        done
+    ;;
+
+    SENT)
+    ;;
+
+    *)
+    ;;
+    esac
+
+fi

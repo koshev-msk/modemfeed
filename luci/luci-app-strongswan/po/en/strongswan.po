@@ -1,0 +1,137 @@
+msgid "IPsec Configuration"
+msgstr "IPsec Configuration"
+
+msgid "Enable IPsec (Internet Protocol Security)"
+msgstr "Enable IPsec (Internet Protocol Security)"
+
+msgid "IKE version"
+msgstr "IKE version"
+
+msgid "Method of key exchange"
+msgstr "Method of key exchange"
+
+msgid "ISAKMP (Internet Security Association and Key Management Protocol) phase 1 exchange mode"
+msgstr "ISAKMP (Internet Security Association and Key Management Protocol) phase 1 exchange mode"
+
+msgid "My identifier type"
+msgstr "My identifier type"
+
+msgid "Choose one accordingly to your IPSec configuration"
+msgstr "Choose one accordingly to your IPSec configuration"
+
+msgid "My identifier"
+msgstr "My identifier"
+
+msgid "Set the device identifier for IPSec tunnel"
+msgstr "Set the device identifier for IPSec tunnel"
+
+msgid "Remote identifier type"
+msgstr "Remote identifier type"
+
+msgid "Choose one accordingly to your IPSec configuration"
+msgstr "Choose one accordingly to your IPSec configuration"
+
+msgid "Remote identifier"
+msgstr "Remote identifier"
+
+msgid "Set the remote identifier for IPSec tunnel"
+msgstr "Set the remote identifier for IPSec tunnel"
+
+msgid "The values clear, hold, and restart all activate DPD."
+msgstr "The values clear, hold, and restart all activate DPD."
+
+msgid "Dead Peer Detection"
+msgstr "Dead Peer Detection"
+
+msgid "Pre shared key"
+msgstr "Pre shared key"
+
+msgid "A shared password to authenticate between the peers."
+msgstr "A shared password to authenticate between the peers."
+
+msgid "Remote VPN endpoint"
+msgstr "Remote VPN endpoint"
+
+msgid "Domain name or IP address. Leave empty for any"
+msgstr "Domain name or IP address. Leave empty for any"
+
+msgid "Local IP address/Subnet mask"
+msgstr "Local IP address/Subnet mask"
+
+msgid "Remote IP address/Subnet mask"
+msgstr "Remote IP address/Subnet mask"
+
+msgid "Remote network secure group IP address and mask used to determine to what subnet an IP address belongs to. Range [0 - 32]. IP should differ from device LAN IP"
+msgstr "Remote network secure group IP address and mask used to determine to what subnet an IP address belongs to. Range [0 - 32]. IP should differ from device LAN IP"
+
+msgid "Enable keepalive"
+msgstr "Enable keepalive"
+
+msgid "Enable tunnel keep alive"
+msgstr "Enable tunnel keep alive"
+
+msgid "A host address to which ICMP (Internet Control Message Protocol) echo requests will be sent"
+msgstr "A host address to which ICMP (Internet Control Message Protocol) echo requests will be sent"
+
+msgid "Ping period (sec)"
+msgstr "Ping period (sec)"
+
+msgid "Send ICMP (Internet Control Message Protocol) echo request every x seconds. Range [0 - 9999999]"
+msgstr "Send ICMP (Internet Control Message Protocol) echo request every x seconds. Range [0 - 9999999]"
+
+msgid "The phase must match with another incoming connection to establish IPSec"
+msgstr "The phase must match with another incoming connection to establish IPSec"
+
+msgid "Encryption algorithm"
+msgstr "Encryption algorithm"
+
+msgid "The encryption algorithm must match with another incoming connection to establish IPSec"
+msgstr "The encryption algorithm must match with another incoming connection to establish IPSec"
+
+msgid "The authentication algorithm must match with another incoming connection to establish IPSec"
+msgstr "The authentication algorithm must match with another incoming connection to establish IPSec"
+
+msgid "DH group"
+msgstr "DH group"
+
+msgid "Lifetime"
+msgstr "Lifetime"
+
+msgid "in"
+msgstr "in"
+
+msgid "The DH (Diffie-Hellman) group must match with another incoming connection to establish IPSec"
+msgstr "The DH (Diffie-Hellman) group must match with another incoming connection to establish IPSec"
+
+msgid "The time duration for phase 1"
+msgstr "The time duration for phase 1"
+
+msgid "Phase"
+msgstr "Phase"
+
+msgid "Phase 1"
+msgstr "Phase 1"
+
+msgid "Phase 2"
+msgstr "Phase 2"
+
+msgid "Hash algorithm"
+msgstr "Hash algorithm"
+
+msgid "The hash algorithm must match with another incoming connection to establish IPSec"
+msgstr "The hash algorithm must match with another incoming connection to establish IPSec"
+
+msgid "PFS group"
+msgstr "PFS group"
+
+msgid "The PFS (Perfect Forward Secrecy) group must match with another incoming connection to establish IPSec"
+msgstr "The PFS (Perfect Forward Secrecy) group must match with another incoming connection to establish IPSec"
+
+msgid "The time duration for phase 2"
+msgstr "The time duration for phase 2"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "There are no IPsec configurations yet"
+msgstr "There are no IPsec configurations yet"

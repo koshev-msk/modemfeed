@@ -1,0 +1,60 @@
+{
+	"admin/services/smscontrol": {
+		"title": "Remote SMS Control",
+		"order": 60,
+		"action": {
+			"type": "alias",
+			"path": "admin/services/smscontrol/general"
+		},
+		"depends": {
+			"acl": [ "luci-app-smscontrol" ],
+			"uci": { "smscontrol": true }
+		}
+	},
+
+	"admin/services/smscontrol/general": {
+		"title": "General Settings",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "smscontrol/general"
+		}
+	},
+
+	"admin/services/smscontrol/sms2cli": {
+		"title": "Command over SMS",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "smscontrol/sms2cli"
+		}
+	},
+
+	"admin/services/smscontrol/sms2ucli": {
+		"title": "Universal command over SMS",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "smscontrol/sms2ucli"
+		}
+	},
+
+	"admin/services/smscontrol/call2cli": {
+		"title": "Command over call",
+		"order": 40,
+		"action": {
+			"type": "view",
+			"path": "smscontrol/call2cli"
+		}
+	},
+
+
+	"admin/services/smscontrol/sendsms": {
+	"title": "Send SMS",
+		"order": 50,
+		"action": {
+			"type": "view",
+			"path": "smscontrol/sendsms"
+		}
+	}
+}
