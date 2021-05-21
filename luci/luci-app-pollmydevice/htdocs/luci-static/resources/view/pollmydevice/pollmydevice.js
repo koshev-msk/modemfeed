@@ -25,7 +25,7 @@ return view.extend({
 					var section_id = String(i);
 					uci.add('pollmydevice', 'interface', section_id);
 					uci.set('pollmydevice', section_id, 'desc',name);
-					uci.set('pollmydevice', section_id, 'devicename','');
+					uci.set('pollmydevice', section_id, 'devicename','/dev/com1');
 					uci.set('pollmydevice', section_id, 'mode','disabled');
 					this.addedSection = section_id;
 					return this.renderMoreOptionsModal(section_id);

@@ -12,20 +12,21 @@ return view.extend({
 		m = new form.Map('smscontrol', _('Command over SMS'));
 		m.description = _('You can make a call from the allowed phone number and then the router will execute the command');
 
-		s = m.section(form.GridSection, 'call', _('Settings'));
+		s = m.section(form.TableSection, 'call', _('Settings'));
 		s.anonymous = true;
-		s.addremove = false;
-		s.nodescriptions = true;
 
-		o = s.option(form.Flag, 'enabled', _('Enabled'))
-		o.rmempty = false
+		o = s.option(form.Flag, 'enabled', _('Enabled'));
+		o.rmempty = false;
+		o.editable = true;
 
-		o = s.option(form.Flag, 'ack', _('Reply via SMS'))
-		o.rmempty = true
+		o = s.option(form.Flag, 'ack', _('Reply via SMS'));
+		o.rmempty = true;
+		o.editable = true;
 
-		o = s.option(form.Value, 'command', _('Linux command'))
-		o.rmempty =false
-		o.optional = false
+		o = s.option(form.Value, 'command', _('Linux command'));
+		o.rmempty =false;
+		o.optional = false;
+		o.editable = true;
 
 		return m.render();
 	}

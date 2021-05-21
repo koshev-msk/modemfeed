@@ -32,14 +32,15 @@ return view.extend({
 		}, this);
 
 		o = s.option(form.Value, 'pass', _('Password'));
-		o.rmempty = false
-		o.optional = false
-		o.datatype = 'and(uciname,maxlength(15))'
+		o.rmempty = false;
+		o.optional = false;
+		o.datatype = 'and(uciname,maxlength(15))';
 
 		o = s.option(form.DynamicList, 'whitelist', _('Allowed phone numbers'));
-		o.datatype = 'phonedigit'
-		o.cast = 'string'
-		o.rmempty =true
+		o.datatype = 'phonedigit';
+		o.cast = 'string';
+		o.rmempty =true;
+		o.optional = false;
 
 		return m.render();
 	}
