@@ -1304,7 +1304,7 @@ body.modal-overlay-active #modal_overlay {
 .cbi-button {
 	cursor: pointer;
 	display: inline-block;
-	background: linear-gradient(#fff, #fff 25%, #e6e6e6) no-repeat;
+	background: #fff;
 	padding: 5px 14px 6px;
 	text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
 	color: #333;
