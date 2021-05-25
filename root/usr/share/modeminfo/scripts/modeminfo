@@ -554,6 +554,7 @@ function dell_data(){
 	CHIPTEMP=$(echo "$O" | awk -F [:] '/xo_therm_buf:/{print $2}')
 }
 
+# Intel XMM modems (need changes)
 function intel_data(){
 	generic_data
 	DEVx="$(echo "$O" | awk -F [:,] '/CGMI:|GMM:/{gsub("\"|\r","",$0);print substr($2,2);}')"
@@ -647,6 +648,7 @@ function mikrotik_data() {
 		if [ "x$EEMGINFO" != "x" ]; then
 			COPS_MCC=$(echo $EEMGINFO | awk -F[','] '{print $11}')
 			COPS_MNC=$(echo $EEMGINFO | awk -F[','] '{print $12}')
+			SINR=$ECIO
 		fi
 	# GSM Engineering Mode
 	elif [ $EEMGSTATE -eq 0 ]; then
