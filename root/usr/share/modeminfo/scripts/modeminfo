@@ -12,26 +12,7 @@ function get_device_info() {
                 *tty*) continue ;;
                 *) get_port ;;
         esac
-	for port in $(ls /dev/cdc-wdm* 2>/dev/null); do
-                if [ $DEVPORT == $port ]; then
-                        logger -t "luci-app-modeminfo" "device port is NOT serial. Check port or config!"
-                        exit 0
-                fi
-        done
 	O=$(gcom -d $DEVPORT -s $GSCRIPT 2>/dev/null)
-	#O=$(cat /root/modem.log)
-	SEC=$(uci show network | grep "/dev/"${DEV##/*/} | cut -f2 -d.)
-	if [ -z "$SEC" ]; then
-		getpath $DEVPORT
-		PORIG=$P
-		for DEV in /sys/class/tty/* /sys/class/usbmisc/*; do
-			getpath "/dev/"${DEV##/*/}
-			if [ "x$PORIG" = "x$P" ]; then
-				SEC=$(uci show network | grep "/dev/"${DEV##/*/} | cut -f2 -d.)
-				[ -n "$SEC" ] && break
-			fi
-		done
-	fi
 	IMEI=$(echo "$O" | awk -F[:] '/IMEI/ { print $2}')
 }
 
