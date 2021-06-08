@@ -8,15 +8,16 @@ GSCRIPT="$RES/scripts/3ginfo.gcom"
 
 function get_device_info() {
 	DEVPORT=$(uci -q get modeminfo.@modeminfo[0].device)
+	case $DEVPORT in
+                *tty*) continue ;;
+                *) get_port ;;
+        esac
 	for port in $(ls /dev/cdc-wdm* 2>/dev/null); do
                 if [ $DEVPORT == $port ]; then
                         logger -t "luci-app-modeminfo" "device port is NOT serial. Check port or config!"
                         exit 0
                 fi
         done
-	if [ "x$DEVPORT" = "x" ]; then
-		get_port
-	fi
 	O=$(gcom -d $DEVPORT -s $GSCRIPT 2>/dev/null)
 	#O=$(cat /root/modem.log)
 	SEC=$(uci show network | grep "/dev/"${DEV##/*/} | cut -f2 -d.)
