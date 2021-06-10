@@ -316,7 +316,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 						e.innerHTML = rsrq_bar(data.sinr + " dB", sinr_min);
 					}
 				}
-			var rsrp_min = -120;
+			var rsrp_min = -140;
 			if (e = document.getElementById('rsrp'))
 				if (data.rsrp == "--") {
 					e.innerHTML = String.format(data.rsrp + " dBm");
