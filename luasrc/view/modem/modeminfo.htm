@@ -33,7 +33,7 @@
         {                                                                                                                                                              
                 var vn = parseInt(v) || 0;                                                                                                                             
                 var mn = parseInt(m) || 100;                                                                                                                           
-                var pc = Math.floor(100*(1-(30 - vn)/(20 - mn)));                                                                                                        
+                var pc = Math.floor(100-(100*(1-((mn - vn)/(mn - 30))))); 
  
                 return String.format(
                         '<div style="width:100%%; max-width:200px; position:relative; border:1px solid #999999">' +
