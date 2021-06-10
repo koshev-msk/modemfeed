@@ -321,7 +321,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				if (data.rsrp == "--") {
 					e.innerHTML = String.format(data.rsrp + " dBm");
 				} else {
-					e.innerHTML = bar(data.rsrp + " dBm", rsrp_min);
+					e.innerHTML = rsrq_bar(data.rsrp + " dBm", rsrp_min);
 				}
 			var rsrq_min = -20;
 			if (e = document.getElementById('rsrq'))
