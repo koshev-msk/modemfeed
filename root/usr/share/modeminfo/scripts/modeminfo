@@ -14,6 +14,10 @@ function get_device_info() {
         esac
 	O=$(gcom -d $DEVPORT -s $GSCRIPT 2>/dev/null)
 	IMEI=$(echo "$O" | awk -F[:] '/IMEI/ { print $2}')
+	case $IMEI in
+		[0-9][0-9]*) continue ;;
+		*) IMEI="" ;;
+	esac
 }
 
 function get_port() {
