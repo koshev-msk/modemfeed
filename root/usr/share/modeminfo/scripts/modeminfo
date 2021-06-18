@@ -543,7 +543,7 @@ function dell_data(){
 function intel_data(){
 	generic_data
 	DEVx="$(echo "$O" | awk -F [:,] '/CGMI:|GMM:/{gsub("\"|\r","",$0);print substr($2,2);}')"
-	DEVICE=$(echo $DEVx | awk '{print $2" "$3" "$4" "$5}')
+	DEVICE=$(echo $DEVx)
 	if [ $MODE = LTE ]; then
 		EARFCN=$(echo "$O" | awk -F [:,] '/\+RSRP:/{print $3}')
 		LTE_Cx=$(echo "$O" | awk -F [:,] '/\+XLEC:/{print $3}')
