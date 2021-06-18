@@ -4,7 +4,7 @@ msgstr ""
 msgid "Report"
 msgstr "Отчёт"
 
-msgid "Create report"
+msgid "Generate report"
 msgstr "Создать отчет"
 
 msgid "Click \"Generate archive\" to download a tar archive of the selected options. It may take several minutes."

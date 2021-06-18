@@ -11,7 +11,7 @@ return view.extend({
 		var m, s, o;
 		
 		m = new form.Map('report', _('Generate report'));
-		m.description = _('Click \'Generate archive\' to download a tar archive of the selected options. It may take several minutes.');
+		m.description = _('Click "Generate archive" to download a tar archive of the selected options. It may take several minutes.');
 
 		s = m.section(form.TypedSection, 'report');
 		s.anonymous = true;
