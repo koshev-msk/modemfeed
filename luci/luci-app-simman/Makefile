@@ -16,6 +16,6 @@ PKG_MAINTAINER:=Sklyarec Konstantin <atskyua@gmail.com> Vladimir Ovseychuk <vgov
 
 LUCI_TITLE:=LuCI SIM manager Configuration Frontend
 
-include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
