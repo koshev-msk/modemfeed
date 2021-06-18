@@ -169,7 +169,8 @@ int modem_common_power_up(struct settings_entry *settings, struct modems_ops *mo
 	{
 		modem->power_up(settings);
 	}
-
+	gpio_set_value(settings->pwrkey_pin,HIGH);
+	sleep(1);
 	gpio_set_value(settings->gsmpow_pin,LOW);
 	while(count<=45){
 		if(modem_common_exist(settings->atdevice)==0){

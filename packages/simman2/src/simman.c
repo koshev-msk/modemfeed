@@ -152,10 +152,19 @@ int main(int argc, char **argv)
 			diff_delay = difftime(now_time, prev_delay_time);
 
 			// check if modem exists
+			if (first_start && ModemStarted(settings.atdevice) < 0 )
+			{
+				LOG("waiting for modem to turn on\n");
+				for(int i=0; i<30; i++){
+					sleep(1);
+					if(ModemStarted(settings.atdevice) >= 0)
+						break;
+				}
+			}
+
 			if ( ModemStarted(settings.atdevice) < 0 )
 			{
 				LOG("modem not found, try to turn on\n");
-				first_start = 1;
 				state = MODEM_INIT;
 			}
 			else
@@ -167,6 +176,7 @@ int main(int argc, char **argv)
 						LOG("modem started\n");
 						modem->init(&settings);
 						state = GET_IMEI;
+						first_start = 1;
 					} else
 					{
 						LOG("modem does not respond to AT-commands\n");
@@ -214,7 +224,7 @@ int main(int argc, char **argv)
 			}
 			sim2_status = tmp;
 
-			if (first_start && state == IDLE)
+			if (first_start && state == GET_IMEI)
 			{
 				if (settings.sim[0].prio < settings.sim[1].prio)
 				{
@@ -324,24 +334,20 @@ int main(int argc, char **argv)
 				case INIT:	break;
 				case GET_IMEI:
 							// get modem IMEI
-							if ( (long int)diff >= 3)
+							settings.imei = modem_summary(modem,INFO_IMEI, settings.atdevice);
+
+							prev_time = now_time;
+
+							if (strstr(settings.imei,"NONE") != NULL)
 							{
-								settings.imei = modem_summary(modem,INFO_IMEI, settings.atdevice);
-
-								prev_time = now_time;
-
-								if (strstr(settings.imei,"NONE") != NULL)
-								{
-									if (++retry >= 2 )
-										state = IDLE;
-									else
-										LOG("retry #%d reading IMEI\n", retry+1);
-
-									break;	
-								}
-								LOG("found modem with IMEI %s\n",settings.imei);
-								state =  GET_CCID;
+								if (++retry >= 2 )
+									state = IDLE;
+								else
+									LOG("retry #%d reading IMEI\n", retry+1);
+								break;	
 							}
+							LOG("found modem with IMEI %s\n",settings.imei);
+							state =  GET_CCID;
 							break;
 				case GET_CCID:
 							if ( (long int)diff >= 3)

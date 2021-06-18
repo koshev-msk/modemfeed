@@ -117,7 +117,8 @@ int gpio_export(uint16_t gpio)
 	{
 		return -1;
 	}
-	ret = write(fd, gpio, 1);
+	sprintf(buf, "%d", gpio);
+	ret = write(fd, buf, strlen(buf));
 
 	close(fd);
 	return ret;
@@ -130,30 +131,17 @@ int gpio_read(uint16_t gpio)
     sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
 
     if((fd = open(buf, O_RDONLY)) < 0)
-		return -1;
-
+	{
+		gpio_export(gpio);
+		if((fd = open(buf, O_RDONLY)) < 0)
+			return -1;
+	}
 	if((ret = read(fd, buf, 1)) > 0)
 	{
 		if (*buf == '0') ret=0;
 		else
 			if (*buf == '1') ret=1;
 	}
-
-	close(fd);
-	return ret;
-}
-
-int gpio_set_value(uint16_t gpio, uint8_t value)
-{
-	char buf[64];
-	int fd, ret;
-    sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
-
-	if((fd = open(buf, O_WRONLY)) < 0)
-		return -1;
-
-    sprintf(buf, "%d", value);
-    ret = write(fd, buf, 1);
 
 	close(fd);
 	return ret;
@@ -169,7 +157,9 @@ int gpio_set_direction(uint16_t gpio, int dir)
 
  	if((fd = open(buf, O_WRONLY)) < 0)
 	{
-		return -1;
+		gpio_export(gpio);
+		if((fd = open(buf, O_RDONLY)) < 0)
+			return -1;
 	}
 
 	if(write(fd, &s_directions_str[IN == dir ? 0 : 3], IN == dir ? 2 : 3) == -1) {
@@ -178,6 +168,26 @@ int gpio_set_direction(uint16_t gpio, int dir)
 
 	close(fd);
 	return 0;
+}
+
+int gpio_set_value(uint16_t gpio, uint8_t value)
+{
+	char buf[64];
+	int fd, ret;
+    sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+
+	if((fd = open(buf, O_WRONLY)) < 0)
+	{
+		gpio_export(gpio);
+		if((fd = open(buf, O_RDONLY)) < 0)
+			return -1;
+	}
+	gpio_set_direction(gpio, OUT);
+    sprintf(buf, "%d", value);
+    ret = write(fd, buf, 1);
+
+	close(fd);
+	return ret;
 }
 
 static const struct modems_ops *modems[] = {
