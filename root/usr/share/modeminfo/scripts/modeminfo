@@ -159,7 +159,7 @@ function get_reg_data(){
 	for CREG in "+CREG" "+CGREG" "+CEREG"; do
 		LAC=$(echo "$O" | awk -F[,] '/\'$CREG'/  {gsub("^A-F0-9|\"", ""); printf "%s", toupper($3)}')
 		CID=$(echo "$O" | awk -F[,] '/\'$CREG'/  {gsub("^A-F0-9|\"", ""); printf "%s", toupper($4)}')
-		if [ "$LAC" -a "$CID" -a "$LAC" != "FFFE" ]; then
+		if [ "$LAC" -a "$CID" ]; then
 			break
 		fi
 	done
