@@ -103,12 +103,18 @@ int ping(char *ip, char *iface)
 
 //---------------------------------------------------------OLD----------------------
 
-int gpio_export(uint16_t gpio)
+int gpio_export(int16_t gpio)
 {
 	char buf[64];
 	int fd, ret;
+	uint16_t igpio;
+	if(gpio<0){
+		igpio = 0-gpio;
+		sprintf(buf, "/sys/class/gpio/gpio%d/value", igpio);
+	} else {
+		sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+	}
 
-	sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
 	if(access(buf, F_OK)==0)
 	{
 		return 0;
@@ -117,18 +123,28 @@ int gpio_export(uint16_t gpio)
 	{
 		return -1;
 	}
-	sprintf(buf, "%d", gpio);
+	if(gpio<0){
+		sprintf(buf, "%d", igpio);
+	} else {
+		sprintf(buf, "%d", gpio);
+	}
 	ret = write(fd, buf, strlen(buf));
 
 	close(fd);
 	return ret;
 }
 
-int gpio_read(uint16_t gpio)
+int gpio_read(int16_t gpio)
 {
 	char buf[64];
 	int fd, ret;
-    sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+	uint16_t igpio;
+	if(gpio<0){
+		igpio = (uint16_t)(0-gpio);
+		sprintf(buf, "/sys/class/gpio/gpio%d/value", igpio);
+	} else {
+		sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+	}
 
     if((fd = open(buf, O_RDONLY)) < 0)
 	{
@@ -138,22 +154,33 @@ int gpio_read(uint16_t gpio)
 	}
 	if((ret = read(fd, buf, 1)) > 0)
 	{
-		if (*buf == '0') ret=0;
-		else
-			if (*buf == '1') ret=1;
+		if(gpio<0)
+		{
+			if (*buf == '0') ret=1;
+			else
+				if (*buf == '1') ret=0;
+		} else {
+			if (*buf == '0') ret=0;
+			else
+				if (*buf == '1') ret=1;
+		}
 	}
 
 	close(fd);
 	return ret;
 }
 
-int gpio_set_direction(uint16_t gpio, int dir)
+int gpio_set_direction(int16_t gpio, int dir)
 {
 	static const char s_directions_str[]  = "in\0out";
 	char buf[64];
 	int fd;
-
-	sprintf(buf, "/sys/class/gpio/gpio%d/direction", gpio);
+	if(gpio<0){
+		uint16_t igpio = 0-gpio;
+		sprintf(buf, "/sys/class/gpio/gpio%d/direction", igpio);
+	} else {
+		sprintf(buf, "/sys/class/gpio/gpio%d/direction", gpio);
+	}
 
  	if((fd = open(buf, O_WRONLY)) < 0)
 	{
@@ -170,11 +197,16 @@ int gpio_set_direction(uint16_t gpio, int dir)
 	return 0;
 }
 
-int gpio_set_value(uint16_t gpio, uint8_t value)
+int gpio_set_value(int16_t gpio, uint8_t value)
 {
 	char buf[64];
 	int fd, ret;
-    sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+	if(gpio<0){
+		uint16_t igpio = 0-gpio;
+		sprintf(buf, "/sys/class/gpio/gpio%d/value", igpio);
+	} else {
+		sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+	}
 
 	if((fd = open(buf, O_WRONLY)) < 0)
 	{
@@ -183,6 +215,12 @@ int gpio_set_value(uint16_t gpio, uint8_t value)
 			return -1;
 	}
 	gpio_set_direction(gpio, OUT);
+	if(gpio<0){
+		if(value==0)
+			value=1;
+		else
+			value=0;
+	}
     sprintf(buf, "%d", value);
     ret = write(fd, buf, 1);
 

@@ -75,12 +75,12 @@ struct settings_entry{
 	uint16_t sw_before_sysres;
 	uint8_t *imei;
 	uint8_t *ccid;
-	uint16_t pwrkey_pin;
-	uint16_t gsmpow_pin;
-	uint16_t simdet_pin;
-	uint16_t simaddr_pin;
-	uint16_t simdet0_pin;
-	uint16_t simdet1_pin;
+	int16_t pwrkey_pin;
+	int16_t gsmpow_pin;
+	int16_t simdet_pin;
+	int16_t simaddr_pin;
+	int16_t simdet0_pin;
+	int16_t simdet1_pin;
 };
 
 struct modems_ops{
@@ -124,8 +124,8 @@ int modem_common_sim_pullup(struct settings_entry *settings);
 int modem_send_command(char *receive, char *device, char *at_command, char *wait_output);
 int common_awk_f(char *source_str, char *delim, uint8_t num);
 int switch_sim(struct settings_entry *settings, struct modems_ops *modem, uint8_t sim_n, uint8_t first_start);
-int gpio_read(uint16_t gpio);
-int gpio_set_value(uint16_t gpio, uint8_t value);
+int gpio_read(int16_t gpio);
+int gpio_set_value(int16_t gpio, uint8_t value);
 char *uci_get_value(char *uci_path);
 char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev);
 
