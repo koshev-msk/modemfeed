@@ -35,6 +35,8 @@ define Package/simman2/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/simman2 $(1)/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/simman2_cli $(1)/sbin/
+	$(INSTALL_DIR) $(1)//usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/simman2.rpcd $(1)/usr/libexec/rpcd/simman2
 	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) ./files/simman2.config $(1)/etc/config/simman2
 	$(INSTALL_DIR) $(1)/etc/init.d
