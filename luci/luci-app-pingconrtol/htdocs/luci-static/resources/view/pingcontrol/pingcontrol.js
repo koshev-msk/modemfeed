@@ -34,6 +34,9 @@ return view.extend({
 
 		o = s.option(widgets.NetworkSelect, 'iface', _('Ping interface'));
 		o.rmempty = false;
+		o.textvalue = function(section_id) {
+			return uci.get('pingcontrol', section_id, 'iface');
+		}
 
 		o = s.option(form.DynamicList, 'testip', _('IP address of remote servers'));
 		o.datatype = 'ipaddr';
