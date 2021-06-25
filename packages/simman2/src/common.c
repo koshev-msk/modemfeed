@@ -461,8 +461,8 @@ char *uci_get_value(char *uci_path)
            break;
        case UCI_TYPE_LIST:
            uci_foreach_element(&ptr.o->v.list, e){
-        	   //fixme: ' ' missing
         	   strcat(buffer,e->name);
+        	   strcat(buffer," ");
            }
            break;
        default:
@@ -765,17 +765,17 @@ int uci_read_configuration(struct settings_entry *set)
 	}
 	set->simdet1_pin = atoi(p);
 
-	fprintf(stderr,"retry_num=%d, check_period=%d, delay=%d, atdevice=%s, gsmpow_pin=%d, simdet_pin=%d, simaddr_pin=%d, simdet0_pin=%d, simdet1_pin=%d, ",
-		set->retry_num,
-		set->check_period,
-		set->delay,
-		set->atdevice,
-		set->gsmpow_pin, set->simdet_pin, set->simaddr_pin, set->simdet0_pin, set->simdet1_pin );
+//	fprintf(stderr,"retry_num=%d, check_period=%d, delay=%d, atdevice=%s, gsmpow_pin=%d, simdet_pin=%d, simaddr_pin=%d, simdet0_pin=%d, simdet1_pin=%d, ",
+//		set->retry_num,
+//		set->check_period,
+//		set->delay,
+//		set->atdevice,
+//		set->gsmpow_pin, set->simdet_pin, set->simaddr_pin, set->simdet0_pin, set->simdet1_pin );
 	for (i = 0; i < sizeof(set->serv)/sizeof(set->serv[0]);i++)
 		if (set->serv[i].ip)
-			fprintf(stderr,"%s ",set->serv[i].ip);
+//			fprintf(stderr,"%s ",set->serv[i].ip);
 
-	fprintf(stderr,"\n");
+//	fprintf(stderr,"\n");
 	return 0;
 }
 
@@ -791,6 +791,12 @@ char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
 
     switch(InfoParam)
     {
+		case INFO_MODEM:
+			strcpy(b,modem->name);
+			break;
+		case INFO_FW:
+			modem->version(b,dev);
+			break;
     	case INFO_SIM:
 			uci_read_configuration(&settings);
 			modem_sim_state(b,&settings);
@@ -801,6 +807,11 @@ char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
 			};
 			sprintf(cmd,"echo %s > /tmp/simman2/ccid",b);
 			system(cmd);
+			break;
+		case INFO_IMSI:
+			if(modem->imsi(b,dev)){
+				strcpy(b,"NONE");
+			};
 			break;
 		case INFO_PINSTAT:
 			modem->pin_state(b,dev);

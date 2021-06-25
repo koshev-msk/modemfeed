@@ -265,12 +265,13 @@ int sim5360_sim_pullup(struct settings_entry *settings){
 }
 
 struct modems_ops sim5360_ops = {
-		.name				= "sim5360",
+		.name				= "SIMCOM SIM5360",
 		.init				= sim5360_init,
 		.probe				= sim5360_probe,
 		.version			= sim5360_version,
 		.imei				= sim5360_imei,
 		.ccid				= sim5360_ccid,
+		.imsi				= modem_common_imsi,
 		.pin_state			= modem_common_pin_state,
 		.csq				= modem_common_csq,
 		.bs_info			= sim5360_bs_info,

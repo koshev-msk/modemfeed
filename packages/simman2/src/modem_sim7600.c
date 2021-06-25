@@ -285,12 +285,13 @@ int sim7600_power_up(struct settings_entry *settings){
 }
 
 struct modems_ops sim7600_ops = {
-		.name				= "sim7600",
+		.name				= "SIMCOM SIM7600E-H",
 		.init				= sim7600_init,
 		.probe				= sim7600_probe,
 		.version			= sim7600_version,
 		.imei				= sim7600_imei,
 		.ccid				= sim7600_ccid,
+		.imsi				= modem_common_imsi,
 		.pin_state			= modem_common_pin_state,
 		.csq				= modem_common_csq,
 		.bs_info			= sim7600_bs_info,

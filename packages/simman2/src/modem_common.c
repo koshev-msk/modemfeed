@@ -118,6 +118,22 @@ int modem_common_data_registration(char *receive, char *device){
 	return 0;
 }
 
+int modem_common_imsi(char *receive, char *device){
+	if(modem_common_send_at(device)!=0){
+		strcpy(receive,"ERROR");
+		return -1;
+	}
+
+	if(modem_send_command(receive,device,"\rAT+CIMI\r","OK")!=0){
+		strcpy(receive,"ERROR");
+		return -1;
+	}
+	if(cut_string(receive, "\r\n", "\r\n")!=0){
+		strcpy(receive,"ERROR");
+	}
+	return 0;
+}
+
 int modem_common_exist(char *device){
 	// 0 - OK, -1 - not found
 	return access(device, F_OK);

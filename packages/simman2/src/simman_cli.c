@@ -8,9 +8,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <syslog.h>
+#include <getopt.h>
 
 #include "common.h"
 
+static const char *device, *config;
 
 typedef struct current_info{
 	uint8_t *atdevice;
@@ -54,72 +56,22 @@ int GetSimInfo(struct settings_entry *settings)
 	modem = modems_backend(settings->atdevice);
 	if(modem!=NULL){
 		modem->init(settings);
-		LOG("Looking for SIM \n");
-		siminfo.sim = 			modem_summary(modem,INFO_SIM, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.sim='%s'",siminfo.sim);
-		system(cmd);
-		LOG("%s \n",siminfo.sim);
-
-		LOG("Reading SIM CCID\n");
-		siminfo.ccid = 			modem_summary(modem,INFO_CCID, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.ccid='%s'",siminfo.ccid);
-		system(cmd);
-		LOG("%s \n",siminfo.ccid);
-
-		LOG("Reading PIN Status\n");
-		siminfo.pincode_stat = 	modem_summary(modem,INFO_PINSTAT, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.pincode_stat='%s'",siminfo.pincode_stat);
-		system(cmd);
-		LOG("%s \n",siminfo.pincode_stat);
-
-		LOG("Reading Signal Strength\n");
-		siminfo.sig_lev = 		modem_summary(modem,INFO_SIGLEV, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.sig_lev='%s'",siminfo.sig_lev);
-		system(cmd);
-		LOG("%s \n",siminfo.sig_lev);
-
-		LOG("Reading Registration Status\n");
-		siminfo.reg_stat = 		modem_summary(modem,INFO_REGSTAT, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.reg_stat='%s'",siminfo.reg_stat);
-		system(cmd);
-		LOG("%s \n",siminfo.reg_stat);
-
-		LOG("Reading Base Station ID\n");
-		siminfo.base_st_id = 	modem_summary(modem,INFO_BASESTID, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.base_st_id='%s'",siminfo.base_st_id);
-		system(cmd);
-		LOG("%s \n",siminfo.base_st_id);
-
-		LOG("Reading Band\n");
-		siminfo.base_st_bw = 	modem_summary(modem,INFO_BASESTBW, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.base_st_bw='%s'",siminfo.base_st_bw);
-		system(cmd);
-		LOG("%s \n",siminfo.base_st_bw);
-
-		LOG("Reading Network Type\n");
-		siminfo.net_type = 		modem_summary(modem,INFO_NETTYPE, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.net_type='%s'",siminfo.net_type);
-		system(cmd);
-		LOG("%s \n",siminfo.net_type);
-
-		LOG("Reading GPRS Status\n");
-		siminfo.gprs_reg_stat = modem_summary(modem,INFO_GPRSSTAT, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.gprs_reg_stat='%s'",siminfo.gprs_reg_stat);
-		system(cmd);
-		LOG("%s \n",siminfo.gprs_reg_stat);
-
-		LOG("Reading Package Type\n");
-		siminfo.pack_type = 	modem_summary(modem,INFO_PACKTYPE, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.pack_type='%s'",siminfo.pack_type);
-		system(cmd);
-		LOG("%s \n",siminfo.pack_type);
-
-		LOG("Reading Modem IMEI\n");
-		siminfo.imei = 			modem_summary(modem,INFO_IMEI, settings->atdevice);
-		sprintf(cmd,"uci set simman2.info.imei='%s'",siminfo.imei);
-		system(cmd);
-		LOG("%s \n",siminfo.imei);
-		system("uci commit simman2");
+		fprintf(stdout, "{\n");
+		fprintf(stdout, "  \"modem\": \"%s\",\n", modem_summary(modem,INFO_MODEM, settings->atdevice));
+		fprintf(stdout, "  \"firmware\": \"%s\",\n", modem_summary(modem,INFO_FW, settings->atdevice));
+		fprintf(stdout, "  \"imei\": \"%s\",\n", modem_summary(modem,INFO_IMEI, settings->atdevice));
+		fprintf(stdout, "  \"ccid\": \"%s\",\n", modem_summary(modem,INFO_CCID, settings->atdevice));
+		fprintf(stdout, "  \"imsi\": \"%s\",\n", modem_summary(modem,INFO_IMSI, settings->atdevice));
+		fprintf(stdout, "  \"sim_state\": \"%s\",\n", modem_summary(modem,INFO_SIM, settings->atdevice));
+		fprintf(stdout, "  \"pin_state\": \"%s\",\n", modem_summary(modem,INFO_PINSTAT, settings->atdevice));
+		fprintf(stdout, "  \"csq\": \"%s\",\n", modem_summary(modem,INFO_SIGLEV, settings->atdevice));
+		fprintf(stdout, "  \"net_reg\": \"%s\",\n", modem_summary(modem,INFO_REGSTAT, settings->atdevice));
+		fprintf(stdout, "  \"net_type\": \"%s\",\n", modem_summary(modem,INFO_NETTYPE, settings->atdevice));
+		fprintf(stdout, "  \"data_reg\": \"%s\",\n", modem_summary(modem,INFO_GPRSSTAT, settings->atdevice));
+		fprintf(stdout, "  \"data_type\": \"%s\",\n", modem_summary(modem,INFO_PACKTYPE, settings->atdevice));
+		fprintf(stdout, "  \"bs_id\": \"%s\",\n", modem_summary(modem,INFO_BASESTID, settings->atdevice));
+		fprintf(stdout, "  \"band\": \"%s\"\n", modem_summary(modem,INFO_BASESTBW, settings->atdevice));
+		fprintf(stdout, "}\n");
 	} else
 	{
 		LOG("modem does not respond to AT-commands\n");
@@ -127,20 +79,140 @@ int GetSimInfo(struct settings_entry *settings)
 	return 0;
 }
 
+static const char *optString = "d:a:scprbnimRBSDIh?";
+static const struct option longOpts[] = {
+		{"device", required_argument, NULL,'d'},		
+		{"get-sim-status",no_argument, NULL,'s' },
+		{"get-ccid",no_argument, NULL,'c'},
+		{"get-pin-status",no_argument, NULL,'p'},
+		{"get-rssi",no_argument, NULL,'r'},
+		{"get-reg",no_argument, NULL,'R'},		
+		{"get-bsid",no_argument, NULL,'B'},
+		{"get-band",no_argument, NULL,'b'},
+		{"get-net-type",no_argument, NULL,'n'},
+		{"get-data-status",no_argument, NULL,'S'},
+		{"get-data-type",no_argument, NULL,'D'},
+		{"get-imsi",no_argument, NULL,'i'},
+		{"get-imei",no_argument, NULL,'I'},
+		{"get-modem",no_argument, NULL,'m'},
+		{"all",required_argument, NULL,'a'},
+		{"help", no_argument, NULL,'h'},
+		{ NULL, no_argument, NULL, 0 }
+};
+
+void display_usage(void)
+{
+	printf("Options:\n"
+			"  --device=NAME, -d NAME:        Set device name to NAME\n"
+			"  --get-sim-status, -s:          Get SIM information\n"
+			"  --get-ccid, -c:                Get CCID SIM card\n"
+			"  --get-pin-status, -p:          Get PIN status\n"
+			"  --get-rssi, -r:                Get RSSI level\n"
+			"  --get-reg, -R:                 Get registration status\n"
+			"  --get-bsid, -B:                Get base station id\n"
+			"  --get-band, -b:                Get mobile band\n"
+			"  --get-net-type, -n:            Get network type\n"
+			"  --get-data-status, -S:         Get data connection status\n"
+			"  --get-data-type, -D:           Get data connection type\n"
+			"  --get-imsi, -i:                Get IMSI SIM card\n"
+			"  --get-imei, -I:                Get IMEI modem\n"
+			"  --get-modem, -m:               Get modem type\n"
+			"       OR\n"
+			"  --all=CONFIG, -a CONFIG:       Get all information about the requested CONFIG\n"
+			);
+	exit(EXIT_FAILURE);
+}
+
+
 int main(int argc, char **argv)
 {
-	struct settings_entry settings;
-	if ( uci_read_configuration(&settings) == 0 )
-	{
-		if ( ModemStarted(settings.atdevice) < 0 )
+	int ch,cmd;
+	struct modems_ops *modem = NULL;
+
+	while((ch = getopt_long(argc, argv, optString, longOpts, NULL)) != -1) {
+		switch(ch){
+			case 'd':
+				device=optarg;
+				break;
+			case 's':
+				cmd=INFO_SIM;
+				break;
+			case 'c':
+				cmd=INFO_CCID;
+				break;
+			case 'p':
+				cmd=INFO_PINSTAT;
+				break;
+			case 'r':
+				cmd=INFO_SIGLEV;
+				break;
+			case 'R':
+				cmd=INFO_REGSTAT;
+				break;
+			case 'B':
+				cmd=INFO_BASESTID;
+				break;
+			case 'b':
+				cmd=INFO_BASESTBW;
+				break;
+			case 'n':
+				cmd=INFO_NETTYPE;
+				break;
+			case 'S':
+				cmd=INFO_GPRSSTAT;
+				break;
+			case 'D':
+				cmd=INFO_PACKTYPE;
+				break;
+			case 'i':
+				cmd=INFO_IMSI;
+				break;
+			case 'I':
+				cmd=INFO_IMEI;
+				break;
+			case 'm':
+				cmd=INFO_MODEM;
+				break;
+			case 'a':
+				config=optarg;
+				break;
+			case 'h':
+			case '?':
+			default:
+				display_usage();
+				break;
+		}
+	}
+	if ((!device) && (!config)) {
+		LOG("No device or config given\n");
+		display_usage();
+	}
+	if (!config) {
+		if ( ModemStarted(device) < 0 )
 		{
-			LOG("modem not found\n");
+			LOG("Modem not found\n");
 			return 1;
 		}
-		LOG("Reading SIM info...\n");
-		if(GetSimInfo(&settings))
-			LOG("Error while reading SIM info\n");
-		//LOG("OK\n");
+
+		modem = modems_backend(device);
+		if(modem!=NULL){
+			fprintf(stdout, "%s\n", modem_summary(modem,cmd,device));
+		} else
+		{
+			LOG("Modem does not respond to AT-commands\n");
+		}
+	} else {
+		struct settings_entry settings;
+		if ( uci_read_configuration(&settings) == 0 )
+		{
+			if ( ModemStarted(settings.atdevice) < 0 )
+			{
+				LOG("modem not found\n");
+				return 1;
+			}
+			if(GetSimInfo(&settings))
+				LOG("Error while reading SIM info\n");
+		}
 	}
 	return 0;
 }

@@ -267,12 +267,13 @@ int sim5300_power_up(struct settings_entry *settings){
 }
 
 struct modems_ops sim5300_ops = {
-		.name				= "sim5300",
+		.name				= "SIMCOM SIM5300E",
 		.init				= sim5300_init,
 		.probe				= sim5300_probe,
 		.version			= sim5300_version,
 		.imei				= sim5300_imei,
 		.ccid				= sim5300_ccid,
+		.imsi				= modem_common_imsi,
 		.pin_state			= modem_common_pin_state,
 		.csq				= modem_common_csq,
 		.bs_info			= sim5300_bs_info,

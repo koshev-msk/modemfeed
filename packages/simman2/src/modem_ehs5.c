@@ -197,12 +197,13 @@ int ehs5_power_up(struct settings_entry *settings){
 }
 
 struct modems_ops ehs5_ops = {
-		.name				= "ehs5",
+		.name				= "Cinterion EHS5",
 		.probe				= ehs5_probe,
 		.init				= ehs5_init,
 		.version			= ehs5_version,
 		.imei				= ehs5_imei,
 		.ccid				= ehs5_ccid,
+		.imsi				= modem_common_imsi,
 		.pin_state			= modem_common_pin_state,
 		.csq				= modem_common_csq,
 		.bs_info			= ehs5_bs_info,

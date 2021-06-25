@@ -15,6 +15,9 @@
 #define	INFO_GPRSSTAT	8
 #define	INFO_PACKTYPE	9
 #define	INFO_IMEI		10
+#define	INFO_MODEM		11
+#define	INFO_IMSI		12
+#define	INFO_FW 		13
 
 #define IN		0
 #define OUT		1
@@ -102,6 +105,7 @@ struct modems_ops{
 	int (*sim_pullup)(struct settings_entry *);
 	int (*power_down)(struct settings_entry *);
 	int (*power_up)(struct settings_entry *);
+	int (*imsi)(char *,char *);
 };
 
 extern struct modems_ops ehs5_ops;
@@ -112,6 +116,7 @@ extern struct modems_ops sim5300_ops;
 int modem_common_send_at(char *device);
 int modem_common_pin_state(char *receive, char *device);
 int modem_common_csq(char *receive, char *device);
+int modem_common_imsi(char *receive, char *device);
 int modem_common_registration(char *receive, char *device);
 int modem_common_data_registration(char *receive, char *device);
 int modem_common_exist(char *device);
