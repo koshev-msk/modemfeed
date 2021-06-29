@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=30
+START=18
 STOP=10
 USE_PROCD=1
 
@@ -42,7 +42,7 @@ start_service_daemon(){
 	fi
 	
 	procd_open_instance
-	procd_set_param command "$DIR/$PROG"
+	procd_set_param command $DIR/$PROG -c $s
 	procd_set_param respawn ${respawn_threshold:-360} ${respawn_timeout:-5} ${respawn_retry:-0}
 	procd_close_instance
 }
@@ -57,12 +57,7 @@ service_triggers()
         procd_add_reload_trigger "simman2"
 }
 
-stop(){
-	service_stop $DIR/$PROG
-}
-
 reload_service() {
-	service_stop $DIR/$PROG
-	config_load 'simman2'
-	config_foreach start_service_daemon 'simman2'
+	stop
+	start
 }

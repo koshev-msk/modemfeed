@@ -2,15 +2,35 @@
 'require fs';
 'require rpc';
 'require uci';
+'require ui';
 'require view';
 'require form';
 'require tools.widgets as widgets';
+
+var modemRequestAll = rpc.declare({
+	object: 'simman2',
+	method: 'statusall',
+	params: [ 'config' ],
+	expect: { '': {} }
+});
+
+var DummyValueExt = form.DummyValue.extend({
+	renderWidget: function(section_id, option_index, cfgvalue) {
+		return E([], [
+			E('div', {
+				'class': 'cbi-value-field',
+				'id': this.cbid(section_id),
+				'style': 'color:#c73d3d;margin-left:0'
+			})
+		]);
+	}
+});
 
 return view.extend({
 	handleEnableService: rpc.declare({
 		object: 'luci',
 		method: 'setInitAction',
-		params: [ 'simman2', 'enable' ],
+		params:  [ 'simman2', 'enable' ],
 		expect: { result: false }
 	}),
 
@@ -36,8 +56,11 @@ return view.extend({
 			return uci.set('simman2', section, 'enabled', value);
 		}, this);
 
-		o = s.taboption('general', widgets.NetworkSelect, 'interface', _('Interface name'));
+		o = s.taboption('general', widgets.NetworkSelect, 'iface', _('Interface name'));
 		o.rmempty = false;
+		o.textvalue = function(section_id) {
+			return uci.get('simman2', section_id, 'iface');
+		}
 
 		o = s.taboption('general', form.Value, 'atdevice', _('AT modem device name'));
 		o.rmempty = false;
@@ -140,38 +163,70 @@ return view.extend({
 		o.datatype = 'ipaddr';
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'imei', _('Modem IMEI'));
+		o = s.taboption('info', DummyValueExt, 'modem', _('Modem'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'sim', _('SIM State'));
+		o = s.taboption('info', DummyValueExt, 'firmware', _('Firmware version'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'ccid', _('Active SIM CCID'));
+		o = s.taboption('info', DummyValueExt, 'imei', _('Modem IMEI'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'pincode_stat', _('Pincode Status'));
+		o = s.taboption('info', DummyValueExt, 'ccid', _('Active SIM CCID'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'sig_lev', _('Signal Strength'));
+		o = s.taboption('info', DummyValueExt, 'imsi', _('Active SIM IMSI'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'reg_stat', _('Registration Status'));
+		o = s.taboption('info', DummyValueExt, 'sim', _('SIM State'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'base_st_id', _('Base Station ID'));
+		o = s.taboption('info', DummyValueExt, 'pincode_stat', _('Pincode Status'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'base_st_bw', _('Base Station Band'));
+		o = s.taboption('info', DummyValueExt, 'sig_lev', _('Signal Strength'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'net_type', _('Cellural Network Type'));
+		o = s.taboption('info', DummyValueExt, 'reg_stat', _('Registration Status'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'gprs_reg_stat', _('GPRS Status'));
+		o = s.taboption('info', DummyValueExt, 'net_type', _('Cellural Network Type'));
 		o.modalonly = true;
 
-		o = s.taboption('info', form.DummyValue, 'pack_type', _('Package Type'));
+		o = s.taboption('info', DummyValueExt, 'gprs_reg_stat', _('GPRS Status'));
 		o.modalonly = true;
+
+		o = s.taboption('info', DummyValueExt, 'pack_type', _('Package Type'));
+		o.modalonly = true;
+
+		o = s.taboption('info', DummyValueExt, 'base_st_id', _('Base Station ID'));
+		o.modalonly = true;
+
+		o = s.taboption('info', DummyValueExt, 'base_st_bw', _('Base Station Band'));
+		o.modalonly = true;		
+
+		o = s.taboption('info', form.Button, 'refresh',_(' '));
+		o.modalonly = true;
+		o.inputstyle = 'action important';
+		o.inputtitle = _('Refresh');
+		o.onclick = L.bind(function(ev, section_id) {
+			return modemRequestAll(section_id).then(function(t) {
+				document.getElementById('cbid.simman2.%s.modem'.format(section_id)).textContent = t.modem || 'n/a';
+				document.getElementById('cbid.simman2.%s.firmware'.format(section_id)).textContent = t.firmware || 'n/a';
+				document.getElementById('cbid.simman2.%s.imei'.format(section_id)).textContent = t.imei || 'n/a';
+				document.getElementById('cbid.simman2.%s.ccid'.format(section_id)).textContent = t.ccid || 'n/a';
+				document.getElementById('cbid.simman2.%s.imsi'.format(section_id)).textContent = t.imsi || 'n/a';
+				document.getElementById('cbid.simman2.%s.sim'.format(section_id)).textContent = t.sim_state || 'n/a';
+				document.getElementById('cbid.simman2.%s.pincode_stat'.format(section_id)).textContent = t.pin_state || 'n/a';
+				document.getElementById('cbid.simman2.%s.sig_lev'.format(section_id)).textContent = t.csq || 'n/a';
+				document.getElementById('cbid.simman2.%s.reg_stat'.format(section_id)).textContent = t.net_reg || 'n/a';				
+				document.getElementById('cbid.simman2.%s.net_type'.format(section_id)).textContent = t.net_type || 'n/a';
+				document.getElementById('cbid.simman2.%s.gprs_reg_stat'.format(section_id)).textContent = t.data_reg || 'n/a';
+				document.getElementById('cbid.simman2.%s.pack_type'.format(section_id)).textContent = t.data_type || 'n/a';
+				document.getElementById('cbid.simman2.%s.base_st_id'.format(section_id)).textContent = t.bs_id || 'n/a';
+				document.getElementById('cbid.simman2.%s.base_st_bw'.format(section_id)).textContent = t.band || 'n/a';
+			});
+		})
 
 		return m.render();
 	}

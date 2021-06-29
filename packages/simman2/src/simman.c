@@ -36,11 +36,14 @@ int8_t state,
 	   changeCounterForReboot,
 	   retry;	   
 
-static int usage(const char *prog)
+static const char *config;
+
+static int display_usage(void)
 {
-	fprintf(stderr, "Usage: %s\n"
-			"\n", prog);
-	exit(0);
+	printf("Options:\n"
+			"  -c CONFIG:       Run program with the requested CONFIG\n"
+			);
+	exit(EXIT_FAILURE);
 }
 
 int ModemStarted(char *atdevice)
@@ -123,12 +126,20 @@ int main(int argc, char **argv)
 
 	signal(SIGPIPE, SIG_IGN);
 
-	while ((ch = getopt(argc, argv, "h")) != -1) {
+	while ((ch = getopt(argc, argv, "hc:")) != -1) {
 		switch (ch) {
+			case 'c':
+				config=optarg;
+				break;
 			case 'h':
 			default:
-				return usage(*argv);
+				return display_usage();
 		}
+	}
+
+	if (!config) {
+		LOG("No config given\n");
+		display_usage();
 	}
 
 	time(&now_time);
@@ -143,7 +154,7 @@ int main(int argc, char **argv)
 
 	LOG("service started\n");
 
-	if (uci_read_configuration(&settings) == 0)  
+	if (uci_read_configuration(&settings,config) == 0)  
 		do{
 			// get now time
 			time(&now_time);

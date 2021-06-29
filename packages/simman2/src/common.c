@@ -375,20 +375,6 @@ int modem_send_command(char *receive, char *device ,char *at_command, char *wait
 int modem_sim_state(char *receive, struct settings_entry *settings){
 	int sim0_stat, sim1_stat, active_sim, res=0;
 
-	res=gpio_set_direction(settings->simdet0_pin,0);
-	if (res!=0)
-	{
-		printf("sim0_detect direction error: %d\n",res);
-		return 1;
-	}
-
-	res=gpio_set_direction(settings->simdet1_pin,0);
-	if (res!=0)
-	{
-		printf("sim1_detect direction error: %d\n",res);
-	    return 1;
-	}
-
 	sim0_stat=gpio_read(settings->simdet0_pin);
 	if (sim0_stat<0)
 	{
@@ -516,95 +502,110 @@ int uci_set_value(char *section_name, char *option, char *value){
 	return 0;
 }
 
-int uci_read_configuration(struct settings_entry *set)
+int uci_read_configuration(struct settings_entry *set, char *config)
 {
 	char * p, path[128];
 	char i,j;
 
-	if ((p = uci_get_value("simman2.core.pwrkey_gpio_pin")) == NULL)
+	set->name = config;
+
+	sprintf(path,"simman2.%s.pwrkey_gpio_pin",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading gsmpow_gpio_pin\n");
 		return -1;
 	}
 	set->pwrkey_pin = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.gsmpow_gpio_pin")) == NULL)
+	sprintf(path,"simman2.%s.gsmpow_gpio_pin",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading gsmpow_gpio_pin\n");
 		return -1;
 	}
 	set->gsmpow_pin = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.simdet_gpio_pin")) == NULL)
+	sprintf(path,"simman2.%s.simdet_gpio_pin",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading simdet_gpio_pin\n");
 		return -1;
 	}
 	set->simdet_pin = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.simaddr_gpio_pin")) == NULL)
+	sprintf(path,"simman2.%s.simaddr_gpio_pin",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading simaddr_gpio_pin\n");
 		return -1;
 	}
 	set->simaddr_pin = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.simdet0_gpio_pin")) == NULL)
+	sprintf(path,"simman2.%s.simdet0_gpio_pin",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading simdet0_gpio_pin\n");
 		return -1;
 	}
 	set->simdet0_pin = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.simdet1_gpio_pin")) == NULL)
+	sprintf(path,"simman2.%s.simdet1_gpio_pin",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading simdet1_gpio_pin\n");
 		return -1;
 	}
 	set->simdet1_pin = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.iface")) == NULL)
+	sprintf(path,"simman2.%s.iface",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading interface\n");
 		return -1;
 	}
 	set->iface = p;
 
-	if ((p = uci_get_value("simman2.core.only_first_sim")) == NULL)
+	sprintf(path,"simman2.%s.only_first_sim",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading only_first_sim\n");
 		return -1;
 	}
 	set->only_first_sim = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.retry_num")) == NULL)
+	sprintf(path,"simman2.%s.retry_num",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading retry_num\n");
 		return -1;
 	}
 	set->retry_num = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.check_period")) == NULL)
+	sprintf(path,"simman2.%s.check_period",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading check_period\n");
 		return -1;
 	}
 	set->check_period = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.delay")) == NULL)
+	sprintf(path,"simman2.%s.delay",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading delay\n");
 		return -1;
 	}
 	set->delay = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.csq_level")) == NULL)
+	sprintf(path,"simman2.%s.csq_level",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		set->csq_level = 0;
 	}
 	set->csq_level = atoi(p);
 
-	if ((p = uci_get_value("simman2.core.sw_before_modres")) == NULL)
+	sprintf(path,"simman2.%s.sw_before_modres",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading sw_before_modres\n");
 		set->sw_before_modres = 0;
@@ -617,7 +618,8 @@ int uci_read_configuration(struct settings_entry *set)
 	else if(set->sw_before_modres < 0)
 		set->sw_before_modres = 0;
 
-	if ((p = uci_get_value("simman2.core.sw_before_sysres")) == NULL)
+	sprintf(path,"simman2.%s.sw_before_sysres",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading sw_before_sysres\n");
 		set->sw_before_sysres = 0;
@@ -630,7 +632,8 @@ int uci_read_configuration(struct settings_entry *set)
 	else if(set->sw_before_sysres < 0)
 		set->sw_before_sysres = 0;
 
-	if ((p = uci_get_value("simman2.core.testip")) == NULL)
+	sprintf(path,"simman2.%s.testip",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading testip\n");
 		return -1;
@@ -657,14 +660,14 @@ int uci_read_configuration(struct settings_entry *set)
 	{
 		set->sim[i].init = 0;
 
-		sprintf(path,"simman2.core.sim%d_priority",i);
+		sprintf(path,"simman2.%s.sim%d_priority",config,i);
 		if ((p = uci_get_value(path)) == NULL)
 		{
 			fprintf(stderr,"Error reading sim%d_priority\n",i);
 			continue;
 		}
 		set->sim[i].prio = atoi(p);
-		sprintf(path,"simman2.core.sim%d_testip",i);
+		sprintf(path,"simman2.%s.sim%d_testip",config,i);
 		if ((p = uci_get_value(path)) != NULL)
 		{
 			char *tok = strtok(p," ");
@@ -675,7 +678,7 @@ int uci_read_configuration(struct settings_entry *set)
 				tok	= strtok(NULL," ");
 			}
 		}
-		sprintf(path,"simman2.core.sim%d_apn",i);
+		sprintf(path,"simman2.%s.sim%d_apn",config,i);
 		if ((p = uci_get_value(path)) == NULL)
 		{
 			//fprintf(stderr,"Error reading sim%d_apn\n",i);
@@ -683,7 +686,7 @@ int uci_read_configuration(struct settings_entry *set)
 		} else
 			set->sim[i].apn = p;
 
-		sprintf(path,"simman2.core.sim%d_username",i);
+		sprintf(path,"simman2.%s.sim%d_username",config,i);
 		if ((p = uci_get_value(path)) == NULL)
 		{
 			//fprintf(stderr,"Error reading sim%d_username\n",i);
@@ -691,7 +694,7 @@ int uci_read_configuration(struct settings_entry *set)
 		} else
 			set->sim[i].user = p;
 
-		sprintf(path,"simman2.core.sim%d_password",i);
+		sprintf(path,"simman2.%s.sim%d_password",config,i);
 		if ((p = uci_get_value(path)) == NULL)
 		{
 			//fprintf(stderr,"Error reading sim%d_password\n",i);
@@ -699,7 +702,7 @@ int uci_read_configuration(struct settings_entry *set)
 		} else
 			set->sim[i].pass = p;
 
-		sprintf(path,"simman2.core.sim%d_pincode",i);
+		sprintf(path,"simman2.%s.sim%d_pincode",config,i);
 		if ((p = uci_get_value(path)) == NULL)
 		{
 			//fprintf(stderr,"Error reading sim%d_pincode\n",i);
@@ -716,54 +719,13 @@ int uci_read_configuration(struct settings_entry *set)
 		return -1;
 	}
 
-	if ((p = uci_get_value("simman2.core.atdevice")) == NULL)
+	sprintf(path,"simman2.%s.atdevice",config);
+	if ((p = uci_get_value(path)) == NULL)
 	{
 		fprintf(stderr,"Error reading atdevice\n");
 		return -1;
 	}
 	set->atdevice = p;
-
-	if ((p = uci_get_value("simman2.core.iface")) == NULL)
-	{
-		fprintf(stderr,"Error reading interface\n");
-		return -1;
-	}
-	set->iface = p;
-
-	if ((p = uci_get_value("simman2.core.gsmpow_gpio_pin")) == NULL)
-	{
-		fprintf(stderr,"Error reading gsmpow_gpio_pin\n");
-		return -1;
-	}
-	set->gsmpow_pin = atoi(p);
-
-	if ((p = uci_get_value("simman2.core.simdet_gpio_pin")) == NULL)
-	{
-		fprintf(stderr,"Error reading simdet_gpio_pin\n");
-		return -1;
-	}
-	set->simdet_pin = atoi(p);
-
-	if ((p = uci_get_value("simman2.core.simaddr_gpio_pin")) == NULL)
-	{
-		fprintf(stderr,"Error reading simaddr_gpio_pin\n");
-		return -1;
-	}
-	set->simaddr_pin = atoi(p);
-
-	if ((p = uci_get_value("simman2.core.simdet0_gpio_pin")) == NULL)
-	{
-		fprintf(stderr,"Error reading simdet0_gpio_pin\n");
-		return -1;
-	}
-	set->simdet0_pin = atoi(p);
-
-	if ((p = uci_get_value("simman2.core.simdet1_gpio_pin")) == NULL)
-	{
-		fprintf(stderr,"Error reading simdet1_gpio_pin\n");
-		return -1;
-	}
-	set->simdet1_pin = atoi(p);
 
 //	fprintf(stderr,"retry_num=%d, check_period=%d, delay=%d, atdevice=%s, gsmpow_pin=%d, simdet_pin=%d, simaddr_pin=%d, simdet0_pin=%d, simdet1_pin=%d, ",
 //		set->retry_num,
@@ -786,7 +748,7 @@ char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
 	char cmd[256] = {0};
     char *defval = "error";
 
-	struct settings_entry settings;
+//	struct settings_entry settings;
 
 
     switch(InfoParam)
@@ -797,10 +759,10 @@ char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
 		case INFO_FW:
 			modem->version(b,dev);
 			break;
-    	case INFO_SIM:
-			uci_read_configuration(&settings);
-			modem_sim_state(b,&settings);
-			break;
+    	// case INFO_SIM:
+		// 	uci_read_configuration(&settings,config);
+		// 	modem_sim_state(b,&settings);
+		// 	break;
     	case INFO_CCID:
 			if(modem->ccid(b,dev)){
 				strcpy(b,"NONE");
@@ -1012,18 +974,18 @@ int switch_sim(struct settings_entry *settings, struct modems_ops *modem, uint8_
 	//fixme
 	sprintf(buf,"network.%s",settings->iface);
 
-	sprintf(buf2,"simman2.core.sim%d_apn",sim_n);
+	sprintf(buf2,"simman2.%s.sim%d_apn",settings->name,sim_n);
 	uci_set_value(buf,"apn",uci_get_value(buf2));
 
 
-	sprintf(buf2,"simman2.core.sim%d_pincode",sim_n);
+	sprintf(buf2,"simman2.%s.sim%d_pincode",settings->name,sim_n);
 	uci_set_value(buf,"pincode",uci_get_value(buf2));
 
 
-	sprintf(buf2,"simman2.core.sim%d_username",sim_n);
+	sprintf(buf2,"simman2.%s.sim%d_username",settings->name,sim_n);
 	uci_set_value(buf,"username",uci_get_value(buf2));
 
-	sprintf(buf2,"simman2.core.sim%d_password",sim_n);
+	sprintf(buf2,"simman2.%s.sim%d_password",settings->name,sim_n);
 	uci_set_value(buf,"password",uci_get_value(buf2));
 
 	system("uci commit network");

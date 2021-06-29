@@ -143,3 +143,13 @@ msgstr "Не доступен"
 
 msgid "Minimum acceptable signal level, ASU (min: 1, max: 31)"
 msgstr "Минимально допустимый уровень сигнала, ASU (мин: 1, макс: 31)"
+
+msgid "Modem"
+msgstr "Модем"
+
+msgid "Firmware version"
+msgstr "Версия прошивки"
+
+msgid "Active SIM IMSI"
+msgstr "IMSI активной SIM карты"
+

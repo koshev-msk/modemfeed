@@ -49,7 +49,14 @@ int ModemStarted(char *atdevice)
 	return access(atdevice, F_OK);
 }
 
-int GetSimInfo(struct settings_entry *settings)
+char *GetSimInfo(struct settings_entry *settings)
+{
+	char b[64] = {0};
+	modem_sim_state(b,settings);
+	return strdup(b);
+}
+
+int GetAllInfo(struct settings_entry *settings)
 {
 	char cmd[256];
 	struct modems_ops *modem = NULL;
@@ -62,7 +69,7 @@ int GetSimInfo(struct settings_entry *settings)
 		fprintf(stdout, "  \"imei\": \"%s\",\n", modem_summary(modem,INFO_IMEI, settings->atdevice));
 		fprintf(stdout, "  \"ccid\": \"%s\",\n", modem_summary(modem,INFO_CCID, settings->atdevice));
 		fprintf(stdout, "  \"imsi\": \"%s\",\n", modem_summary(modem,INFO_IMSI, settings->atdevice));
-		fprintf(stdout, "  \"sim_state\": \"%s\",\n", modem_summary(modem,INFO_SIM, settings->atdevice));
+		fprintf(stdout, "  \"sim_state\": \"%s\",\n", GetSimInfo(settings));
 		fprintf(stdout, "  \"pin_state\": \"%s\",\n", modem_summary(modem,INFO_PINSTAT, settings->atdevice));
 		fprintf(stdout, "  \"csq\": \"%s\",\n", modem_summary(modem,INFO_SIGLEV, settings->atdevice));
 		fprintf(stdout, "  \"net_reg\": \"%s\",\n", modem_summary(modem,INFO_REGSTAT, settings->atdevice));
@@ -79,10 +86,10 @@ int GetSimInfo(struct settings_entry *settings)
 	return 0;
 }
 
-static const char *optString = "d:a:scprbnimRBSDIh?";
+static const char *optString = "d:a:s:cprbnimRBSDIh?";
 static const struct option longOpts[] = {
-		{"device", required_argument, NULL,'d'},		
-		{"get-sim-status",no_argument, NULL,'s' },
+		{"device",required_argument, NULL,'d'},		
+		{"get-sim",required_argument, NULL,'s' },
 		{"get-ccid",no_argument, NULL,'c'},
 		{"get-pin-status",no_argument, NULL,'p'},
 		{"get-rssi",no_argument, NULL,'r'},
@@ -103,8 +110,7 @@ static const struct option longOpts[] = {
 void display_usage(void)
 {
 	printf("Options:\n"
-			"  --device=NAME, -d NAME:        Set device name to NAME\n"
-			"  --get-sim-status, -s:          Get SIM information\n"
+			"  --device=NAME, -d NAME:        Set device name to NAME\n"			
 			"  --get-ccid, -c:                Get CCID SIM card\n"
 			"  --get-pin-status, -p:          Get PIN status\n"
 			"  --get-rssi, -r:                Get RSSI level\n"
@@ -119,10 +125,10 @@ void display_usage(void)
 			"  --get-modem, -m:               Get modem type\n"
 			"       OR\n"
 			"  --all=CONFIG, -a CONFIG:       Get all information about the requested CONFIG\n"
+			"  --get-sim=CONFIG, -s CONFIG:   Get SIM information\n"
 			);
 	exit(EXIT_FAILURE);
 }
-
 
 int main(int argc, char **argv)
 {
@@ -136,6 +142,7 @@ int main(int argc, char **argv)
 				break;
 			case 's':
 				cmd=INFO_SIM;
+				config=optarg;
 				break;
 			case 'c':
 				cmd=INFO_CCID;
@@ -174,6 +181,7 @@ int main(int argc, char **argv)
 				cmd=INFO_MODEM;
 				break;
 			case 'a':
+				cmd=INFO_ALL;
 				config=optarg;
 				break;
 			case 'h':
@@ -195,7 +203,7 @@ int main(int argc, char **argv)
 		}
 
 		modem = modems_backend(device);
-		if(modem!=NULL){
+		if(modem!=NULL && cmd!=NULL){
 			fprintf(stdout, "%s\n", modem_summary(modem,cmd,device));
 		} else
 		{
@@ -203,15 +211,23 @@ int main(int argc, char **argv)
 		}
 	} else {
 		struct settings_entry settings;
-		if ( uci_read_configuration(&settings) == 0 )
+		if ( uci_read_configuration(&settings,config) == 0 )
 		{
 			if ( ModemStarted(settings.atdevice) < 0 )
 			{
 				LOG("modem not found\n");
 				return 1;
 			}
-			if(GetSimInfo(&settings))
-				LOG("Error while reading SIM info\n");
+			if(cmd==INFO_ALL)
+			{
+				if(GetAllInfo(&settings))
+					LOG("Error while reading SIM info\n");
+			}
+			else if (cmd==INFO_SIM)
+			{
+				fprintf(stdout, "%s\n", GetSimInfo(&settings));
+			}
+			
 		}
 	}
 	return 0;

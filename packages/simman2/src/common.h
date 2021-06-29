@@ -18,6 +18,7 @@
 #define	INFO_MODEM		11
 #define	INFO_IMSI		12
 #define	INFO_FW 		13
+#define	INFO_ALL 		14
 
 #define IN		0
 #define OUT		1
@@ -65,6 +66,7 @@ typedef struct sim_s
 }sim_t;
 
 struct settings_entry{
+	uint8_t *name;
 	uint8_t only_first_sim;
 	uint8_t retry_num;
 	uint16_t check_period;
