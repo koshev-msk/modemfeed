@@ -39,7 +39,7 @@ Set your variables (bot token and chat id) in `telegrambot` file under `/etc/con
 uci set telegrambot.config.bot_token='[PUT YOUR BOT TOKEN HERE]'
 uci set telegrambot.config.chat_id='[PUT YOUR CHAT ID HERE]'
 
-uci commit telegram_bot
+uci commit telegrambot
 ```
 
 Start `telegrambot` service with commands:
