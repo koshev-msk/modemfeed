@@ -89,7 +89,7 @@ function mmcli_name(){
 # get CSQ 
 function get_csq(){
 	case $FAMILY in
-		INTEL) CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CSQ/ {print $2}') ;;
+		INTEL) CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CSQ/ {print $3}') ;;
 		*) CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CSQ/ {print $2}') ;;
 	esac
 	[ "x$CSQ" = "x" ] && CSQ=-1
