@@ -9,6 +9,7 @@ DEVICE=$(uci -q get smstools3.@sms[0].device)
 LOG=$(uci -q get smstools3.@sms[0].loglevel)
 PIN=$(uci -q get smstools3.@sms[0].pin)
 LED_EN=$(uci -q get smstools3.@sms[0].led_enable)
+INIT_=$(uci -q get smstools3.@sms[0].init)
 
 if [ ! -d /root/sms ]; then
 	mkdir /root/sms
@@ -53,7 +54,12 @@ if [ "$LOG" ]; then
 fi
 echo ""
 echo "[GSM1]"
-echo "init = AT+CPMS=\"ME\",\"ME\",\"ME\""
+case $INIT_ in
+        huawei) INIT_STRING="init = AT+CPMS=\"SM\";+CNMI=2,0,0,2,1" ;;
+        intel) INIT_STRING="init = AT+CPMS=\"SM\"" ;;
+        *)INIT_STRING="init = AT+CPMS=\"ME\",\"ME\",\"ME\"" ;;
+esac
+echo $INIT_STRING
 echo "device = $DEVICE"
 if [ ! "$UI" ]; then
         echo -e "detect_unexpected_input = no"

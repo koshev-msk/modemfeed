@@ -40,6 +40,14 @@ if try_devices then
 	end
 end
 
+init = s:option(ListValue, "init", translate("Init string"),
+                translate("Initialise modem for more vendors"))
+init:value("huawei", "Huawei")
+init:value("intel", "Intel XMM")
+init:value("", "Qualcomm or more")
+init.default = ""
+init.rempty = true
+
 pin =s:option(Value, "pin", translate("PIN Code"),
 		translate("Default value: not in use.<br />Specifies the PIN number of the SIM card inside the modem."))
 pin.rmempty = true
