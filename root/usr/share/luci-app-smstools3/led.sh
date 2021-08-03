@@ -23,7 +23,9 @@ fi
 NUM=$(ls -1 /var/spool/sms/incoming/ | wc -l)
 BODY=$(echo $2 | awk -F [\/] '{print $NF}')
 
-if [ $NUM -ge 10 ] && [ $NUM -lt 100 ]; then
+if [ $NUM -ge 100 ] && [ $NUM -lt 1000 ]; then
+	NUM=0$NUM
+elif [ $NUM -ge 10 ] && [ $NUM -lt 100 ]; then
         NUM=00$NUM
 elif [ $NUM -ge 0 ] && [ $NUM -lt 10 ]; then
         NUM=000$NUM
