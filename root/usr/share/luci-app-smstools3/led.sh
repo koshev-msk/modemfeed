@@ -19,3 +19,17 @@ esac
 if [ -r /etc/smstools3.user ]; then
 	. /etc/smstools3.user
 fi
+
+NUM=$(ls -1 /var/spool/sms/incoming/ | wc -l)
+BODY=$(echo $2 | awk -F [\/] '{print $NF}')
+
+if [ $NUM -ge 10 ] && [ $NUM -lt 100 ]; then
+        NUM=00$NUM
+elif [ $NUM -ge 0 ] && [ $NUM -lt 10 ]; then
+        NUM=000$NUM
+fi
+
+
+case $1 in
+        RECEIVED) mv $2 /var/spool/sms/incoming/${NUM}_${BODY} ;;
+esac
