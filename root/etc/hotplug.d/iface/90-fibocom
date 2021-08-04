@@ -1,0 +1,130 @@
+PORT=$(uci -q get xmm-modem.@xmm-modem[0].device)
+APN=$(uci -q get xmm-modem.@xmm-modem[0].apn)
+ENABLE=$(uci -q get xmm-modem.@xmm-modem[0].enable)
+NODE="IntelNCM"
+
+enable_() {
+        if [ $ENABLE -ne 1 ]; then
+                logger -t "$NODE" "Scenario disabled"
+                exit 0
+        fi
+	if [ ! $APN ]; then
+		logger -t "$NODE" "APN not found!"
+		exit 0
+	fi
+}
+
+start_() {
+	SCRIPT=/etc/gcom/xmm-connect.gcom
+        GO=$(APN=$APN gcom -d $PORT -s $SCRIPT)
+	IPADDR=$(echo "$GO" | awk -F [,] '/^\+CGPADDR/{gsub("\"", ""); print $2}')
+	RETRIES=0
+	until [ $IPADDR ]; do
+		GO=$(APN=$APN gcom -d $PORT -s $SCRIPT)
+		IPADDR=$(echo "$GO" | awk -F [,] '/^\+CGPADDR/{gsub("\"", ""); print $2}')
+	        if [ $(echo "$GO" | grep CONNECT) ]; then
+	                logger -t "$NODE" "Modem connected"
+	        else
+			RETRIES=$(($RETRIES+1))
+			if [ $RETRIES -ge 5 ]; then
+	        	        logger -t "$NODE" "Modem failed to connect"
+				exit 0
+			fi
+	        fi
+		
+	done
+}
+
+stop_() {
+	SCRIPT=/etc/gcom/xmm-disconnect.gcom
+	gcom -d $PORT -s $SCRIPT
+}
+
+cellular_(){
+	SCRIPT=/etc/gcom/xmm-config.gcom
+        if [ $(ls $SCRIPT) ]; then
+                DATA=$(gcom -d $PORT -s $SCRIPT)
+                IPADDR=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\"|\r",""); print $2}'| sed 's/[[:space:]]//g')
+                DNS0=$(echo "$DATA" | awk -F [,] '/^\+XDNS: 0/{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
+		DNS1=$(echo "$DATA" | awk -F [,] '/^\+XDNS: 1/{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
+		if [ $(echo $DNS0 | grep 0.0.0.0) ] ; then
+			DNS=$DNS1
+		else
+			DNS=$DNS0
+		fi
+        else
+                logger -t "$NODE" "Failed to connect network"
+                exit 0
+        fi
+        for d in $DNS; do
+                if [ $(echo "$NS" | grep "$d") ]; then
+                        false
+                else
+                        if [ "$d" != "0.0.0.0" ]; then
+                                NS="$NS $d"
+                        fi
+                fi
+        done
+        DNS=$NS
+        if [ $IPADDR ]; then
+                GATEWAY=$(echo $IPADDR | awk -F [.] '{print $1"."$2"."$3".1"}')
+        else
+                logger -t "$NODE" "Failed to obtain IP-address"
+                exit 0
+        fi
+        uci set network.$INTERFACE=interface
+        uci set network.$INTERFACE.proto='static'
+        uci set network.$INTERFACE.ifname=$DEVICE
+        uci set network.$INTERFACE.metric='10'
+        uci set network.$INTERFACE.ipaddr=$(echo ${IPADDR})
+        uci set network.$INTERFACE.netmask=255.255.255.0
+        uci set network.$INTERFACE.gateway=$GATEWAY
+        if [ -n "$DNS" ]; then
+                uci set network.$INTERFACE.dns="$(echo "$DNS")"
+        else
+		uci set network.$INTERFACE.dns="8.8.8.8 1.1.1.1"
+	fi
+        if [ $IPADDR ]; then
+                ip link set dev $DEVICE arp off
+                uci commit network
+		reload_config
+        fi
+	echo $INTERFACE > /tmp/xmm-modem
+}
+
+connect_(){
+        logger -t "$NODE" "Connect to cellular network"
+        cellular_
+        logger -t "$NODE" "Configure interface"
+        sleep 5
+        CHECK=$(ip a s dev $DEVICE | awk '/inet /{print $2}')
+        if [ $CHECK ]; then
+                logger -t "IntelNCM" "Obtain address $CHECK"
+        else
+                logger -t "IntelNCM" "Failed to obtain IP-address"
+                exit 0
+        fi
+}
+
+case $ACTION in
+        ifup)
+                case $DEVICE in
+                        usb0|wwan0|eth1)
+				enable_
+				start_
+                                connect_
+                                logger -t "IntelNCM" "Connection established"
+                        ;;
+                esac
+        ;;
+	ifdown)
+		IFNAME=$(cat /tmp/xmm-modem)
+		case $INTERFACE in
+			$IFNAME)
+				stop_
+				logger -t "$NODE" "Modem disconnected"
+			;;
+		esac
+	;;
+esac
+
