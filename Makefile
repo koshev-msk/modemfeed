@@ -17,7 +17,7 @@ define Package/$(PKG_NAME)/description
 	Simple connect to cellular for Fibocom L850/L860 module (Intel XMM LTE-A 7360/7560)
 endef
 
-define Package.$(PKG_NAME)/conffiles
+define Package/$(PKG_NAME)/conffiles
 	/etc/config/xmm-modem
 endef
 
