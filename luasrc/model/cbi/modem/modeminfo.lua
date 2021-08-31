@@ -6,8 +6,6 @@ require("nixio.fs")
 
 local TTY_PATH    = "/dev/tty[A-Z][A-Z]*"
 local QMI_PATH    = "/dev/cdc-wdm*"
-local PORT_NFOUND = "<div style=\"color: red;\"><b>No port(s) found! \
-				Check the modem connection.</b><br></div>"
 
 -- add device in ListValue
 function addValues(dev, path)
@@ -44,7 +42,7 @@ if addValues(dev, TTY_PATH) then
     o.rawhtml = true
     o:depends("qmi_mode", 0)
     function o.cfgvalue(self, section)
-        return translate(PORT_NFOUND)
+        return translate(<div style=\"color: red;\"><b>No port(s) found! Check the modem connection.</b></div>)
     end
 end
 
@@ -59,7 +57,7 @@ if addValues(dev, QMI_PATH) then
     o.rawhtml = true
     o:depends("qmi_mode", 1)
     function o.cfgvalue(self, section)
-        return translate(PORT_NFOUND)
+        return translate(<div style=\"color: red;\"><b>No port(s) found! Check the modem connection.</b></div>)
     end
 end
 
