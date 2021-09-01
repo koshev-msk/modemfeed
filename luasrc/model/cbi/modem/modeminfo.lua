@@ -42,7 +42,7 @@ if addValues(dev, TTY_PATH) then
     o.rawhtml = true
     o:depends("qmi_mode", 0)
     function o.cfgvalue(self, section)
-        return translate(<div style=\"color: red;\"><b>No port(s) found! Check the modem connection.</b></div>)
+        return translate("<div style=\"color: red;\"><b>No port(s) found! Check the modem connection.</b></div>")
     end
 end
 
@@ -57,7 +57,7 @@ if addValues(dev, QMI_PATH) then
     o.rawhtml = true
     o:depends("qmi_mode", 1)
     function o.cfgvalue(self, section)
-        return translate(<div style=\"color: red;\"><b>No port(s) found! Check the modem connection.</b></div>)
+        return translate("<div style=\"color: red;\"><b>No port(s) found! Check the modem connection.</b></div>")
     end
 end
 
