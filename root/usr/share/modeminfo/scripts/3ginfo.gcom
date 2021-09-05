@@ -182,6 +182,10 @@ opengt
  let $c="AT+MTSM=1^m"
  let $r="+MTSM"
  gosub readatcmd
+
+ send "AT+XMCI=1^m"
+ get 1 "" $s
+ print $s
  goto next
 
 :zte
