@@ -262,13 +262,15 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				}
 				var namech = "EARFCN";
 				var namesnr = "SINR";
-				var nametac = "LAC(dec)/eNB ID-PCI";
+				var nametac = "LAC(dec)/eNB ID";
+				var namecid = "CID(dec)/PCI";
 				var cidpci = data.cid + " (" + data.cid_num + ") / " + data.pci;
 				var lactac = data.lac + " (" + data.lac_num + ") / " + data.enbid;
 			} else if (netmode == "3G" || netmode == "UMTS" || netmode == "HSPA" || netmode == "HSUPA" || netmode == "HSDPA" || netmode == "HSPA+" || netmode == "WCDMA" || netmode == "DC-HSPA+") {
 				var namech = "UARFCN";
 				var namesnr = "ECIO";
 				var nametac = "LAC(dec)";
+				var namecid = "CID(dec)";
 				var bcc = " " + band;
 				var freq = dlfreq + " / " + ulfreq + " MHz"
 				var arfcn = data.arfcn;
@@ -279,6 +281,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				var namech = "ARFCN";
 				var namesnr = "SINR/ECIO";
 				var nametac = "LAC(dec)";
+				var namecid = "CID(dec)";
 				var bcc = " " + band;
 				var arfcn = data.arfcn;
 				var freq = dlfreq + " / " + ulfreq + " MHz"
@@ -408,7 +411,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 		<div class="tr cbi-rowstyle-2"> 
 			<div class="td left" width="25%" id="nametac"><b><%:LAC(dec):%></b></div>
 			<div class="td left" width="25%" id="lac">-</div>
-			<div class="td left" width="25%"><b><%:CID(dec):%></b></div>
+			<div class="td left" width="25%" id="cidname"><b><%:CID(dec):%></b></div>
 			<div class="td left" width="20%" id="cid">-</div>
 		</div>
 		<div class="tr cbi-rowstyle-1">
