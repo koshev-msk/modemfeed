@@ -263,7 +263,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				var namech = "EARFCN";
 				var namesnr = "SINR";
 				var nametac = "LAC(dec)/eNB ID";
-				var namecid = "CID(dec)/PCI";
+				var namecid = "CID(dec)/Cell";
 				var cidpci = data.cid + " (" + data.cid_num + ") / " + data.pci;
 				var lactac = data.lac + " (" + data.lac_num + ") / " + data.enbid;
 			} else if (netmode == "3G" || netmode == "UMTS" || netmode == "HSPA" || netmode == "HSUPA" || netmode == "HSDPA" || netmode == "HSPA+" || netmode == "WCDMA" || netmode == "DC-HSPA+") {
