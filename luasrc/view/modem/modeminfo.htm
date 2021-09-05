@@ -262,7 +262,8 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				}
 				var namech = "EARFCN";
 				var namesnr = "SINR";
-				var nametac = "LAC(dec)/eNB ID";
+				var nametac = "LAC(dec)/eNB ID-PCI";
+				var cidpci = data.cid + " (" + data.cid_num + ") / " + data.pci;
 				var lactac = data.lac + " (" + data.lac_num + ") / " + data.enbid;
 			} else if (netmode == "3G" || netmode == "UMTS" || netmode == "HSPA" || netmode == "HSUPA" || netmode == "HSDPA" || netmode == "HSPA+" || netmode == "WCDMA" || netmode == "DC-HSPA+") {
 				var namech = "UARFCN";
@@ -271,6 +272,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				var bcc = " " + band;
 				var freq = dlfreq + " / " + ulfreq + " MHz"
 				var arfcn = data.arfcn;
+				var cidpci = data.cid + " (" + data.cid_num + ")";
 				var lactac = data.lac + "  (" + data.lac_num + ")";
 				
 			} else {
@@ -280,6 +282,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 				var bcc = " " + band;
 				var arfcn = data.arfcn;
 				var freq = dlfreq + " / " + ulfreq + " MHz"
+				var cidpci = data.cid + " (" + data.cid_num + ")";
 				var lactac = data.lac + " (" + data.lac_num + ")";
 			}
 
@@ -292,7 +295,7 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 			 	e.innerHTML = String.format(data.device);
 			
 			if (e = document.getElementById('cid'))
-					e.innerHTML = String.format(data.cid + " (" + data.cid_num + ")");
+					e.innerHTML = String.format(cidpci);
 
 			if (e = document.getElementById('mccmnc'))
 			 	e.innerHTML = String.format(data.mcc  + " " + data.mnc);
