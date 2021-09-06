@@ -561,11 +561,8 @@ function intel_data(){
 	DEVICE=$(echo $DEVx)
 	if [ $MODE = LTE ]; then
 		EARFCN=$(echo "$O" | awk -F [:,] '/\+RSRP:/{print $3}')
-		DISTANCE=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); print $14}')
-		calc() { awk "BEGIN{ printf \"%.2f\n\", $* }"; }
-		DISTANCE=$(calc $(($DISTANCE))*78/1000)
-		PCI=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); print $7}')
-		PCI=$(echo $(($PCI)))
+		DISTANCE=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); printf "%.2f\n", ($14*78)/1000}')
+		PCI=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); printf "%d\n", $7}')
 		LTE_Cx=$(echo "$O" | awk -F [:,] '/\+XLEC:/{print $3}')
 		LTE_CA=$(($LTE_Cx -1))
 		BWDL=$(echo "$O" | awk -F [:,] '/\+XLEC:/{gsub("\r","",$4); print $4}')
