@@ -60,10 +60,14 @@ command_start="*/memory* return RAM info
 */wll_list* wifi clients
 */reboot* reboot the device
 */wol <mac_address>* wake on lan over the Internet
+*/loc* get current location via modemmanager
 */wanip* WAN ip address
 */plugins* aviable commands"
 
-curl -k -s -X POST $api/sendMessage -d chat_id=$chat_id -d parse_mode=Markdown --data-urlencode text="$(uci -q get system.@system[0].hostname). TelegramBot started." &> $log_file
+curl -k -s -X POST $api/sendMessage \
+	-d chat_id=$chat_id \
+	-d parse_mode=Markdown \
+	--data-urlencode text="$(uci -q get system.@system[0].hostname). TelegramBot started." &> $log_file
 
 if [ -f "$offset_file" ] ; then
 	offset=$( cat $offset_file )
@@ -76,7 +80,37 @@ reply_to_msg () {
 	local msg_id=$1
 	local origin=$2
 	eval local text="$3"
-        curl -k -s -X POST $api/sendMessage -d reply_to_message_id=$msg_id -d chat_id=$origin -d parse_mode=Markdown --data-urlencode text="$text" &> $log_file
+        curl -k -s -X POST $api/sendMessage \
+		-d reply_to_message_id=$msg_id \
+		-d chat_id=$origin \
+		-d parse_mode=Markdown \
+		--data-urlencode text="$text" &> $log_file
+}
+
+reply_to_location() {
+        local msg_id=$1
+        local origin=$2
+        SLOT=$(mmcli -L | awk '{print $1}' | awk -F [\/] '{print $NF}')
+        GPS="$(echo $(mmcli -m $SLOT  --location-get -J | jsonfilter -e '@["modem"].*["gps"].*'))"
+        LAT=$(echo $GPS | awk '{print $2}')
+        LONG=$(echo $GPS | awk '{print $3}')
+        case $LAT in
+                *[0-9]*)
+                        curl -k -s -X POST $api/sendLocation \
+                                -d reply_to_message_id=$msg_id \
+                                -d chat_id=$origin \
+                                -d parse_mode=Markdown \
+                                -d latitude=$LAT \
+                                -d longitude=$LONG &>$log_file
+                ;;
+                *)
+                        curl -k -s -X POST $api/sendMessage \
+                                -d reply_to_message_id=$msg_id \
+                                -d chat_id=$origin \
+                                -d parse_mode=Markdown \
+                                --data-urlencode text="Location not sended! Check your mmcli settings or GPS antenna." &>$log_file
+                ;;
+        esac
 }
 
 while [ true ]
@@ -125,6 +159,9 @@ do
 							RETURN_TEXT="$(${plugins}/wol.sh ${parms})"
 							reply_to_msg $msg_id $origin "\${RETURN_TEXT}"
                                                         ;;
+						("/loc")
+                                                        reply_to_location $msg_id $origin
+							;;
 						(*)
 							if [ -f "${plugins}/${cmd}.sh" ] ; then
 								(echo "Call $cmd [$parms]" | logger -t "telegram_bot" -p daemon.info)&
