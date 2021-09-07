@@ -180,9 +180,8 @@ function get_reg_data(){
 	LAC_NUM=$(printf %d 0x$LAC)
 	REGST=$(echo "$O" | awk -F[,] '/\'$CREG'/ {print $2}')
 	ENBx=$(echo $CID | sed -e 's/..$//')
-	PCI=$(printf %d 0x${CID: -2})
+	CELL=$(printf %d 0x${CID: -2})
 	ENBID=$(printf %d 0x$ENBx)
-	ENBID="${ENBID}-${PCI}"
 	if [ "x$CID" != "x" ]; then
 		CID_NUM=$(printf %d 0x$CID)
 		if [ ${#CID} -gt 4 ]; then
