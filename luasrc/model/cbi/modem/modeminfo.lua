@@ -41,14 +41,14 @@ qmi_mode.rmempty = true
 check_dev(PATH[1])
 dev = s:option(ListValue, "device", translate("Data port"), port)
 dev.default = ""
-dev.rempty = true
+dev.rmempty = true
 dev:depends("qmi_mode", 0)
 try_port(PATH[1])
 
 check_dev(PATH[2])
 dev = s:option(ListValue, "device_qmi", translate("Data port"), port)
 dev.default = ""
-dev.rempty = true
+dev.rmempty = true
 dev:depends("qmi_mode", 1)
 try_port(PATH[2])
 
