@@ -133,6 +133,11 @@ XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
 					var frul = 1920;
 					var offset = 0;
 					var band = "1";
+				} else if (rfcn >= 600 && rfcn <= 1199) {
+					var frdl = 1930;
+					var frul = 1850;
+					var offset = 600;
+					var band = "2";
 				} else if (rfcn >= 1200 && rfcn <= 1949) {
 					var frdl = 1805;
 					var frul = 1710;
