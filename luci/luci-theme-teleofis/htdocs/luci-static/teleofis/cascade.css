@@ -964,7 +964,7 @@ a.menu:after, .dropdown-toggle:after {
 	margin-left: 4px;
 	border-left: 4px solid transparent;
 	border-right: 4px solid transparent;
-	border-top: 4px solid #ffffff;
+	border-top: 4px solid #b60000;
 	opacity: 0.5;
 }
 
@@ -1341,8 +1341,7 @@ body.modal-overlay-active #modal_overlay {
 
 .btn.primary,
 .cbi-button-apply,
-.cbi-button-negative,
-.cbi-button-reload {
+.cbi-button-negative {
 	border-color: #b60000;
 	color: #b60000;
 	text-shadow: none !important;
@@ -1374,6 +1373,8 @@ body.modal-overlay-active #modal_overlay {
 .cbi-button-positive,
 .cbi-button-action.important,
 .cbi-button-action,
+.cbi-button-save,
+.cbi-button-reload,
 .cbi-page-actions .cbi-button-apply {
 	color: #FFFFFF;
 	background: #d2492d;
@@ -1382,13 +1383,13 @@ body.modal-overlay-active #modal_overlay {
 }
 
 .cbi-button-fieldadd,
-.cbi-button-save,
 .cbi-section-remove .cbi-button,
 .cbi-button-remove,
 .cbi-button-add,
 .cbi-button-negative.important,
 .cbi-page-actions .cbi-button-save,
-.cbi-page-actions .cbi-button-reset {
+.cbi-page-actions .cbi-button-reset,
+.cbi-section-actions .cbi-button-action {
 	color: #95110F;
 	background: #ffffff;
 	border-color: #95110F;
