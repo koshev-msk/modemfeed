@@ -52,13 +52,10 @@ dev.rmempty = true
 dev:depends("qmi_mode", 1)
 try_port(PATH[2])
 
-<<<<<<< HEAD
 local decimail = s:option(Flag, "decimail", translate("Show decimal"),
 	translate("Show LAC and CID in decimal."))
 decimail.rmempty = true
 
-=======
->>>>>>> 98c38c813a9b17fe66983344e5b40b4d46f3898d
 local name = s:option(Flag, "mmcli_name", translate("Name via mmcli"),
         translate("Get device hardware name via mmcli utility if aviable."))
 name.rmempty = true
