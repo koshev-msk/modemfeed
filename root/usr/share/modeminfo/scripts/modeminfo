@@ -1,4 +1,4 @@
-# (c) 2010-2016 Cezary Jackiewicz <cezary@eko.one.pl>
+get_csq# (c) 2010-2016 Cezary Jackiewicz <cezary@eko.one.pl>
 # (c) 2020-2021 modified by Konstantine Shevlyakov  <shevlakov@132lan.ru>
 # (c) 2021 modified by Vladislav Kadulin  <spanky@yandex.ru>
 
@@ -809,9 +809,9 @@ function get_data_in(){
 		;;
 		INTEL)
 			get_cops
+			get_csq
 			get_reg_data
 			intel_data
-			get_csq
 		;;
 		MIKROTIK)
 			get_cops_mikrotik
