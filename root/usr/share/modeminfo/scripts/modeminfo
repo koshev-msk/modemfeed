@@ -112,6 +112,16 @@ function get_hwinfo(){
 # get CSQ
 function get_csq(){
 	CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CSQ/ {print $2}')
+	# @csharper2005 commit #da52cbc
+	# RSSI & CSQ look very strange. Therefore we calculate it
+        # through RSSP and number of available resource blocks
+	case $FAMILY in
+		INTEL)
+			case $MODE in
+				LTE*) CSQ=$(echo $RSRP $NP | awk '{printf "%.0f\n", (($1+10*log(12*$2)/log(10))+113)/2}') ;;
+			esac
+		;;
+	esac
 	[ "x$CSQ" = "x" ] && CSQ=-1
 	if [ $CSQ -ge 0 -a $CSQ -le 31 ]; then
 		CSQ_PER=$(($CSQ * 100/31))
@@ -582,9 +592,6 @@ function intel_data(){
 		EARFCN=$(echo "$O" | awk -F [:,] '/\+RSRP:/{print $3}')
 		DISTANCE=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); printf "%.2f\n", ($14*78)/1000}')
 		PCI=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); printf "%d\n", $7}')
-		# no needed
-		#LAC=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); printf $5}')
-		#LAC_NUM=$(printf %d $LAC)
 		RSRP=$(echo "$O" | awk -F [:,] '/\+RSRP:/{printf "%.0f\n", $4}')
 		RSRQ=$(echo "$O" | awk -F [:,] '/\+RSRQ:/{printf "%.0f\n", $4}')
 		# ! SINR formula needs to be checked !
@@ -601,10 +608,6 @@ function intel_data(){
 			5) NP=100 ;;
 			*) NP=0 ;;
 		esac
-		# RSSI & CSQ look very strange. Therefore we calculate it
-		# through RSSP and number of available resource blocks
-		CSQ_RSSI=$(echo $RSRP $NP | awk '{printf "%.0f\n", $1+10*log(12*$2)/log(10)}')
-		CSQ=$(echo $CSQ_RSSI | awk '{printf "%.0f\n",($1+113)/2}')
 		for ca in $BWCx; do
 			case $ca in
 				1) N=3 ;;
@@ -809,9 +812,9 @@ function get_data_in(){
 		;;
 		INTEL)
 			get_cops
-			get_csq
 			get_reg_data
 			intel_data
+			get_csq
 		;;
 		MIKROTIK)
 			get_cops_mikrotik
