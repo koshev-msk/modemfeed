@@ -643,7 +643,7 @@ function intel_data(){
 				SC=28
 			elif [ $sca -ge 9870 ] && [ $sca -le 9919 ]; then
 				SC=31
-			elif [ $sca -ge 37750 ] && [ $sca -le 38249 ]; hen
+			elif [ $sca -ge 37750 ] && [ $sca -le 38249 ]; then
 				SC=38
 			elif [ $sca -ge 38650 ] && [ $sca -le 39649 ]; then 
 				SC=40
