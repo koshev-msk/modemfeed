@@ -1267,7 +1267,8 @@ body.modal-overlay-active #modal_overlay {
 	line-height: 18px;
 }
 
-.modal .btn.danger {
+.modal .btn.danger,
+.modal .btn {
 	white-space: normal;
 }
 
