@@ -36,14 +36,14 @@ while true; do
 		if [[ "$?" -eq "0" ]]; then
 			let host_up_count++
 		else
-			logger -t pingcontrol "Ping to host $IP lost"
+			logger -t pingcontrol "$IFACE: Ping to host $IP lost"
 			let lost1++
 			let lost2++
 		fi
 	done
 
 	if [[ "$host_up_count" -gt 0 ]]; then
-		logger -t pingcontrol "Ping OK, reset counters"
+		logger -t pingcontrol "$IFACE: Ping OK, reset counters"
 		host_up_count=0
 		lost1=0
 		lost2=0
@@ -52,7 +52,7 @@ while true; do
 	if [[ "$lost1" -gt "0" ]]; then
 		if [[ "$SW_BEFORE_MODRES" -ne "0" ]]; then
 			if [[ "$lost1" -ge "$SW_BEFORE_MODRES" ]]; then
-				logger -t pingcontrol "Ifup/ifdown $IFACE"
+				logger -t pingcontrol "$IFACE: Ifup/ifdown $IFACE"
 				ubus call network.interface.$IFACE down
 				sleep 1
 				ubus call network.interface.$IFACE up
@@ -61,7 +61,7 @@ while true; do
 		fi
 		if [[ "$SW_BEFORE_SYSRES" -ne "0" ]]; then
 			if [[ "$lost2" -ge "$SW_BEFORE_SYSRES" ]]; then
-				logger -t pingcontrol "Reboot now!"
+				logger -t pingcontrol "$IFACE: Reboot now!"
 				reboot
 			fi
 		fi
