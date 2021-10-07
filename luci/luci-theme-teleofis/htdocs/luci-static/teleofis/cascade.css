@@ -1609,12 +1609,25 @@ select + .cbi-button {
 	line-height: 28px;
 }
 
-select + .cbi-button {
+/*select + .cbi-button {
 	border-left-color: transparent;
+}*/
+
+input[type="text"] + .cbi-button-add {
+	color: #fff;
+	border-radius: 0 3px 3px 0;
+	border-color: #d2492d;
+	background: #d2492d;
+}
+
+input[type="text"] + .cbi-button-remove {
+	color: #c44;
+	border-radius: 0 3px 3px 0;
+	border-color: #ccc;
 }
 
 .cbi-title-ref {
-	color: #37c;
+	color: #b60000;
 }
 
 .cbi-title-ref::after {
