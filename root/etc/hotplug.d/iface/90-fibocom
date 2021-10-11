@@ -109,7 +109,7 @@ connect_(){
 case $ACTION in
         ifup)
                 case $DEVICE in
-                        usb0|wwan0|eth1)
+                        usb0|wwan0|eth1|eth2)
 				enable_
 				start_
                                 connect_
