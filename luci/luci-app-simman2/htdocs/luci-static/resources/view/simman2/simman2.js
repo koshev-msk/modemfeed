@@ -42,7 +42,8 @@ return view.extend({
 
 		s = m.section(form.GridSection, 'simman2', _('Settings'));
 		s.tab('general', _('General Settings'));
-		s.tab('sim_cards', _('SIM Settings'));
+		s.tab('sim0', _('SIM0 Settings'));
+		s.tab('sim1', _('SIM1 Settings'));
 		s.tab('info', _('Information'));
 		s.addremove = true;
 		s.nodescriptions = true;
@@ -107,59 +108,69 @@ return view.extend({
 		o.default = '600';
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.DummyValue, 'sim0', _('SIM1 configuration'));
-		o.default = '';
-		o.modalonly = true;
-
-		o = s.taboption('sim_cards', form.ListValue, 'sim0_priority', _('Priority'));
+		o = s.taboption('sim0', form.ListValue, 'sim0_priority', _('Priority'));
 		o.default = '1';
 		o.value('0','low');
 		o.value('1','high');
 		o.rmempty = false;
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim0_apn', _('APN'));
+		o = s.taboption('sim0', form.ListValue, 'sim0_mode', _('Service type'));
+		o.default = 'all';
+		o.value('all',_('All'));
+		o.value('lte',_('LTE only'));
+		o.value('umts',_('UMTS only'));
+		o.value('gsm',_('GPRS only'));
+		o.rmempty = false;
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim0_pincode', _('Pincode'));
+		o = s.taboption('sim0', form.Value, 'sim0_apn', _('APN'));
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim0_username', _('User name'));
+		o = s.taboption('sim0', form.Value, 'sim0_pincode', _('Pincode'));
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim0_password', _('Password'));
+		o = s.taboption('sim0', form.Value, 'sim0_username', _('User name'));
+		o.modalonly = true;
+
+		o = s.taboption('sim0', form.Value, 'sim0_password', _('Password'));
 		o.modalonly = true;
 		o.password = true;
 
-		o = s.taboption('sim_cards', form.DynamicList, 'sim0_testip', _('IP address of remote servers'));
+		o = s.taboption('sim0', form.DynamicList, 'sim0_testip', _('IP address of remote servers'));
 		o.datatype = 'ipaddr';
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.DummyValue, 'sim1', _('SIM2 configuration'));
-		o.default = '';
-		o.modalonly = true;
-
-		o = s.taboption('sim_cards', form.ListValue, 'sim1_priority', _('Priority'));
-		o.default = '1';
+		o = s.taboption('sim1', form.ListValue, 'sim1_priority', _('Priority'));
+		o.default = '0';
 		o.value('0','low');
 		o.value('1','high');
 		o.rmempty = false;
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim1_apn', _('APN'));
+		o = s.taboption('sim1', form.ListValue, 'sim1_mode', _('Service type'));
+		o.default = 'all';
+		o.value('all',_('All'));
+		o.value('lte',_('LTE only'));
+		o.value('umts',_('UMTS only'));
+		o.value('gsm',_('GPRS only'));
+		o.rmempty = false;
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim1_pincode', _('Pincode'));
+		o = s.taboption('sim1', form.Value, 'sim1_apn', _('APN'));
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim1_username', _('User name'));
+		o = s.taboption('sim1', form.Value, 'sim1_pincode', _('Pincode'));
 		o.modalonly = true;
 
-		o = s.taboption('sim_cards', form.Value, 'sim1_password', _('Password'));
+		o = s.taboption('sim1', form.Value, 'sim1_username', _('User name'));
+		o.modalonly = true;
+
+		o = s.taboption('sim1', form.Value, 'sim1_password', _('Password'));
 		o.modalonly = true;
 		o.password = true;
 
-		o = s.taboption('sim_cards', form.DynamicList, 'sim1_testip', _('IP address of remote servers'));
+		o = s.taboption('sim1', form.DynamicList, 'sim1_testip', _('IP address of remote servers'));
 		o.datatype = 'ipaddr';
 		o.modalonly = true;
 

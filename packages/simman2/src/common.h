@@ -35,19 +35,7 @@
 		fprintf(stderr, "simman: "fmt, ## __VA_ARGS__); \
 	} while (0)
 
-//-----------------------------------OLD----------------------------------
-void execCommandNoWait(char **cmd);
-void execCommand(char **cmd); 
-
-/**
-* @brief Read parameter fro UCI
-* @param path UCI string
-* @return Return string parameter value or null if parameter not exists
-*/
 int ping(char *ip, char *iface);
-//int ping(char *ip);
-
-//-----------------------------------OLD----------------------------------
 
 typedef struct testip{
 	uint8_t *ip;
@@ -63,6 +51,7 @@ typedef struct sim_s
 	uint8_t *user;
 	uint8_t *pass;
 	uint8_t *apn;
+	uint8_t *mode;
 }sim_t;
 
 struct settings_entry{
@@ -107,10 +96,13 @@ struct modems_ops{
 	int (*sim_pullup)(struct settings_entry *);
 	int (*power_down)(struct settings_entry *);
 	int (*power_up)(struct settings_entry *);
+	int (*set_mode)(struct settings_entry *, char *);
+	int (*set_apn)(struct settings_entry *, char *);
 	int (*imsi)(char *,char *);
 };
 
 extern struct modems_ops ehs5_ops;
+extern struct modems_ops a7600_ops;
 extern struct modems_ops sim7600_ops;
 extern struct modems_ops sim5360_ops;
 extern struct modems_ops sim5300_ops;
@@ -127,6 +119,8 @@ int modem_common_power_up(struct settings_entry *settings, struct modems_ops *mo
 int modem_common_power_reset(struct settings_entry *settings, struct modems_ops *modem);
 int modem_common_sim_pullout(struct settings_entry *settings);
 int modem_common_sim_pullup(struct settings_entry *settings);
+int modem_common_set_mode(struct settings_entry *settings, char *mode);
+int modem_common_set_apn(struct settings_entry *settings, char *apn);
 
 int modem_send_command(char *receive, char *device, char *at_command, char *wait_output);
 int common_awk_f(char *source_str, char *delim, uint8_t num);

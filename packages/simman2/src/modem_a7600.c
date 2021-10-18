@@ -11,7 +11,7 @@
 #include "common.h"
 
 
-int sim5360_probe(char *device){
+int a7600_probe(char *device){
 	char receive[256]={0};
 	if(modem_common_send_at(device)!=0){
 		return -1;
@@ -20,18 +20,65 @@ int sim5360_probe(char *device){
 	if(modem_send_command(receive,device,"\rATI\r","OK")!=0){
 		return -1;
 	}
-	if(strstr(receive,"SIMCOM_SIM5360E")==NULL){
+	if(strstr(receive,"A7600E-HNVD")==NULL && strstr(receive,"A7600E-HNVW")==NULL){
 		return -1;
 	}
 
 	return 0;
 }
 
-int sim5360_init(struct settings_entry *settings){
+int a7600_init(struct settings_entry *settings){
+	char buf[256]={0};
+	uint8_t reset=0;
+	if(modem_common_send_at(settings->atdevice)!=0){
+		return -1;
+	}
+	
+	if(modem_send_command(buf,settings->atdevice,"\rAT+UIMHOTSWAPON?\r","OK")!=0)
+	{
+		return -1;
+	}
+
+	if(strstr(buf,"+UIMHOTSWAPON: 1")==NULL)
+	{
+		modem_send_command(buf,settings->atdevice,"\rAT+UIMHOTSWAPON=1\r","OK");
+		reset=1;
+	}
+
+	memset(buf,0,sizeof(buf));
+
+	modem_send_command(buf,settings->atdevice,"\rAT+UIMHOTSWAPLEVEL?\r","OK");
+	if(strstr(buf,"+UIMHOTSWAPLEVEL: 1")==NULL)
+	{
+		modem_send_command(buf,settings->atdevice,"\rAT+UIMHOTSWAPLEVEL=1\r","OK");
+		reset=1;
+	}
+
+	memset(buf,0,sizeof(buf));
+
+	if(modem_send_command(buf,settings->atdevice,"\rAT+DIALMODE?\r","OK")!=0)
+	{
+		return -1;
+	}
+
+	if(strstr(buf,"+DIALMODE: 0")==NULL)
+	{
+		modem_send_command(buf,settings->atdevice,"\rAT+DIALMODE=0\r","OK");
+		reset=1;
+	}
+
+	if(reset)
+	{
+		modem_send_command(buf,settings->atdevice,"\rAT+UIMHOTSWAPON=1\r","OK");
+		modem_send_command(buf,settings->atdevice,"\rAT+UIMHOTSWAPLEVEL=1\r","OK");
+		a7600_power_down(settings);
+		a7600_power_up(settings);
+	}
+
 	return 0;
 }
 
-int sim5360_version(char *receive, char *device){
+int a7600_version(char *receive, char *device){
 	if(modem_common_send_at(device)!=0){
 		strcpy(receive,"ERROR");
 		return -1;
@@ -48,7 +95,7 @@ int sim5360_version(char *receive, char *device){
 	return 0;
 }
 
-int sim5360_ccid(char *receive, char *device){
+int a7600_ccid(char *receive, char *device){
 	if(modem_common_send_at(device)!=0){
 		strcpy(receive,"ERROR");
 		return -1;
@@ -61,11 +108,11 @@ int sim5360_ccid(char *receive, char *device){
 	if(cut_string(receive, "+ICCID: ", "\r")!=0){
 		strcpy(receive,"ERROR");
 	}
+	receive[strlen(receive)-2]='\0';
 	return 0;
 }
 
-int sim5360_bs_info(char *receive, char *device){
-	uint8_t i;
+int a7600_bs_info(char *receive, char *device){
 	if(modem_common_send_at(device)!=0){
 		strcpy(receive,"ERROR");
 		return -1;
@@ -87,7 +134,7 @@ int sim5360_bs_info(char *receive, char *device){
 	return 0;
 }
 
-int sim5360_network_type(char *receive, char *device){
+int a7600_network_type(char *receive, char *device){
 	if(modem_common_send_at(device)!=0){
 		strcpy(receive,"ERROR");
 		return -1;
@@ -104,7 +151,7 @@ int sim5360_network_type(char *receive, char *device){
 	return 0;
 }
 
-int sim5360_band_info(char *receive, char *device){
+int a7600_band_info(char *receive, char *device){
 	char buf[256]={0};
 	if(modem_common_send_at(device)!=0){
 		strcpy(receive,"ERROR");
@@ -152,7 +199,7 @@ int sim5360_band_info(char *receive, char *device){
 }
 
 
-int sim5360_data_type(char *receive, char *device){
+int a7600_data_type(char *receive, char *device){
 	if(modem_common_send_at(device)!=0){
 		strcpy(receive,"ERROR");
 		return -1;
@@ -187,7 +234,7 @@ int sim5360_data_type(char *receive, char *device){
 	return 0;
 }
 
-int sim5360_imei(char *receive, char *device){
+int a7600_imei(char *receive, char *device){
 	if(modem_common_send_at(device)!=0){
 		strcpy(receive,"ERROR");
 		return -1;
@@ -204,10 +251,11 @@ int sim5360_imei(char *receive, char *device){
 	return 0;
 }
 
-int sim5360_power_down(struct settings_entry *settings){
+int a7600_power_down(struct settings_entry *settings){
 	char buf[256]={0};
 	char count=0;
 
+	ubus_interface_down(settings->iface);
 	if(modem_common_send_at(settings->atdevice)!=0){
 		return -1;
 	}
@@ -231,7 +279,7 @@ int sim5360_power_down(struct settings_entry *settings){
 	return 0;
 }
 
-int sim5360_power_up(struct settings_entry *settings){
+int a7600_power_up(struct settings_entry *settings){
 	uint8_t count=0;
 	gpio_set_value(settings->pwrkey_pin,HIGH);
 	usleep(500);
@@ -250,40 +298,74 @@ int sim5360_power_up(struct settings_entry *settings){
 	return 0;
 }
 
-int sim5360_sim_pullout(struct settings_entry *settings){
-	if(sim5360_power_down(settings)!=0){
+int a7600_set_mode(struct settings_entry *settings,char *mode){
+	char receive[256]={0};
+	if(modem_common_send_at(settings->atdevice)!=0){
 		return -1;
+	}
+	
+	if(mode == NULL){
+		if(modem_send_command(receive,settings->atdevice,"\rAT+CNMP=2\r","OK")!=0)
+			return -1;
+	} else {
+		switch(mode[0]){
+			case 'l': //LTE
+				if(modem_send_command(receive,settings->atdevice,"\rAT+CNMP=38\r","OK")!=0)
+					return -1;
+				break;
+			case 'u': //UMTS
+				if(modem_send_command(receive,settings->atdevice,"\rAT+CNMP=14\r","OK")!=0)
+					return -1;
+				break;
+			case 'g': //GSM
+				if(modem_send_command(receive,settings->atdevice,"\rAT+CNMP=13\r","OK")!=0)
+					return -1;
+				break;
+			default: //ALL MODES
+				if(modem_send_command(receive,settings->atdevice,"\rAT+CNMP=2\r","OK")!=0)
+					return -1;
+				break;
+		}
 	}
 	return 0;
 }
 
-int sim5360_sim_pullup(struct settings_entry *settings){
-	if(sim5360_power_up(settings)!=0){
+int a7600_set_apn(struct settings_entry *settings,char *apn){
+	char receive[256]={0},buf[256]={0};
+	
+	
+	if(modem_common_send_at(settings->atdevice)!=0){
 		return -1;
+	}
+	
+	if(apn != NULL){
+		sprintf(buf,"\rAT+CGDCONT=1,\"IP\",\"%s\"\r",apn);
+		if(modem_send_command(receive,settings->atdevice,buf,"OK")!=0)
+			return -1;
 	}
 	return 0;
 }
 
-struct modems_ops sim5360_ops = {
-		.name				= "SIMCOM SIM5360",
-		.init				= sim5360_init,
-		.probe				= sim5360_probe,
-		.version			= sim5360_version,
-		.imei				= sim5360_imei,
-		.ccid				= sim5360_ccid,
+struct modems_ops a7600_ops = {
+		.name				= "SIMCOM A7600E-H",
+		.init				= a7600_init,
+		.probe				= a7600_probe,
+		.version			= a7600_version,
+		.imei				= a7600_imei,
+		.ccid				= a7600_ccid,
 		.imsi				= modem_common_imsi,
 		.pin_state			= modem_common_pin_state,
 		.csq				= modem_common_csq,
-		.bs_info			= sim5360_bs_info,
+		.bs_info			= a7600_bs_info,
 		.registration		= modem_common_registration,
-		.band_info			= sim5360_band_info,
-		.network_type		= sim5360_network_type,
+		.band_info			= a7600_band_info,
+		.network_type		= a7600_network_type,
 		.data_registration	= modem_common_data_registration,
-		.data_type			= sim5360_data_type,
-		.sim_pullout		= sim5360_sim_pullout,
-		.sim_pullup			= sim5360_sim_pullup,
-		.power_down			= sim5360_power_down,
-		.power_up			= sim5360_power_up,
-		.set_mode			= modem_common_set_mode,
-		.set_apn			= modem_common_set_apn
+		.data_type			= a7600_data_type,
+		.sim_pullout		= modem_common_sim_pullout,
+		.sim_pullup			= modem_common_sim_pullup,
+		.power_down			= a7600_power_down,
+		.power_up			= a7600_power_up,
+		.set_mode			= a7600_set_mode,
+		.set_apn			= a7600_set_apn
 };

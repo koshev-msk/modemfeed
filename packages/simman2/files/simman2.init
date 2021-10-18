@@ -28,10 +28,38 @@ start_service_daemon(){
 	section_enabled "$s" || return 1
 	config_get PWRKEY "$s" pwrkey_gpio_pin
 	config_get GSMPOW "$s" gsmpow_gpio_pin
-	echo $PWRKEY > /sys/class/gpio/export
-	echo $GSMPOW > /sys/class/gpio/export
-	echo high > /sys/class/gpio/gpio$PWRKEY/direction
-	echo low > /sys/class/gpio/gpio$GSMPOW/direction
+	config_get FIRSTSTART "$s" firststart
+	config_get ATDEVICE "$s" atdevice
+	if [[ -n "$PWRKEY" ]]; then
+		if [[ "$PWRKEY" -lt "0" ]]; then
+			PWRKEY=$(echo ${PWRKEY:1})
+			echo $PWRKEY > /sys/class/gpio/export
+			echo low > /sys/class/gpio/gpio$PWRKEY/direction
+		else
+			echo $PWRKEY > /sys/class/gpio/export
+			echo high > /sys/class/gpio/gpio$PWRKEY/direction	
+		fi		
+	fi
+	if [[ -n "$GSMPOW" ]]; then
+		if [[ "$GSMPOW" -lt "0" ]]; then
+			GSMPOW=$(echo ${GSMPOW:1})
+			echo $GSMPOW > /sys/class/gpio/export
+			echo high > /sys/class/gpio/gpio$GSMPOW/direction
+		else
+			echo $GSMPOW > /sys/class/gpio/export
+			echo low > /sys/class/gpio/gpio$GSMPOW/direction
+		fi		
+	fi
+
+	
+	if [[ "$FIRSTSTART" -eq "1" ]]; then
+		/etc/simman2/modeminit $ATDEVICE &
+		uci_set simman2 "$1" firststart "0"
+		uci_commit simman2
+	fi
+
+	echo 509 > /sys/class/gpio/export
+	echo low > /sys/class/gpio/gpio509/direction
 
 	if [[ -e "/tmp/simman2" ]]; then
 		rm /tmp/simman2/* &>/dev/null

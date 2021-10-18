@@ -303,5 +303,7 @@ struct modems_ops sim7600_ops = {
 		.sim_pullout		= modem_common_sim_pullout,
 		.sim_pullup			= modem_common_sim_pullup,
 		.power_down			= sim7600_power_down,
-		.power_up			= sim7600_power_up
+		.power_up			= sim7600_power_up,
+		.set_mode			= modem_common_set_mode,
+		.set_apn			= modem_common_set_apn
 };

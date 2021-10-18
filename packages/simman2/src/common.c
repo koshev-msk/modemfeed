@@ -17,39 +17,17 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+static const struct modems_ops *modems[] = {
+	&ehs5_ops,
+	&sim7600_ops,
+	&a7600_ops,
+	&sim5360_ops,
+	&sim5300_ops,
+};
+
 //---------------------------------------------------------OLD----------------------
 
-void execCommandNoWait(char **cmd) {
-	//  Create a child process from current (?)
-	pid_t varProcess = fork();
-	
-	//  if fork successfully created
-	if (!varProcess) {
-		//  Execute command
-		execvp(*cmd, cmd);
-	}
-	
-	//  Wait for command closing
-	waitpid(varProcess, NULL, WNOHANG);
-}
-
-
-void execCommand(char **cmd) {
-	//  Create a child process from current (?)
-	pid_t varProcess = fork();
-	
-	//  if fork successfully created
-	if (!varProcess) {
-		//  Execute command
-		execvp(*cmd, cmd);
-	}
-	
-	//  Wait for command closing
-	waitpid(varProcess, NULL, 0);
-}
-
 int ping(char *ip, char *iface)
-//int ping(char *ip)
 {
  	FILE *fp;
     char b[128];
@@ -227,13 +205,6 @@ int gpio_set_value(int16_t gpio, uint8_t value)
 	close(fd);
 	return ret;
 }
-
-static const struct modems_ops *modems[] = {
-	&ehs5_ops,
-	&sim7600_ops,
-	&sim5360_ops,
-	&sim5300_ops,
-};
 
 const struct modems_ops * modems_backend(char *device)
 {
@@ -663,10 +634,19 @@ int uci_read_configuration(struct settings_entry *set, char *config)
 		sprintf(path,"simman2.%s.sim%d_priority",config,i);
 		if ((p = uci_get_value(path)) == NULL)
 		{
-			fprintf(stderr,"Error reading sim%d_priority\n",i);
+			//fprintf(stderr,"Error reading sim%d_priority\n",i);
 			continue;
 		}
 		set->sim[i].prio = atoi(p);
+
+		sprintf(path,"simman2.%s.sim%d_mode",config,i);
+		if ((p = uci_get_value(path)) == NULL)
+		{
+			//fprintf(stderr,"Error reading sim%d_mode\n",i);
+			set->sim[i].mode = NULL;
+		} else
+			set->sim[i].mode = p;
+
 		sprintf(path,"simman2.%s.sim%d_testip",config,i);
 		if ((p = uci_get_value(path)) != NULL)
 		{
@@ -744,7 +724,7 @@ int uci_read_configuration(struct settings_entry *set, char *config)
 char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
 {
 	FILE *fp;
-    char b[64] = {0};
+    char b[256] = {0};
 	char cmd[256] = {0};
     char *defval = "error";
 
@@ -1006,13 +986,16 @@ int switch_sim(struct settings_entry *settings, struct modems_ops *modem, uint8_
 
 	gpio_set_value(settings->simdet_pin,0);
 	usleep(500);
+	modem->set_mode(settings,settings->sim[sim_n].mode);
+	modem->set_apn(settings,settings->sim[sim_n].apn);
 	gpio_set_value(settings->simaddr_pin,sim_n);
 	sprintf(cmd,"echo %d > /tmp/simman2/sim",sim_n);
 	system(cmd);
 	usleep(100);
 	gpio_set_value(settings->simdet_pin,1);
 	usleep(500);
-	//fixme
+	
+	//fixme	
 	modem->sim_pullup(settings);
 	services_start(settings->iface);
 	ubus_network_reload();

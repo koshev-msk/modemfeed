@@ -285,5 +285,7 @@ struct modems_ops sim5300_ops = {
 		.sim_pullout		= sim5300_sim_pullout,
 		.sim_pullup			= sim5300_sim_pullup,
 		.power_down			= sim5300_power_down,
-		.power_up			= sim5300_power_up
+		.power_up			= sim5300_power_up,
+		.set_mode			= modem_common_set_mode,
+		.set_apn			= modem_common_set_apn
 };

@@ -310,8 +310,6 @@ int main(int argc, char **argv)
 			first_start = hot_change;
 			hot_change = 0;
 
-			// Если работаем на карте с низким приоритетом,
-			// пробуем переключится на карту с высшим приоритетом
 			if (((active_sim == 0 ) && (settings.sim[0].prio < settings.sim[1].prio))
 					||((active_sim > 0) &&  (settings.sim[0].prio > settings.sim[1].prio)))
 			{

@@ -44,10 +44,11 @@ define Package/simman2/install
 	$(INSTALL_DIR) $(1)/etc/simman2
 	$(INSTALL_BIN) ./files/nbinfo.sh $(1)/etc/simman2/nbinfo.sh
 	$(INSTALL_BIN) ./files/setsim.sh $(1)/etc/simman2/setsim.sh
+	$(INSTALL_BIN) ./files/modeminit $(1)/etc/simman2/modeminit
 	$(INSTALL_BIN) ./files/check_prio.sh $(1)/etc/simman2/check_prio.sh
 	$(CP) ./files/*.gcom $(1)/etc/simman2
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
-	$(INSTALL_DATA) ./files/simman2.hotplug $(1)/etc/hotplug.d/usb/12-modem
+	#$(INSTALL_DATA) ./files/simman2.hotplug $(1)/etc/hotplug.d/usb/12-modem
 	$(INSTALL_DATA) ./files/scmux.hotplug $(1)/etc/hotplug.d/usb/13-scmux
 endef
 

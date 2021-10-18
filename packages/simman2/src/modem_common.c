@@ -141,20 +141,6 @@ int modem_common_exist(char *device){
 
 int modem_common_power_down(struct settings_entry *settings, struct modems_ops *modem){
 	uint8_t count=0;
-	// ubus_interface_down(settings->iface);
-	// gpio_set_value(settings->pwrkey_pin,LOW);
-	// sleep(1);
-	// gpio_set_value(settings->pwrkey_pin,HIGH);
-	// sleep(3);
-	// gpio_set_value(settings->pwrkey_pin,LOW);
-	// while(count<=15){
-	// 	if(modem_common_exist(settings->atdevice)==-1){
-	// 		break;
-	// 	}
-	// 	count++;
-	// 	sleep(1);
-	// }
-	// count=0;
 
 	if(modem!=NULL)
 	{
@@ -221,5 +207,13 @@ int modem_common_sim_pullout(struct settings_entry *settings){
 }
 
 int modem_common_sim_pullup(struct settings_entry *settings){
+	return 0;
+}
+
+int modem_common_set_mode(struct settings_entry *settings, char *mode){
+	return 0;
+}
+
+int modem_common_set_apn(struct settings_entry *settings, char *apn){
 	return 0;
 }

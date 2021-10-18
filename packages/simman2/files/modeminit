@@ -1,0 +1,24 @@
+#!/bin/sh
+
+ATDEVICE=$1
+while [[ ! -e $ATDEVICE ]]; do
+	sleep 1
+done
+
+MODEM=$(simman2_cli -d "$ATDEVICE" -m)
+while [[ -n $MODEM ]]; do	
+	sleep 1
+	MODEM=$(simman2_cli -d "$ATDEVICE" -m)
+done
+
+if echo "$MODEM" | grep -q A7600E; then
+	uci set network.internet=interface
+	uci set network.internet.proto=dhcp
+	uci set network.internet.device=usb0
+	uci commit network
+	uci add_list firewall.@zone[1].network='internet'
+	uci commit firewall
+	ubus call network reload
+fi
+
+exit 0
