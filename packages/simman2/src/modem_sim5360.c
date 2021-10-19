@@ -177,8 +177,8 @@ int sim5360_data_type(char *receive, char *device){
 		case '2': strcpy(receive,"GPRS"); break;
 		case '3': strcpy(receive,"EGPRS (EDGE)"); break;
 		case '4': strcpy(receive,"WCDMA"); break;
-		case '5': strcpy(receive,"HSDPA only(WCDMA)"); break;
-		case '6': strcpy(receive,"HSUPA only(WCDMA)"); break;
+		case '5': strcpy(receive,"HSDPA only (WCDMA)"); break;
+		case '6': strcpy(receive,"HSUPA only (WCDMA)"); break;
 		case '7': strcpy(receive,"HSPA (HSDPA and HSUPA, WCDMA)"); break;
 		case '8': strcpy(receive,"LTE"); break;
 		default: strcpy(receive,"UNKNOWN"); break;
@@ -285,5 +285,7 @@ struct modems_ops sim5360_ops = {
 		.power_down			= sim5360_power_down,
 		.power_up			= sim5360_power_up,
 		.set_mode			= modem_common_set_mode,
-		.set_apn			= modem_common_set_apn
+		.set_apn			= modem_common_set_apn,
+		.set_pin			= modem_common_set_pin,
+		.set_auth			= modem_common_set_auth
 };

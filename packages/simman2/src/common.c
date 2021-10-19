@@ -985,15 +985,15 @@ int switch_sim(struct settings_entry *settings, struct modems_ops *modem, uint8_
 	modem->sim_pullout(settings);
 
 	gpio_set_value(settings->simdet_pin,0);
-	usleep(500);
-	modem->set_mode(settings,settings->sim[sim_n].mode);
-	modem->set_apn(settings,settings->sim[sim_n].apn);
+	usleep(500);	
 	gpio_set_value(settings->simaddr_pin,sim_n);
-	sprintf(cmd,"echo %d > /tmp/simman2/sim",sim_n);
-	system(cmd);
 	usleep(100);
 	gpio_set_value(settings->simdet_pin,1);
 	usleep(500);
+	modem->set_pin(settings,settings->sim[sim_n].pin);
+	modem->set_mode(settings,settings->sim[sim_n].mode);
+	modem->set_auth(settings,settings->sim[sim_n].user,settings->sim[sim_n].pass);
+	modem->set_apn(settings,settings->sim[sim_n].apn);
 	
 	//fixme	
 	modem->sim_pullup(settings);

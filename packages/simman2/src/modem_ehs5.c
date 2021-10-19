@@ -216,5 +216,8 @@ struct modems_ops ehs5_ops = {
 		.sim_pullup			= modem_common_sim_pullup,
 		.power_down			= ehs5_power_down,
 		.power_up			= ehs5_power_up,
-		.set_mode			= modem_common_set_mode
+		.set_mode			= modem_common_set_mode,
+		.set_apn			= modem_common_set_apn,
+		.set_pin			= modem_common_set_pin,
+		.set_auth			= modem_common_set_auth
 };

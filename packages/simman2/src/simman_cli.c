@@ -14,35 +14,6 @@
 
 static const char *device, *config;
 
-typedef struct current_info{
-	uint8_t *atdevice;
-	uint8_t *sim;
-	uint8_t *imei;
-	uint8_t *ccid;
-	uint8_t *pincode_stat;
-	uint8_t *sig_lev;
-	uint8_t *reg_stat;
-	uint8_t *base_st_id;
-	uint8_t *base_st_bw;
-	uint8_t *net_type;
-	uint8_t *gprs_reg_stat;
-	uint8_t *pack_type;
-}current_info_t;
-
-current_info_t siminfo;   
-
-int ReadConfiguration(current_info_t *set)
-{
-	char * p;
-	if ((p = uci_get_value("simman2.info.atdevice")) == NULL)
-	{
-		fprintf(stderr,"Error reading atdevice\n");
-		return -1;
-	}
-	siminfo.atdevice = p;
-	return 0;
-}
-
 int ModemStarted(char *atdevice)
 {
 	// 0 - OK, -1 - not found

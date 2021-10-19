@@ -224,8 +224,8 @@ int a7600_data_type(char *receive, char *device){
 		case '2': strcpy(receive,"GPRS"); break;
 		case '3': strcpy(receive,"EGPRS (EDGE)"); break;
 		case '4': strcpy(receive,"WCDMA"); break;
-		case '5': strcpy(receive,"HSDPA only(WCDMA)"); break;
-		case '6': strcpy(receive,"HSUPA only(WCDMA)"); break;
+		case '5': strcpy(receive,"HSDPA only (WCDMA)"); break;
+		case '6': strcpy(receive,"HSUPA only (WCDMA)"); break;
 		case '7': strcpy(receive,"HSPA (HSDPA and HSUPA, WCDMA)"); break;
 		case '8': strcpy(receive,"LTE"); break;
 		default: strcpy(receive,"UNKNOWN"); break;
@@ -333,13 +333,62 @@ int a7600_set_mode(struct settings_entry *settings,char *mode){
 int a7600_set_apn(struct settings_entry *settings,char *apn){
 	char receive[256]={0},buf[256]={0};
 	
-	
-	if(modem_common_send_at(settings->atdevice)!=0){
-		return -1;
-	}
-	
 	if(apn != NULL){
+		if(modem_common_send_at(settings->atdevice)!=0){
+			return -1;
+		}
 		sprintf(buf,"\rAT+CGDCONT=1,\"IP\",\"%s\"\r",apn);
+		if(modem_send_command(receive,settings->atdevice,buf,"OK")!=0)
+			return -1;
+	}
+	return 0;
+}
+
+int a7600_set_pin(struct settings_entry *settings,char *pin){
+	char receive[256]={0},buf[256]={0};
+	int count=0;
+	
+	if(pin != NULL){
+		if(modem_common_send_at(settings->atdevice)!=0){
+			return -1;
+		}
+
+		while(strstr(receive,"RADIOPOWER: 1")==NULL){
+			memset(receive,0,sizeof(receive));
+			modem_send_command(receive,settings->atdevice,"\rAT\r","OK");
+			if(count++>10){
+				break;
+			}
+			sleep(1);
+		}
+		count=0;
+		while(strstr(receive,"+CPIN:")==NULL){
+			memset(receive,0,sizeof(receive));
+			modem_send_command(receive,settings->atdevice,"\rAT+CPIN?\r","OK");
+			if(count++>10){
+				break;
+			}
+			usleep(500);
+		}
+
+		if(strstr(receive,"+CPIN: SIM PIN")!=NULL)
+		{
+			sprintf(buf,"\rAT+CPIN=%s\r",pin);
+			if(modem_send_command(receive,settings->atdevice,buf,"+CPIN: READY")!=0)
+				return -1;
+		}
+	}
+	return 0;
+}
+
+int a7600_set_auth(struct settings_entry *settings,char *user,char *pass){
+	char receive[256]={0},buf[256]={0};
+	
+	if(user != NULL && pass != NULL){
+		if(modem_common_send_at(settings->atdevice)!=0){
+			return -1;
+		}
+		sprintf(buf,"\rAT+CGAUTH=1,2,%s,%s\r",pass,user);
 		if(modem_send_command(receive,settings->atdevice,buf,"OK")!=0)
 			return -1;
 	}
@@ -367,5 +416,7 @@ struct modems_ops a7600_ops = {
 		.power_down			= a7600_power_down,
 		.power_up			= a7600_power_up,
 		.set_mode			= a7600_set_mode,
-		.set_apn			= a7600_set_apn
+		.set_apn			= a7600_set_apn,
+		.set_pin			= a7600_set_pin,
+		.set_auth			= a7600_set_auth
 };

@@ -14,7 +14,7 @@ int modem_common_send_at(char *device){
 	uint8_t i=0;
 
 	while(i<5){
-		if(modem_send_command(buf,device,"AT\r","OK")==0){
+		if(modem_send_command(buf,device,"\rAT\r","OK")==0){
 			return 0;
 		};
 		i++;
@@ -215,5 +215,13 @@ int modem_common_set_mode(struct settings_entry *settings, char *mode){
 }
 
 int modem_common_set_apn(struct settings_entry *settings, char *apn){
+	return 0;
+}
+
+int modem_common_set_pin(struct settings_entry *settings, char *pin){
+	return 0;
+}
+
+int modem_common_set_auth(struct settings_entry *settings, char *user, char *pass){
 	return 0;
 }
