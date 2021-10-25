@@ -353,7 +353,7 @@ int a7600_set_pin(struct settings_entry *settings,char *pin){
 			return -1;
 		}
 
-		while(strstr(receive,"RADIOPOWER: 1")==NULL){
+		while(strstr(receive,"ISIMAID:")==NULL){
 			memset(receive,0,sizeof(receive));
 			modem_send_command(receive,settings->atdevice,"\rAT\r","OK");
 			if(count++>10){
