@@ -26,7 +26,7 @@ pingcontrol_instance() {
 
 
         procd_open_instance
-        procd_set_param command "$PROG" "$iface" "$check_period" "$testip" "$sw_before_modres" "$sw_before_sysres"
+        procd_set_param command "$PROG" "$1"
 
         procd_set_param stdout 1
         procd_set_param stderr 1
