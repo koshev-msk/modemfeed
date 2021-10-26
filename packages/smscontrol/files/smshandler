@@ -12,6 +12,12 @@ if [ "$ENABLED" -eq "1" ]; then
         FROM=$(echo "${MESSAGE}"|grep -e '^From\:'|cut -d' ' -f2)
         DATE=$(echo "${MESSAGE}"|grep -e '^Received\:'|cut -d' ' -f2,3)
         BODY=$(echo "${MESSAGE}"|sed -e '1,/^$/d')
+        CFG=$(uci add event_log event)
+        uci set event_log.$CFG.date="${DATE}"
+        uci set event_log.$CFG.type=SMS
+        uci set event_log.$CFG.from="${FROM}"
+        uci set event_log.$CFG.from="${BODY}"
+        uci commit event_log
         [ "$PASS;" != "${BODY::$PASSLENGTH}" ] && exit
         ADMINPHONES=$(uci get smscontrol.common.whitelist)
         COUNTPHONES=$(echo $ADMINPHONES | wc -w)   
@@ -39,6 +45,12 @@ if [ "$ENABLED" -eq "1" ]; then
     CALL)
         MESSAGE=$(cat "$2")
         FROM=$(echo "${MESSAGE}"|grep -e '^From\:'|cut -d' ' -f2)
+        CFG=$(uci add event_log event)
+        DATE=$(date +"%H:%M %m-%d-%y")
+        uci set event_log.$CFG.date="${DATE}"
+        uci set event_log.$CFG.type=CALL
+        uci set event_log.$CFG.from="${FROM}"
+        uci commit event_log
         ADMINPHONES=$(uci get smscontrol.common.whitelist)
         COUNTPHONES=$(echo $ADMINPHONES | wc -w)   
         COUNT="0"

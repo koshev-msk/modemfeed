@@ -33,6 +33,7 @@ define Package/smscontrol/install
 	$(CP) ./files/smshandler $(1)/etc/smscontrol/smshandler
 	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) ./files/smscontrol.config $(1)/etc/config/smscontrol
+	$(CP) ./files/event_log.config $(1)/etc/config/event_log
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/smscontrol.init $(1)/etc/init.d/smscontrol
 endef

@@ -42,6 +42,15 @@ return view.extend({
 		o.rmempty =true;
 		o.optional = false;
 
+		o = s.option(form.Flag, 'event_log', _('Enable event log'));
+		o.optional = false;		
+
+		o = s.option(form.Button, 'remove_log',_('Clear event log'));
+		o.inputstyle = 'action important';
+		o.inputtitle = _('Remove');
+		o.onclick = function(section_id) {
+		}
+
 		return m.render();
 	}
 });

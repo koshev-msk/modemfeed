@@ -48,10 +48,18 @@
 		}
 	},
 
+	"admin/services/smscontrol/log": {
+		"title": "Message log",
+		"order": 50,
+		"action": {
+			"type": "view",
+			"path": "smscontrol/log"
+		}
+	},
 
 	"admin/services/smscontrol/sendsms": {
 	"title": "Send SMS",
-		"order": 50,
+		"order": 60,
 		"action": {
 			"type": "view",
 			"path": "smscontrol/sendsms"
