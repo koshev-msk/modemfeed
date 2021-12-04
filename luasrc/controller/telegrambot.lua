@@ -4,6 +4,5 @@ function index()
         if not nixio.fs.access("/etc/config/telegrambot") then
                 return
         end
-        local page
-        page = entry({"admin", "services", "telegrambot"}, cbi("telegrambot"), _("TelegramBot"), 82)
+        entry({"admin", "services", "telegrambot"}, cbi("telegrambot"), _("TelegramBot"), 82).acl_depends={"unauthenticated"}
 end
