@@ -33,5 +33,8 @@ fi
 
 
 case $1 in
-        RECEIVED) mv $2 /var/spool/sms/incoming/${NUM}_${BODY} ;;
+        RECEIVED) 
+		mv $2 /var/spool/sms/incoming/${NUM}_${BODY}
+		rm -f /var/spool/sms/incoming/*concat*
+		;;
 esac
