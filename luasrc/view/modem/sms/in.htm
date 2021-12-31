@@ -74,8 +74,8 @@ end
 <script type="text/javascript">//<![CDATA[
     function erase_in_sms(){
     	alert("<%:Delete all incoming messages!%>");
-    		XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "erase_in_sms")%>');
 	    	location.reload();
+    		XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "erase_in_sms")%>');
     	}
 //]]></script>	
 

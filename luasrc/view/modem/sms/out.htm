@@ -73,8 +73,8 @@ end
 <script type="text/javascript">//<![CDATA[
     function erase_out_sms(){
 	    alert("<%:All outgoing messages are deleted!%>");
-	    XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "erase_out_sms")%>');
 	    location.reload();
+	    XHR.get('<%=luci.dispatcher.build_url("admin", "modem", "erase_out_sms")%>');
     }
 //]]></script>
 
