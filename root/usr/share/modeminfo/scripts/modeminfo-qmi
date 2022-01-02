@@ -3,13 +3,14 @@
 
 get_device_info(){
 	DEVPORT=$(uci -q get modeminfo.@modeminfo[0].device_qmi)
+	if [ -x /usr/bin/qmicli ]; then
+		export QMICTL="qmicli -p -d $DEVPORT"
+	else
+ 		logger -t "luci-app-modeminfo" "qmicli not found!"
+		exit 1
+        fi
 	if [ $DEVPORT ]; then
-		if [ -x /usr/bin/qmicli ]; then
-			export QMICTL="qmicli -p -d $DEVPORT"
-		else
-			logger -t "luci-app-modeminfo" "qmicli not found!"
-			exit 1
-		fi
+		export QMICTL="qmicli -p -d $DEVPORT"
 	else
 	       	for qmi in $(ls /dev/cdc-wdm*); do
                 	if [ $qmi ]; then
