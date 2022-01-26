@@ -593,10 +593,7 @@ function dell_data(){
 
 # Fibocom NL668/678 modems
 function fibocom_data(){
-	TECH=$(echo "$O" | awk -F[,\ ] '/^\*CNTI/ {print $3}' | sed 's|/|,|g')
-	if [ "x$TECH" != "x" ]; then
-		MODE="$TECH"
-	fi
+	generic_data
 	NETWORK=$(echo "$O"| grep -A2 'service cell' | awk 'NR ==2{print}')
 	EARFCN=$(echo "$NETWORK" | awk -F [,] '{print $7}')
 	if [ "$MODE" = "LTE" ]; then
@@ -634,6 +631,10 @@ function fibocom_data(){
 		fi
 			
 	else
+		TECH=$(echo "$O" | awk -F[,\ ] '/^\*CNTI/ {print $3}' | sed 's|/|,|g')
+        	if [ "x$TECH" != "x" ]; then
+                	MODE="$TECH"
+	        fi
 		SINR=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", $NF/2-24}')
 	fi 
 	CHIPTEMP=$(echo "$O" | awk '/\+MTSM/{print $2}')
