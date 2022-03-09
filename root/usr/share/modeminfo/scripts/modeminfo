@@ -54,6 +54,8 @@ function modem_family() {
 		FAMILY=QUALCOMM
 	elif (echo ${DEVICE} | grep -i del >/dev/null); then
                 FAMILY=DELL
+        elif (echo "$O" | grep -i "fibocom l8" >/dev/null); then
+                FAMILY=INTEL
 	elif (echo ${DEVICE} | grep -i fib >/dev/null); then
 		FAMILY=FIBOCOM
 	elif (echo "$O" | grep -i xmm >/dev/null); then
