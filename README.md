@@ -5,6 +5,10 @@
 <p align="center">Gpoint was created in order to use full set of functions of mobile modules installed in OpenWRT router.
 Manufacturers of GSM/3G/LTE modems often lay down GNSS function, so why not use it?
 It doesn't matter if you use a router in transport or it is installed in your terminal, you can always find out its location!</p>
+<details>
+   <summary>Screenshots</summary>
+   ![](https://github.com/Kodo-kakaku/luci-app-gpoint/blob/main/Images/overview.png)
+</details>
 
 ## Features
 - Support: GPS, GLONASS (works with "NMEA 0183" standard protocol)
