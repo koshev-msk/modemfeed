@@ -7,7 +7,7 @@ Manufacturers of GSM/3G/LTE modems often lay down GNSS function, so why not use 
 It doesn't matter if you use a router in transport or it is installed in your terminal, you can always find out its location!</p>
 <details>
    <summary>Screenshots</summary>
-   ![](https://github.com/Kodo-kakaku/luci-app-gpoint/blob/main/Images/overview.png)
+   <img src="https://github.com/Kodo-kakaku/luci-app-gpoint/blob/main/Images/overview.png" alt="overview" height="200" width="370">
 </details>
 
 ## Features
