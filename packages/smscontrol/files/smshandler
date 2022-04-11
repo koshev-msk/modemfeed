@@ -12,12 +12,14 @@ if [ "$ENABLED" -eq "1" ]; then
         FROM=$(echo "${MESSAGE}"|grep -e '^From\:'|cut -d' ' -f2)
         DATE=$(echo "${MESSAGE}"|grep -e '^Received\:'|cut -d' ' -f2,3)
         BODY=$(echo "${MESSAGE}"|sed -e '1,/^$/d')
-        CFG=$(uci add event_log event)
-        uci set event_log.$CFG.date="${DATE}"
-        uci set event_log.$CFG.type=SMS
-        uci set event_log.$CFG.from="${FROM}"
-        uci set event_log.$CFG.from="${BODY}"
-        uci commit event_log
+        if [[ "$(uci -q get smscontrol.common.smscontrol_log)" = "1" ]]; then
+            CFG=$(uci add smscontrol_log event)
+            uci set smscontrol_log.$CFG.date="${DATE}"
+            uci set smscontrol_log.$CFG.type=SMS
+            uci set smscontrol_log.$CFG.from="${FROM}"
+            uci set smscontrol_log.$CFG.message="${BODY}"
+            uci commit smscontrol_log
+        fi
         [ "$PASS;" != "${BODY::$PASSLENGTH}" ] && exit
         ADMINPHONES=$(uci get smscontrol.common.whitelist)
         COUNTPHONES=$(echo $ADMINPHONES | wc -w)   
@@ -45,12 +47,16 @@ if [ "$ENABLED" -eq "1" ]; then
     CALL)
         MESSAGE=$(cat "$2")
         FROM=$(echo "${MESSAGE}"|grep -e '^From\:'|cut -d' ' -f2)
-        CFG=$(uci add event_log event)
-        DATE=$(date +"%H:%M %m-%d-%y")
-        uci set event_log.$CFG.date="${DATE}"
-        uci set event_log.$CFG.type=CALL
-        uci set event_log.$CFG.from="${FROM}"
-        uci commit event_log
+
+        if [[ "$(uci -q get smscontrol.common.smscontrol_log)" = "1" ]]; then
+            CFG=$(uci add smscontrol_log event)
+            DATE=$(date +"%y-%m-%d %H:%M:%S")
+            uci set smscontrol_log.$CFG.date="${DATE}"
+            uci set smscontrol_log.$CFG.type=CALL
+            uci set smscontrol_log.$CFG.from="${FROM}"
+            uci commit smscontrol_log
+        fi
+        
         ADMINPHONES=$(uci get smscontrol.common.whitelist)
         COUNTPHONES=$(echo $ADMINPHONES | wc -w)   
         COUNT="0"
@@ -65,6 +71,18 @@ if [ "$ENABLED" -eq "1" ]; then
     ;;
 
     SENT)
+        if [[ "$(uci -q get smscontrol.common.smscontrol_log)" = "1" ]]; then
+            MESSAGE=$(cat "$2")
+            TO=$(echo "${MESSAGE}"|grep -e '^To\:'|cut -d' ' -f2)
+            BODY=$(echo "${MESSAGE}"|sed -e '1,/^$/d')        
+            CFG=$(uci add smscontrol_log event)
+            DATE=$(date +"%y-%m-%d %H:%M:%S")
+            uci set smscontrol_log.$CFG.date="${DATE}"
+            uci set smscontrol_log.$CFG.type=SMS
+            uci set smscontrol_log.$CFG.to="${TO}"
+            uci set smscontrol_log.$CFG.message="${BODY}"
+            uci commit smscontrol_log
+        fi
     ;;
 
     *)

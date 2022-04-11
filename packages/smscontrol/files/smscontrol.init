@@ -17,6 +17,9 @@ generate_pass() {
 			"TELEOFIS LT70")
 				PASS=$(head -c 1000 /dev/urandom | tr -dc '0-9' | cut -c -15)
 			;;
+			"TELEOFIS RTUx68v2")
+				PASS=$(getserialnum)
+			;;
 		esac
 		uci_set smscontrol common pass "$PASS"
 		uci_commit smscontrol
@@ -107,6 +110,7 @@ start() {
 	config_load smscontrol
 	generate_pass
 	enabled=$(uci get smscontrol.common.enabled)
+	[ -e "/etc/config/smscontrol_log" ] || touch /etc/config/smscontrol_log
 	if [ "$enabled" -eq "1" ]; then
 		mkdir "$DIR"
 		touch "$COMMANDS"
