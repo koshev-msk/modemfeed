@@ -1830,7 +1830,7 @@ device_config_t GetFullDeviceConfig(int deviceID)
         LOG("No UCI field %s \n", UCIpathClientID);
     }
     if(UCIptr.flags & UCI_LOOKUP_COMPLETE)
-        deviceConfig.clientID = atoi(UCIptr.o->v.string);
+        deviceConfig.clientID = strtoll(UCIptr.o->v.string, NULL, 10);
 
     //Modbus Gateway
     memcpy(UCIpath , UCIpathBegin, MAX_CHARS_IN_UCIPATH);
