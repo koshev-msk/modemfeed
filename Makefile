@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
-PKG_VERSION:=0.9.2
+PKG_VERSION:=0.9.4
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -9,7 +9,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/z3APA3A/3proxy.git
-PKG_SOURCE_VERSION:=8ec14c131d3a8bf010d98baac9c87787d29c1a1b
+PKG_SOURCE_VERSION:=346880eb2e73836385e5f7648f738efcece580ac
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -77,6 +77,7 @@ define Package/$(PKG_NAME)-common/install
 		$(PKG_BUILD_DIR)/bin/smtpp \
 		$(PKG_BUILD_DIR)/bin/tcppm \
 		$(PKG_BUILD_DIR)/bin/udppm \
+		$(PKG_BUILD_DIR)/bin/socks \
 		$(1)/usr/bin
 endef
 
