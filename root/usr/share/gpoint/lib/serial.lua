@@ -54,6 +54,11 @@ function serial.read(serial_port)
 	local serialData, err, read_data = {}, "", ""
 	while READ_LEN > 0 do
 		err, read_data = port:read(1, TIMEOUT)
+		if err ~= rs232.RS232_ERR_NOERROR then
+			err = {true, "Error reading GNSS port. Updating data or searching for satellites..."}
+			assert(port:close() == rs232.RS232_ERR_NOERROR)
+			return err, ""
+		end
 		if read_data ~= nil then
 			table.insert(serialData, read_data)
 			READ_LEN = READ_LEN - 1
