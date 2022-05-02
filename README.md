@@ -15,7 +15,7 @@ It doesn't matter if you use a router in transport or it is installed in your te
 ## Features
 - Support: GPS, GLONASS (works with "NMEA 0183" standard protocol)
 - GeoHash (reduces drift of GPS\GLONASS coordinate readings in parking)
-- [Kalman filter](https://github.com/lacker/ikalman) (Implementation of Kalman filter for geo (gps) tracks. This is a Lua port of original C code by Kevin Lacker) 
+- [Kalman filter](https://github.com/lacker/ikalman) (Implementation of Kalman filter for geo (gps) tracks. This is a Lua port of original C code)
 - Yandex Locator [API](https://yandex.ru/dev/locator/) (Determines location by nearest Wi-Fi access points)
 - Server side (sends GNSS data to a remote server)
 - Support [OpenLayers](https://openlayers.org/) maps in UI, and much more!
