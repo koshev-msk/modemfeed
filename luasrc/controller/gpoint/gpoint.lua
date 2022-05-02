@@ -24,7 +24,8 @@ local serviceIsStop = {
                 app={true,"Service stop"},
                 server={true,"Service stop"},
                 filter={true,"Service stop"},
-                locator={true,"Service stop"}
+                locator={true,"Service stop"},
+                kalman={true,"Service stop"}
         }
 }
 
@@ -33,7 +34,8 @@ local serviceUbusFailed = {
                 app={true,"Ubus Failed"},
                 server={true,"Loading..."},
                 filter={true,"Loading..."},
-                locator={true,"Loading..."}
+                locator={true,"Loading..."},
+                kalman ={true, "Loading..."}
         }
 }
 

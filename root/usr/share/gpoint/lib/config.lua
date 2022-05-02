@@ -46,10 +46,10 @@ local STATUS = {
 -----------------------------------------------------------------------------------
 function config.getModemData()
 
-	local err = ""
+	local err = {}
 	local modem = {
-		name = "",
-		port = ""
+		name = "-",
+		port = "-"
 	}
 
 	if not CFG.modem_settings.modem and CFG.modem_settings.modem == "mnf" then
@@ -63,10 +63,8 @@ function config.getModemData()
 	if not err[1] then
 		modem.name = CFG.modem_settings.modem
 		modem.port = CFG.modem_settings.port
-		return err, modem
-	else
-		return err, nil
 	end
+	return err, modem
 end
 
 -----------------------------------------------------------------------------------
@@ -77,7 +75,7 @@ end
 -----------------------------------------------------------------------------------
 function config.getServerData()
 	
-	local err = ""
+	local err = {}
 	local server = {
 		address = "",
 		port = "",
@@ -134,7 +132,7 @@ end
 -----------------------------------------------------------------------------------
 function config.getLoctorData()
 
-	local err = ""
+	local err = {}
 	local locator = {
 		enable = false,
 		iface  = "",
@@ -167,7 +165,8 @@ end
 	-- 3. Make the settings, if there are none, then we apply the default settings
 -----------------------------------------------------------------------------------
 function config.getFilterData()
-	local err = ""
+
+	local err = {}
 	local filter = {
 		enable  = false,
 		changes = 0,
@@ -189,6 +188,31 @@ function config.getFilterData()
 end
 
 -----------------------------------------------------------------------------------
+-- KalmanFilter
+	-- 1. Checking for the kalman filter library
+	-- 2. Check KalmanFilter service enable/disable
+	-- 3. Make the settings, if there are none, then we apply the default settings
+-----------------------------------------------------------------------------------
+function config.getKalmanData()
+	
+	local err = {}
+	local filter = {
+		enable  = false,
+		noise   = 0
+	}
+
+	if not CFG.service_settings.kalman_enable then
+		err = STATUS.FILTER.SERVICE_OFF
+	else
+		err = STATUS.FILTER.SERVICE_ON
+		filter.enable  = true
+		filter.noise = tonumber(CFG.service_settings.kalman_noise or 1.0)
+	end	
+	
+	return err, filter
+end
+
+-----------------------------------------------------------------------------------
 -- Session ID
 	-- 1.When initializing the ubus, we write the session id to the uci to work with the UI
 -----------------------------------------------------------------------------------
@@ -199,4 +223,3 @@ function config.setUbusSessionId(id)
 end
 
 return config
-

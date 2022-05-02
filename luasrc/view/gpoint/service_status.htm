@@ -25,6 +25,10 @@
     <tr class="tr">
         <td class="td left" id="filter">GpointFilter: -</td>
     </tr>
+    <tr class="tr"></tr>
+    <tr class="tr">
+        <td class="td left" id="kalmanf">KalmanFilter: -</td>
+    </tr>
 </table>
 
 <script type="text/javascript">
@@ -71,6 +75,7 @@
             createForm(data.warning.server, "Remote Server: ", "server");
             createForm(data.warning.locator, "Yandex Locator: ", "locat");
             createForm(data.warning.filter, "GeoHash Filter: ", "filter");
+            createForm(data.warning.kalman, "Kalman filter: ", "kalmanf");
         });
 //]]>
 </script>

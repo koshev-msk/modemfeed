@@ -5,7 +5,7 @@
 -- Copyright 2021-2022 Vladislav Kadulin <spanky@yandex.ru>
 -- Licensed to the GNU General Public License v3.0
 
-common_path   = "/usr/share/gpoint/modems/?.lua;/usr/share/gpoint/lib/?.lua;/usr/share/gpoint/proto/?.lua;"
+common_path   = "/usr/share/gpoint/modems/?.lua;/usr/share/gpoint/lib/?.lua;/usr/share/gpoint/proto/?.lua;/usr/share/gpoint/lib/kalman_filter/?.lua;"
 package.path  = common_path .. package.path
 
 local config  = require("config")
@@ -15,15 +15,13 @@ local ubus    = require("ubus")
 
 
 function portActive(port)
-	local s = false
 	local fport = nixio.glob("/dev/tty[A-Z][A-Z]*")
 	for p in fport do
 		if string.find(p, port) then
-			s = true, {warning = {app = {false, "OK"}}} 
-			break
+			return true, {warning = {app = {false, "OK"}}} 
 		end
 	end
-	return s, {warning = {
+	return false, {warning = {
 				app = {true, "Port is unavailable. Check the modem connections!"},
 				locator = {}, 
 				server = {}
@@ -64,7 +62,6 @@ local locatorStatus, locatorConfig = config.getLoctorData()
 if not locatorStatus[1] then
 	locator = require("locator")
 end
-
 --------------------------------------------------------------------------------
 -- Filter coorinate GeoHash Filter
 --------------------------------------------------------------------------------
@@ -84,9 +81,22 @@ if not filterStatus[1] then
 else
 	FilterGNSS, FilterGNSSdata = nil, nil
 end
-
 --------------------------------------------------------------------------------
--- Config Ubus for GpointFilter
+-- Filter coorinate KalmanFilter
+--------------------------------------------------------------------------------
+local kalman = {}
+local kalmanFilter = ""
+local kalmanIsStop = true;
+local secondsSinceLastUpdate = os.time()
+
+local kalmanStatus, kalmanConfig = config.getKalmanData()
+if not kalmanStatus[1] then
+	kalmanFilter = require("gps_lib")
+else
+	kalman,kalmanFilter,kalmanIsStop,secondsSinceLastUpdate = nil, nil, nil, nil
+end
+--------------------------------------------------------------------------------
+-- Config Ubus
 --------------------------------------------------------------------------------
 local serviceIsStart = {warning={app={true,"Service start"},locator={true,"Loading..."},server={true,"Loading..."}}}
 local conn = ubus.connect()
@@ -101,6 +111,8 @@ conn:call("session", "set", {ubus_rpc_session = ubusSessionId, values = serviceI
 serviceIsStart = nil
 conn:close()
 --------------------------------------------------------------------------------
+
+local timeToUpdateGNSSdata = 3
 
 while true do
 	-- modem GNSS data
@@ -126,7 +138,6 @@ while true do
 					GnssData.gp.utc		   = os.date("%H:%M", os.time(os.date("!*t"))) -- TODO time + UTF(+3)
 					GnssData.gga.latitude  = locator.degreesToNmea(latitude)
 					GnssData.gga.longitude = locator.degreesToNmea(longitude)
-					--print(latitude, longitude, locator.degreesToNmea(latitude), locator.degreesToNmea(longitude), altitude, "<------")
 				end
 			else
 				GnssData.warning.locator = {true, "getting navigation data..."}
@@ -168,13 +179,31 @@ while true do
 			end
 		end
 	end
+
+	-- KalmanFilter
+	-- TODO enabling and disabling in parking lot
+	GnssData.warning.kalman = kalmanStatus
+	if portStatus and not GnssData.warning.kalman[1] then
+		if not GnssData.warning.gga[1] or not GnssData.warning.gns[1] and GnssData.warning.locator[2] == "OK" then
+			if kalmanIsStop then
+				kalman = kalmanFilter.create_velocity2d(kalmanConfig.noise)
+				kalmanIsStop = false
+			end
+			kalman = kalmanFilter.update_velocity2d(kalman, GnssData.gp.latitude, GnssData.gp.longitude, os.time() - secondsSinceLastUpdate)
+			GnssData.gp.latitude,  GnssData.gp.longitude  = kalmanFilter.get_lat_lon(kalman)
+			GnssData.gga.latitude, GnssData.gga.longitude = locator.degreesToNmea(GnssData.gp.latitude), ('0' .. locator.degreesToNmea(GnssData.gp.longitude))
+			GnssData.gns.latitude, GnssData.gns.longitude = GnssData.gga.latitude, GnssData.gga.longitude
+		else
+			kalmanIsStop = true
+		end
+	end
 	
 	-- remote server
 	-- Filter locator to access send data to server
 	GnssData.warning.server = serverStatus
 	if locatorGPSmiss == 0 or locatorGPSmiss >= 3 then
 		if portStatus and not serverStatus[1] and os.time() >= frequencyDataSend then
-			frequencyDataSend = os.time() + serverConfig.frequency
+			frequencyDataSend = os.time() + (serverConfig.frequency - timeToUpdateGNSSdata)
 			GnssData.warning.server = gnssProtocol.sendData(GnssData, serverConfig)
 		end
 	end
@@ -187,5 +216,5 @@ while true do
 	end
 
 	-- update NMEA coordinate time
-	socket.sleep((locatorGPSmiss == 0 or locatorGPSmiss >= 3) and 3 or 1)
+	socket.sleep((locatorGPSmiss == 0 or locatorGPSmiss >= 3) and timeToUpdateGNSSdata or 1)
 end

@@ -166,6 +166,7 @@ s:tab("ya", translate("Yandex Locator"), translate("Determines the location of t
 													device by the nearest Wi-Fi access points and \
 													cellular base stations — without using satellite navigation systems."))
 s:tab("gpoint_filter", translate("GeoHash Filter"), translate("Filters \"DRIFT\" and \"JUMPS\" of navigation 3G/LTE dongles"))
+s:tab("kalman", translate("Kalman Filter"), translate("Designed to make the route smoother. Removes \"jumps\" of navigation 3G/LTE dongles"))
 
 ----------------------------------------------------------------------------------------------------------------
 
@@ -196,7 +197,7 @@ o = s:taboption("ya", DummyValue, "ya_href")
 	end
 o.rawhtml = true
 
--- GeoHash ()
+-- GeoHash
 o = s:taboption("gpoint_filter", Flag, "filter_enable", translate("Enable:"), translate("Enabling GpointFilter"))
 o.optional = true
 
@@ -215,6 +216,14 @@ end
 o = s:taboption("gpoint_filter", Value, "filter_speed", translate("Speed:"), translate("Above the specified speed, the filter will be disabled"))
 o.placeholder = "default 2 km/h"
 o.datatype    = "range(0, 150)"
+
+-- Kalman
+o = s:taboption("kalman", Flag, "kalman_enable", translate("Enable:"), translate("Enabling KalmanFilter"))
+o.optional = true
+o = s:taboption("kalman", Value, "kalman_noise", translate("Noise:"), translate("Noise is a parameter you can use to alter the expected noise.\
+			1.0 is the original, and the higher it is, the more a path will be \"smoothed\""))
+o.placeholder = ""
+o.datatype    = "range(1.0, 30.0)"
 
 
 return m
