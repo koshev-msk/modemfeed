@@ -14,7 +14,8 @@ error()
 
 check_client_id()
 {
-	config_get CLIENT_ID "$1" client_id
+	INTERFACE=$1
+	config_get CLIENT_ID INTERFACE client_id
 	if [ -z "$CLIENT_ID" ]; then
 		. /usr/share/libubox/jshn.sh
 		json_load "$(ubus call system board)"
@@ -23,8 +24,12 @@ check_client_id()
 			"TELEOFIS LT70")
 				CLIENT_ID=$(head -c 1000 /dev/urandom | tr -dc '0-9' | cut -c -15)
 			;;
+			"TELEOFIS RTUx68v2")
+				SERIALNUM=$((0x$(getserialnum)))
+				CLIENT_ID=$((SERIALNUM*100000+INTERFACE))
+			;;
 		esac
-		uci_set pollmydevice "$1" client_id "$CLIENT_ID"
+		uci_set pollmydevice "$INTERFACE" client_id "$CLIENT_ID"
 		uci_commit pollmydevice
 	fi
 }
@@ -54,8 +59,13 @@ stop()
 	service_stop $DIR/$PROG
 }
 
-reload_service()
-{
-	service_stop $DIR/$PROG
-	start_service
+# reload_service()
+# {
+# 	service_stop $DIR/$PROG
+# 	start_service
+# }
+
+reload_service() {
+        stop
+        start
 }
