@@ -36,7 +36,7 @@ int ping(char *ip, char *iface)
 	char ph_iface[128] = {0};
 
 	if(iface == NULL)
-		sprintf(path,"/bin/ping -w10 -c2 -s 8 %s | grep 'rec' | awk -F'[ ]' '{print $4}'",ip);
+		sprintf(path,"/bin/ping -w5 -W5 -c1 -s8 %s | grep 'rec' | awk -F'[ ]' '{print $4}'",ip);
 	else
 	{
 		sprintf(path,"ubus call network.interface.%s status | grep l3_device", iface);
@@ -53,9 +53,9 @@ int ping(char *ip, char *iface)
 		}
 		pclose(fp);
 		if(common_awk_f(ph_iface,"\"", 4)!=0)
-			sprintf(path,"/bin/ping -w3 -c2 -s 8 -I %s %s | grep 'rec' | awk -F'[ ]' '{print $4}'", iface, ip);
+			sprintf(path,"/bin/ping -w5 -W5 -c1 -s8 -I %s %s | grep 'rec' | awk -F'[ ]' '{print $4}'", iface, ip);
 		else
-			sprintf(path,"/bin/ping -w3 -c2 -s 8 -I %s %s | grep 'rec' | awk -F'[ ]' '{print $4}'", ph_iface, ip);
+			sprintf(path,"/bin/ping -w5 -W5 -c1 -s8 -I %s %s | grep 'rec' | awk -F'[ ]' '{print $4}'", ph_iface, ip);
 	}
 
 	fp = popen(path,"r");
@@ -300,7 +300,7 @@ int set_interface(int fd, int speed)
 	cfsetospeed(&tty, speed);
 
 	if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-			printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+			//printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
 			return 1;
 	}
 	return 0;
@@ -734,7 +734,7 @@ char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
     switch(InfoParam)
     {
 		case INFO_MODEM:
-			strcpy(b,modem->name);
+			modem->name(b,dev);
 			break;
 		case INFO_FW:
 			modem->version(b,dev);
@@ -747,8 +747,6 @@ char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
 			if(modem->ccid(b,dev)){
 				strcpy(b,"NONE");
 			};
-			sprintf(cmd,"echo %s > /tmp/simman2/ccid",b);
-			system(cmd);
 			break;
 		case INFO_IMSI:
 			if(modem->imsi(b,dev)){
@@ -783,8 +781,6 @@ char *modem_summary(struct modems_ops *modem, uint8_t InfoParam, char *dev)
 			if(modem->imei(b,dev)){
 				strcpy(b,"NONE");
 			};
-			sprintf(cmd,"echo %s > /tmp/simman2/imei",b);
-			system(cmd);
 			break;
 		default:
 			return strdup(defval);
@@ -950,17 +946,15 @@ int switch_sim(struct settings_entry *settings, struct modems_ops *modem, uint8_
 	}
 
 	ubus_interface_down(settings->iface);
-	sleep(1);
+	sleep(2);
 	//fixme
 	sprintf(buf,"network.%s",settings->iface);
 
 	sprintf(buf2,"simman2.%s.sim%d_apn",settings->name,sim_n);
 	uci_set_value(buf,"apn",uci_get_value(buf2));
 
-
 	sprintf(buf2,"simman2.%s.sim%d_pincode",settings->name,sim_n);
 	uci_set_value(buf,"pincode",uci_get_value(buf2));
-
 
 	sprintf(buf2,"simman2.%s.sim%d_username",settings->name,sim_n);
 	uci_set_value(buf,"username",uci_get_value(buf2));
@@ -970,24 +964,23 @@ int switch_sim(struct settings_entry *settings, struct modems_ops *modem, uint8_
 
 	system("uci commit network");
 
-	if (sim_n==active_sim && first_start == 0){
-		//fixme log
-		printf("SIM %d is already active\n",sim_n+1);
-		sprintf(cmd,"echo %d > /tmp/simman2/sim",sim_n);
-		system(cmd);
-		ubus_network_reload();
-		ubus_interface_up(settings->iface);
-		return 0;
-	}
 	//fixme
 	services_stop(settings->iface);
 	//fixme
 	modem->sim_pullout(settings);
 
 	gpio_set_value(settings->simdet_pin,0);
-	usleep(500);	
-	gpio_set_value(settings->simaddr_pin,sim_n);
-	usleep(100);
+	usleep(500);
+	if (sim_n==active_sim && first_start == 0){
+		//fixme log
+		printf("SIM %d is already active\n",sim_n+1);
+		//ubus_network_reload();
+		//ubus_interface_up(settings->iface);
+		//return 0;
+	} else {
+		gpio_set_value(settings->simaddr_pin,sim_n);
+	}	
+	sleep(3);
 	gpio_set_value(settings->simdet_pin,1);
 	usleep(500);
 	modem->set_pin(settings,settings->sim[sim_n].pin);

@@ -10,6 +10,25 @@
 
 #include "common.h"
 
+int sim7600_name(char *receive, char *device){
+	if(modem_common_send_at(device)!=0){
+		return -1;
+	}
+
+	if(modem_send_command(receive,device,"\rATI\r","OK")!=0){
+		return -1;
+	}
+	if(strstr(receive,"SIMCOM_SIM7100E")!=NULL){
+		strcpy(receive,"SIMCOM SIM7100E");
+		return 0;
+	}
+	if(strstr(receive,"SIMCOM_SIM7600E")!=NULL){
+		strcpy(receive,"SIMCOM SIM7600E-H");
+		return 0;
+	}
+	strcpy(receive,"ERROR");
+	return -1;
+}
 
 int sim7600_probe(char *device){
 	char receive[256]={0};
@@ -285,7 +304,7 @@ int sim7600_power_up(struct settings_entry *settings){
 }
 
 struct modems_ops sim7600_ops = {
-		.name				= "SIMCOM SIM7600E-H",
+		.name				= sim7600_name,
 		.init				= sim7600_init,
 		.probe				= sim7600_probe,
 		.version			= sim7600_version,

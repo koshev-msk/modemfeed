@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+int sim5360_name(char *receive, char *device){
+	strcpy(receive,"SIMCOM SIM5360E");
+	return 0;
+}
 
 int sim5360_probe(char *device){
 	char receive[256]={0};
@@ -28,6 +32,12 @@ int sim5360_probe(char *device){
 }
 
 int sim5360_init(struct settings_entry *settings){
+	char buf[256]={0};
+	if(modem_common_send_at(settings->atdevice)!=0){
+		return -1;
+	}
+	modem_send_command(buf,settings->atdevice,"\rAT+AUTOANSWER=0,0\r","OK");
+	
 	return 0;
 }
 
@@ -265,7 +275,7 @@ int sim5360_sim_pullup(struct settings_entry *settings){
 }
 
 struct modems_ops sim5360_ops = {
-		.name				= "SIMCOM SIM5360",
+		.name				= sim5360_name,
 		.init				= sim5360_init,
 		.probe				= sim5360_probe,
 		.version			= sim5360_version,

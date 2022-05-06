@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+int a7600_name(char *receive, char *device){
+	strcpy(receive,"SIMCOM A7602E-H");
+	return 0;
+}
 
 int a7600_probe(char *device){
 	char receive[256]={0};
@@ -20,7 +24,7 @@ int a7600_probe(char *device){
 	if(modem_send_command(receive,device,"\rATI\r","OK")!=0){
 		return -1;
 	}
-	if(strstr(receive,"A7600E-HNVD")==NULL && strstr(receive,"A7600E-HNVW")==NULL){
+	if(strstr(receive,"A7600E-HNVD")==NULL && strstr(receive,"A7600E-HNVW")==NULL && strstr(receive,"A7602E-H")==NULL){
 		return -1;
 	}
 
@@ -396,7 +400,7 @@ int a7600_set_auth(struct settings_entry *settings,char *user,char *pass){
 }
 
 struct modems_ops a7600_ops = {
-		.name				= "SIMCOM A7600E-H",
+		.name				= a7600_name,
 		.init				= a7600_init,
 		.probe				= a7600_probe,
 		.version			= a7600_version,

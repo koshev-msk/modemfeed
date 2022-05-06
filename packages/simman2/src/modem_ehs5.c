@@ -9,6 +9,10 @@
 
 #include "common.h"
 
+int ehs5_name(char *receive, char *device){
+	strcpy(receive,"Cinterion EHS5-E");
+	return 0;
+}
 
 int ehs5_probe(char *device){
 	char receive[256]={0};
@@ -197,7 +201,7 @@ int ehs5_power_up(struct settings_entry *settings){
 }
 
 struct modems_ops ehs5_ops = {
-		.name				= "Cinterion EHS5",
+		.name				= ehs5_name,
 		.probe				= ehs5_probe,
 		.init				= ehs5_init,
 		.version			= ehs5_version,

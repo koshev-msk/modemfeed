@@ -78,7 +78,7 @@ struct settings_entry{
 };
 
 struct modems_ops{
-	const char *name;
+	int (*name)(char *,char *);
 	int (*probe)(char *);
 	int (*init)(struct settings_entry *);
 	int (*version)(char *,char *);

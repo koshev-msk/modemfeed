@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+int sim5300_name(char *receive, char *device){
+	strcpy(receive,"SIMCOM SIM5300E");
+	return 0;
+}
 
 int sim5300_probe(char *device){
 	char receive[256]={0};
@@ -267,7 +271,7 @@ int sim5300_power_up(struct settings_entry *settings){
 }
 
 struct modems_ops sim5300_ops = {
-		.name				= "SIMCOM SIM5300E",
+		.name				= sim5300_name,
 		.init				= sim5300_init,
 		.probe				= sim5300_probe,
 		.version			= sim5300_version,

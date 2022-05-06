@@ -32,6 +32,8 @@ define Build/Prepare
 endef
 
 define Package/simman2/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/simman2.defaults $(1)/etc/uci-defaults/10_simman2
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/simman2 $(1)/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/simman2_cli $(1)/sbin/
@@ -47,9 +49,6 @@ define Package/simman2/install
 	$(INSTALL_BIN) ./files/modeminit $(1)/etc/simman2/modeminit
 	$(INSTALL_BIN) ./files/check_prio.sh $(1)/etc/simman2/check_prio.sh
 	$(CP) ./files/*.gcom $(1)/etc/simman2
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
-	#$(INSTALL_DATA) ./files/simman2.hotplug $(1)/etc/hotplug.d/usb/12-modem
-	$(INSTALL_DATA) ./files/scmux.hotplug $(1)/etc/hotplug.d/usb/13-scmux
 endef
 
 $(eval $(call BuildPackage,simman2))

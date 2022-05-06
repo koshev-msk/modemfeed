@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=18
+START=80
 STOP=10
 USE_PROCD=1
 
@@ -26,49 +26,15 @@ start_service_daemon(){
 	local s="$1"
 
 	section_enabled "$s" || return 1
-	config_get PWRKEY "$s" pwrkey_gpio_pin
-	config_get GSMPOW "$s" gsmpow_gpio_pin
-	config_get FIRSTSTART "$s" firststart
 	config_get ATDEVICE "$s" atdevice
-	if [[ -n "$PWRKEY" ]]; then
-		if [[ "$PWRKEY" -lt "0" ]]; then
-			PWRKEY=$(echo ${PWRKEY:1})
-			echo $PWRKEY > /sys/class/gpio/export
-			echo low > /sys/class/gpio/gpio$PWRKEY/direction
-		else
-			echo $PWRKEY > /sys/class/gpio/export
-			echo high > /sys/class/gpio/gpio$PWRKEY/direction	
-		fi		
-	fi
-	if [[ -n "$GSMPOW" ]]; then
-		if [[ "$GSMPOW" -lt "0" ]]; then
-			GSMPOW=$(echo ${GSMPOW:1})
-			echo $GSMPOW > /sys/class/gpio/export
-			echo high > /sys/class/gpio/gpio$GSMPOW/direction
-		else
-			echo $GSMPOW > /sys/class/gpio/export
-			echo low > /sys/class/gpio/gpio$GSMPOW/direction
-		fi		
-	fi
+	config_get FIRSTSTART "$s" firststart
 
-	
 	if [[ "$FIRSTSTART" -eq "1" ]]; then
 		/etc/simman2/modeminit $ATDEVICE &
 		uci_set simman2 "$1" firststart "0"
 		uci_commit simman2
 	fi
 
-	echo 509 > /sys/class/gpio/export
-	echo low > /sys/class/gpio/gpio509/direction
-
-	if [[ -e "/tmp/simman2" ]]; then
-		rm /tmp/simman2/* &>/dev/null
-	else
-		mkdir /tmp/simman2
-		echo "0" > /tmp/simman2/sim
-		echo "NONE" > /tmp/simman2/imei
-	fi
-	
 	procd_open_instance
 	procd_set_param command $DIR/$PROG -c $s
 	procd_set_param respawn ${respawn_threshold:-360} ${respawn_timeout:-5} ${respawn_retry:-0}

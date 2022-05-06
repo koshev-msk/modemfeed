@@ -62,18 +62,6 @@ int SetSim(struct settings_entry *settings, struct modems_ops *modem, uint8_t si
 	changeCounterForReboot++;
 	changeCounter++;
 	//LOG("changeCounter now %d and changeCounterForReboot %d \n", changeCounter, changeCounterForReboot);
-	if ((settings->only_first_sim == 0) || (first_start == 1))
-	{
-		switch_sim(settings, modem, sim, first_start);
-		first_start = 0;
-
-	}
-	else
-	{	
-		LOG("switching to over SIM is not necessary\n");
-		switch_sim(settings, modem, (sim==0)?1:0, first_start);
-	}
-
 	if(settings->sw_before_sysres != 0)
 	{
 		if(changeCounterForReboot > settings->sw_before_sysres)
@@ -98,6 +86,18 @@ int SetSim(struct settings_entry *settings, struct modems_ops *modem, uint8_t si
 			first_start = 1;
 		}
 
+	}
+
+	if ((settings->only_first_sim == 0) || (first_start == 1))
+	{
+		switch_sim(settings, modem, sim, first_start);
+		first_start = 0;
+
+	}
+	else
+	{
+		LOG("switching to over SIM is not necessary\n");
+		switch_sim(settings, modem, (sim==0)?1:0, first_start);
 	}
 
 	if(changeCounter>101)
