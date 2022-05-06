@@ -38,6 +38,8 @@ define Package/pollmydevice/install
 	$(INSTALL_BIN) ./files/pollmydevice.init $(1)/etc/init.d/pollmydevice
 	$(INSTALL_DIR) $(1)/etc/pollmydevice
 	$(CP) ./files/console $(1)/etc/pollmydevice/console
+	$(INSTALL_DIR) $(1)/etc/sysctl.d
+	$(CP) ./files/printk.sysctl $(1)/etc/sysctl.d/12-printk.conf
 endef
 
 $(eval $(call BuildPackage,pollmydevice))

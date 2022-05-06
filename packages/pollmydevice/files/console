@@ -2,18 +2,18 @@
 
 disable()
 {
-	CHECK=$(grep -r "#ttyAPP4" /etc/inittab)
+	CHECK=$(grep -r "#::askconsole" /etc/inittab)
 	if [ -z "$CHECK" ]; then
-		sed -i -e "s/ttyAPP4/#ttyAPP4/g" /etc/inittab
-		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
+		sed -i -e "s/::askconsole/#::askconsole/g" /etc/inittab
+		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.d/12-printk.conf)
 		if [ -n "$CHECK" ]; then
-			sed -i -e "s/#kernel.printk/kernel.printk/g" /etc/sysctl.conf
+			sed -i -e "s/#kernel.printk/kernel.printk/g" /etc/sysctl.d/12-printk.conf
 		fi
 		reboot
 	else
 		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
 		if [ -n "$CHECK" ]; then
-			sed -i -e "s/#kernel.printk/kernel.printk/g" /etc/sysctl.conf
+			sed -i -e "s/#kernel.printk/kernel.printk/g" /etc/sysctl.d/12-printk.conf
 			reboot
 		fi
 	fi
@@ -21,18 +21,18 @@ disable()
 
 enable()
 {
-	CHECK=$(grep -r "#ttyAPP4" /etc/inittab)
+	CHECK=$(grep -r "#::askconsole" /etc/inittab)
 	if [ -n "$CHECK" ]; then
-		sed -i -e "s/#ttyAPP4/ttyAPP4/g" /etc/inittab
-		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
+		sed -i -e "s/#::askconsole/::askconsole/g" /etc/inittab
+		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.d/12-printk.conf)
 		if [ -z "$CHECK" ]; then
-			sed -i -e "s/kernel.printk/#kernel.printk/g" /etc/sysctl.conf
+			sed -i -e "s/kernel.printk/#kernel.printk/g" /etc/sysctl.d/12-printk.conf
 		fi
 		reboot
 	else
-		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.conf)
+		CHECK=$(grep -r "#kernel.printk" /etc/sysctl.d/12-printk.conf)
 		if [ -z "$CHECK" ]; then
-			sed -i -e "s/kernel.printk/#kernel.printk/g" /etc/sysctl.conf
+			sed -i -e "s/kernel.printk/#kernel.printk/g" /etc/sysctl.d/12-printk.conf
 			reboot
 		fi
 	fi
