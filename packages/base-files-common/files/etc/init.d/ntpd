@@ -76,10 +76,10 @@ start_ntpd_instance() {
 	done
 
 	if [ "$use_gps" != 0 ]; then
-		emit "server 127.127.28.0 minpoll 4 maxpoll 4 prefer"
+		emit "server 127.127.28.0 minpoll 4 maxpoll 4"
 		emit "fudge 127.127.28.0 time1 0.35 flag1 1 refid GPS"
-		emit "server 127.127.22.0 minpoll 4 maxpoll 4"
-		emit "fudge 127.127.22.0 refid PPS"
+		emit "server 127.127.28.2 minpoll 4 maxpoll 4 prefer"
+		emit "fudge 127.127.28.2 refid PPS"
 	fi
 
 	if [ -d "/etc/ntpd.d" ]; then

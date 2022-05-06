@@ -24,6 +24,7 @@ start_service() {
 	mkdir -p $WRT_SPOOL/sms/checked
 	mkdir -p $WRT_SPOOL/sms/failed
 	mkdir -p $WRT_SPOOL/sms/sent
+	mkdir -p $WRT_SPOOL/sms/calls
 
 	enabled=$(uci get smscontrol.common.enabled)
 	if [ "$enabled" -eq "1" ]; then

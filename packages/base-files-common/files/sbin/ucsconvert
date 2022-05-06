@@ -1,0 +1,33 @@
+#!/bin/sh
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+if [ $# -lt 1 ]; then
+        echo "Give me a file!"
+        exit 10
+fi
+if [ ! -f "$1" ]; then
+        echo "$1: No such file or it's not a regular file!"
+        exit 20
+fi
+if ! which iconv > /dev/null 2>&1; then
+        echo "There is no iconv(1) here! Please, install it."
+        exit 40
+fi
+HEADER=$(sed -e '/^$/q' $1)
+BODY=$(sed -e '1,/^$/d' $1)
+ALPHABET=""
+# Is body in english?
+if ! echo -n "$BODY" | iconv -t ISO-8859-15 > /dev/null 2>&1; then
+        ALPHABET="Alphabet: UCS"
+fi
+FILE=$(mktemp /tmp/smsd_XXXXXX)
+echo "$HEADER" >> $FILE
+# If body isn't in english tell it to smsd
+[ -n "$ALPHABET" ] && echo "$ALPHABET" >> $FILE
+echo "" >> $FILE
+# Convert body if it's needed.
+if [ -n "$ALPHABET" ]; then
+        echo -n "$BODY" | iconv -f UTF-8 -t UCS-2 >> $FILE
+else
+        echo -n "$BODY" >> $FILE
+fi
+mv $FILE $1
