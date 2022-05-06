@@ -12,7 +12,7 @@ return view.extend({
 		m = new form.Map('smscontrol', _('Command over SMS'));
 		m.description = _('For example, if you enter \'1234\' as a password and send an SMS command \'1234;CLI$ifconfig br-lan down\' to the router, the router will execute CLI-command ifconfig br-lan down');
 
-		s = m.section(form.TableSection, 'cli', _('Settings'));
+		s = m.section(form.TableSection, 'cli');
 		s.anonymous = true;
 
 		o = s.option(form.Flag, 'enabled', _('Enabled'));

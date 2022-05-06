@@ -12,7 +12,7 @@ return view.extend({
 		m = new form.Map('smscontrol', _('Command over SMS'));
 		m.description = _('For example, if you enter \'1234\' as a password and send an SMS command \'1234;reboot\' to the router, the router will reboot');
 
-		s = m.section(form.TableSection, 'remote', _('Settings'));
+		s = m.section(form.TableSection, 'remote');
 		s.anonymous = true;
 		s.addremove = true;
 

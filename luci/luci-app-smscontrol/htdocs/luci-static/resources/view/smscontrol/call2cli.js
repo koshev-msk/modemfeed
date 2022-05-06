@@ -12,7 +12,7 @@ return view.extend({
 		m = new form.Map('smscontrol', _('Command over SMS'));
 		m.description = _('You can make a call from the allowed phone number and then the router will execute the command');
 
-		s = m.section(form.TableSection, 'call', _('Settings'));
+		s = m.section(form.TableSection, 'call');
 		s.anonymous = true;
 
 		o = s.option(form.Flag, 'enabled', _('Enabled'));

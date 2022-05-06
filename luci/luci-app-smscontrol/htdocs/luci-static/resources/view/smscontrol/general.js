@@ -6,30 +6,15 @@
 'require tools.widgets as widgets';
 
 return view.extend({
-	handleEnableService: rpc.declare({
-		object: 'luci',
-		method: 'setInitAction',
-		params: [ 'general', 'enabled' ],
-		expect: { result: false }
-	}),
-
 	render: function() {
 		var m, s, o;
-		
+
 		m = new form.Map('smscontrol', _('Remote SMS Control'));
 		m.description = _('Here you can send commands to router via a call or SMS');
 
 		s = m.section(form.NamedSection, 'common', 'smscontrol');
 
 		o = s.option(form.Flag, 'enabled', _('Enabled'));
-		o.rmempty = false;
-		o.write = L.bind(function(section, value) {
-			if (value == '1') {
-				this.handleEnableService();
-			}
-
-			return uci.set('common', section, 'enabled', value);
-		}, this);
 
 		o = s.option(form.Value, 'pass', _('Password'));
 		o.rmempty = false;
@@ -42,14 +27,8 @@ return view.extend({
 		o.rmempty =true;
 		o.optional = false;
 
-		o = s.option(form.Flag, 'event_log', _('Enable event log'));
-		o.optional = false;		
-
-		o = s.option(form.Button, 'remove_log',_('Clear event log'));
-		o.inputstyle = 'action important';
-		o.inputtitle = _('Remove');
-		o.onclick = function(section_id) {
-		}
+		o = s.option(form.Flag, 'smscontrol_log', _('Enable sms and call log'));
+		o.optional = false;
 
 		return m.render();
 	}

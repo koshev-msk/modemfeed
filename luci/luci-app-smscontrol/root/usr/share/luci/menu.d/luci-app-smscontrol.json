@@ -49,7 +49,7 @@
 	},
 
 	"admin/services/smscontrol/log": {
-		"title": "Message log",
+		"title": "Event log",
 		"order": 50,
 		"action": {
 			"type": "view",

@@ -46,3 +46,27 @@ msgid ""
 "You can make a call from the allowed phone number and then the router will "
 "execute the command"
 msgstr "Если совершить звонок с разрешенного телефонного номера, роутер выполнит указанную команду"
+
+msgid "Remote SMS Control"
+msgstr "Управление по SMS"
+
+msgid "Enable sms and call log"
+msgstr "Включить логирование сообщений и звонков"
+
+msgid "From"
+msgstr "От"
+
+msgid "To"
+msgstr "Кому"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "SMS and call log"
+msgstr "Журнал сообщений и звонков"
+
+msgid "Event log"
+msgstr "Журнал событий"
+
+msgid "Remove all"
+msgstr "Удалить все"
