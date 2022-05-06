@@ -1,6 +1,6 @@
 {
         "admin/services/pollmydevice": {
-                "title": "Pollmydevice",
+                "title": "PollMyDevice",
                 "action": {
                         "type": "view",
                         "path": "pollmydevice/pollmydevice"

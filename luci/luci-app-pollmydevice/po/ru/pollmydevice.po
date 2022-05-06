@@ -87,3 +87,6 @@ msgstr "Попеременный"
 
 msgid "Simultaneous"
 msgstr "Одновременный"
+
+msgid "Port Settings"
+msgstr "Настройки порта"
