@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2017 teleofis
+
+START=12
+STOP=84
+
+start()
+{
+	# modem init
+	echo 105 > /sys/class/gpio/export
+	echo high > /sys/class/gpio/gpio105/direction
+	echo 83 > /sys/class/gpio/export
+	echo low > /sys/class/gpio/gpio83/direction
+	echo 104 > /sys/class/gpio/export
+	echo in > /sys/class/gpio/gpio104/direction
+	echo 79 > /sys/class/gpio/export
+	echo in > /sys/class/gpio/gpio79/direction
+	echo 82 > /sys/class/gpio/export
+	echo low > /sys/class/gpio/gpio82/direction
+	echo 78 > /sys/class/gpio/export
+	echo low > /sys/class/gpio/gpio78/direction
+
+	# ext modem and onboard cp2105
+	echo 133 > /sys/class/gpio/export
+	echo high > /sys/class/gpio/gpio133/direction
+
+	# usb host
+	echo 46 > /sys/class/gpio/export
+	echo low > /sys/class/gpio/gpio46/direction
+	echo 23 > /sys/class/gpio/export
+	echo low > /sys/class/gpio/gpio23/direction
+	echo 122 > /sys/class/gpio/export
+	echo high > /sys/class/gpio/gpio122/direction
+	echo 121 > /sys/class/gpio/export
+	echo low > /sys/class/gpio/gpio121/direction
+	echo high > /sys/class/gpio/gpio121/direction
+
+	ln -s /dev/ttyAPP1 /dev/gps0
+	ln -s /dev/ttyAPP4 /dev/com0
+	ln -s /dev/ttyAPP2 /dev/com1
+}

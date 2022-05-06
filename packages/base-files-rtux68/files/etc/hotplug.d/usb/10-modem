@@ -1,0 +1,86 @@
+#!/bin/sh
+
+echo $DEVPATH | grep -q "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/" || exit 0
+
+SIM7100="1e0e/9001/232"
+SIM7600="1e0e/9001/318"
+SIM5360="5c6/9000/0"
+EHS5="1e2d/58/1730"
+SIM5300="1e0e/20/1730"
+A7602="1e0e/9011/100"
+
+case "$ACTION" in
+    add)
+        case "$PRODUCT" in 
+            "$SIM7100" | "$SIM7600" | "$SIM5360" )
+                if  [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.2" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.2" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.2" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                    exit 0
+                fi
+                if  [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.3" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.3" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.3" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                    exit 0
+                fi
+            ;;
+            "$EHS5" )
+                if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.6" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.6" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.6" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH/tty | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                    exit 0
+                fi
+                if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.8" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.8" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.8" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH/tty | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                    exit 0
+                fi
+            ;;
+            "$SIM5300" )
+                if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.6" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.6" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.6" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH/tty | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                    exit 0
+                fi
+            ;;
+            "$A7602" )
+                if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.4" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.4" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.4" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                    exit 0
+                fi
+                if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.5" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.5" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.5" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                    exit 0
+                fi
+            ;;
+        esac
+    ;;
+    remove)
+        case "$PRODUCT" in 
+            "$SIM7100" | "$SIM7600" | "$EHS5" | "$SIM5300" | "$SIM5360" | "$A7602" )
+                rm /dev/ttyGSM1 
+                rm /dev/ttyGSM2
+                exit 0
+            ;;
+        esac
+    ;;
+esac
+
+exit 0

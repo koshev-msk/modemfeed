@@ -1,0 +1,13 @@
+#!/bin/ash
+ln -s /dev/pps0 /dev/gpspps0
+#ln -s /dev/ttyAPP1 /dev/gps0
+RESULT=$(gcom -d /dev/ttyAPP1 -s /etc/simman/gpsdata.gcom)
+if [ "$RESULT" != "ERROR" ]; then
+	rm /dev/gps0
+	uci set simman.core.gpsdevice="/dev/ttyAPP1"
+	ln -s /dev/ttyAPP1 /dev/gps0
+fi
+
+sleep 2
+/etc/init.d/gpsd restart
+/etc/init.d/ntpd restart

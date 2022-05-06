@@ -1,0 +1,5 @@
+#!/bin/sh
+
+mv /etc/opkg/distfeeds_cust.conf /etc/opkg/distfeeds.conf
+
+exit 0

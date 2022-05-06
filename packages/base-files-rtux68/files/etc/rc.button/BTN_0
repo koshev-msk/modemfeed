@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ "${ACTION}" = "released" ]; then
+	logger "power supply error: main supply restored"
+fi
+
+if [ "${ACTION}" = "pressed" ]; then
+	logger "power supply error: switching to backup power"
+fi

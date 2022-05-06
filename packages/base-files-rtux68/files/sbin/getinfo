@@ -1,0 +1,41 @@
+#!/bin/sh
+BOARD=$(cat /tmp/sysinfo/hw)
+if [[ "$BOARD" = "v2" ]]; then
+	case "$1" in
+		"adc1")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage0_raw
+		;;
+		"adc2")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage1_raw
+		;;
+		"adc3")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage4_raw
+		;;
+		"adc4")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage6_raw
+		;;
+		*)
+			echo "Unsupported request: adc1 adc2 adc3 adc4"
+		;;
+	esac
+else
+	case "$1" in
+		"adc4")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage0_raw
+		;;
+		"adc3")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage1_raw
+		;;
+		"adc2")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage4_raw
+		;;
+		"adc1")
+			cat /sys/bus/iio/devices/iio\:device0/in_voltage6_raw
+		;;
+		*)
+			echo "Unsupported request: adc1 adc2 adc3 adc4"
+		;;
+	esac
+fi
+
+exit 0

@@ -1,0 +1,2 @@
+#!/bin/sh
+cat /sys/devices/soc0/80000000.apb/80000000.apbh/8002c000.ocotp/fuses/HW_OCOTP_CUST0 | awk -F'x' '{print $2}'
