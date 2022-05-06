@@ -31,7 +31,7 @@ return view.extend({
 		o = s.option(form.Flag, 'openvpn', _('OpenVPN config:'));
 		o.rmempty = false;
 
-		o = s.option(form.Flag, 'mwan', _('MultiWAN config:'));
+		o = s.option(form.Flag, 'mwan', _('MWAN3 config:'));
 		o.rmempty = false;
 
 		o = s.option(form.Flag, 'pollmydevice', _('Pollmydevice config:'));
