@@ -42,10 +42,10 @@ return view.extend({
 
 		s = m.section(form.GridSection, 'simman2', _('Settings'));
 		s.tab('general', _('General Settings'));
-		s.tab('sim0', _('SIM0 Settings'));
-		s.tab('sim1', _('SIM1 Settings'));
+		s.tab('sim0', _('SIM1 Settings'));
+		s.tab('sim1', _('SIM2 Settings'));
 		s.tab('info', _('Information'));
-		s.addremove = true;
+		s.addremove = false;
 		s.nodescriptions = true;
 
 		o = s.taboption('general', form.Flag, 'enabled', _('Enabled'));

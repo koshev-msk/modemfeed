@@ -153,3 +153,14 @@ msgstr "Версия прошивки"
 msgid "Active SIM IMSI"
 msgstr "IMSI активной SIM карты"
 
+msgid "Simman2"
+msgstr "Менеджер SIM"
+
+msgid "SIM1 Settings"
+msgstr "Настройки SIM1"
+
+msgid "SIM2 Settings"
+msgstr "Настройки SIM2"
+
+msgid "Service type"
+msgstr "Тип службы"
