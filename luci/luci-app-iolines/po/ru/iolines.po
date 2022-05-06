@@ -1,0 +1,26 @@
+msgid "ADC input: voltage measurement.<br />Dry contact input: when turned on, the analog input of the router is connected to +5V voltage via a pull-up resistor. The pull-up is required to ensure the correct operation of the dry contact input.<br />Open collector: open collector output is set into the active state."
+msgstr "АЦП: измерение напряжения.<br />Сухой контакт: При включении аналоговый вход роутера с помощью резистора подтягивается к напряжению 5В. Подтяжка необходима для правильного функционирования аналогового входа в режиме сухой контакт.<br />Открытый коллектор: устанавливается активный уровень на выходе открытый коллектор."
+
+msgid "I/O port"
+msgstr "I/O порт"
+
+msgid "Save configuration before reboot"
+msgstr "Сохранять настройки при загрузке"
+
+msgid "Measured voltage, mV"
+msgstr "Измеренное напряжение, mV"
+
+msgid "Update measurements"
+msgstr "Обновить замеры"
+
+msgid "ADC"
+msgstr "АЦП"
+
+msgid "Dry contact"
+msgstr "Сухой контакт"
+
+msgid "Open collector (OC)"
+msgstr "Открытый коллектор"
+
+msgid "Universal I/O lines"
+msgstr "Универсальные линии ввода-вывода"
