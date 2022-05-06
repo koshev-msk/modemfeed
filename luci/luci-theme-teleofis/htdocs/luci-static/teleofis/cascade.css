@@ -790,7 +790,7 @@ header h3 a, header .brand {
 	float: left;
 	display: block;
 	padding: 8px 20px 12px;
-	margin-left: -20px;
+	margin-left: 5px;
 	color: #600;
 	font-size: 20px;
 	font-family: sans-serif;
@@ -808,7 +808,7 @@ header h3 a, header .brand {
 	background-size: 135px 30px;
 	background-position: center center;
 	background-repeat: no-repeat;
-	margin-right: 20px;
+	margin-right: 5px;
 }
 
 header p {
@@ -1892,7 +1892,7 @@ header .pull-right { padding-top: 8px; }
 }
 
 .left { text-align: left !important; }
-.right { text-align: right !important; }
+.right { text-align: right !important; margin-bottom: 5px !important;}
 .center { text-align: center !important; }
 .top { vertical-align: top !important; }
 .middle { vertical-align: middle !important; }
