@@ -23,7 +23,7 @@ fi
 
 if [[ "$(uci -q get report.@report[0].simman)" -eq "1" ]]; then
 	cp /etc/config/simman2 /tmp/report/simman2.txt
-	simman2_cli &> /tmp/report/simman2_cli.txt
+	simman2_cli -a core &> /tmp/report/simman2_cli.txt
 fi
 
 if [[ "$(uci -q get report.@report[0].openvpn)" -eq "1" ]]; then
