@@ -1,0 +1,35 @@
+#!/bin/sh
+
+echo $DEVPATH | grep -q "/devices/platform/1e1c0000.xhci/usb1/" || exit 0
+
+A7602="1e0e/9011/100"
+
+case "$ACTION" in
+    add)
+        case "$PRODUCT" in 
+            "$A7602" )
+                if [ "$DEVPATH" = "/devices/platform/1e1c0000.xhci/usb1/1-2/1-2:1.4" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM1
+                    exit 0
+                fi
+                if [ "$DEVPATH" = "/devices/platform/1e1c0000.xhci/usb1/1-2/1-2:1.5" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH | grep tty)
+                    ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
+                    exit 0
+                fi
+            ;;
+        esac
+    ;;
+    remove)
+        case "$PRODUCT" in 
+            "$A7602" )
+                rm /dev/ttyGSM1 
+                rm /dev/ttyGSM2
+                exit 0
+            ;;
+        esac
+    ;;
+esac
+
+exit 0

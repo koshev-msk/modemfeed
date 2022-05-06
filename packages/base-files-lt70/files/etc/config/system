@@ -1,0 +1,37 @@
+config system
+	option hostname 'LT70'
+	option timezone 'UTC'
+	option ttylogin '0'
+	option log_size '64'
+	option urandom_seed '0'
+
+config timeserver 'ntp'
+	option enabled '1'
+	option enable_server '0'
+	list server '0.openwrt.pool.ntp.org'
+	list server '1.openwrt.pool.ntp.org'
+	list server '2.openwrt.pool.ntp.org'
+	list server '3.openwrt.pool.ntp.org'
+	option enable_server '1'
+	option use_gps '1'
+
+config led
+	option name 'Power'
+	option trigger 'none'
+	option sysfs 'top:power'
+	option default '1'
+
+config led
+	option name 'Network'
+	option sysfs 'middle:net'
+	option trigger 'netdev'
+	option dev '3g-internet'
+	option mode 'link'
+
+config led
+	option name 'Active'
+	option sysfs 'bottom:act'
+	option trigger 'netdev'
+	option dev '3g-internet'
+	list mode 'tx'
+	list mode 'rx'

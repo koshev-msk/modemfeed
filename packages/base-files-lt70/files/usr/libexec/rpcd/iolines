@@ -1,0 +1,86 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+case "$1" in
+	list)
+		echo '{' 
+		echo '"raw": {"adc":"str"},'
+		echo '"voltage": {"adc":"str"},'
+		echo '"resist": {"adc":"str"}'
+		echo '}'
+	;;
+	call)
+		case "$2" in
+			raw)
+				read input;
+				json_load "$input"
+				json_get_var ADC adc
+				if [[ "$ADC" == "all" ]]; then
+					echo '{'
+					for num in 0 1 2 3 4 5 6 7
+					do
+						value=$(getinfo adc$num)
+						echo "\"adc$((num+1))\": \"$value\","
+					done
+					value=$(getinfo adc8)
+					echo "\"adc9\": \"$value\""
+					echo '}'
+				else
+					adc1=$(getinfo $ADC)
+					echo '{'
+					echo "\"value\": \"$adc1\""
+					echo '}'
+				fi
+			;;
+			voltage)
+				read input;
+				json_load "$input"
+				json_get_var ADC adc
+				if [[ "$ADC" == "all" ]]; then
+					echo '{'
+					for num in 0 1 2 3 4 5 6 7
+					do
+						value=$(getinfo adc$num)
+						echo "\"voltage$((num+1))\": \"$value\","
+					done
+					value=$(getinfo adc8)
+					echo "\"voltage9\": \"$value\""
+					echo '}'
+				else
+					adc1=$(getinfo $ADC)
+					echo '{'
+					echo "\"value\": \"$adc1\""
+					echo '}'
+				fi
+			;;
+			resist)
+				read input;
+				json_load "$input"
+				json_get_var ADC adc
+				if [[ "$ADC" == "all" ]]; then
+					adc1=$(getinfo adc1)
+					adc1=$(echo "scale=0;$adc1*1.1" | bc -l)
+					adc2=$(getinfo adc2)
+					adc2=$(echo "scale=0;$adc2*1.1" | bc -l)
+					adc3=$(getinfo adc3)
+					adc3=$(echo "scale=0;$adc3*1.1" | bc -l)
+					adc4=$(getinfo adc4)
+					adc4=$(echo "scale=0;$adc4*1.1" | bc -l)
+					echo '{'
+					echo "\"adc1(Ohm)\": \"$adc1\","
+					echo "\"adc2(Ohm)\": \"$adc2\"",
+					echo "\"adc3(Ohm)\": \"$adc3\"",
+					echo "\"adc4(Ohm)\": \"$adc4\""
+					echo '}'
+				else
+					adc1=$(getinfo $ADC)
+					adc1=$(echo "scale=0;$adc1*1.1" | bc -l)
+					echo '{'
+					echo "\"value\": \"$adc1\""
+					echo '}'
+				fi
+			;;
+		esac
+	;;
+esac
