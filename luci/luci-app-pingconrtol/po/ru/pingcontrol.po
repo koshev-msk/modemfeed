@@ -18,3 +18,21 @@ msgstr "Количество неудачных попыток до переза
 
 msgid "Configuration name"
 msgstr "Имя конфигурации"
+
+msgid "Commands"
+msgstr "Команды"
+
+msgid "Ping lost"
+msgstr "Пинг потерян"
+
+msgid "Ping restored"
+msgstr "Пинг восстановлен"
+
+msgid "Before interface down"
+msgstr "Перед отключением интерфейса"
+
+msgid "After interface up"
+msgstr "После включения интерфейса"
+
+msgid "Before reboot"
+msgstr "Перед перезагрузкой"
