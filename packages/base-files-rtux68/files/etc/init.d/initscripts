@@ -38,4 +38,7 @@ start()
 	ln -s /dev/ttyAPP1 /dev/gps0
 	ln -s /dev/ttyAPP4 /dev/com0
 	ln -s /dev/ttyAPP2 /dev/com1
+
+	mkdir /mnt/data
+	mount -t ubifs ubi0_5 /mnt/data
 }
