@@ -70,3 +70,6 @@ msgstr "Журнал событий"
 
 msgid "Remove all"
 msgstr "Удалить все"
+
+msgid "The phone number is set in the international format without '+'"
+msgstr "Номер телефона задается в международном формате без символа '+'"

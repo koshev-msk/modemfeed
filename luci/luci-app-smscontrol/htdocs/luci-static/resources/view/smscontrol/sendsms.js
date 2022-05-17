@@ -14,15 +14,15 @@ return view.extend({
 
 		s = m.section(form.NamedSection, 'common', 'send');
 
-		o = s.option(form.Value, 'to', _('To phone number'));
+		o = s.option(form.Value, 'to', _('To phone number'), _('The phone number is set in the international format without \'+\''));
 		o.datatype = 'phonedigit';
 		o.cast = 'string';
-		o.rmempty =true;
-		o.optional =false;
+		o.rmempty = true;
+		o.optional = false;
 
 		o = s.option(form.Value, 'msgtxt', _('Message text'));
-		o.rmempty =true;
-		o.optional =false;
+		o.rmempty = true;
+		o.optional = false;
 
 		o = s.option(form.Button, 'sendsms',_(' '));
 		o.inputstyle = 'action important';

@@ -21,7 +21,7 @@ return view.extend({
 		o.optional = false;
 		o.datatype = 'and(uciname,maxlength(15))';
 
-		o = s.option(form.DynamicList, 'whitelist', _('Allowed phone numbers'));
+		o = s.option(form.DynamicList, 'whitelist', _('Allowed phone numbers'), _('The phone number is set in the international format without \'+\''));
 		o.datatype = 'phonedigit';
 		o.cast = 'string';
 		o.rmempty =true;
