@@ -962,6 +962,9 @@ int switch_sim(struct settings_entry *settings, struct modems_ops *modem, uint8_
 	sprintf(buf2,"simman2.%s.sim%d_password",settings->name,sim_n);
 	uci_set_value(buf,"password",uci_get_value(buf2));
 
+	sprintf(buf2,"simman2.%s.sim%d_mode",settings->name,sim_n);
+	uci_set_value(buf,"modes",uci_get_value(buf2));
+
 	system("uci commit network");
 
 	//fixme
