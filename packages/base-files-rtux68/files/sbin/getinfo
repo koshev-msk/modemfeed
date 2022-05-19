@@ -1,41 +1,76 @@
 #!/bin/sh
-BOARD=$(cat /tmp/sysinfo/hw)
-if [[ "$BOARD" = "v2" ]]; then
-	case "$1" in
-		"adc1")
+
+unsupported_request(){
+	echo "Unsupported request: adc1 adc2 adc3 adc4 hostname \
+		serialnum release imei simstatus ccid registration nettype baseid packtype"
+}
+
+get_adc(){
+	BOARD=$(cat /tmp/sysinfo/hw)
+	if [[ "$BOARD" != "v2" ]]; then
+		ADC=$((5-ADC))
+	fi
+	case "$ADC" in
+		"1")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage0_raw
 		;;
-		"adc2")
+		"2")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage1_raw
 		;;
-		"adc3")
+		"3")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage4_raw
 		;;
-		"adc4")
+		"4")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage6_raw
 		;;
 		*)
-			echo "Unsupported request: adc1 adc2 adc3 adc4"
+			unsupported_request
 		;;
 	esac
-else
-	case "$1" in
-		"adc4")
-			cat /sys/bus/iio/devices/iio\:device0/in_voltage0_raw
-		;;
-		"adc3")
-			cat /sys/bus/iio/devices/iio\:device0/in_voltage1_raw
-		;;
-		"adc2")
-			cat /sys/bus/iio/devices/iio\:device0/in_voltage4_raw
-		;;
-		"adc1")
-			cat /sys/bus/iio/devices/iio\:device0/in_voltage6_raw
-		;;
-		*)
-			echo "Unsupported request: adc1 adc2 adc3 adc4"
-		;;
-	esac
-fi
+}
+
+case "$1" in
+	"adc"*)
+		ADC=${1:3}
+		get_adc
+	;;
+	"hostname")
+		uci get system.@system[0].hostname
+	;;
+	"serialnum")
+		getserialnum
+	;;
+	"release")
+		. /etc/openwrt_release
+		echo $DISTRIB_DESCRIPTION
+	;;
+	"imei")
+		simman2_cli -d /dev/ttyGSM1 --get-imei
+	;;
+	"simstatus")
+		simman2_cli -s core
+	;;
+	"ccid")
+		simman2_cli -d /dev/ttyGSM1 --get-ccid
+	;;
+	"signal")
+		simman2_cli -d /dev/ttyGSM1 --get-rssi
+	;;
+	"registration")
+		simman2_cli -d /dev/ttyGSM1 --get-data-status
+	;;
+	"nettype")
+		simman2_cli -d /dev/ttyGSM1 --get-net-type
+	;;
+	"baseid")
+		simman2_cli -d /dev/ttyGSM1 --get-bsid
+	;;
+	"packtype")
+		simman2_cli -d /dev/ttyGSM1 --get-data-type
+	;;
+	*)
+		unsupported_request
+	;;
+esac
 
 exit 0
