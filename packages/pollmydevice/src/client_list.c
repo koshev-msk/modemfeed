@@ -88,12 +88,13 @@ void remove_descr(int descr)
             return;
         }
     }
-    free(current);
+    
     if(current!=head){
         prev->next=current->next;
     } else {
     	head=head->next;
-    }    
+    }
+    free(current);
     start_request_descr();
 
 }

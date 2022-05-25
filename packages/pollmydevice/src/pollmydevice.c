@@ -1864,7 +1864,7 @@ device_config_t GetFullDeviceConfig(int deviceID)
     		(UCIptr.o==NULL || UCIptr.o->v.string==NULL))
     {
     	LOG("No UCI field %s \n", UCIpathPackTimeout);
-        deviceConfig.timeout_pack==0;
+        deviceConfig.timeout_pack=0;
     }
     if(UCIptr.flags & UCI_LOOKUP_COMPLETE)
     	deviceConfig.timeout_pack = atoi(UCIptr.o->v.string);
@@ -1877,7 +1877,7 @@ device_config_t GetFullDeviceConfig(int deviceID)
     		(UCIptr.o==NULL || UCIptr.o->v.string==NULL))
     {
     	LOG("No UCI field %s \n", UCIpathPackSize);
-        deviceConfig.size_pack==0;
+        deviceConfig.size_pack=0;
     }
     if(UCIptr.flags & UCI_LOOKUP_COMPLETE)
     	deviceConfig.size_pack = atoi(UCIptr.o->v.string);
