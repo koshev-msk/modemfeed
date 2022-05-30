@@ -1,0 +1,23 @@
+#!/bin/sh
+
+case "$1" in
+	list)
+		echo '{ "con_on": { }, "con_off": { }, "status": { } }'
+	;;
+	call)
+		case "$2" in
+			con_on)
+				/etc/pollmydevice/console enable
+				echo '{ "con_on": "done" }'
+			;;
+			con_off)
+				/etc/pollmydevice/console disable
+				echo '{ "con_off": "done" }'
+			;;
+			status)
+				status=$(/etc/pollmydevice/console status)
+				echo "{ \"status\": \"$status\" }"
+			;;
+		esac
+	;;
+esac

@@ -90,3 +90,21 @@ msgstr "Одновременный"
 
 msgid "Port Settings"
 msgstr "Настройки порта"
+
+msgid "Console status"
+msgstr "Статус консоли"
+
+msgid "activated"
+msgstr "включена"
+
+msgid "deactivated"
+msgstr "отключена"
+
+msgid "Console"
+msgstr "Консоль"
+
+msgid "On/Off"
+msgstr "Вкл/откл"
+
+msgid "Mode Settings"
+msgstr "Настройки подключения"

@@ -5,14 +5,38 @@
 'require rpc';
 'require ui';
 
+var consoleStatus = rpc.declare({
+	object: 'pollmydevice',
+	method: 'status',
+	expect: { '': {} }
+});
+
+var consoleDisable = rpc.declare({
+	object: 'pollmydevice',
+	method: 'con_off',
+	expect: { '': {} }
+});
+
+var consoleEnable = rpc.declare({
+	object: 'pollmydevice',
+	method: 'con_on',
+	expect: { '': {} }
+});
+
 return view.extend({
-	render: function() {
+	load: function() {
+		return Promise.all([
+			consoleStatus()
+		]);
+	},
+	render: function(rpc_replies) {
+		var status = rpc_replies[0];
 		var m, s, o;
 		
 		m = new form.Map('pollmydevice', _('PollMyDevice'));
 		m.description = _('TCP to RS232/RS485 converter');
 
-		s = m.section(form.GridSection, 'interface', _('Settings'));		
+		s = m.section(form.GridSection, 'interface');		
 		s.tab('general', _('Mode Settings'));
 		s.tab('serial', _('Port Settings'));
 		s.addremove = true;
@@ -53,7 +77,8 @@ return view.extend({
 		o = s.taboption('general', form.Flag, 'quiet',_('Disable log messages'));
 		o.default = 0;
 		o.modalonly = true;
-		o.depends({mode: 'disabled', '!reverse': true});
+		o.depends({mode: 'server'});
+		o.depends({mode: 'client'});
 
 		o = s.taboption('general', form.Value, 'server_port', _('Server Port'));
 		o.modalonly = true;
@@ -77,7 +102,8 @@ return view.extend({
 		o.modalonly = true;
 		o.default = 0;
 		o.datatype = 'and(uinteger, min(0), max(255))';
-		o.depends({mode: 'disabled', '!reverse': true});
+		o.depends({mode: 'server'});
+		o.depends({mode: 'client'});
 
 		o = s.taboption('general', form.Value, 'pack_timeout', _('Packet timeout [0-255] (x100ms)'));
 		o.modalonly = true;
@@ -144,6 +170,52 @@ return view.extend({
 			if(this.cfgvalue(section_id)==1) return 'RTU';
 			if(this.cfgvalue(section_id)==2) return 'ASCII';
 		};
+
+		o = s.taboption('general', form.DummyValue, 'console_status',_('Console status'));
+		o.modalonly = true;
+		o.depends({desc: 'console'});
+		o.cfgvalue = function(section_id) {
+			return _(status.status);
+		};
+
+		o = s.taboption('general', form.Button, 'switch',_('Console'),_('Save the changes. The router will reboot'));
+		o.modalonly = true;
+		o.inputstyle = 'action important';
+		o.inputtitle = _('On/Off');
+		o.depends({desc: 'console'});
+		o.onclick = L.bind(function(section_id) {
+			if (status.status == 'activated') {
+				consoleDisable().then(function(){
+					L.ui.showModal(_('Rebooting…'), [
+						E('p', { 'class': 'spinning' }, _('Waiting for device...'))
+					]);
+
+					window.setTimeout(function() {
+						L.ui.showModal(_('Rebooting…'), [
+							E('p', { 'class': 'spinning alert-message warning' },
+								_('Device unreachable! Still waiting for device...'))
+						]);
+					}, 150000);
+
+					L.ui.awaitReconnect();
+				})
+			} else {
+				consoleEnable().then(function(){
+					L.ui.showModal(_('Rebooting…'), [
+						E('p', { 'class': 'spinning' }, _('Waiting for device...'))
+					]);
+
+					window.setTimeout(function() {
+						L.ui.showModal(_('Rebooting…'), [
+							E('p', { 'class': 'spinning alert-message warning' },
+								_('Device unreachable! Still waiting for device...'))
+						]);
+					}, 150000);
+
+					L.ui.awaitReconnect();
+				})
+			}
+		},this)
 
 		o = s.taboption('serial', form.ListValue, 'baudrate', _('BaudRate'));
 		o.default = 9600;

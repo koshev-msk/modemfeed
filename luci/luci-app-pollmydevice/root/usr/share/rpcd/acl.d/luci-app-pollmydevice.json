@@ -2,7 +2,10 @@
 	"luci-app-pollmydevice": {
 		"description": "Grant UCI access for luci-app-pollmydevice",
 		"read": {
-			"uci": [ "pollmydevice" ]
+			"uci": [ "pollmydevice" ],
+			"ubus": {
+				"pollmydevice": [ "status", "con_on", "con_off" ]
+			}
 		},
 		"write": {
 			"uci": [ "pollmydevice" ]

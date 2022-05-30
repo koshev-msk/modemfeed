@@ -38,6 +38,17 @@ enable()
 	fi
 }
 
+status()
+{
+	CHECK1=$(grep -r "#::askconsole" /etc/inittab)
+	CHECK2=$(grep -r "#kernel.printk" /etc/sysctl.d/12-printk.conf)
+	if [ -z "$CHECK1" -a -n "$CHECK2" ]; then
+		echo "activated"
+	else
+		echo "deactivated"
+	fi
+}
+
 $1
 
 exit 0
