@@ -46,42 +46,42 @@ shift $((OPTIND-1))
 }
 
 # read GPIO configuration
-PWRKEY_PIN=$(uci -q get simman.core.pwrkey_gpio_pin)
+PWRKEY_PIN=$(uci -q get simman2.core.pwrkey_gpio_pin)
 [ -z "$PWRKEY_PIN" ] && {
 	logger -t $tag "Not set PWRKEY_PIN" && exit 0 
 }
 
-GSMPOW_PIN=$(uci -q get simman.core.gsmpow_gpio_pin)
+GSMPOW_PIN=$(uci -q get simman2.core.gsmpow_gpio_pin)
 [ -z "$GSMPOW_PIN" ] && {
 	logger -t $tag "Not set GSMPOW_PIN" && exit 0 
 }
 
-SIMDET_PIN=$(uci -q get simman.core.simdet_gpio_pin)
+SIMDET_PIN=$(uci -q get simman2.core.simdet_gpio_pin)
 [ -z "$SIMDET_PIN" ] && {
 	logger -t $tag "Not set SIMDET_PIN" && exit 0
 }
 
-SIMADDR_PIN=$(uci -q get simman.core.simaddr_gpio_pin)
+SIMADDR_PIN=$(uci -q get simman2.core.simaddr_gpio_pin)
 [ -z "$SIMADDR_PIN" ] && {
 	logger -t $tag "Not set SIMADDR_PIN" && exit 0
 }
 
-SIMDET0_PIN=$(uci -q get simman.core.simdet0_gpio_pin)
+SIMDET0_PIN=$(uci -q get simman2.core.simdet0_gpio_pin)
 [ -z "$SIMDET0_PIN" ] && {
 	logger -t $tag "Not set SIMDET0_PIN" && exit 0
 }
 
-SIMDET1_PIN=$(uci -q get simman.core.simdet1_gpio_pin)
+SIMDET1_PIN=$(uci -q get simman2.core.simdet1_gpio_pin)
 [ -z "$SIMDET1_PIN" ] && {
 	logger -t $tag "Not set SIMDET1_PIN" && exit 0
 }
 
-ATDEVICE=$(uci -q get simman.core.atdevice)
+ATDEVICE=$(uci -q get simman2.core.atdevice)
 [ -z "$ATDEVICE" ] && {
 	logger -t $tag "Not set ATDEVICE" && exit 0
 }
 
-GPSPORT=$(uci -q get simman.core.gpsdevice)
+GPSPORT=$(uci -q get simman2.core.gpsdevice)
 
 # GPIO ports configure 
 if [ ! -d "$GPIO_PATH/gpio$GSMPOW_PIN" ]; then
@@ -114,11 +114,6 @@ if [ ! -d "$GPIO_PATH/gpio$SIMDET1_PIN" ]; then
 	logger -t $tag "Exporting gpio$SIMDET1_PIN"
 fi
 
-# modem type: 0 - Telit; 1 - Simcom
-proto=$(uci -q get simman.core.proto)
-[ -z "$proto" ] && {
-	logger -t $tag "Not set modem type" && exit 0
-}
 # find 3g interface
 iface=$(uci show network | awk "/proto='3g'|proto='qmi'/" | awk -F'.' '{print $2}')
 
@@ -127,11 +122,10 @@ iface=$(uci show network | awk "/proto='3g'|proto='qmi'/" | awk -F'.' '{print $2
 # Check if SIM card placed in holder
 sim1=$(cat $GPIO_PATH/gpio$SIMDET0_PIN/value)
 sim2=$(cat $GPIO_PATH/gpio$SIMDET1_PIN/value)
-ac_sim=$(cat /tmp/simman/sim)
+ac_sim=$(cat $GPIO_PATH/gpio$SIMADDR_PIN/value)
 
 if [ "$sim1" == "1" ] && [ "$sim2" == "1" ]; then
 	logger -t $tag "Both SIM cards are not inserted"
-	[ "$ac_sim" != "0" ] && echo 0 > /tmp/simman/sim
 	# release SIM_DET pin
 	echo "0" > $GPIO_PATH/gpio$SIMDET_PIN/value
 	ubus call network.interface.$iface down
@@ -141,13 +135,13 @@ fi
 if [ "$pow" != "1" ]; then
 [ "$sim" == "0" ] && {
 	[ "$sim1" == "1" ] && logger -t $tag "Not inserted sim 1" && exit 0 
-	[ "$ac_sim" == "1" ] && ubus call network.interface.$iface down && logger -t $tag "SIM 1 is already active" && ubus call network.interface.$iface up && exit 0
+	[ "$ac_sim" == "0" ] && ubus call network.interface.$iface down && logger -t $tag "SIM 1 is already active" && ubus call network.interface.$iface up && exit 0
 	logger -t $tag "Set SIM card 1"
 }
 
 [ "$sim" == "1" ] && {
 	[ "$sim2" == "1" ] && logger -t $tag "Not inserted sim 2" && exit 0 
-	[ "$ac_sim" == "2" ] && ubus call network.interface.$iface down && logger -t $tag "SIM 2 is already active" && ubus call network.interface.$iface up && exit 0
+	[ "$ac_sim" == "1" ] && ubus call network.interface.$iface down && logger -t $tag "SIM 2 is already active" && ubus call network.interface.$iface up && exit 0
 	logger -t $tag "Set SIM card 2"
 }
 else 
@@ -222,9 +216,7 @@ if [ "$mode" == "0" ]; then
 
  # Power switch
  if [ "$pow" == "1" ]; then
-
   logger -t $tag "Reset pin toggle"
-
   if [ -n "$GPSPORT" -a "$GPSPORT" != "/dev/ttyAPP1" ]; then
   		/etc/init.d/gpsd stop
   		/etc/init.d/ntpd stop
@@ -238,44 +230,32 @@ if [ "$mode" == "0" ]; then
   echo "1" > $GPIO_PATH/gpio$GSMPOW_PIN/value
 
   sleep 2
-
   # power up
   echo "0" > $GPIO_PATH/gpio$GSMPOW_PIN/value
 
-  sleep 4
-  
+  sleep 4  
+  dev=$(ls $ATDEVICE 2>/dev/null)
+  while [ -z "$dev" ]; do
+  	sleep 4
   	dev=$(ls $ATDEVICE 2>/dev/null)
-  	while [ -z "$dev" ]; do
-  		sleep 4
-  		dev=$(ls $ATDEVICE 2>/dev/null)
-  	done
-  	sim="0"
-
+  done
+  sim="0"
  else
   retry=0
-
-
-
   while [ $retry -lt 10 -a "$proto" != "2" ]; do
      retry=`expr $retry + 1`
-
-     reg=$($CONFIG_DIR/getreg.sh)
-
-     [ "$reg" == "'UNKNOWN'" ] || [ "$reg" == "'NOT REGISTERED'" ] || [ "$reg" == "NONE" ] && break
-
-	 logger -t $tag "retry #$retry reading CREG, now registration status $reg"
-
-	 sleep 1
+     reg=$(simman2_cli -d $ATDEVICE -R)
+     [ "$reg" == "UNKNOWN" ] || [ "$reg" == "NOT REGISTERED" ] || [ "$reg" == "NONE" ] && break
+     logger -t $tag "retry #$retry reading CREG, now registration status $reg"
+     sleep 1
   done
- fi  
+ fi
 fi
 
 if [ "$sim" == "1" ]; then
  echo "1" > $GPIO_PATH/gpio$SIMADDR_PIN/value
- echo "2" > /tmp/simman/sim
 else
  echo "0" > $GPIO_PATH/gpio$SIMADDR_PIN/value
- echo "1" > /tmp/simman/sim
 fi
 
 sleep 1

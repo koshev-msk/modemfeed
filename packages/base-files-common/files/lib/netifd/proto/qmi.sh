@@ -64,11 +64,10 @@ proto_qmi_setup() {
 
 	[ -n "$delay" ] && sleep "$delay"
 
-    # sim7600e-h quirk start
-    uqmi -s -d "$device" --get-pin-status &>/dev/null &
-    sleep 2
-    killall uqmi &> /dev/null
-    # sim7600e-h bzik end
+	# sim7600e-h quirk start
+	uqmi -s -d "$device" --get-pin-status &>/dev/null &
+	sleep 2 && kill $! &> /dev/null
+	# sim7600e-h bzik end
 
 	while uqmi -s -d "$device" --get-pin-status | grep '"UIM uninitialized"' > /dev/null; do
 		[ -e "$device" ] || return 1
