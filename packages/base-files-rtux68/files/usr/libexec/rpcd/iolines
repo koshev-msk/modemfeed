@@ -21,15 +21,15 @@ case "$1" in
 				json_load "$input"
 				json_get_var ADC adc
 				if [[ "$ADC" == "all" ]]; then
+					adc0=$(getinfo adc0)
 					adc1=$(getinfo adc1)
 					adc2=$(getinfo adc2)
 					adc3=$(getinfo adc3)
-					adc4=$(getinfo adc4)
 					echo '{'
+					echo "\"adc0\": \"$adc0\","
 					echo "\"adc1\": \"$adc1\","
-					echo "\"adc2\": \"$adc2\"",
-					echo "\"adc3\": \"$adc3\"",
-					echo "\"adc4\": \"$adc4\""
+					echo "\"adc2\": \"$adc2\","
+					echo "\"adc3\": \"$adc3\""
 					echo '}'
 				else
 					adc1=$(getinfo $ADC)
@@ -48,19 +48,19 @@ case "$1" in
 					KV=$KV4
 				fi
 				if [[ "$ADC" == "all" ]]; then
+					adc0=$(getinfo adc0)
 					adc1=$(getinfo adc1)
 					adc2=$(getinfo adc2)
 					adc3=$(getinfo adc3)
-					adc4=$(getinfo adc4)					
+					adc0=$(echo "scale=0;$adc0*$KV" | bc -l)
 					adc1=$(echo "scale=0;$adc1*$KV" | bc -l)
 					adc2=$(echo "scale=0;$adc2*$KV" | bc -l)
 					adc3=$(echo "scale=0;$adc3*$KV" | bc -l)
-					adc4=$(echo "scale=0;$adc4*$KV" | bc -l)
 					echo '{'
+					echo "\"voltage0\": \"$adc0\","
 					echo "\"voltage1\": \"$adc1\","
-					echo "\"voltage2\": \"$adc2\"",
-					echo "\"voltage3\": \"$adc3\"",
-					echo "\"voltage4\": \"$adc4\""
+					echo "\"voltage2\": \"$adc2\","
+					echo "\"voltage3\": \"$adc3\""
 					echo '}'
 				else
 					adc1=$(getinfo $ADC)
@@ -75,19 +75,19 @@ case "$1" in
 				json_load "$input"
 				json_get_var ADC adc
 				if [[ "$ADC" == "all" ]]; then
+					adc0=$(getinfo adc0)
 					adc1=$(getinfo adc1)
-					adc1=$(echo "scale=0;$adc1*1.1" | bc -l)
 					adc2=$(getinfo adc2)
-					adc2=$(echo "scale=0;$adc2*1.1" | bc -l)
 					adc3=$(getinfo adc3)
+					adc0=$(echo "scale=0;$adc0*1.1" | bc -l)
+					adc1=$(echo "scale=0;$adc1*1.1" | bc -l)
+					adc2=$(echo "scale=0;$adc2*1.1" | bc -l)
 					adc3=$(echo "scale=0;$adc3*1.1" | bc -l)
-					adc4=$(getinfo adc4)
-					adc4=$(echo "scale=0;$adc4*1.1" | bc -l)
 					echo '{'
+					echo "\"adc0(Ohm)\": \"$adc0\","
 					echo "\"adc1(Ohm)\": \"$adc1\","
-					echo "\"adc2(Ohm)\": \"$adc2\"",
-					echo "\"adc3(Ohm)\": \"$adc3\"",
-					echo "\"adc4(Ohm)\": \"$adc4\""
+					echo "\"adc2(Ohm)\": \"$adc2\","
+					echo "\"adc3(Ohm)\": \"$adc3\""
 					echo '}'
 				else
 					adc1=$(getinfo $ADC)

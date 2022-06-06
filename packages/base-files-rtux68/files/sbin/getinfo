@@ -8,19 +8,19 @@ unsupported_request(){
 get_adc(){
 	BOARD=$(cat /tmp/sysinfo/hw)
 	if [[ "$BOARD" != "v2" ]]; then
-		ADC=$((5-ADC))
+		ADC=$((3-ADC))
 	fi
 	case "$ADC" in
-		"1")
+		"0")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage0_raw
 		;;
-		"2")
+		"1")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage1_raw
 		;;
-		"3")
+		"2")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage4_raw
 		;;
-		"4")
+		"3")
 			cat /sys/bus/iio/devices/iio\:device0/in_voltage6_raw
 		;;
 		*)
