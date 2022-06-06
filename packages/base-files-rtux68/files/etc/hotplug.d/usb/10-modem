@@ -69,6 +69,13 @@ case "$ACTION" in
                     ln -s /dev/$DEVICE_NAME /dev/ttyGSM2
                     exit 0
                 fi
+                if [ "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1:1.0" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.1/1-1.1:1.0" \
+                        -o "$DEVPATH" = "/devices/soc0/80080000.ahb/80090000.usb/ci_hdrc.1/usb1/1-1/1-1.3/1-1.3:1.0" ]; then
+                    DEVICE_NAME=$(ls /sys$DEVPATH/net)
+                    ip link set $DEVICE_NAME name mobile
+                    exit 0
+                fi
             ;;
         esac
     ;;
