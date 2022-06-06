@@ -51,7 +51,7 @@ return view.extend({
 			poll.add(function() {
 				return adcRequestAll("all").then(function(t) {
 					var sections = uci.sections('iolines','io');
-					for (var i = 1; i < sections.length+1; i++) {
+					for (var i = 0; i < sections.length; i++) {
 						var volt_num = 'voltage'+i;
 						document.getElementById('cbid.iolines.adc%s.voltage'.format(i)).textContent = t[volt_num] || 'n/a';
 					}
