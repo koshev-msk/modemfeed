@@ -75,24 +75,32 @@ boot() {
 
 	if [ "$BOARD" -gt "600" -a "$BOARD" -lt "900" ]; then
 		echo v4 > /tmp/sysinfo/hw
-		ln -s /sys/class/gpio/gpio51 /dev/pu4
-		ln -s /sys/class/gpio/gpio50 /dev/pd4
-		ln -s /sys/class/gpio/gpio54 /dev/pu3
-		ln -s /sys/class/gpio/gpio53 /dev/pd3
-		ln -s /sys/class/gpio/gpio57 /dev/pu2
-		ln -s /sys/class/gpio/gpio64 /dev/pd2
-		ln -s /sys/class/gpio/gpio66 /dev/pu1
-		ln -s /sys/class/gpio/gpio65 /dev/pd1		
-	else
-		echo v2 > /tmp/sysinfo/hw
-		ln -s /sys/class/gpio/gpio51 /dev/pu1
-		ln -s /sys/class/gpio/gpio50 /dev/pd1
+		ln -s /sys/class/gpio/gpio51 /dev/pu3
+		ln -s /sys/class/gpio/gpio50 /dev/pd3
 		ln -s /sys/class/gpio/gpio54 /dev/pu2
 		ln -s /sys/class/gpio/gpio53 /dev/pd2
-		ln -s /sys/class/gpio/gpio57 /dev/pu3
-		ln -s /sys/class/gpio/gpio64 /dev/pd3
-		ln -s /sys/class/gpio/gpio66 /dev/pu4
-		ln -s /sys/class/gpio/gpio65 /dev/pd4
+		ln -s /sys/class/gpio/gpio57 /dev/pu1
+		ln -s /sys/class/gpio/gpio64 /dev/pd1
+		ln -s /sys/class/gpio/gpio66 /dev/pu0
+		ln -s /sys/class/gpio/gpio65 /dev/pd0
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage0_raw /dev/io3
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage1_raw /dev/io2
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage4_raw /dev/io1
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage6_raw /dev/io0
+	else
+		echo v2 > /tmp/sysinfo/hw
+		ln -s /sys/class/gpio/gpio51 /dev/pu0
+		ln -s /sys/class/gpio/gpio50 /dev/pd0
+		ln -s /sys/class/gpio/gpio54 /dev/pu1
+		ln -s /sys/class/gpio/gpio53 /dev/pd1
+		ln -s /sys/class/gpio/gpio57 /dev/pu2
+		ln -s /sys/class/gpio/gpio64 /dev/pd2
+		ln -s /sys/class/gpio/gpio66 /dev/pu3
+		ln -s /sys/class/gpio/gpio65 /dev/pd3
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage0_raw /dev/io0
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage1_raw /dev/io1
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage4_raw /dev/io2
+		ln -s /sys/bus/iio/devices/iio\:device0/in_voltage6_raw /dev/io3
 	fi
 	config_load iolines
 	config_foreach load_iolines_boot io
