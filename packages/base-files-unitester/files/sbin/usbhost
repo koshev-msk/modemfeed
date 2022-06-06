@@ -1,0 +1,11 @@
+echo 46 > /sys/class/gpio/export
+echo low > /sys/class/gpio/gpio46/direction
+
+echo 23 > /sys/class/gpio/export
+echo low > /sys/class/gpio/gpio23/direction
+
+echo 122 > /sys/class/gpio/export
+echo high > /sys/class/gpio/gpio122/direction
+echo 121 > /sys/class/gpio/export
+echo low > /sys/class/gpio/gpio121/direction
+echo high > /sys/class/gpio/gpio121/direction

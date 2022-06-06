@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2017 teleofis
+
+START=12
+STOP=84
+
+start()
+{
+
+	ln -s /dev/ttyAPP4 /dev/com0
+	ln -s /dev/ttyAPP2 /dev/com1
+
+	mkdir /mnt/data
+	mount -t ubifs ubi0_5 /mnt/data
+	sleep 5
+	CON_OFF=$(fw_printenv bootargs | grep console)
+	if [ ! -z "$CON_OFF" ]; then
+		image=$(fw_printenv -n image)
+		fw_setenv bootargs "usbcore.autosuspend=-1 rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs_$image rw mtdparts=gpmi-nand:5m(bootloader),-(root)"
+		fw_setenv bootstopkey "rrrrrrr"
+		fw_setenv boot_status "normal"
+		sync
+		reboot
+	fi
+	telnetd -l /usr/libexec/login.sh &
+}
