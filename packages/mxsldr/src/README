@@ -1,0 +1,31 @@
+Freescale i.MX233/i.MX28 USB loader
+===================================
+
+This tool allows user to load U-Boot via BootROM USB download.
+
+Prerequisites:
+==============
+
+This tool depends on libusb 1.0, make sure to install development
+version of this library.
+
+
+In case your kernel is very outdated, meaning kernel older than 3.7.4,
+3.4.26 (stable) etc. or if your kernel does not properly handle the
+MXS BootROM recovery mode, which can be seen in 'dmesg' output by
+kernel reporting that the device is ignored due to problem with HID
+descriptor, apply patches (*.diff) onto kernel on your host machine
+and rebuild the kernel. Then restart the machine with the new kernel.
+
+Usage:
+======
+
+1) Connect the MX233/MX28 device to USB via device cable
+
+2) Compile U-Boot and produce u-boot.sb
+
+3) Compile this tool:
+ $ make
+
+4) Load u-boot.sb onto the device:
+ $ sudo ./mxsldr <path to u-boot.sb>

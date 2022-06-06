@@ -1,0 +1,11 @@
+--- a/drivers/hid/hid-core.c	2012-08-04 23:53:38.900126160 +0200
++++ b/drivers/hid/hid-core.c	2012-08-04 23:54:03.148127188 +0200
+@@ -374,7 +374,7 @@
+ 
+ 	case HID_GLOBAL_ITEM_TAG_REPORT_SIZE:
+ 		parser->global.report_size = item_udata(item);
+-		if (parser->global.report_size > 96) {
++		if (parser->global.report_size > 128) {
+ 			hid_err(parser->device, "invalid report_size %d\n",
+ 					parser->global.report_size);
+ 			return -1;
