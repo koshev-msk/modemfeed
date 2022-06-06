@@ -115,7 +115,7 @@ if [ ! -d "$GPIO_PATH/gpio$SIMDET1_PIN" ]; then
 fi
 
 # find 3g interface
-iface=$(uci show network | awk "/proto='3g'|proto='qmi'/" | awk -F'.' '{print $2}')
+iface="internet"
 
 [ -z "$iface" ] && logger -t $tag "Not found 3g/4g interface" && exit 0 
 
@@ -240,15 +240,6 @@ if [ "$mode" == "0" ]; then
   	dev=$(ls $ATDEVICE 2>/dev/null)
   done
   sim="0"
- else
-  retry=0
-  while [ $retry -lt 10 -a "$proto" != "2" ]; do
-     retry=`expr $retry + 1`
-     reg=$(simman2_cli -d $ATDEVICE -R)
-     [ "$reg" == "UNKNOWN" ] || [ "$reg" == "NOT REGISTERED" ] || [ "$reg" == "NONE" ] && break
-     logger -t $tag "retry #$retry reading CREG, now registration status $reg"
-     sleep 1
-  done
  fi
 fi
 

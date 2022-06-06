@@ -51,14 +51,14 @@ case "$MODEM" in
 	"$A7602" )
 		uci set network.internet="interface"
 		uci set network.internet.proto="dhcp"
-		uci set network.internet.device="usb0"
+		uci set network.internet.device="mobile"
 		uci add_list firewall.@zone[1].network='internet'
-		uci set system.@led[1].dev="usb0"
-		uci set system.@led[2].dev="usb0"
+		uci set system.@led[1].dev="mobile"
+		uci set system.@led[2].dev="mobile"
 		uci commit
 		ubus call network reload
-		echo usb0 > /sys/class/leds/middle\:net/device_name
-		echo usb0 > /sys/class/leds/bottom\:act/device_name
+		echo mobile > /sys/class/leds/middle\:net/device_name
+		echo mobile > /sys/class/leds/bottom\:act/device_name
 		exit 0
 	;;
 esac

@@ -199,6 +199,7 @@ int modem_common_power_reset(struct settings_entry *settings, struct modems_ops 
 	if(modem_common_power_up(settings,modem)!=0){
 		return -1;
 	}
+	sleep(3);
 	return 0;
 }
 
