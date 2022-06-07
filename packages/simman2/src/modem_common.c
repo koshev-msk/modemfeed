@@ -195,11 +195,11 @@ int modem_common_power_reset(struct settings_entry *settings, struct modems_ops 
 	if(modem_common_power_down(settings,modem)!=0){
 		return -1;
 	}
-	sleep(1);
+	sleep(3);
 	if(modem_common_power_up(settings,modem)!=0){
 		return -1;
 	}
-	sleep(3);
+	sleep(1);
 	return 0;
 }
 
