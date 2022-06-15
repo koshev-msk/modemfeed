@@ -43,7 +43,7 @@ update feeds and compile package. E.g
 
 ```
 ./scripts/feeds update -a && ./scripts feeds install -a
-make -j$((`npoc`+1)) package/feeds/modeminfo/luci-app-modeminfo/compile
+make -j$((`nproc`+1)) package/feeds/modeminfo/luci-app-modeminfo/compile
 ```
 
 
