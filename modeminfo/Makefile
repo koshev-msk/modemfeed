@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
   PKGARCH:=all
-  DEPENDS:=+comgt | qmi-utils
+  DEPENDS:=+comgt
   TITLE:=Signal information for 3G/LTE dongle
 endef
 
