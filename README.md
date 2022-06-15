@@ -7,7 +7,7 @@ Support LED Linear and RGB PWM modes.
 
 # How-To compile
 
-Add repo in feed.conf.defaut OpenWrt SDK 
+Add repo in feeds.conf.default OpenWrt SDK 
 ```
 src-git cellled https://github.com/koshev-msk/cellled.git
 ```
