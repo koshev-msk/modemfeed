@@ -4,7 +4,7 @@
 
 
 RES="/usr/share/modeminfo"
-GSCRIPT="$RES/scripts/3ginfo.gcom"
+#GSCRIPT="$RES/scripts/${FAMILY}.txt"
 
 function get_device_info() {
 	DEVPORT=$(uci -q get modeminfo.@modeminfo[0].device)
@@ -12,12 +12,9 @@ function get_device_info() {
                 *tty*) continue ;;
                 *) get_port ;;
         esac
-	O=$(gcom -d $DEVPORT -s $GSCRIPT 2>/dev/null)
-	IMEI=$(echo "$O" | awk -F[:] '/IMEI/ { print $2}')
-	case $IMEI in
-		[0-9][0-9]*) continue ;;
-		*) IMEI="" ;;
-	esac
+	modem_family
+	GSCRIPT="$RES/scripts/${FAMILY}.txt"
+	O=$(atinout $GSCRIPT $DEVPORT - |grep -v '^$')
 }
 
 function get_port() {
@@ -31,31 +28,33 @@ function get_port() {
 			fi
 		done
 	DEVPORT=$(uci -q get modeminfo.@modeminfo[0].device)
-	O=$(gcom -d $DEVPORT -s $GSCRIPT 2>/dev/null)
+	O=$(atinout $GSCRIPT $DEVPORT - |grep -v '^$')
 }
 	
 function modem_family() {
-	DEVICE=$(echo "$O" | awk -F[:] '/DEVICE/ { print $2}')
-	if (echo ${DEVICE} | grep -i que >/dev/null); then
-	        FAMILY=QUECTEL
+	if [ ! -f /tmp/modemdevice ]; then
+		F=$(atinout $RES/scripts/family.txt $DEVPORT -)
+		if (echo ${F} | grep -i que >/dev/null); then
+		        FAMILY=QUECTEL
+		else
+		        FAMILY=GENERIC
+		fi
+		echo $FAMILY > /tmp/modemdevice
 	else
-	        FAMILY=GENERIC
+		FAMILY=$(cat /tmp/modemdevice)
 	fi
+		
 }
 
 # get hardware info
 function get_hwinfo(){
-	if [ ! -f /tmp/modemdevice ]; then
-		SCRIPT=$RES/scripts/hwinfo.gcom
-		O=$(gcom -d $DEVPORT -s $SCRIPT 2>/dev/null)
-		FW=$(echo "$O" | awk '/Revision:/{print $2}')
-		CCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-		IMSI=$(echo "$O" | grep -A2 CIMI | awk 'NR ==2{gsub("\r","");print $0}')
-		echo FW=\"$FW\" >/tmp/modemdevice
-		echo ICCID=\"$ICCID\" >> /tmp/modemdevice
-		echo IMSI=\"$IMSI\" >> /tmp/modemdevice
-		echo IMEI=\"$IMEI\">> /tmp/modemdevice
-		source /tmp/modemdevice
+	MANUF=$(echo "$O" | grep -i $FAMILY)
+	MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
+	DEVICE="$MANUF $MODEL"
+	FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
+	ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
+	IMSI=$(echo "$O" | grep -A3 -i $FAMILY | tail -1)
+	IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
 }
 
 # get CSQ
@@ -91,31 +90,7 @@ function get_cops() {
 
 # Get Registration data
 function get_reg_data(){
-	for CREG in "+CREG" "+CGREG" "+CEREG"; do
-		LAC=$(echo "$O" | awk -F[,] '/\'$CREG'/  {gsub("^A-F0-9|\"", ""); printf "%s", toupper($3)}')
-		CID=$(echo "$O" | awk -F[,] '/\'$CREG'/  {gsub("^A-F0-9|\"", ""); printf "%s", toupper($4)}')
-		if [ "$LAC" -a "$CID" ]; then
-			break
-		fi
-	done
-	case $LAC in
-		*FFFE*|*0000*)
-			CREG="+CEREG"
-			LAC=$(echo "$O" | awk -F[,] '/\'$CREG'/  {gsub("^A-F0-9|\"", ""); printf "%s", toupper($3)}')
-		;;
-	esac
-	LAC_NUM=$(printf %d 0x$LAC)
-	REGST=$(echo "$O" | awk -F[,] '/\'$CREG'/ {print $2}')
-	ENBx=$(echo $CID | sed -e 's/..$//')
-	CELL=$(printf %d 0x${CID: -2})
-	ENBID=$(printf %d 0x$ENBx)
-	if [ "x$CID" != "x" ]; then
-		CID_NUM=$(printf %d 0x$CID)
-	fi
-	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) -eq 1 ]; then
-                LAC=$LAC_NUM                                
-                CID=$CID_NUM                    
-        fi
+	REGST=$(echo "$O" | awk -F[,] '/\+CGREG/ {print $2}')
 }
 
 # Quectel modems
@@ -126,22 +101,37 @@ function quectel_data(){
 		RSRP=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $15}')
 		SINR=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $18}')
 		PCI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $9}')
+		CID=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $8}')
+		LAC=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $14}')
+		ENBx=$(echo $CID | sed -e 's/..$//')
+		CELL=$(printf %d 0x${CID: -2})
+		ENBID=$(printf %d 0x$ENBx)
 		CSQ_RSSI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $17}')
 		RSRQ=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $16}')
 		BWUL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $12}')
-	      BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
+	      	BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
 	elif [ "$MODE" = "EDGE" ]; then
+		LAC=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $6}')
+		CID=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $7}')
 		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $10}')
 	else
+		LAC=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $7}')
+		CID=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $8}')
 		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $9}')
 		ECIO=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
 		SINR=$ECIO
 	fi
 	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $3}')
+	LAC_NUM=$(printf %d 0x$LAC)
+	CID_NUM=$(printf %d 0x$CID)
 	# Quectel EM1X modem temp sensors
 	if [ ! $(echo "$CHIPTEMP" | grep "^?[0-9]+$") ] || [ $CHIPTEMP -eq 255 ]; then
                 CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {gsub("\"",""); print $2}')
         fi
+	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) -eq 1 ]; then
+		LAC=$LAC_NUM
+		CID=$CID_NUM
+	fi
 }
 
 function generic_data(){
@@ -161,10 +151,10 @@ function get_data_in(){
 	modem_family
 	case $FAMILY in
 		QUECTEL)
+			get_reg_data
 			get_cops
 			get_csq
 			quectel_data
-			get_reg_data
 		;;
 		*)
 			generic_data
