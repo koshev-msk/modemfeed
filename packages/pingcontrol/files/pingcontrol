@@ -16,6 +16,7 @@ TESTIP=$(uci -q get pingcontrol.$1.testip)
 SW_BEFORE_MODRES=$(uci -q get pingcontrol.$1.sw_before_modres)
 SW_BEFORE_SYSRES=$(uci -q get pingcontrol.$1.sw_before_sysres)
 
+PING_OK=$(uci -q get pingcontrol.$1.ping_ok)
 PING_LOST=$(uci -q get pingcontrol.$1.ping_lost)
 PING_RESTORED=$(uci -q get pingcontrol.$1.ping_restored)
 BEFORE_IFACE_DOWN=$(uci -q get pingcontrol.$1.before_iface_down)
@@ -57,12 +58,20 @@ while true; do
 
 	if [[ "$host_up_count" -gt "0" ]]; then
 		logger -t pingcontrol "$INSTANCE: Ping OK, reset counters"
-		if [[ "$lost_flag" -eq "1" ]]; then
-			if [[ -n "$PING_RESTORED" ]]; then
-				logger -t pingcontrol "$INSTANCE: Execute $PING_RESTORED"
-				eval $PING_RESTORED 
-			fi
-		fi
+		case $lost_flag in
+			0)
+				if [[ -n "$PING_OK" ]]; then
+					logger -t pingcontrol "$INSTANCE: Execute $PING_OK"
+					eval $PING_OK
+				fi
+			;;
+			1)
+				if [[ -n "$PING_RESTORED" ]]; then
+					logger -t pingcontrol "$INSTANCE: Execute $PING_RESTORED"
+					eval $PING_RESTORED 
+				fi
+			;;
+		esac
 		host_up_count=0
 		lost1=0
 		lost2=0

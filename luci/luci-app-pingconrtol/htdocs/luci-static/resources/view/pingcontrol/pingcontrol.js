@@ -58,6 +58,9 @@ return view.extend({
 		o.datatype = 'and(uinteger,min(0),max(100))';
 		o.default = '0';
 
+		o = s.taboption('commands',form.Value, 'ping_ok', _('Ping ok'));
+		o.modalonly = true;
+
 		o = s.taboption('commands',form.Value, 'ping_lost', _('Ping lost'));
 		o.modalonly = true;
 
