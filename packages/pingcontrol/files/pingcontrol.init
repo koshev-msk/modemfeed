@@ -9,7 +9,7 @@ validate_pingcontrol_section() {
                 'enabled:bool:0' \
                 'iface:string' \
                 'check_period:uinteger' \
-                'testip:list(ipaddr)' \
+                'testip:list(host)' \
                 'sw_before_modres:uinteger' \
                 'sw_before_sysres:uinteger'
 }
