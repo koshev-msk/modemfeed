@@ -7,8 +7,8 @@ msgstr "Период проверки, сек"
 msgid "Ping interface"
 msgstr "Интерфейс для ping-запросов"
 
-msgid "IP address of remote server"
-msgstr "IP адрес удаленного сервера"
+msgid "Remote hosts or ip addresses"
+msgstr "Удалённые узлы или адреса"
 
 msgid "Failed attempts before iface up/down"
 msgstr "Количество неудачных попыток до переподключения интерфейса"

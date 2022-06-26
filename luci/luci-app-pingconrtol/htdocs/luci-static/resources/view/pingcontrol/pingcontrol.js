@@ -40,8 +40,8 @@ return view.extend({
 			return uci.get('pingcontrol', section_id, 'iface');
 		}
 
-		o = s.taboption('general',form.DynamicList, 'testip', _('IP address of remote servers'));
-		o.datatype = 'ipaddr';
+		o = s.taboption('general',form.DynamicList, 'testip', _('Remote hosts or ip addresses'));
+		o.datatype = 'host';
 
 		o = s.taboption('general',form.Value, 'check_period', _('Period of check, sec'));
 		o.rmempty = false;
