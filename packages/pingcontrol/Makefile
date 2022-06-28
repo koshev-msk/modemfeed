@@ -12,6 +12,7 @@ define Package/pingcontrol
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Network interface watchdog
+  PKGARCH:=all
   DEPENDS:=
 endef
 
