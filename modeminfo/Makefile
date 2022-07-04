@@ -9,20 +9,19 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
   PKGARCH:=all
-  DEPENDS:=
   TITLE:=Signal information for 3G/LTE dongle
 endef
 
 define Package/$(PKG_NAME)-serial
   PKGARCH:=all
   DEPENDS=+comgt +atinout +modeminfo
-  TITLE:=Signal information for 3G/LTE dongle. Serial addon
+  TITLE:=Serial addon for modeminfo
 endef
 
 define Package/$(PKG_NAME)-qmi
   PKGARCH:=all
   DEPENDS=+qmi-utils +modeminfo
-  TITLE:=Signal information for 3G/LTE dongle. QMI addon
+  TITLE:=QMI addon for modeminfo
 endef
 
 define Package/$(PKG_NAME)/description
@@ -33,7 +32,7 @@ define Package/$(PKG_NAME)-serial/description
         Serial addon for modeminfo
 endef
 
-define Package/$(PKG_NAME)/description
+define Package/$(PKG_NAME)-qmi/description
         QMI addon for modeminfo
 endef
 
@@ -60,8 +59,8 @@ define Package/$(PKG_NAME)-serial/install
         $(CP) ./root/usr/share/modeminfo/* $(1)/usr/share/modeminfo
 endef
 
-define Package/$(PKG_NAME)-serial/install
-        $(CP) ./root/usr/share/modeminfo-qmi/* $(1)/usr/share/modeminfo
+define Package/$(PKG_NAME)-qmi/install
+        $(CP) ./root/usr/share/modeminfo-qmi/* $(1)/usr/share/modeminfo/scripts
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
