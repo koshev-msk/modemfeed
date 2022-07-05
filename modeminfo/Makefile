@@ -84,31 +84,39 @@ endef
 
 
 define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo
+	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) ./root/usr/bin/* $(1)/usr/bin
-	$(CP) ./root/usr/share/modeminfo \
-		./root/usr/share/*.gcom \
-		./root/usr/share/ch_to_band \
-		$(1)/usr/share/modeminfo
-	$(CP) ./root/etc/* $(1)/etc/
+	$(CP) ./root/usr/share/modeminfo/scripts \
+		./root/usr/share/modeminfo/scripts/*.gcom \
+		./root/usr/share/modeminfog/scripts/ch_to_band \
+		$(1)/usr/share/modeminfo/scripts/
+	$(CP) ./root/etc/config/* $(1)/etc/config
 endef
 
 define Package/$(PKG_NAME)-serial-simcom/install
-        $(CP) ./root/usr/share/modeminfo/SIMCOM* $(1)/usr/share/modeminfo
+		$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+        $(CP) ./root/usr/share/modeminfo/scripts/SIMCOM* $(1)/usr/share/modeminfo/scripts
 endef
 
 define Package/$(PKG_NAME)-serial-huawei/install
-        $(CP) ./root/usr/share/modeminfo/HUAWEI* $(1)/usr/share/modeminfo
+		$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+        $(CP) ./root/usr/share/modeminfo/scripts/HUAWEI* $(1)/usr/share/modeminfo/scripts
 endef
 
 define Package/$(PKG_NAME)-serial-quectel/install
-        $(CP) ./root/usr/share/modeminfo/QUECTEL* $(1)/usr/share/modeminfo
+		$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+        $(CP) ./root/usr/share/modeminfo/scripts/QUECTEL* $(1)/usr/share/modeminfo/scripts
 endef
 
 define Package/$(PKG_NAME)-serial-fibocom/install
-        $(CP) ./root/usr/share/modeminfo/FIBOCOM* $(1)/usr/share/modeminfo
+		$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+        $(CP) ./root/usr/share/modeminfo/scripts/FIBOCOM* $(1)/usr/share/modeminfo/scripts
 endef
 
 define Package/$(PKG_NAME)-qmi/install
+		$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
         $(CP) ./root/usr/share/modeminfo-qmi/* $(1)/usr/share/modeminfo/scripts
 endef
 
