@@ -31,6 +31,12 @@ define Package/$(PKG_NAME)-serial-quectel
   TITLE:=QUECTEL serial addon for modeminfo
 endef
 
+define Package/$(PKG_NAME)-serial-fibocom
+  PKGARCH:=all
+  DEPENDS=+atinout +modeminfo
+  TITLE:=FIBOCOM NL668\678 serial addon for modeminfo
+endef
+
 define Package/$(PKG_NAME)-qmi
   PKGARCH:=all
   DEPENDS=+qmi-utils +modeminfo
