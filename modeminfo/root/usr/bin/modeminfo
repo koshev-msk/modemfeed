@@ -33,7 +33,6 @@ fi
 
 get_device_info
 get_data_in
-get_hwinfo
 if_null
 json_status
 

@@ -49,17 +49,6 @@ function modem_family() {
 	fi
 }
 
-# get hardware info
-function get_hwinfo(){
-	MANUF=$(echo "$O" | grep -i $FAMILY)
-	MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
-	DEVICE="$MANUF $MODEL"
-	FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
-	ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-	IMSI=$(echo "$O" | grep -A3 -i $FAMILY | tail -1)
-	IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
-}
-
 # get CSQ
 function get_csq(){
 	CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CSQ/ {print $2}')
@@ -99,6 +88,15 @@ function get_reg_data(){
 # Quectel modems
 function quectel_data(){
 	generic_data
+	# hwinfo
+        MANUF=$(echo "$O" | grep -i $FAMILY)
+        MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
+        DEVICE="$MANUF $MODEL"
+        FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
+        ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
+        IMSI=$(echo "$O" | grep -A3 -i $FAMILY | tail -1)
+        IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
+	# signal info
 	if [ "$MODE" = "LTE" ]; then
 		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $10}')
 		RSRP=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $15}')
