@@ -24,6 +24,34 @@ function modem_data(){
 		RSRQ=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $16}')
 		BWUL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $12}')
 		BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
+		LTE_CA=$(echo "$O" | awk '/^\+QCAINFO/{print $0}' | wc -l)
+		if [ $LTE_CA -ge 2 ]; then
+			CA_INFO=$(echo "$O" | awk '/^\+QCAINFO/{print $0}' | awk '/scc/{print $0}')
+			CA=$(echo "$CA_INFO" | awk -F [\,] '{print $4}' | awk '{print $3}' | sed 's/\"//g')
+			BWC=$(echo "$CA_INFO" | awk -F [\,] '{print $3}')
+			for cc in $CA; do
+				SC=$cc
+				SCC="$SCC+$SC"
+			done
+			case $BWDL in
+				1) BWCP=3 ;;
+				2) BWCP=5 ;;
+				3) BWCP=10 ;;
+				4) BWCP=15 ;;
+				5) BWCP=20 ;;
+			esac
+			for BW in $BWC; do
+				case $BW in
+					15) BWCC=3 ;;
+					25) BWCC=5 ;;
+					50) BWCC=10 ;;
+					75) BWCC=15 ;;
+					100) BWCC=20 ;;
+				esac
+				BWCA="$BWCA+$BWCC"
+			done
+			BWCA=$(($BWCP$BWCA))
+		fi
 	elif [ "$MODE" = "EDGE" ]; then
 		LAC=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $6}')
 		CID=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $7}')
