@@ -33,13 +33,17 @@ function get_port() {
 
 function modem_family() {
 	if [ ! -f /tmp/modemdevice ]; then
-		F=$(atinout $RES/scripts/family.txt $DEVPORT -)
+		F=$(atinout $RES/scripts/family.at $DEVPORT -)
 		if (echo ${F} | grep -i que >/dev/null); then
 			FAMILY=QUECTEL
+		elif (echo ${F} | grep -i xmm >/dev/null); then                        
+			FAMILY=INTEL
 		elif (echo ${F} | grep -i sim >/dev/null); then
 			FAMILY=SIMCOM
 		elif (echo ${F} | grep -i fib >/dev/null); then
 			FAMILY=FIBOCOM
+		elif (echo ${F} | grep -i qua >/dev/null); then
+			FAMILY=QUALCOMM
 		else
 			FAMILY=GENERIC
 		fi
@@ -99,14 +103,14 @@ function generic_data(){
 }
 
 function get_data_in(){
-        modem_family
-		get_reg_data
-		get_cops
-		get_csq
-        if [ -f "$RES/scripts/${FAMILY}" ]; then
-            . $RES/scripts/$FAMILY
-			modem_data
-		else
-			generic_data
-		fi
+	modem_family
+	get_reg_data
+	get_cops
+	get_csq
+	if [ -f "$RES/scripts/${FAMILY}" ]; then
+		. $RES/scripts/$FAMILY
+		modem_data
+	else
+		generic_data
+	fi
 }

@@ -35,5 +35,6 @@ get_device_info
 get_data_in
 if_null
 json_status
+killall atinout
 
 exit 0
