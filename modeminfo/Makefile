@@ -65,6 +65,13 @@ define Package/$(PKG_NAME)-serial-sierra
   TITLE:= Sierra Wireless EM7455 serial addon for modeminfo
 endef
 
+define Package/$(PKG_NAME)-serial-dell
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
+  TITLE:= Dell DW5821e serial addon for modeminfo
+endef
+
 define Package/$(PKG_NAME)-qmi
   PKGARCH:=all
   SUBMENU:=Telephony
@@ -136,8 +143,13 @@ define Package/$(PKG_NAME)-serial-xmm/install
 endef
 
 define Package/$(PKG_NAME)-serial-sierra/install
-        $(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
-        $(CP) ./root/usr/share/modeminfo/scripts/SIERRA* $(1)/usr/share/modeminfo/scripts
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/SIERRA* $(1)/usr/share/modeminfo/scripts
+endef
+
+define Package/$(PKG_NAME)-serial-dell/install
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/DELL* $(1)/usr/share/modeminfo/scripts
 endef
 
 define Package/modeminfo-qmi/install
@@ -153,4 +165,5 @@ $(eval $(call BuildPackage,$(PKG_NAME)-serial-fibocom))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-telit))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-xmm))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-sierra))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-dell))
 $(eval $(call BuildPackage,$(PKG_NAME)-qmi))

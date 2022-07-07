@@ -38,6 +38,8 @@ function modem_family() {
 			FAMILY=QUECTEL
 		elif (echo ${F} | grep -i sie >/dev/null); then
 			FAMILY=SIERRA
+		elif (echo ${F} | grep -i dell >/dev/null); then
+			FAMILY=DELL
 		elif (echo ${F} | grep -i xmm >/dev/null); then
 			FAMILY=INTEL
 		elif (echo ${F} | grep -i sim >/dev/null); then
@@ -104,6 +106,26 @@ function generic_data(){
 	esac
 }
 
+# name device via mmcli utility
+mmcli_name(){
+	MCLI=$(uci -q get modeminfo.@modeminfo[0].mmcli_name)
+	if [ "$MMCLI" -eq "1" ]; then
+		if [ -x /usr/bin/mmcli ]; then
+			MODEM=$(mmcli -L | awk '{print $1}' | head -1)
+			if [ $MODEM ]; then
+				MANUF=$(mmcli -m $MODEM -J | jsonfilter -e '@["modem"].*["manufacturer"]' | awk '{gsub("\r", ""); print $0}')
+				MODEL=$(mmcli -m $MODEM -J | jsonfilter -e '@["modem"].*["model"]' | awk '{gsub("\r", ""); print $0}')
+				if [ -n "$(echo "$MODEL" | grep "${MANUF}")" ]; then
+					DEVICE="$MODEL"
+				else
+					DEVICE="$MANUF $MODEL"
+				fi
+			fi
+		fi
+	fi
+}
+
+
 function get_data_in(){
 	modem_family
 	get_reg_data
@@ -115,4 +137,5 @@ function get_data_in(){
 	else
 		generic_data
 	fi
+	mmcli_name
 }
