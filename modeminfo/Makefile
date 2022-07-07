@@ -58,6 +58,13 @@ define Package/$(PKG_NAME)-serial-xmm
   TITLE:= FIBOCOM L850/L860 Intel XMM chips serial addon for modeminfo
 endef
 
+define Package/$(PKG_NAME)-serial-sierra
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-serial-qualcomm +atinout
+  TITLE:= Sierra Wireless EM7455 serial addon for modeminfo
+endef
+
 define Package/$(PKG_NAME)-qmi
   PKGARCH:=all
   SUBMENU:=Telephony
@@ -128,6 +135,11 @@ define Package/$(PKG_NAME)-serial-xmm/install
 	$(CP) ./root/usr/share/modeminfo/scripts/INTEL* $(1)/usr/share/modeminfo/scripts
 endef
 
+define Package/$(PKG_NAME)-serial-sierra/install
+        $(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+        $(CP) ./root/usr/share/modeminfo/scripts/SIERRA* $(1)/usr/share/modeminfo/scripts
+endef
+
 define Package/modeminfo-qmi/install
 	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
 	$(CP) ./root/usr/share/modeminfo-qmi/* $(1)/usr/share/modeminfo/scripts
@@ -140,4 +152,5 @@ $(eval $(call BuildPackage,$(PKG_NAME)-serial-quectel))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-fibocom))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-telit))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-xmm))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-sierra))
 $(eval $(call BuildPackage,$(PKG_NAME)-qmi))

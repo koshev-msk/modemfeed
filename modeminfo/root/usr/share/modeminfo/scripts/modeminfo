@@ -36,7 +36,9 @@ function modem_family() {
 		F=$(atinout $RES/scripts/family.at $DEVPORT -)
 		if (echo ${F} | grep -i que >/dev/null); then
 			FAMILY=QUECTEL
-		elif (echo ${F} | grep -i xmm >/dev/null); then                        
+		elif (echo ${F} | grep -i sie >/dev/null); then
+			FAMILY=SIERRA
+		elif (echo ${F} | grep -i xmm >/dev/null); then
 			FAMILY=INTEL
 		elif (echo ${F} | grep -i sim >/dev/null); then
 			FAMILY=SIMCOM
