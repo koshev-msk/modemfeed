@@ -91,7 +91,7 @@ if try_leds then
 end
 
 function m.on_after_commit(Map)
-        luci.sys.call("/usr/bin/luci-app-smstools3")
+	luci.sys.call("/usr/bin/luci-app-smstools3")
 end
 
 return m

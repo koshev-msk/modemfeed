@@ -197,6 +197,28 @@ msgstr "Подробный вывод журнала."
 msgid "Enable LED indication incoming messages."
 msgstr "Включить индикацию LED для входящих сообщений."
 
+#: applications/luci-app-smstools3/luasrc/model/cbi/modem/smstools3.lua:61
+msgid "Check network"
+msgstr "Тест сети"
+
+msgid "Setup network checking. Some modems incorrect test network." 
+msgstr "Настроить проверку наличия сети. Некторые модемы неверно проверяют сеть."
+
+msgid "Ignore check"
+msgstr "Всегда игнорировать"
+
+msgid "Always check"
+msgstr "Всегда проверять"
+
+msgid "Check prepare message"
+msgstr "При обратотке сообщений"
+
+msgid "Ignore signal level"
+msgstr "Игнорировать уровень сигнала"
+
+msgid "Some devices do not support Bit Error Rate"
+msgstr "Некоторые устройства не поддерживают уровень сигнала"
+
 #: applications/luci-app-smstools3/luasrc/model/cbi/modem/smstools3.lua:62
 msgid "Select LED"
 msgstr "Выбрать светодиод"
