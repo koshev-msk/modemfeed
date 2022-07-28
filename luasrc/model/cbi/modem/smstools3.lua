@@ -48,9 +48,18 @@ init:value("", "Qualcomm or more")
 init.default = ""
 init.rempty = true
 
-pin =s:option(Value, "pin", translate("PIN Code"),
+pin = s:option(Value, "pin", translate("PIN Code"),
 		translate("Default value: not in use.<br />Specifies the PIN number of the SIM card inside the modem."))
 pin.rmempty = true
+
+net = s:option(ListValue, "net_check", translate("Check network")
+		translate("Setup network checking. Some modems incorrect test network")
+net:value("0","Ignore check")
+net:value("1","Always check")
+net:value("2","Check prepare message")
+
+sig = s:option(Flag, "sig_check", translate"(Ignore signal level")
+		translate("Some devices do not support Bit Error Rate")
 
 log = s:option(ListValue, "loglevel", translate("Loglevel"),
 		translate("Verbose logging output."))

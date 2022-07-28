@@ -206,7 +206,7 @@ msgid "LED indicate to Incoming messages.<br />To revert, setup led \"System -> 
 msgstr "Светодиод для индикации входящих сообщений. Для возврата поведения светодиода, настройте его заново<br > в \"Система - Настройка LED индикации\""
 
 #: applications/luci-app-smstools3/luasrc/model/cbi/modem/smsevent.lua:11
-msgid "Edit smstools3 user script.<br />Add user's actions for incoming & outcoming messages.<br />Is shell script for smstools3 scenario.<br/>See <a href=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\">smstools3 manual page</a> for more details."
+msgid "Edit smstools3 user script.<br />Add user's actions for incoming and outcoming messages.<br />Is shell script for smstools3 scenario.<br/>See <a href=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\">smstools3 manual page</a> for more details."
 msgstr "Пользовательский скрипт оболочки ash для smstools3.<br />Действия для входящих и исходящих сообщений.<br/>Подробности сморите в <a href=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\">руководстве к smstools3</a>."
 
 
