@@ -54,7 +54,7 @@ modeminfo-serial-xmm - Fibocom L850/L860 modems support
 
 <details>
    <summary>How install precompiled packages</summary>
-   Add repositaries for our Router in /etc/opkg/customfeeds.conf
+   Add repositories for your Router in /etc/opkg/customfeeds.conf
    
    For Openwrt 19th branch:
    
