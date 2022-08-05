@@ -81,9 +81,9 @@ modeminfo-serial-xmm - Fibocom L850/L860 modems support
       
       OpenWrt 21th version modeminfo-serial-* packages have dependies: atinout. Please check compiled package for your platform.
       
-      Current build `<arch>` are:
+      Current build <arch> are:
       
-      - miplsel_24kc
+      - mipsel_24kc
       
       - arm_cortex-a7_neon-vfpv4
       
