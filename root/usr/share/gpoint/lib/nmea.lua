@@ -168,8 +168,9 @@ local function getRMC(GnssData, resp)
 		"date",      -- Date, ddmmyy
 		"mv",        -- Magnetic Variation, degrees
 		"ewm",       -- E or W
-		"nstat"      -- Nav Status (NMEA 4.1 and later) A=autonomous, D=differential, E=Estimated, -> 
-					 -- -> M=Manual input mode N=not valid, S=Simulator, V = Valid
+		"nstat",      -- Nav Status (NMEA 4.1 and later) A=autonomous, D=differential, E=Estimated, -> 
+						-- M=Manual input mode N=not valid, S=Simulator, V = Valid
+		"sc", 			--checksum
 	}
 
 	local err, rmc = getCropData(resp, "$GPRMC,")
@@ -225,7 +226,8 @@ local function getGSA(GnssData, resp)
 		"id12",       -- ID of 12th satellite used for fix
 		"pdop",       -- PDOP
 		"hdop",       -- HDOP
-		"vdop"        -- VDOP
+		"vdop",       -- VDOP
+		"sc",         -- checksum
 	}
 
 	local err, gsa = getCropData(resp, "$GPGSA,")

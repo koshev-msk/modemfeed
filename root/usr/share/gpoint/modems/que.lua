@@ -1,4 +1,4 @@
-common_path = '/usr/share/radar/lib/?.lua;'
+common_path = '/usr/share/gpoint/lib/?.lua;'
 package.path = common_path .. package.path
 
 local nmea = require("nmea")

@@ -30,7 +30,8 @@ local timezone = {
 local modems = { 
 	["2c7c:0306"] = "Quectel EP06",
 	["2c7c:0512"] = "Quectel EM12",
-	["2c7c:0125"] = "Quectel EC25"
+	["2c7c:0125"] = "Quectel EC25",
+	["2c7c:0800"] = "Quectel RM500Q"
 }
 
 local m = Map("gpoint", translate(""))
