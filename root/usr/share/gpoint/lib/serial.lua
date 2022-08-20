@@ -48,8 +48,8 @@ function serial.read(serial_port)
 	end
 	configSerial(port)
 
-	local READ_LEN = 500  -- Read byte form GNSS port
-	local TIMEOUT  = 100  -- Timeout reading in miliseconds
+	local READ_LEN = 1024  -- Read byte form GNSS port
+	local TIMEOUT  = 500  -- Timeout reading in miliseconds
 
 	local serialData, err, read_data = {}, "", ""
 	while READ_LEN > 0 do
