@@ -170,7 +170,7 @@ local function getRMC(GnssData, resp)
 		"ewm",       -- E or W
 		"nstat",      -- Nav Status (NMEA 4.1 and later) A=autonomous, D=differential, E=Estimated, -> 
 						-- M=Manual input mode N=not valid, S=Simulator, V = Valid
-		"sc", 			--checksum
+		"sc" 			--checksum
 	}
 
 	local err, rmc = getCropData(resp, "$GPRMC,")
@@ -227,7 +227,7 @@ local function getGSA(GnssData, resp)
 		"pdop",       -- PDOP
 		"hdop",       -- HDOP
 		"vdop",       -- VDOP
-		"sc",         -- checksum
+		"sc"         -- checksum
 	}
 
 	local err, gsa = getCropData(resp, "$GPGSA,")
