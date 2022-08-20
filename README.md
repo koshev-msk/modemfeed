@@ -21,7 +21,7 @@ It doesn't matter if you use a router in transport or it is installed in your te
 - Support [OpenLayers](https://openlayers.org/) maps in UI, and much more!
 
 ## Supported devices
-- Quectel EC25/EP06/EM12
+- Quectel EC25/EP06/EM12/RM500Q
 
 ## Supported GNSS protocols
 - [OsmAnd](https://www.traccar.org/osmand/)
