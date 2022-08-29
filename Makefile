@@ -36,7 +36,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Utils
   TITLE:=Tools modems based on the Qualcom chipset
   URL:=https://github.com/forth32/qtools
-  DEPENDS:=+libreadline
+  DEPENDS:=+libreadline +libncurses
 endef
 
 define Package/$(PKG_NAME)/description
