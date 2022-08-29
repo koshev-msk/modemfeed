@@ -1,0 +1,14 @@
+--- qtools.orig/Makefile
++++ qtools/Makefile
+@@ -52,3 +52,11 @@ qbadblock:   qbadblock.o $(OBJS)  ptable
+ qflashparm:  qflashparm.o $(OBJS)
+ 
+ qterminal qcommand: override LDLIBS+=-lreadline -lncurses
++
++install: all
++	mkdir -p $(DESTDIR)$(PREFIX)/bin
++	cp *.sh mibibsplit qbadblock qblinfo \
++		qcommand qdload qefs qflashparm \
++		qident qnvram qrflash qrmem \
++		qwdirect qwflash $(DESTDIR)$(PREFIX)/bin
++
