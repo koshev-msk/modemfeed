@@ -1,8 +1,6 @@
-Index: mrtg-2.17.7/configure.in
-===================================================================
---- mrtg-2.17.7.orig/configure.in
-+++ mrtg-2.17.7/configure.in
-@@ -19,47 +19,6 @@ fi
+--- mrtg-2.17.10.orig/configure.ac
++++ mrtg-2.17.10/configure.ac
+@@ -20,46 +20,6 @@ fi
  
  AC_PATH_PROGS(NROFF, groff nroff)
  
@@ -16,7 +14,7 @@ Index: mrtg-2.17.7/configure.in
 -AC_MSG_CHECKING([for printf long long format specifier])
 -AC_CACHE_VAL(mr_cv_long_long_format_specifier,[
 -    for format in ll l q I64; do
--        AC_TRY_RUN([#include <stdio.h>  
+-        AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>  
 -            int main()
 -            {
 -                long long b, a = -0x3AFAFAFAFAFAFAFALL;
@@ -25,10 +23,9 @@ Index: mrtg-2.17.7/configure.in
 -                sscanf (buffer, "%${format}u", &b);
 -                exit (b!=a);
 -            }
--            ],
--            mr_cv_long_long_format_specifier="%${format}d"
+-            ]])],[mr_cv_long_long_format_specifier="%${format}d"
 -            mr_cv_long_long_format="${format}d"
--            break)
+-            break],[],[])
 -        done])
 -AC_MSG_RESULT($mr_cv_long_long_format_specifier)
 -AC_DEFINE_UNQUOTED(LLD, "$mr_cv_long_long_format_specifier",
