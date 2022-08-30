@@ -41,8 +41,7 @@ done
 while true; do
 	for IP in $TESTIP
 	do
-		/bin/ping -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null
-		if [[ "$?" -eq "0" ]]; then
+		if $(/bin/ping -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null); then
 			let host_up_count++
 		else
 			logger -t pingcontrol "$INSTANCE: Ping to host $IP lost"
