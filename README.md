@@ -1,2 +1,2 @@
 # qtools OpenWrt package
-Tools modems based on the Qualcom chipset
+Tools modems based on the Qualcomm chipset
