@@ -3,9 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luci-app-pingcontrol
 LUCI_DEPENDS:=+pingcontrol
 
-PKG_VERSION:=1.0.0
-
-PKG_RELEASE:=1
+PKG_VERSION:=1.0.0-2
 
 LUCI_TITLE:=LuCI network interface control
 

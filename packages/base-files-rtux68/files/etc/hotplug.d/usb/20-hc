@@ -1,6 +1,0 @@
-if [ "$PRODUCT" == "1d6b/2/504" ]; then
-	if [ "$ACTION" == "offline" ]; then
-		echo ci_hdrc.1 > /sys/bus/platform/drivers/ci_hdrc/unbind
-		echo ci_hdrc.1 > /sys/bus/platform/drivers/ci_hdrc/bind
-	fi
-fi

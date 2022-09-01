@@ -1,7 +1,0 @@
-#!/bin/sh /etc/rc.common
-
-START=99
-boot() {
-	boot_status=$(fw_printenv -n boot_status)
-	[ "$boot_status" == "try" ] && fw_setenv boot_status normal
-}

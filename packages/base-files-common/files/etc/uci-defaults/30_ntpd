@@ -1,6 +1,0 @@
-#!/bin/sh
-
-[ ! -e "/usr/sbin/ntpd" && -e "/sbin/ntpd" ] || ln -s /sbin/ntpd /usr/sbin/ntpd
-[ -e "/etc/init.d/sysntpd" ] && rm /etc/init.d/sysntpd 
-
-exit 0
