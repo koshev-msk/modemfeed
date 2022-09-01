@@ -1,0 +1,41 @@
+msgid "Server availability check"
+msgstr "Проверка доступности сервера"
+
+msgid "Period of check, sec"
+msgstr "Период проверки, сек"
+
+msgid "Ping interface"
+msgstr "Интерфейс для ping-запросов"
+
+msgid "Remote hosts or ip addresses"
+msgstr "Удалённые узлы или адреса"
+
+msgid "Failed attempts before iface up/down"
+msgstr "Количество неудачных попыток до переподключения интерфейса"
+
+msgid "Failed attempts before reboot"
+msgstr "Количество неудачных попыток до перезагрузки устройства"
+
+msgid "Configuration name"
+msgstr "Имя конфигурации"
+
+msgid "Commands"
+msgstr "Команды"
+
+msgid "Ping ok"
+msgstr "Пинг в норме"
+
+msgid "Ping lost"
+msgstr "Пинг потерян"
+
+msgid "Ping restored"
+msgstr "Пинг восстановлен"
+
+msgid "Before interface down"
+msgstr "Перед отключением интерфейса"
+
+msgid "After interface up"
+msgstr "После включения интерфейса"
+
+msgid "Before reboot"
+msgstr "Перед перезагрузкой"
