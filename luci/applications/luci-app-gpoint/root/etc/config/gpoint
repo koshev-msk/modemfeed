@@ -1,0 +1,5 @@
+config modem_settings 'modem_settings'
+	
+config server_settings 'server_settings'
+
+config service_settings 'service_settings'
