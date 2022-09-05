@@ -1,6 +1,6 @@
 # modemfeed
 
-Ia a repository for OpenWrt wirmware worked by with LTE celluar modems.
+Ia a repository for OpenWrt firmware worked by with LTE celluar modems.
 
 Included next packages:
 
@@ -22,8 +22,13 @@ Add next line to feeds.conf.default in OpenWrt SDK/Buildroot
 
 ```
 src-gz modemfeed https://github.com/koshev-msk/modemfeed.git
+```
+
+Update feeds and compile singe package
+
+```
 ./scripts update -a; ./scrips/install -a
 make -j$((`nproc+1`)) package/feeds/modemfeed/*package*/compile
 ```
 
-or `make menuconfig` to include package firmware in Buildroot
+or `make menuconfig` menu to include package(s) firmware in Buildroot
