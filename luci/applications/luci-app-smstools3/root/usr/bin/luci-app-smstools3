@@ -5,5 +5,6 @@ sleep 10 && \
 	rm -f /etc/smsd.conf && ln -s /tmp/smsd.conf /etc && \
 	/etc/init.d/smstools3 stop && \
 	sleep 3 && \
-	/etc/init.d/smstools3 start &
+	/etc/init.d/smstools3 start && \
+	/etc/init.d/led restart &
 

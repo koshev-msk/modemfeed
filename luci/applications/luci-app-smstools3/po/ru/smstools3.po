@@ -224,8 +224,8 @@ msgid "Select LED"
 msgstr "Выбрать светодиод"
 
 #: applications/luci-app-smstools3/luasrc/model/cbi/modem/smstools3.lua:63
-msgid "LED indicate to Incoming messages.<br />To revert, setup led \"System -> LED Configuration\" again."
-msgstr "Светодиод для индикации входящих сообщений. Для возврата поведения светодиода, настройте его заново<br > в \"Система - Настройка LED индикации\""
+msgid "LED indicate to Incoming messages."
+msgstr "Светодиод для индикации входящих сообщений."
 
 #: applications/luci-app-smstools3/luasrc/model/cbi/modem/smsevent.lua:11
 msgid "Edit smstools3 user script.<br />Add user's actions for incoming and outcoming messages.<br />Is shell script for smstools3 scenario.<br/>See <a href=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\">smstools3 manual page</a> for more details."

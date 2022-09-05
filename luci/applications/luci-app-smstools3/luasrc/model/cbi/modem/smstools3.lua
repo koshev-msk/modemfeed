@@ -77,7 +77,7 @@ led_enable = s:option(Flag, "led_enable", translate("LED"),
 		translate("Enable LED indication incoming messages."))
 
 led = s:option(ListValue, "led", translate("Select LED"),
-		translate("LED indicate to Incoming messages.<br />To revert, setup led \"System -> LED Configuration\" again."))
+		translate("LED indicate to Incoming messages."))
 
 led:depends("led_enable", 1)
 if try_leds then
