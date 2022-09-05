@@ -21,7 +21,7 @@ Included next packages:
 Add next line to feeds.conf.default in OpenWrt SDK/Buildroot
 
 ```
-src-gz modemfeed https://github.com/koshev-msk/modemfeed.git
+src-git modemfeed https://github.com/koshev-msk/modemfeed.git
 ```
 
 Update feeds and compile singe package
