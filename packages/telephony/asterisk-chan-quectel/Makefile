@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=asterisk-chan-quectel
-PKG_VERSION:=2.1-20211201
+PKG_VERSION:=2.1-20220526
 PKG_RELEASE:=1
 
 #PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
