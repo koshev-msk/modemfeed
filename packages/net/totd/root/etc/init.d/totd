@@ -29,7 +29,11 @@ totd(){
 				echo "$fa" | awk -F [#] '{print "forwarder "$1" port "$2}'
 			done
 		}
-                [ -n "$prefix" ] && echo "prefix $prefix"
+                [ -n "$prefix" ] && {
+			for pr in $prefix; do
+				echo "prefix $pr"
+			done
+		}
                 [ -n "$port" ] && echo "port $port"
                 [ -n "$interface" ] && echo "interfaces $interface"
                 [ -n "$lookup" ] && echo "$lookup reverse lookup"
