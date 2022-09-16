@@ -4,16 +4,15 @@ Ia a repository for OpenWrt firmware worked by with LTE celluar modems.
 
 Included next packages:
 
-* modeminfo (luci-app-modeminfo) - Dashboard for LTE modemds.
-
-* luci-app-smstools3 - web UI smstools3 package.
-
-* luci-app-mmcomig - band manipulation modem via mmcli utility.
-
-* atinout (luci-app-atinout) - AT commands tool.
-
-* qtools - tools manupulation Qualcomm chipset cellualr modems.
-
+|Package       |        Dependies      |       Description        |
+|:-------------|:----------------------|:-------------------------|
+| luci-app-modeminfo|modeminfo|Dashboard for LTE modemds.|
+|luci-app-smstools3|smstools3|web UI smstools3 package.|
+|luci-app-mmcomig|modemmanager|band manipulation modem via mmcli utility.|
+|luci-app-atinout|atinout|AT commands tool.|
+|luci-app-cellled|cellled|LED cellular signal signal strength.|
+|qtools||tools manupulation Qualcomm chipset cellualr modems.|
+|asterisk-chan-quectel|asterisk|asterisk plugin for SimCom and Quectel modems.|
 * and more packages not included in official OpenWrt Repo.
 
 # How-to add repo and compile packages
