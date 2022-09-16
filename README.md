@@ -1,6 +1,6 @@
 # modemfeed
 
-Ia a repository for OpenWrt firmware worked by with LTE celluar modems.
+Is a repository for OpenWrt firmware worked by with LTE celluar modems.
 
 Included next packages:
 
