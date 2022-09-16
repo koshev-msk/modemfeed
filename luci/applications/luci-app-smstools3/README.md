@@ -15,12 +15,12 @@ Note: If you use this app with modemmanager, please move or remove /etc/hotplug.
 <details>
    <summary>Screenshots</summary>
    
-   ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/incoming.png)
+   ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-smstools3/screenshots/incoming.png)
    
-   ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/outcoming.png)
+   ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-smstools3/screenshots/outcoming.png)
    
-   ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/push.png)
+   ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-smstools3/screenshots/push.png)
    
-   ![](https://raw.githubusercontent.com/koshev-msk/luci-app-smstools3/master/screenshots/setup.png)
+   ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-smstools3/screenshots/setup.png)
    
 </details>
