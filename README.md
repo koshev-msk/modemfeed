@@ -11,8 +11,9 @@ Included next packages:
 |luci-app-mmcomig|modemmanager|band manipulation modem via mmcli utility.|
 |luci-app-atinout|atinout|AT commands tool.|
 |luci-app-cellled|cellled|LED cellular signal signal strength.|
-|qtools||tools manupulation Qualcomm chipset cellualr modems.|
+|qtools|libc|tools manupulation Qualcomm chipset cellualr modems.|
 |asterisk-chan-quectel|asterisk|asterisk plugin for SimCom and Quectel modems.|
+|xmm-modem|kmod-usb-net-ncm, kmod-usb-acm|Intel XMM modem connect scripts|
 * and more packages not included in official OpenWrt Repo.
 
 # How-to add repo and compile packages
