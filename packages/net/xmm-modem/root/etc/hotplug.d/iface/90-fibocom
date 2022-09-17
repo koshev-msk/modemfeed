@@ -47,7 +47,7 @@ cellular_(){
                 IPADDR=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\"|\r",""); print $2}'| sed 's/[[:space:]]//g')
                 DNS0=$(echo "$DATA" | awk -F [,] '/^\+XDNS: 0/{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
 		DNS1=$(echo "$DATA" | awk -F [,] '/^\+XDNS: 1/{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
-		if [ $(echo $DNS0 | grep 0.0.0.0) ] ; then
+		if [ "$(echo $DNS0 | grep 0.0.0.0)" ] ; then
 			DNS=$DNS1
 		else
 			DNS=$DNS0
