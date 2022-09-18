@@ -1,6 +1,6 @@
 # modemfeed
 
-Is a repository for OpenWrt firmware worked by with LTE celluar modems.
+Is a repository for OpenWrt firmware worked by with LTE cellular modems.
 
 Included next packages:
 
@@ -11,7 +11,7 @@ Included next packages:
 |luci-app-mmcomig|modemmanager|band manipulation modem via mmcli utility.|
 |luci-app-atinout|atinout|AT commands tool.|
 |luci-app-cellled|cellled|LED cellular signal signal strength.|
-|qtools|libc|tools manupulation Qualcomm chipset cellualr modems.|
+|qtools|libc|tools manipulation Qualcomm chipset cellualr modems.|
 |asterisk-chan-quectel|asterisk|asterisk plugin for SimCom and Quectel modems.|
 |xmm-modem|kmod-usb-net-ncm, kmod-usb-acm|Intel XMM modem connect scripts|
 * and more packages not included in official OpenWrt Repo.
