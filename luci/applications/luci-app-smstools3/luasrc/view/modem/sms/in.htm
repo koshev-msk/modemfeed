@@ -14,7 +14,7 @@ local dir = '/var/spool/sms/incoming/'
 msg = {}
 
 function directory(dir)
-   local p = io.popen('find "'..dir..'" -type f | sort -r')
+   local p = io.popen('find "'..dir..'" -type f -iname [0-9]* | sort -r')
    for file in p:lines() do
       table.insert(msg, file)
       msg[#msg + 1] = sms
