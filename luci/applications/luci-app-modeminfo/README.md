@@ -45,6 +45,8 @@ Supported devices:
 <details>
    <summary>Screenshots</summary>
 
+   ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-modeminfo/screenshots/modeminfo-overview.png)
+
    ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-modeminfo/screenshots/modeminfo-network.png)
 	
    ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-modeminfo/screenshots/modeminfo-hardware.png)
