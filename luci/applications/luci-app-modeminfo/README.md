@@ -40,8 +40,6 @@ Supported devices:
 |modeminfo-serial-xmm |Fibocom L850/L860 modems support |
 </details>
 
-Сompiled old versions https://inf.labz.ru/repo/
-
 <details>
    <summary>Screenshots</summary>
 
