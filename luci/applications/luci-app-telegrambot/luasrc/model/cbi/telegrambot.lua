@@ -15,6 +15,7 @@ enable.value = 1
 enable.value = 0
 enable.default = 0
 token = m:option(Value, "bot_token", translate("Bot Token"), translate("Token ID your Telegram Bot"))
+token.password = true
 chatid = m:option(Value, "chat_id", translate("Bot ID"), translate("Chat ID your Telegram Bot"))
 timeout = m:option(Value, "timeout", translate("Time Out"), translate("Time Out respone Bot in s."))
 ptime = m:option(Value, "polling_time", translate("Polling Time"), translate ("Polling Time in s."))
