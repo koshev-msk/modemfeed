@@ -42,12 +42,21 @@ Supported devices:
 
 <details>
    <summary>Screenshots</summary>
+   
+   
+* Overview page. Short network info.
 
    ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-modeminfo/screenshots/modeminfo-overview.png)
+   
+* Modeminfo index page. Verbose network info.
 
    ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-modeminfo/screenshots/modeminfo-network.png)
-	
+   
+* Modeminfo hardware page.
+
    ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-modeminfo/screenshots/modeminfo-hardware.png)
+
+* Modeminfo setup page.
 
    ![](https://raw.githubusercontent.com/koshev-msk/modemfeed/master/luci/applications/luci-app-modeminfo/screenshots/modeminfo-setup.png)
 
