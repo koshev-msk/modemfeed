@@ -40,6 +40,12 @@ stop_() {
 	gcom -d $PORT -s $SCRIPT
 }
 
+flush_() {
+	for s in  proto ipaddr netmask gateway dns metric; do
+		uci -q delete network.${INTERFACE}.${s}
+	done
+}
+
 cellular_(){
 	SCRIPT=/etc/gcom/xmm-config.gcom
         if [ $(ls $SCRIPT) ]; then
@@ -112,6 +118,7 @@ case $ACTION in
                         usb0|wwan0|eth1|eth2)
 				enable_
 				start_
+				flush_
                                 connect_
                                 logger -t "IntelNCM" "Connection established"
                         ;;
@@ -122,9 +129,12 @@ case $ACTION in
 		case $INTERFACE in
 			$IFNAME)
 				stop_
+				flush_
 				logger -t "$NODE" "Modem disconnected"
 			;;
 		esac
+		uci commit network
+		reload_config
 	;;
 esac
 
