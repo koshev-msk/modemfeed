@@ -80,7 +80,7 @@ cellular_(){
         fi
         uci set network.$INTERFACE=interface
         uci set network.$INTERFACE.proto='static'
-        uci set network.$INTERFACE.ifname=$DEVICE
+        uci set network.$INTERFACE.device=$DEVICE
         uci set network.$INTERFACE.metric='10'
         uci set network.$INTERFACE.ipaddr=$(echo ${IPADDR})
         uci set network.$INTERFACE.netmask=255.255.255.0
