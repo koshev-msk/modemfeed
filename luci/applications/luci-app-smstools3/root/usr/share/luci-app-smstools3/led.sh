@@ -6,6 +6,7 @@ LED=$(uci -q get smstools3.@sms[0].led)
 case $1 in
 	off) 
 		if [ $LED_EN ]; then
+			echo none > /sys/class/leds/${LED}/trigger 
 			/etc/init.d/led restart
 		fi
 	;;
