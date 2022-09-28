@@ -27,7 +27,7 @@ src-git modemfeed https://github.com/koshev-msk/modemfeed.git
 Update feeds and compile singe package
 
 ```
-./scripts update -a; ./scrips/install -a
+./scripts/feeds update -a; ./scrips/feeds install -a
 make -j$((`nproc+1`)) package/feeds/modemfeed/*package*/compile
 ```
 
