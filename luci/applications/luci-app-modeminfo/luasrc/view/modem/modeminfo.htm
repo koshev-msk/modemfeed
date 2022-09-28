@@ -5,6 +5,11 @@
 -%>
 
 
+<%
+local sys        = require("luci.sys")
+luci.sys.exec('rm -f /tmp/modemdevice')
+%>
+
 <%+header%>
 
 <h2 name="content"><%:Modeminfo%></h2>

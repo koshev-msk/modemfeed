@@ -4,6 +4,11 @@
  Licensed to the public under the Apache License 2.0.
 -%>
 
+<%
+local sys        = require("luci.sys")
+luci.sys.exec('rm -f /tmp/modemdevice')
+%>
+
 <script type="text/javascript">//<![CDATA[
 
 XHR.poll(4, '<%=build_url("admin/modem/data")%>', null,
