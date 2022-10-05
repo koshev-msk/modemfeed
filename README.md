@@ -27,8 +27,8 @@ src-git modemfeed https://github.com/koshev-msk/modemfeed.git
 Update feeds and compile singe package
 
 ```
-./scripts update -a; ./scrips/install -a
-make -j$((`nproc+1`)) package/feeds/modemfeed/*package*/compile
+./scripts/feeds update -a; ./scripts/feeds install -a
+make -j$((`nproc` + 1)) package/feeds/modemfeed/<package_name>/compile
 ```
 
 or `make menuconfig` menu to include package(s) firmware in Buildroot
