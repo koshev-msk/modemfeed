@@ -9,10 +9,6 @@ modem_data(){
 	IMSI=$(echo "$O" | grep -A1 -i $FW | tail -1)
 	IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
 	# get signal info
-	LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{print $3}')
-	CID=$(echo "$O" | awk -F [,] '/\+CEREG/{print $4}')
-	LAC_NUM=$(printf %d 0x$LAC)
-	CID_NUM=$(printf %d 0x$CID)
 	TECH=$(echo "$O" | awk -F[,\ ] '/^\+CNSMOD/ {print $3}')
 	case "$TECH" in
 		1*) MODE="GSM";;
@@ -33,6 +29,8 @@ modem_data(){
 			RSRQ=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", $12/10}')
 			SINR=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {printf "%.0f\n", ($15*2)-20}')
 			PCI=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $7}')
+			LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{print $3}')
+			CID=$(echo "$O" | awk -F [,] '/\+CEREG/{print $4}')
 			BWDL=$(echo "$O" |awk -F[,\ ] '/^\+CPSI/ {print $10}')
 			BWUL=$(echo "$O" |awk -F[,\ ] '/^\+CPSI/ {print $11}')
 			ENBx=$(echo $CID | sed -e 's/..$//')
@@ -72,11 +70,17 @@ modem_data(){
 			EARFCN=$(echo "$O" | awk -F[,] '/^\+CPSI/ {print $8}')
 			ECIO=$(echo "$O" | awk -F[,] '/^\+CPSI/ {printf"%.0f\n", $10}')
 			SINR="-"$ECIO
+                        LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{print $3}')
+                        CID=$(echo "$O" | awk -F [,] '/\+CEREG/{print $4}')
 		;;
 		1*|2*|3*)
 			EARFCN=$(echo "$O" | awk -F[,\ ] '/^\+CPSI/ {print $7}')
+                        LAC=$(echo "$O" | awk -F [,] '/\+CREG/{print $3}')
+                        CID=$(echo "$O" | awk -F [,] '/\+CREG/{print $4}')
 		;;
 	esac
+        LAC_NUM=$(printf %d 0x$LAC)
+        CID_NUM=$(printf %d 0x$CID)
 	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+CPMUTEMP/ {print $2}')
 	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) -eq 1 ]; then
 		LAC=$LAC_NUM
