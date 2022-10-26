@@ -52,7 +52,8 @@ define Build/Configure
 endef
 
 define Package.$(PKG_NAME)/conffiles
-	/etc/config/3proxy
+/etc/config/3proxy
+/etc/3proxy.cfg
 endef
 
 define Package/$(PKG_NAME)/install
