@@ -8,6 +8,7 @@ opengt
  send "AT+COPS=0^m"
  send "AT+CGPIAF=1,0,0,0^m"
  send "AT+XDNS=1,1^m"
+ send "AT+CGDCONT=1^m"
  send "AT+CGDCONT=1,\"IP\",\""
  send $env("APN")
  send "\"^m"
