@@ -10,11 +10,11 @@ function modem_data(){
 	IMSI=$(echo "$O" | grep -A1 -i ICCID | tail -1)
 	IMEI=$(echo "$O" | grep -A2 -i ICCID | tail -1)
 	# signal
-	REGST=$(echo "$O" | awk -F[,] '/\+CEREG/ {print $2}')
 	RADIODATA=$(echo "$O" |grep -A2 RFSTS: | awk 'NR ==2{print $0}')
 	LTE_CA=$(echo "$O" | awk '/SCC/{print $0}' | wc -l)
 	EARFCN=$(echo "$RADIODATA" |awk -F [,] '{print $2}')
         if [ "$MODE" = "LTE" ]; then
+		REGST=$(echo "$O" | awk -F[,] '/\+CEREG/ {print $2}')
 		LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $3}')
 		CID=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $5}')
                 RSRP=$(echo "$RADIODATA" |awk -F [,] '{printf "%.0f\n",$3}')
