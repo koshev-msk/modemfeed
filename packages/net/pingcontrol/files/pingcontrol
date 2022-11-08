@@ -56,7 +56,6 @@ while true; do
 	done
 
 	if [[ "$host_up_count" -gt "0" ]]; then
-		logger -t pingcontrol "$INSTANCE: Ping OK, reset counters"
 		case $lost_flag in
 			0)
 				if [[ -n "$PING_OK" ]]; then
