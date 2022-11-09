@@ -11,9 +11,9 @@ local json = require("luci.jsonc")
 module("luci.controller.gpoint.gpoint", package.seeall)
 
 function index()
-        entry({"admin", "services", "gpoint"}, alias ("admin","services", "gpoint", "map"), translate("GPoint"), 10)
-        entry({"admin", "services", "gpoint", "map"}, template("gpoint/overview"), translate("Overview"), 51)
-        entry({"admin", "services", "gpoint", "settings"}, cbi("gpoint/gpoint"), translate("Settings"), 52)
+        entry({"admin", "services", "gpoint"}, alias ("admin","services", "gpoint", "map"), translate("GPoint"), 10).acl_depends={"unauthenticated"}
+        entry({"admin", "services", "gpoint", "map"}, template("gpoint/overview"), translate("Overview"), 51).acl_depends={"unauthenticated"}
+        entry({"admin", "services", "gpoint", "settings"}, cbi("gpoint/gpoint"), translate("Settings"), 52).acl_depends={"unauthenticated"}
         entry({"admin", "services", "gpoint", "action"}, call("gpoint_action"), nil).leaf = true
         entry({"admin", "services", "gpoint", "geopoint"}, call("get_geopoint"), nil).leaf = true
         entry({"admin", "services", "gpoint", "blackbox"}, call("get_blackbox"), nil).leaf = true

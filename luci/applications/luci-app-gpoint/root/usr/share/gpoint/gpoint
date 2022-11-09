@@ -38,6 +38,12 @@ local modemStatus, modemConfig = config.getModemData()
 if not modemStatus[1] then
 	if string.find(modemConfig.name, "Quectel") then
 		modemVendor = require("que")
+	elseif string.find(modemConfig.name, "Sierra") then
+		modemVendor = require("sierra")
+	elseif string.find(modemConfig.name, "U-Blox") then
+		modemVendor = require("ublox")
+	elseif  string.find(modemConfig.name, "Simcom") then
+		modemVendor = require("simcom")
 	end
 end
 --------------------------------------------------------------------------------
@@ -179,6 +185,7 @@ while true do
 			end
 		end
 	end
+
 
 	-- KalmanFilter
 	-- TODO enabling and disabling in parking lot

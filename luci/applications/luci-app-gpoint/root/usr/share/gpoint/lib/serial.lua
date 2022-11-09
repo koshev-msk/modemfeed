@@ -9,7 +9,7 @@ local rs232 = require("luars232")
 local serial = {}
 
 local function configSerial(port)
-	assert(port:set_baud_rate(rs232.RS232_BAUD_460800)  == rs232.RS232_ERR_NOERROR)
+	assert(port:set_baud_rate(rs232.RS232_BAUD_115200)  == rs232.RS232_ERR_NOERROR)
 	assert(port:set_parity(rs232.RS232_PARITY_NONE)     == rs232.RS232_ERR_NOERROR)
 	assert(port:set_data_bits(rs232.RS232_DATA_8)       == rs232.RS232_ERR_NOERROR)
 	assert(port:set_stop_bits(rs232.RS232_STOP_1)       == rs232.RS232_ERR_NOERROR)
@@ -25,7 +25,7 @@ function serial.write(serial_port, command)
 		return err
 	end
 	configSerial(port)
-	
+
 	local err, len_written = port:write(command  .. "\r\n")
 	if err ~= rs232.RS232_ERR_NOERROR then
 		err = {true, "Error writing AT port"}
@@ -33,7 +33,7 @@ function serial.write(serial_port, command)
 		return err
 	end
 
-	err = {true, "OK"}
+	err = {false, "OK"}
 	assert(port:close() == rs232.RS232_ERR_NOERROR)
 	return err
 end
@@ -49,7 +49,7 @@ function serial.read(serial_port)
 	configSerial(port)
 
 	local READ_LEN = 1024  -- Read byte form GNSS port
-	local TIMEOUT  = 500  -- Timeout reading in miliseconds
+	local TIMEOUT  = 1000  -- Timeout reading in miliseconds
 
 	local serialData, err, read_data = {}, "", ""
 	while READ_LEN > 0 do

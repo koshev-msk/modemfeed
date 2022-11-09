@@ -80,6 +80,10 @@ function doTable(data, keys)
 		data = string.gsub(data, ',,', ",-,")
 	end
 
+	if string.sub(data, 1, 1) == ',' then
+		data = '-' .. data
+	end
+
 	local i = 1
 	for val in string.gmatch(data, "[^,]+") do
 		parseData[keys[i]] = val
@@ -101,13 +105,11 @@ local function findTimeZone(time, date, lon)
 	datetime.hour, datetime.min, datetime.sec   = string.match(time, "(%d%d)(%d%d)(%d%d)")
 	datetime.day, datetime.month, datetime.year = string.match(date,"(%d%d)(%d%d)(%d%d)")
 	datetime.year = "20" .. datetime.year -- Someone change this to 21 in the 2100 year
-	
+
 	--we request the unix time and then add the time zone
 	local unix = os.time(datetime)
 	unix = unix + ((math.floor(tonumber(timeZone) * 100)) % 100) * 36
-    unix = unix + math.floor(tonumber(timeZone)) * 3600
-
-    return os.date("*t", unix)
+    return unix + math.floor(tonumber(timeZone)) * 3600
 end
 
 -- Add 0 for the time and date values if < 10
@@ -145,7 +147,8 @@ local function getGGA(GnssData, resp)
 	}
 
 	local err, gga = getCropData(resp, "$GPGGA,")
-	if not err[1] and string.gsub(gga, ',', '') ~= '0' then
+	if not err[1] and string.gsub(gga, ',', '') ~= '0'
+		and string.sub(gga, string.find(gga, ',') + 1, string.find(gga, ',') + 1) ~= ',' then
 		GnssData.gga = doTable(gga, GnssData.gga)
 		GnssData.warning.gga = {false, "OK"}
 	else
@@ -168,7 +171,7 @@ local function getRMC(GnssData, resp)
 		"date",      -- Date, ddmmyy
 		"mv",        -- Magnetic Variation, degrees
 		"ewm",       -- E or W
-		"nstat",      -- Nav Status (NMEA 4.1 and later) A=autonomous, D=differential, E=Estimated, -> 
+		"nstat",      -- Nav Status (NMEA 4.1 and later) A=autonomous, D=differential, E=Estimated, ->
 						-- M=Manual input mode N=not valid, S=Simulator, V = Valid
 		"sc" 			--checksum
 	}
@@ -271,20 +274,21 @@ end
 -- Prepares data for the web application (Some custom data)
 local function getGPoint(GnssData, resp)
 	GnssData.gp = {
-		longitude = '-', 
-		latitude  = '-', 
-		altitude  = '-', 
-		utc       = '-', 
-		date      = '-', 
-		nsat      = '-', 
-		hdop      = '-', 
-		cog       = '-', 
-		spkm      = '-'
+		longitude = '-',
+		latitude  = '-',
+		altitude  = '-',
+		utc       = '-',
+		date      = '-',
+		nsat      = '-',
+		hdop      = '-',
+		cog       = '-',
+		spkm      = '-',
+		unix      = '-'
 	}
 
 	local err = {true, ""}
 	local GpsOrGlonas = false
-	
+
 	if not GnssData.warning.gga[1] then
 		GpsOrGlonas = GnssData.gga
 	elseif not GnssData.warning.gns[1] then
@@ -296,7 +300,7 @@ local function getGPoint(GnssData, resp)
 	if GpsOrGlonas then
 		GnssData.gp.latitude   = string.format("%0.6f", nmeaCoordinatesToDouble(GpsOrGlonas.latitude))
 		GnssData.gp.longitude  = string.format("%0.6f", nmeaCoordinatesToDouble(GpsOrGlonas.longitude))
-		GnssData.gp.altitude   = GpsOrGlonas.alt 
+		GnssData.gp.altitude   = GpsOrGlonas.alt
 		GnssData.gp.nsat       = GpsOrGlonas.sat
 		GnssData.gp.hdop       = GpsOrGlonas.hdp
 	end
@@ -309,9 +313,12 @@ local function getGPoint(GnssData, resp)
 	end
 
 	if not GnssData.warning.rmc[1] then
-		local dateTime = findTimeZone(GnssData.rmc.utc, GnssData.rmc.date, nmeaCoordinatesToDouble(GnssData.rmc.longitude))
-		GnssData.gp.utc = string.format("%s:%s", addZero(dateTime.hour), addZero(dateTime.min))
+		local unixTime = findTimeZone(GnssData.rmc.utc, GnssData.rmc.date, nmeaCoordinatesToDouble(GnssData.rmc.longitude))
+		local dateTime = os.date("*t", unixTime)
+
+		GnssData.gp.utc  = string.format("%s:%s", addZero(dateTime.hour), addZero(dateTime.min))
 		GnssData.gp.date = string.format("%s.%s.%d", addZero(dateTime.day), addZero(dateTime.month), dateTime.year)
+		GnssData.gp.unix = unixTime
 	else
 		err[2] = err[2] .. "RMC: " .. GnssData.warning.rmc[2]
 	end

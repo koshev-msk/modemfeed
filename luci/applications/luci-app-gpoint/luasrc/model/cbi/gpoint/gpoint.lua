@@ -28,10 +28,22 @@ local timezone = {
 }
 
 local modems = { 
-	["2c7c:0306"] = "Quectel EP06",
-	["2c7c:0512"] = "Quectel EM12",
-	["2c7c:0125"] = "Quectel EC25",
-	["2c7c:0800"] = "Quectel RM500Q"
+	["Quectel"] = {
+		["2c7c:0306"] = "EP06",
+		["2c7c:0512"] = "EM12",
+		["2c7c:0125"] = "EC25",
+		["2c7c:0800"] = "RM500Q"
+	},
+	["Sierra"] = {
+		["1199:9071"] = "EM7455",
+		["1199:9091"] = "EM7565"
+	},
+	["U-Blox"] = {
+		["1546:01a7"] = "VK-172"
+	},
+	["Simcom"] = {
+		["1e0e:9001"] = "SIM7600E-H"
+	}
 }
 
 local m = Map("gpoint", translate(""))
@@ -56,11 +68,12 @@ s.addremove = false
 local no_device = true
 o = s:option(ListValue, "modem", translate("Modem(s):"))
 if lsusb then
-	for id, modem in pairs(modems) do
-		if string.find(lsusb, id) then
-			no_device = false
-			local rename = string.gsub(modems[id], ' ', '_')
-			o:value(rename, modems[id])
+	for modem_name, modem_data in pairs(modems) do
+		for id, modem in pairs(modem_data) do
+			if string.find(lsusb, id) then
+				no_device = false
+				o:value(modem_name .. '_' .. modem, modem_name .. ' ' .. modem)
+			end
 		end
 	end
 end
@@ -76,8 +89,12 @@ if no_device then
 	function o.cfgvalue(self, section)
 		local nfound = "<div style=\"color: red;\"><b>No modem(s) found! Check the modem connections.</b><br> \
 						<div style=\"color: lime;\">Supported modems: "
-		for _, modem in pairs(modems) do
-			nfound = nfound .. "<br>" .. "- " ..  modem
+		for modem_name, modem_data in pairs(modems) do
+			nfound = nfound .. "<br>" .. modem_name .. ' '
+			for _, modem in pairs(modem_data) do
+				nfound = nfound  ..  modem .. ", "
+			end
+			nfound = nfound:sub(1, -3)
 		end
 		nfound = nfound .. "</div></div>"
 		return translate(nfound)
