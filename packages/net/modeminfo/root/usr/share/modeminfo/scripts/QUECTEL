@@ -32,7 +32,11 @@ function modem_data(){
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
-		CSQ_RSSI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $17}')
+		case $MODEL in
+			# EC200 send incorrect RSSI value, use value from AT+CSQ
+			*EC200*) continue ;;
+			*) CSQ_RSSI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $17}') ;;
+                esac
 		RSRQ=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $16}')
 		BWUL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $12}')
 		BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
