@@ -7,15 +7,9 @@ json_get_var COPS cops
 json_get_var MODE mode
 json_get_var PERS csq_per
 echo -ne "*Device:* $DEVICE\n*Operator:* $COPS 📶${PERS}% $MODE\n"
-if [ $MODE = LTE ]; then
-	json_get_var CA lteca
-fi
-
 json_get_var CH arfcn
 . /usr/share/modeminfo/scripts/ch_to_band
-
 ch_to_band $CH
-
 json_get_var RSSI rssi
 case $MODE in
 	LTE)
@@ -53,7 +47,7 @@ case $MODE in
 		json_get_var LAC lac
 		json_get_var CID cid
 		echo -ne "*BAND:* $SC\n"
-		echo -ne "*RSSI:*  ${RSSI}dBm\nn*LAC/CID:* ${LAC}/${CID}"
+		echo -ne "*RSSI:*  ${RSSI}dBm\n*LAC/CID:* ${LAC}/${CID}"
 	;;
 esac
 
