@@ -51,7 +51,7 @@ function msg_(){
 	esac
 }
 
-# parse incomint messages
+# parse incoming message
 if [ "$1" == "RECEIVED" ]; then
 	from=`grep "From:" $2 | awk -F ': ' '{printf $2}'`
 	content=$(sed -e '1,/^$/ d' < "$2")
@@ -92,7 +92,7 @@ if [ "$1" == "RECEIVED" ]; then
 			link_
 			msg_
 		;;
-		# restart device services
+		# manage device services
 		service)
 			SERVICE=$(echo $content | awk '{print $2}')
 			ACTION=$(echo $content | awk '{print $3}')
@@ -101,7 +101,7 @@ if [ "$1" == "RECEIVED" ]; then
 					/etc/init.d/${SERVICE} ${ACTION}
 					TXT="$ROUTER. Service ${SERVICE} ${ACTION}"
 				;;
-				*) TXT="$ROUTER. Usage: ${SERVICE} start|stop|restart|enable|disable" ;;
+				*) TXT="$ROUTER. Usage: service ${SERVICE} start|stop|restart|enable|disable" ;;
 			esac
 			link_
 			msg_
