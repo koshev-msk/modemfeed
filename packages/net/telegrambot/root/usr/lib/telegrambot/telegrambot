@@ -152,7 +152,7 @@ do
 						("/reboot")
                                                 	(echo "Call $cmd" | logger -t "telegram_bot" -p daemon.info)&
 	                                                RETURN_TEXT="Command executed!"
-							reply_to_msg $msg_id $origin "\${RETURN_TEXT}" && sleep 5 && reboot
+							reply_to_msg $msg_id $origin "\${RETURN_TEXT}" && touch /etc/banner && sleep 5 && reboot
 							;;
 						("/wol")
 							(echo "Call $cmd [$parms]" | logger -t "telegram_bot" -p daemon.info)&
