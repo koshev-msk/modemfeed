@@ -20,10 +20,13 @@ end
 
 function action_send_sms()
 	local set = luci.http.formvalue("set")
-	number = (string.sub(set, 1, 20))
-	txt = string.sub(set, 21)
-	message = string.gsub(txt, "\n", " ")
-	os.execute("/usr/bin/sendsms " ..number.." '"..message.."'")
+	number = string.gsub((string.sub(set, 1, 20)), "[%p%c%s]", '')
+	message = string.gsub((string.sub(set, 21)), "\n", " ")
+	if number:len() <= 5 then
+		os.execute("/usr/bin/sendsms s"..number.." '"..message.."'")
+	else
+		os.execute("/usr/bin/sendsms "..number.." '"..message.."'")
+	end
 end
 
 function action_in_erase_sms()
