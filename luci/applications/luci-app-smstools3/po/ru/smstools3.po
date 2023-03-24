@@ -22,10 +22,14 @@ msgid "Push"
 msgstr "Отправить"
 
 #: applications/luci-app-smstools3/luasrc/controller/smstools3.lua:13
+msgid "Command"
+msgstr "Команды"
+
+#: applications/luci-app-smstools3/luasrc/controller/smstools3.lua:14
 msgid "Setup"
 msgstr "Настройки"
 
-#: applications/luci-app-smstools3/luasrc/controller/smstools3.lua:14
+#: applications/luci-app-smstools3/luasrc/controller/smstools3.lua:15
 msgid "User Script"
 msgid "Скрипт"
 
@@ -231,7 +235,53 @@ msgstr "Светодиод для индикации входящих сообщ
 msgid "Edit smstools3 user script.<br />Add user's actions for incoming and outcoming messages.<br />Is shell script for smstools3 scenario.<br/>See <a href=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\">smstools3 manual page</a> for more details."
 msgstr "Пользовательский скрипт оболочки ash для smstools3.<br />Действия для входящих и исходящих сообщений.<br/>Подробности смотрите в <a href=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\">руководстве к smstools3</a>."
 
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:8
+msgid "Smstools3: command list interface."
+msgstr "Smstools3: интерфейс команд."
 
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:10
+msgid "Root Phone numbers"
+msgstr "Номера управления"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:13
+msgid "Phone number"
+msgstr "Номер телефона"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:14
+msgid "List phone numbers without +"
+msgstr "Список телефонных номеров без +"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:17
+msgid "Command List"
+msgstr "Список команд"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:21
+msgid "Description"
+msgstr "Описание"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:22
+msgid "SMS command"
+msgstr "Команда SMS"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:23
+msgid "Execute"
+msgstr "Выполнить"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:24
+msgid "Delay"
+msgstr "Задержка"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:25
+msgid "Delay in sec."
+msgstr "Задержка в сек."
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:26
+msgid "Answer"
+msgstr "Ответ"
+
+#: /applications/luci-app-smstools3/luasrc/model/cbi/modem/smscommand.lua:26
+msgid "Answer MSG"
+msgstr "Сообщение"
 
 
 

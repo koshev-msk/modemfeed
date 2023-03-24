@@ -17,6 +17,10 @@ case $1 in
 	;;
 esac
 
+if [ -r /usr/share/luci-app-smstools3/smscommand.sh ]; then
+	. /usr/share/luci-app-smstools3/smscommand.sh
+fi
+
 if [ -r /etc/smstools3.user ]; then
 	. /etc/smstools3.user
 fi
