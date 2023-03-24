@@ -152,7 +152,16 @@ if [ "$1" == "RECEIVED" ]; then
 			esac
 		;;
 		# print help
-		help) TXT="$ROUTER. Usage: reboot|restart|service|wifi|answer help for more info." ;;
+		help)
+			TXT="$ROUTER. Usage: reboot|restart|service|wifi|answer help for more info."
+			link_
+			msg_
+		;;
+		*)
+			TXT="$ROUTER. Send message with text \"help\" for more info."
+			link_
+			msg_
+		;;
 		esac
 	else
 		# resent incoming messages to telegram
