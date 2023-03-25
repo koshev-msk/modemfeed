@@ -4,6 +4,7 @@ SECTIONS=$(uci show smstools3 | awk -F [\]\[\@=] '/=command/{print $3}')
 PHONE=$(uci -q get smstools3.@root_phone[0].phone)
 
 
+# smscommand function
 smscmd(){
         for s in $SECTIONS; do
                 CMD="$(uci -q get smstools3.@command[$s].command)"
@@ -35,8 +36,6 @@ if [ "$1" == "RECEIVED" ]; then
 		if [ "$from" -eq "$n" ]; then
 			PHONE=$n
 			smscmd
-		else
-			exit 0
 		fi
 	done
 fi
