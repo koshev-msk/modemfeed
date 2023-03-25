@@ -10,7 +10,6 @@ smscmd(){
                 MSG="$(echo $content)"
                 case $CMD in
                         *${MSG}*)
-                                echo "command is $CMD" >> /tmp/smscommand.log
                                 ANSWER=$(uci -q get smstools3.@command[$s].answer)
                                 if [ "$ANSWER" ]; then
                                         /usr/bin/sendsms $PHONE "$ANSWER"
@@ -35,7 +34,6 @@ if [ "$1" == "RECEIVED" ]; then
 	for n in ${PHONE}; do
 		if [ "$from" -eq "$n" ]; then
 			PHONE=$n
-			echo "Root Phone is $PHONE detect" >> /tmp/smscommand.log
 			smscmd
 		else
 			exit 0
@@ -43,4 +41,3 @@ if [ "$1" == "RECEIVED" ]; then
 	done
 fi
 
-#ROOTN=1
