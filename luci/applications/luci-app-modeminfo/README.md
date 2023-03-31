@@ -22,6 +22,8 @@ Supported devices:
 
  - Fibocom NL668/NL678/L850/L860
 
+ - Gosuncnwelink GM510
+
 <details>
 <summary>Package contents:</summary>
 
@@ -38,6 +40,7 @@ Supported devices:
 |modeminfo-serial-dell |Dell DW5821e modem support |
 |modeminfo-serial-fibocom |Fibocom LN668/NL678 modems support |
 |modeminfo-serial-xmm |Fibocom L850/L860 modems support |
+|modeminfo-serial-gosun |Gosuncnwelink GM510 support |
 </details>
 
 <details>
