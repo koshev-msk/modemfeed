@@ -44,6 +44,7 @@ init = s:option(ListValue, "init", translate("Init string"),
                 translate("Initialise modem for more vendors"))
 init:value("huawei", "Huawei")
 init:value("intel", "Intel XMM")
+init:value("zte", "ZTE or more")
 init:value("", "Qualcomm or more")
 init.default = ""
 init.rempty = true
