@@ -40,7 +40,7 @@ function modem_data(){
 		2|4|5|6|8)
 			EEMGINFO=$(echo "$O" | awk -F[':'] '/^\+EEMUMTSSVC/ {print $2}')
 			EARFCN=$(echo $EEMGINFO | awk -F [,] '{print $20}')
-			SINR=$(echo $EEMGINFO | awk -F [,] '{print $7}')
+			SINR=$(echo $EEMGINFO | awk -F [,] '{printf "%.0f\n", -24+$6/2}')
 			LAC=$(echo $EEMGINFO | awk -F [,] '{printf "%x\n", toupper($16)}')
 			CID=$(echo $EEMGINFO | awk -F [,] '{printf "%x\n", toupper($17)}')
 			
