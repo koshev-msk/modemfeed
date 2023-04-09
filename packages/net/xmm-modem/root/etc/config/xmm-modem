@@ -1,4 +1,5 @@
 config xmm-modem
+	option iface 'eth1'
 	option enable '1'
 	option device '/dev/ttyACM0'
 	option apn 'internet'

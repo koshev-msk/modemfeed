@@ -1,7 +1,16 @@
-PORT=$(uci -q get xmm-modem.@xmm-modem[0].device)
-APN=$(uci -q get xmm-modem.@xmm-modem[0].apn)
-ENABLE=$(uci -q get xmm-modem.@xmm-modem[0].enable)
-NODE="IntelNCM"
+SECTIONS=$(uci show xmm-modem | awk -F [\]\[\@=] '/=xmm-modem/{print $3}')
+
+for s in $SECTIONS; do
+	IFACENET=$(uci -q get xmm-modem.@xmm-modem[${s}].iface)
+	if [ "$IFACENET" = "$DEVICE" ]; then
+		IFCONN=$DEVICE
+		PORT=$(uci -q get xmm-modem.@xmm-modem[${s}].device)
+		APN=$(uci -q get xmm-modem.@xmm-modem[${s}].apn)
+		ENABLE=$(uci -q get xmm-modem.@xmm-modem[${s}].enable)
+		NODE="IntelNCM $DEVICE"
+		break
+	fi
+done
 
 enable_() {
         if [ $ENABLE -ne 1 ]; then
@@ -41,7 +50,8 @@ stop_() {
 }
 
 flush_() {
-	for s in  proto ipaddr netmask gateway dns metric; do
+	uci -q set network.${INTERFACE}.proto='none'
+	for s in ipaddr netmask gateway dns; do
 		uci -q delete network.${INTERFACE}.${s}
 	done
 }
@@ -81,7 +91,6 @@ cellular_(){
         uci set network.$INTERFACE=interface
         uci set network.$INTERFACE.proto='static'
         uci set network.$INTERFACE.device=$DEVICE
-        uci set network.$INTERFACE.metric='10'
         uci set network.$INTERFACE.ipaddr=$(echo ${IPADDR})
         uci set network.$INTERFACE.netmask=255.255.255.0
         uci set network.$INTERFACE.gateway=$GATEWAY
@@ -95,7 +104,7 @@ cellular_(){
                 uci commit network
 		reload_config
         fi
-	echo $INTERFACE > /tmp/xmm-modem
+	echo $INTERFACE > /tmp/xmm-modem.${IFCONN}
 }
 
 connect_(){
@@ -105,9 +114,9 @@ connect_(){
         sleep 5
         CHECK=$(ip a s dev $DEVICE | awk '/inet /{print $2}')
         if [ $CHECK ]; then
-                logger -t "IntelNCM" "Obtain address $CHECK"
+                logger -t "$NODE" "Obtain address $CHECK"
         else
-                logger -t "IntelNCM" "Failed to obtain IP-address"
+                logger -t "$NODE" "Failed to obtain IP-address"
                 exit 0
         fi
 }
@@ -115,7 +124,7 @@ connect_(){
 case $ACTION in
         ifup)
                 case $DEVICE in
-                        usb0|wwan0|eth1|eth2)
+                        $IFCONN)
 				enable_
 				start_
 				flush_
@@ -125,7 +134,7 @@ case $ACTION in
                 esac
         ;;
 	ifdown)
-		IFNAME=$(cat /tmp/xmm-modem)
+		IFNAME=$(cat /tmp/xmm-modem.${IFCONN})
 		case $INTERFACE in
 			$IFNAME)
 				stop_
