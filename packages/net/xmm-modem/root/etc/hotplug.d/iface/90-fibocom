@@ -99,7 +99,7 @@ cellular_(){
         uci set network.$INTERFACE.ipaddr=$(echo ${IPADDR})
         uci set network.$INTERFACE.netmask=255.255.255.0
         uci set network.$INTERFACE.gateway=$GATEWAY
-	if [ $PEERDNS -eq 0 ]; then
+	if [ $PEERDNS -eq 1 ]; then
 	        if [ -n "$DNS" ]; then
         	        uci set network.$INTERFACE.dns="$(echo "$DNS")"
 	        else
