@@ -6,6 +6,7 @@ The config stored in /etc/config/xmm-modem. Example configuration:
 ```
 config xmm-modem
 	option iface 'eth1' # Data interface with hwaddr 00:00:11:12:13:14
+	option dns '1' # Use Peer dns. 0 - disabled
 	option enable '1' # Enable connect scenario
 	option device '/dev/ttyACM0' # Device serial port
 	option apn 'internet' # ISP Access 

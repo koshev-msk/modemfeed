@@ -4,6 +4,7 @@ for s in $SECTIONS; do
 	IFACENET=$(uci -q get xmm-modem.@xmm-modem[${s}].iface)
 	if [ "$IFACENET" = "$DEVICE" ]; then
 		IFCONN=$DEVICE
+		PEERDNS=$(uci -q get xmm-modem.@xmm-modem[${s}].dns)
 		PORT=$(uci -q get xmm-modem.@xmm-modem[${s}].device)
 		APN=$(uci -q get xmm-modem.@xmm-modem[${s}].apn)
 		ENABLE=$(uci -q get xmm-modem.@xmm-modem[${s}].enable)
@@ -51,7 +52,11 @@ stop_() {
 
 flush_() {
 	uci -q set network.${INTERFACE}.proto='none'
-	for s in ipaddr netmask gateway dns; do
+	ATTRS="ipaddr netmask gateway dns"
+	if [ $PEERDNS -eq 0 ]; then
+		ATTRS="ipaddr netmask gateway"
+	fi
+	for s in $ATTRS; do
 		uci -q delete network.${INTERFACE}.${s}
 	done
 }
@@ -94,10 +99,12 @@ cellular_(){
         uci set network.$INTERFACE.ipaddr=$(echo ${IPADDR})
         uci set network.$INTERFACE.netmask=255.255.255.0
         uci set network.$INTERFACE.gateway=$GATEWAY
-        if [ -n "$DNS" ]; then
-                uci set network.$INTERFACE.dns="$(echo "$DNS")"
-        else
-		uci set network.$INTERFACE.dns="8.8.8.8 1.1.1.1"
+	if [ $PEERDNS -eq 0 ]; then
+	        if [ -n "$DNS" ]; then
+        	        uci set network.$INTERFACE.dns="$(echo "$DNS")"
+	        else
+			uci set network.$INTERFACE.dns="8.8.8.8 1.1.1.1"
+		fi
 	fi
         if [ $IPADDR ]; then
                 ip link set dev $DEVICE arp off
