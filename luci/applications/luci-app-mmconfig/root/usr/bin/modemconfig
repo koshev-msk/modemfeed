@@ -7,7 +7,6 @@ run_config(){
 	# get device path
 	DEV=$(uci show network | awk -F [=] '/device/{gsub("'\''",""); print $2}')
 	for n in $SECTIONS; do
-		SLOTMM=$(mmcli -J -m $(uci get modemconfig.@modem[$n].device) | jsonfilter -e '@["modem"].*["device"]')
 		SLOT=$(uci -q get modemconfig.@modem[$n].device)
         	NETMODE=$(uci -q get modemconfig.@modem[$n].mode)
 	        GET_GSM=$(uci -q get modemconfig.@modem[$n].gsm_band)
@@ -15,7 +14,7 @@ run_config(){
 	        GET_LTE=$(uci -q get modemconfig.@modem[$n].lte_band)
 		export SLOT NETMODE GET_GSM GET_3G GET_LTE
 		for d in $DEV; do
-			if [ $SLOTMM = $d ]; then
+			if [ $SLOT = $d ]; then
 				WWIFACE=$(uci -q show network | grep $d | awk -F [=.] '{print $2}')
 			fi
 		done
