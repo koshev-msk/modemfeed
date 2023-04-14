@@ -67,8 +67,11 @@ if mm ~= nil then
 		if type(g) ~= "table" then
 			n = io.popen("mmcli -J -m "..g.." | jsonfilter -e '@[\"modem\"].*[\"model\"]'", "r")
 			local model = n:read("*l")
-			dev:value(g,model)
 			n:close()
+			x = io.popen("mmcli -J -m "..g.." | jsonfilter -e '@[\"modem\"].*[\"device\"]'", "r")
+			local bus = x:read("*l")
+			x:close()
+			dev:value(bus,model)
 		end
 	end
 end
