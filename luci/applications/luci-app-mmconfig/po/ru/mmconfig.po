@@ -33,6 +33,10 @@ msgstr "Режим сети"
 msgid "Preffered Network mode select."
 msgstr "Выбор предпочтительного режима сети."
 
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:61
+msgid "Select modem"
+msgstr "Выбор модема"
+
 #: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:72
 msgid "Maybe must reconnect cellular interface. <br /> If deselect all bands, then used default band modem config."
 msgstr "Возможно потребуется перезапустить сотовое соединение. <br /> Если не выбрано ни одного диапазона, используется конфигурация модема по умолчанию."

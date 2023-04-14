@@ -56,7 +56,7 @@ m = Map("modemconfig", translate("Configure modem bands"),
 s = m:section(TypedSection, "modem", "<p>&nbsp;</p>" .. translate("Choose bands cellular modem"))
 s.anonymous = true
 
-dev = s:option(ListValue, "device", translate("Device"), translate("Select device"))
+dev = s:option(ListValue, "device", translate("Modem"), translate("Select modem"))
 if mm ~= nil then
 	for dev in t:lines() do
 		table.insert(mm, m)
