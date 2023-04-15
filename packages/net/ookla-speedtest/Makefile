@@ -27,7 +27,9 @@ ifeq ($(ARCH),aarch64)
 endif
 
 define Package/$(PKG_NAME)/description
-	Hotplug script to get NS attribytes: DNS and domain search.
+	Speedtest CLI brings the trusted technology and global server network behind Speedtest to the command line.
+	Built for software developers, system administrators and computer enthusiasts alike,
+	Speedtest CLI is the first official Linux-native Speedtest application backed by Ookla®.
 endef
 
 define Build/Prepare
@@ -40,7 +42,6 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	echo $(ARCH) > /tmp/pkg.log
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(BIN_PATH)/speedtest $(1)/usr/bin
 endef
