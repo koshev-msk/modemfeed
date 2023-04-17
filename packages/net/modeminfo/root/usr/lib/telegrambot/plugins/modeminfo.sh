@@ -30,7 +30,7 @@ case $MODE in
 		json_get_var CELL cell
         	json_get_var DIST distance
 		echo -ne "*RSSI/RSRP:* ${RSSI}dBm/${RSRP}dBm\n*RSRQ/SINR:* ${RSRQ}dB/${SINR}dB\n*eNBID-Cell/PCI:* ${ENBID}-${CELL}/${PCI}"
-                if [ $DIST != "0.00" ]; then
+                if [ $DIST ] && [ "$DIST" -ne "0.00" ]; then
                         echo -ne " ~${DIST}km\n"
                 else
                         echo -ne "\n"
