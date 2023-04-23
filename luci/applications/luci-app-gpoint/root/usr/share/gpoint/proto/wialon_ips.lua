@@ -2,7 +2,7 @@
 -- A module for working with the "WIALON IPS" navigation protocol.
 -- This module prepares and sends data to a remote server.
 -------------------------------------------------------------
--- Copyright 2021-2022 Vladislav Kadulin <spanky@yandex.ru>
+-- Copyright 2021-2023 Vladislav Kadulin <spanky@yandex.ru>
 -- Licensed to the GNU General Public License v3.0
 
 local json = require("luci.jsonc")
@@ -12,6 +12,14 @@ local socket = require("socket")
 local tcp = assert(socket.tcp())
 
 local wialon_ips = {}
+
+-- add optional field in package
+local function addOptional(field ,name, data_type, value)
+    if field == "NA" then
+        return string.format("%s:%s:%s", name, data_type, value)
+    end
+    return field .. string.format(",%s:%s:%s", name, data_type, value)
+end
 
 -- Abbreviated data package
 local function shortData(GnssData)
@@ -38,7 +46,7 @@ local function shortData(GnssData)
 end
 
 -- Extended Data package with CRC16
-local function bigData(GnssData, params)
+local function bigData(GnssData, optionalParams)
     local D = {"NA","NA","NA","NA","NA","NA","NA","NA","NA","NA","NA","NA","NA","","NA","NA"}
     if not GnssData.warning.rmc[1] then
         D[1], D[2]  = GnssData.rmc.date, GnssData.rmc.utc
@@ -55,15 +63,15 @@ local function bigData(GnssData, params)
     elseif not GnssData.warning.locator[1] then
         D[1], D[2]  = os.date("%d%m%y"), os.date("%H%M%S", os.time(os.date("!*t"))) .. ".00"
         D[3], D[5]  = GnssData.gga.latitude, '0' .. GnssData.gga.longitude
-        D[16] = string.format("%s:%s:%s", "yandex", '3', "Data from wi-fi scan")
     end
     if not GnssData.warning.vtg[1] then
         D[7], D[8]  = GnssData.vtg.speed, GnssData.vtg.course_t
     end
-    if params then
-        -- TODO PARAMS WITH YA LOCATOR
-        D[16] = string.format("%s:%s:%s", params[1], params[2], params[3])
+
+    for _,param in pairs(optionalParams) do
+        D[16] = addOptional(D[16], param[1], param[2], param[3])
     end
+
     D[17] = checksum.crc16(table.concat(D, ";") .. ';')
     return "#D#" .. table.concat(D, ";") .. "\r\n"
 end
@@ -111,11 +119,11 @@ local function login(imei, pass)
 end
 
 -- Send data to server side
-function wialon_ips.sendData(GnssData, serverConfig)
+function wialon_ips.sendData(GnssData, serverConfig, optionalParams)
     local r, s, e
     local DATA_OK    = "OK"
     local err        = {false, DATA_OK}
-    local wialonData = bigData(GnssData)
+    local wialonData = bigData(GnssData, optionalParams)
 
     -- Data is missing, there is nothing to send
     if string.find(wialonData, "DB2D") then
