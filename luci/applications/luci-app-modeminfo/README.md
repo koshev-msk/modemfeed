@@ -6,9 +6,9 @@ luci-app-modeminfo is fork from https://github.com/IceG2020/luci-app-3ginfo
 
 Supported devices:
 
- - Quectel EC200T/EC21/EC25/EP06/EM12
+ - Quectel EC200T/EC21/EC25/EP06/EM12/EM160R-GL
 
- - SimCom SIM7600E-H
+ - SimCom SIM7600E-H/SIM7906
 
  - Huawei E3372 (LTE)/ME909
 

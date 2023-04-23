@@ -12,7 +12,7 @@ function modem_data(){
 		        IMSI=$(echo "$O" | grep -A3 -i $FAMILY | tail -1)
 		        IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
 		;;
-                *EC25*|*EP06*)
+                *EC25*|*EP06*|*EM160*)
                         IMSI=$(echo "$O" | grep -A1 -i $FW | tail -1)
                         IMEI=$(echo "$O" | grep -A1 -i $ICCID | tail -1)
 		;;
@@ -79,13 +79,18 @@ function modem_data(){
 		ECIO=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
 		SINR=$ECIO
 	fi
-	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $3}')
+	case $MODEL in                                                                                            
+		*EM160*) CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP: \"cpu-usr\"/ {gsub("\"","");print $3}') ;;
+		*)
+			CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $3}')
+			# Quectel EM1X modem temp sensors
+			if [ ! $(echo "$CHIPTEMP" | grep "^?[0-9]+$") ] || [ $CHIPTEMP -eq 255 ]; then
+				CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {gsub("\"",""); print $2}')
+			fi
+		;;
+	esac
 	LAC_NUM=$(printf %d 0x$LAC)
 	CID_NUM=$(printf %d 0x$CID)
-	# Quectel EM1X modem temp sensors
-	if [ ! $(echo "$CHIPTEMP" | grep "^?[0-9]+$") ] || [ $CHIPTEMP -eq 255 ]; then
-		CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {gsub("\"",""); print $2}')
-	fi
 	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) -eq 1 ]; then
 		LAC=$LAC_NUM
 		CID=$CID_NUM
