@@ -1,0 +1,11 @@
+--- a/ndpi-netfilter/src/Makefile	2022-08-03 19:15:39.849630013 +0200
++++ b/ndpi-netfilter/src/Makefile	2022-08-03 19:15:57.481336123 +0200
+@@ -13,7 +13,7 @@
+ KERNEL_DIR := /lib/modules/$(shell uname -r)/build
+ endif
+ 
+-ifeq ($(shell test -f $(KERNEL_DIR)/source/include/linux/skbuff.h && grep -qc userid $(KERNEL_DIR)/source/include/linux/skbuff.h),1)
++ifeq ($(shell test -f $(KERNEL_DIR)/include/linux/skbuff.h && shell grep -qc userid $(KERNEL_DIR)/include/linux/skbuff.h),1)
+ ccflags-y += -DUSE_HACK_USERID=1
+ endif
+ 
