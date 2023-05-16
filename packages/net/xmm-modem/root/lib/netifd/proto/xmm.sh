@@ -63,13 +63,13 @@ proto_xmm_setup() {
 	proto_add_data
 	proto_close_data
 	DATA=$(gcom -d $device -s /etc/gcom/xmm-config.gcom)
-	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\"", ""); print $2}') >/dev/null 2&>1
-	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\"", ""); print $3}') >/dev/null 2&>1
+	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2&>1
+	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2&>1
 	RETRIES=0
 	until [ $ip4addr ]; do
 		DATA=$(gcom -d $device -s /etc/gcom/xmm-config.gcom)
-		ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\"", ""); print $2}') >/dev/null 2&>1
-		lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\"", ""); print $3}') >/dev/null 2&>1
+		ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2&>1
+		lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2&>1
 		if [ $(echo $GO | grep -i CONNECT >/dev/null 2&>1) ]; then
 			echo "Modem connected"
 		else

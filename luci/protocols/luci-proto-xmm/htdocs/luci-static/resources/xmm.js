@@ -83,7 +83,7 @@ return network.registerProtocol('xmm', {
 
 		o = s.taboption('general', form.ListValue, 'pdp', _('PDP Type'));
 		o.value('ipv4v6', 'IPv4/IPv6');
-		o.value('ipv4', 'IPv4');
+		o.value('ip', 'IPv4');
 		o.value('ipv6', 'IPv6');
 		o.default = 'ipv4v6';
 
