@@ -108,17 +108,19 @@ proto_xmm_setup() {
 		*IP*|*IPV4V6*)
 			echo "PDP type is: $pdp"
 			echo "Set IPv4 address: ${ip4addr}/${ip4mask}"
-			echo "Set LLADDR: ${lladdr}"
 			proto_add_ipv4_address $ip4addr $ip4mask
 			proto_add_ipv4_route "0.0.0.0" 0 $defroute
-			proto_add_dns_server "$dns1"
-			echo "Using IPv4 DNS: $dns1"
+			if ! [ "$(echo $dns1 | grep 0.0.0.0)" ]; then
+				proto_add_dns_server "$dns1"
+				echo "Using IPv4 DNS: $dns1"
+			fi
 		;;
 		*IPV4V6*|*IPV6*)
 			echo "Add LLADDR: ${lladdr}/64"
 			proto_add_ipv6_address ${lladdr} 64
 			case $lladdr in
 				*FE80*)
+					echo "Set LLADDR: ${lladdr}"
 					json_init
 					json_add_string name "${interface}_6"
 					json_add_string ifname "@$interface"
