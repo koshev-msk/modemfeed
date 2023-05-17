@@ -57,7 +57,7 @@ proto_xmm_setup() {
 		return 1
 	}
 	echo "Setting up $ifname"
-	GO=$(APN=$apn  gcom -d $device -s /etc/gcom/xmm-connect.gcom)
+	GO=$(APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom)
 	[ -n "$delay" ] && sleep "$delay"
 	proto_init_update "$ifname" 1
 	proto_add_data
