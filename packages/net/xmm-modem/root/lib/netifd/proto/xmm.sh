@@ -76,11 +76,11 @@ proto_xmm_setup() {
 			RETRIES=$(($RETRIES+1))
 			if [ $RETRIES -ge 5 ]; then
 				echo "Modem failed to connect"
-				proto_notify_error "$interface" NO_IFACE
-				proto_set_available "$interface" 0
-				break
+				proto_notify_error "$interface" CALL_FAILED
+				return 1
 			fi
 		fi
+		sleep 2
 	done
 	case $ip4addr in
 		*FE80*)
@@ -107,9 +107,16 @@ proto_xmm_setup() {
 	case $pdp in
 		*IP*|*IPV4V6*)
 			echo "PDP type is: $pdp"
-			echo "Set IPv4 address: ${ip4addr}/${ip4mask}"
-			proto_add_ipv4_address $ip4addr $ip4mask
-			proto_add_ipv4_route "0.0.0.0" 0 $defroute
+			if ! [ "$(echo $ip4addr | grep 0.0.0.0)" ]; then
+				echo "Set IPv4 address: ${ip4addr}/${ip4mask}"
+				proto_add_ipv4_address $ip4addr $ip4mask
+				proto_add_ipv4_route "0.0.0.0" 0 $defroute
+			else
+				echo "Failed to configure interface"
+				proto_notify_error "$interface" CONFIGURE_FAILED
+				return 1
+			fi
+
 			if ! [ "$(echo $dns1 | grep 0.0.0.0)" ]; then
 				proto_add_dns_server "$dns1"
 				echo "Using IPv4 DNS: $dns1"
@@ -140,6 +147,11 @@ proto_xmm_setup() {
 }
 
 proto_xmm_teardown() {
+	local interface="$1"
+	local device
+	device=$(uci -q get network.$interface.device)
+	gcom -d $device -s /etc/gcom/xmm-disconnect.gcom >/dev/null 2&>1
+	echo "Modem $device disconnected"
 	proto_kill_command "$interface"
 }
 
