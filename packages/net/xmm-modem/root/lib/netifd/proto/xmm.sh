@@ -53,7 +53,7 @@ proto_xmm_setup() {
 		return 1
 	}
 	echo "Setting up $ifname"
-	GO=$(APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom)
+	APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2&>1
 	[ -n "$delay" ] && sleep "$delay" || sleep 5
 	proto_init_update "$ifname" 1
 	proto_add_data
@@ -63,7 +63,6 @@ proto_xmm_setup() {
 	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2&>1
 	ns=$(echo "$DATA" | awk -F [,] '/^\+XDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
 	dns1=$(echo "$ns" | grep -v "0.0.0.0" | tail -1)
-	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2&>1
 	if ! [ $ip4addr ]; then
 		proto_notify_error "$interface" CONFIGURE_FAILED
 		return 1
@@ -73,16 +72,11 @@ proto_xmm_setup() {
 		*FE80*)
 			lladdr=$ip4addr
 			ip4addr=""
-			ip adress add ${lladdr}/64 dev $ifname >/dev/null 2&>1
 		;;
 		*)
 			ip4mask=24
 			defroute=$(echo $ip4addr | awk -F [.] '{print $1"."$2"."$3".1"}')
 		;;
-	esac
-	case $lladdr in
-		*FE80*) ip address add ${lladdr}/64 dev $ifname >/dev/null 2&>1 ;;
-		*) lladdr="" ;;
 	esac
 	proto_set_keep 1
 	ip link set dev $ifname arp off
@@ -107,7 +101,7 @@ proto_xmm_setup() {
 	
 	}
 	[ "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] && {
-		ip address add ${lladdr}/64 dev $ifname >/dev/null 2&>1
+		ip -6 address add ${lladdr}/64 dev $ifname >/dev/null 2&>1
 		json_init
 		json_add_string name "${interface}_6"
 		json_add_string ifname "@$interface"
