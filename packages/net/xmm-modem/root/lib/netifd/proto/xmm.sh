@@ -23,8 +23,6 @@ proto_xmm_setup() {
 	local device ifname apn pdp pincode delay $PROTO_DEFAULT_OPTIONS
 	json_get_vars device ifname apn pdp pincode delay $PROTO_DEFAULT_OPTIONS
 	[ "$metric" = "" ] && metric="0"
-	pdp=$(echo $pdp | awk '{print toupper($0)}')
-	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP" 
 	[ -z $ifname ] && {
 		devname=$(basename $device)
 		case "$devname" in
@@ -33,12 +31,10 @@ proto_xmm_setup() {
 				devpath="$(readlink -f /sys/class/tty/$devname/device)"
 				echo "Found path $devpath"
 				hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
-				for a in $hwaddr; do
-					for h in $hwaddr; do
-						if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
-							ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
-						fi
-					done
+				for h in $hwaddr; do
+					if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
+						ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
+					fi
 				done
 			;;
 		esac
@@ -52,9 +48,11 @@ proto_xmm_setup() {
 		proto_set_available "$interface" 0
 		return 1
 	}
+	pdp=$(echo $pdp | awk '{print toupper($0)}')
+	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP"
 	echo "Setting up $ifname"
-	APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2&>1
 	[ -n "$delay" ] && sleep "$delay" || sleep 5
+	APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2&>1
 	proto_init_update "$ifname" 1
 	proto_add_data
 	proto_close_data
