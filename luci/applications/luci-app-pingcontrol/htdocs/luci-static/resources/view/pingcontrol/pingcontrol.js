@@ -39,6 +39,12 @@ return view.extend({
 		o.textvalue = function(section_id) {
 			return uci.get('pingcontrol', section_id, 'iface');
 		}
+		
+		o = s.taboption('general',form.ListValue, 'ipv6', _('Inet family'));
+		o.value('', 'Auto');
+		o.value('0', 'IPv4');
+		o.value('1', 'IPv6');
+		default = '';
 
 		o = s.taboption('general',form.DynamicList, 'testip', _('Remote hosts or ip addresses'));
 		o.datatype = 'host';

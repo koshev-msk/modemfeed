@@ -22,6 +22,7 @@ PING_RESTORED=$(uci -q get pingcontrol.$1.ping_restored)
 BEFORE_IFACE_DOWN=$(uci -q get pingcontrol.$1.before_iface_down)
 AFTER_IFACE_UP=$(uci -q get pingcontrol.$1.after_iface_up)
 BEFORE_REBOOT=$(uci -q get pingcontrol.$1.before_reboot)
+INET=$(uci -q get pingcontrol.$1.ipv6)
 
 host_up_count=0
 lost1=0
@@ -41,7 +42,12 @@ done
 while true; do
 	for IP in $TESTIP
 	do
-		if $(/bin/ping -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null); then
+		case $INET in
+			0) FAMILY="-4" ;;
+			1) FAMILY="-6" ;;
+			*) FAMILY="";;
+		esac
+		if $(/bin/ping ${FAMILY} -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null); then
 			let host_up_count++
 		else
 			logger -t pingcontrol "$INSTANCE: Ping to host $IP lost"
