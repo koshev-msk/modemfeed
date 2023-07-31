@@ -73,6 +73,16 @@ return network.registerProtocol('xmm', {
 			return true;
 		};
 
+		s.taboption('general', form.Value, 'username', _('PAP/CHAP username'));
+
+		o = s.taboption('general', form.Value, 'password', _('PAP/CHAP password'));
+
+		o = s.taboption('general', form.ListValue, 'auth', _('Auth Type'));
+		o.value('auto', 'Auto');
+		o.value('pap', 'PAP');
+		o.value('chap', 'CHAP');
+		o.default = 'auto';
+
 		o = s.taboption('advanced', form.Value, 'delay', _('Modem init timeout'), _('Maximum amount of seconds to wait for the modem to become ready'));
 		o.placeholder = '10';
 		o.datatype    = 'min(1)';
