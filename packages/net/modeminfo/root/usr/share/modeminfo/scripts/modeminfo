@@ -52,7 +52,7 @@ function modem_family() {
 			FAMILY=HUAWEI
 		elif (echo ${F} | grep -i gos >/dev/null); then
 			FAMILY=GOSUN
-		elif (echo ${F} | grep -i gos >/dev/null); then
+		elif (echo ${F} | grep -i zte >/dev/null); then
 			FAMILY=ZTE
 		else
 			FAMILY=GENERIC
