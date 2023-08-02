@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.3.2
-PKG_RELEASE:=3
+PKG_VERSION:=0.3.3
+PKG_RELEASE:=0
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -78,6 +78,14 @@ define Package/$(PKG_NAME)-serial-gosun
   DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
   TITLE:= Gosuncnwelink GM510 serial addon for modeminfo
 endef
+
+define Package/$(PKG_NAME)-serial-zte
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
+  TITLE:= ZTE MF823D serial addon for modeminfo
+endef
+
 
 define Package/$(PKG_NAME)-qmi
   PKGARCH:=all
@@ -172,6 +180,11 @@ define Package/$(PKG_NAME)-serial-gosun/install
 	$(CP) ./root/usr/share/modeminfo/scripts/GOSUN* $(1)/usr/share/modeminfo/scripts
 endef
 
+define Package/$(PKG_NAME)-serial-zte/install
+        $(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+        $(CP) ./root/usr/share/modeminfo/scripts/ZTE* $(1)/usr/share/modeminfo/scripts
+endef
+
 define Package/$(PKG_NAME)-qmi/install
 	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
 	$(CP) ./root/usr/share/modeminfo-qmi/* $(1)/usr/share/modeminfo/scripts
@@ -192,5 +205,6 @@ $(eval $(call BuildPackage,$(PKG_NAME)-serial-xmm))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-sierra))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-dell))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-gosun))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-zte))
 $(eval $(call BuildPackage,$(PKG_NAME)-qmi))
 $(eval $(call BuildPackage,$(PKG_NAME)-telegram))
