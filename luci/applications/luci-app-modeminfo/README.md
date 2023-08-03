@@ -24,6 +24,8 @@ Supported devices:
 
  - Gosuncnwelink GM510
 
+ - ZTE MF823/MF823D
+
 <details>
 <summary>Package contents:</summary>
 
@@ -41,6 +43,7 @@ Supported devices:
 |modeminfo-serial-fibocom |Fibocom LN668/NL678 modems support |
 |modeminfo-serial-xmm |Fibocom L850/L860 modems support |
 |modeminfo-serial-gosun |Gosuncnwelink GM510 support |
+|modeminfo-serial-gosun |ZTE MF823/MF823D support |
 </details>
 
 <details>

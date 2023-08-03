@@ -83,7 +83,7 @@ define Package/$(PKG_NAME)-serial-zte
   PKGARCH:=all
   SUBMENU:=Telephony
   DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
-  TITLE:= ZTE MF823D serial addon for modeminfo
+  TITLE:= ZTE MF823/MF823D serial addon for modeminfo
 endef
 
 
@@ -181,8 +181,8 @@ define Package/$(PKG_NAME)-serial-gosun/install
 endef
 
 define Package/$(PKG_NAME)-serial-zte/install
-        $(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
-        $(CP) ./root/usr/share/modeminfo/scripts/ZTE* $(1)/usr/share/modeminfo/scripts
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/ZTE* $(1)/usr/share/modeminfo/scripts
 endef
 
 define Package/$(PKG_NAME)-qmi/install
