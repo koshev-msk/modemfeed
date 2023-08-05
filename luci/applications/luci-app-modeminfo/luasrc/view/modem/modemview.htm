@@ -81,7 +81,7 @@ XHR.poll(4, '<%=url("admin/modem/data")%>', null,
 				} else if (rfcn >= 38650 && rfcn <= 39649) {
 					var band = "40";
 				} else {
-					var band = "--";
+					var band = (rfcn);
 				}
 				var bwdld = (data.bwdl);
 				if (bwdld == 0) {
@@ -111,7 +111,7 @@ XHR.poll(4, '<%=url("admin/modem/data")%>', null,
 				} else if (rfcn >= 1 && rfcn <= 124) {
 					var band = "GSM900";
 				} else {
-					var band = "--";
+					var band = (rfcn);
 				}
 			}
 			var carrier = "";

@@ -174,7 +174,7 @@ XHR.poll(4, '<%=url("admin/modem/data")%>', null,
 					var frdl = 0;
 					var frul = 0;
 					var rfcn = 0;
-					var band = "--";
+					var band = (rfcn);
 				}
 				var bwdld = (data.bwdl);
 				if (bwdld == 0) {
@@ -224,7 +224,7 @@ XHR.poll(4, '<%=url("admin/modem/data")%>', null,
 				} else {
 					var ulfreq = 0;
 					var dlfreq = 0;
-					var band = "--";
+					var band = (rfcn);
 				}
 			}
 			var carrier = "";
