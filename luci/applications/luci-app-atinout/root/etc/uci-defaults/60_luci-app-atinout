@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ "$PKG_UPGRADE" != 1 ]; then
+	uci set atinout.general=atinout
+fi
+
+if [ ! -f /etc/atcommands.user  ]; then
+	echo "Demo command \"ATI\";ATI" > /etc/atcommands.user
+fi
+
