@@ -1,0 +1,8 @@
+#!/bin/sh -x
+
+if [ "$PKG_UPGRADE" != "1" ]; then
+        touch /etc/config/smstools3
+        uci set smstools3.@sms[0]=sms
+	uci set smstools3.@root_phone[0]=root_phone
+	uci set smstools3.@command[0]=command
+fi
