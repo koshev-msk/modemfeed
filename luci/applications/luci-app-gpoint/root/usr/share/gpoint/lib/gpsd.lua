@@ -59,7 +59,7 @@ local function connectToGspd(ip, port)
     local s, e, status, partial, err
     s, e = tcp:connect(ip, port)
     tcp:settimeout(0.1)
-    tcp:send("?WATCH={\"enable\":true};")
+    tcp:send("?WATCH={\"enable\":true,\"json\":true};\r\n")
     tcp:receive('*a')
     tcp:send("?POLL;")
     s, status, partial = tcp:receive('*a')
@@ -88,10 +88,11 @@ function gpsd.getAllData(modemConfig)
         return GnssData
     end
 
+
     -- FOR GP --
     GnssData.gp.hdop = string.format("%0.2f", tostring(gnssReq.sky[1].hdop))
     GnssData.gp.date = string.gsub(string.sub(gnssReq.tpv[1].time, 1, string.find(gnssReq.tpv[1].time, 'T') - 1), '-', '')
-    GnssData.gp.spkm = tostring(gnssReq.tpv[1].speed)
+    GnssData.gp.spkm = tostring(modemConfig.gpsd_speed == '0' and gnssReq.tpv[1].speed * 3.6 or gnssReq.tpv[1].speed)
     GnssData.gp.altitude = string.format("%0.1f", tostring(gnssReq.tpv[1].alt))
     GnssData.gp.unix = string.gsub(string.sub(gnssReq.tpv[1].time, string.find(gnssReq.tpv[1].time, 'T') + 1, string.len(gnssReq.tpv[1].time) - 1), ':', '')
     GnssData.gp.longitude = string.format("%0.6f", tostring(gnssReq.tpv[1].lon))

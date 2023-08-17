@@ -31,7 +31,7 @@ local modems = {
         ["2c7c:0306"] = "EP06",
         ["2c7c:0512"] = "EM12",
         ["2c7c:0125"] = "EC25",
-	["2c7c:0620"] = "EM160R",
+        ["2c7c:0620"] = "EM160R",
         ["2c7c:0800"] = "RM500Q",
         ["2c7c:0801"] = "RM520N"
     },
@@ -133,6 +133,7 @@ else
     end
 end
 
+
 o = s:option(Value, "gpsd_ip", translate("Address:"))
 o.datatype = "host"
 o.placeholder = "127.0.0.1"
@@ -143,6 +144,12 @@ o = s:option(Value, "gpsd_port", translate("Port:"))
 o.datatype = "port"
 o.placeholder = "2947"
 o.default = "2947"
+o:depends("mode", "gpsd")
+
+o = s:option(ListValue, "gpsd_speed", translate("Speed over ground:"))
+o.default = 0
+o:value(0, "Kilometers per hour")
+o:value(1, "Meters per second")
 o:depends("mode", "gpsd")
 
 o = s:option(ListValue, "listen_globally", translate("Listen globally:"))
