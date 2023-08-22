@@ -54,7 +54,7 @@ echo "[GSM1]"
 case $INIT_ in
         huawei) INIT_STRING="init = AT+CPMS=\"SM\";+CNMI=2,0,0,2,1" ;;
         intel) INIT_STRING="init = AT+CPMS=\"SM\"" ;;
-	zte) INIT_STRING="init = AT+CPMS=\"SM\",\"SM\",\"SM\"" ;;
+	asr) INIT_STRING="init = AT+CPMS=\"SM\",\"SM\",\"SM\"" ;;
         *)INIT_STRING="init = AT+CPMS=\"ME\",\"ME\",\"ME\"" ;;
 esac
 echo $INIT_STRING
