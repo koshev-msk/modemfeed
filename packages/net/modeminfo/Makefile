@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.3.4
+PKG_VERSION:=0.3.5
 PKG_RELEASE:=0
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
@@ -77,6 +77,13 @@ define Package/$(PKG_NAME)-serial-gosun
   SUBMENU:=Telephony
   DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
   TITLE:= Gosuncnwelink GM510 serial addon for modeminfo
+endef
+
+define Package/$(PKG_NAME)-serial-tw
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
+  TITLE:= ThinkWill ML7820+ serial addon for modeminfo
 endef
 
 define Package/$(PKG_NAME)-serial-yuge
@@ -187,6 +194,11 @@ define Package/$(PKG_NAME)-serial-gosun/install
 	$(CP) ./root/usr/share/modeminfo/scripts/GOSUN* $(1)/usr/share/modeminfo/scripts
 endef
 
+define Package/$(PKG_NAME)-serial-tw/install
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/THINKWILL* $(1)/usr/share/modeminfo/scripts
+endef
+
 define Package/$(PKG_NAME)-serial-yuge/install
 	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
 	$(CP) ./root/usr/share/modeminfo/scripts/YUGE* $(1)/usr/share/modeminfo/scripts
@@ -217,6 +229,7 @@ $(eval $(call BuildPackage,$(PKG_NAME)-serial-xmm))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-sierra))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-dell))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-gosun))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-tw))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-yuge))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-zte))
 $(eval $(call BuildPackage,$(PKG_NAME)-qmi))

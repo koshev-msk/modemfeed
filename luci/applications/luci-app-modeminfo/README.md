@@ -24,6 +24,8 @@ Supported devices:
 
  - Gosuncnwelink GM510
 
+ - ThinkWill ML7820+
+
  - Yuge CLM920
 
  - ZTE MF823/MF823D
@@ -45,6 +47,7 @@ Supported devices:
 |modeminfo-serial-fibocom |Fibocom LN668/NL678 modems support |
 |modeminfo-serial-xmm |Fibocom L850/L860 modems support |
 |modeminfo-serial-gosun |Gosuncnwelink GM510 support |
+|modeminfo-serial-tw |ThinkWill ML7820+ support |
 |modeminfo-serial-yuge |Yuge CLM920 support |
 |modeminfo-serial-zte |ZTE MF823/MF823D support |
 </details>
