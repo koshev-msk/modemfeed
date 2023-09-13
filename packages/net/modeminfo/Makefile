@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.3.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.6
+PKG_RELEASE:=0
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -56,6 +56,13 @@ define Package/$(PKG_NAME)-serial-xmm
   SUBMENU:=Telephony
   DEPENDS:=+modeminfo +kmod-usb-acm +atinout
   TITLE:= FIBOCOM L850/L860 Intel XMM chips serial addon for modeminfo
+endef
+
+define Package/$(PKG_NAME)-serial-mikrotik
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-acm +atinout
+  TITLE:= MikroTik R11e-LTE/R11e-LTE6 serial addon for modeminfo
 endef
 
 define Package/$(PKG_NAME)-serial-sierra
@@ -179,6 +186,11 @@ define Package/$(PKG_NAME)-serial-xmm/install
 	$(CP) ./root/usr/share/modeminfo/scripts/INTEL* $(1)/usr/share/modeminfo/scripts
 endef
 
+define Package/$(PKG_NAME)-serial-mikrotik/install
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/MIKROTIK* $(1)/usr/share/modeminfo/scripts
+endef
+
 define Package/$(PKG_NAME)-serial-sierra/install
 	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
 	$(CP) ./root/usr/share/modeminfo/scripts/SIERRA* $(1)/usr/share/modeminfo/scripts
@@ -226,6 +238,7 @@ $(eval $(call BuildPackage,$(PKG_NAME)-serial-quectel))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-fibocom))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-telit))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-xmm))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-mikrotik))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-sierra))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-dell))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-gosun))

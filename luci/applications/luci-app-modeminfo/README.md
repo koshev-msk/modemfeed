@@ -18,7 +18,7 @@ Supported devices:
 
  - Dell DW5821e
  
- - MikroTik R11e-LTE/R11e-LTE6 (temporary dropped)
+ - MikroTik R11e-LTE/R11e-LTE6
 
  - Fibocom NL668/NL678/L850/L860
 
@@ -46,6 +46,7 @@ Supported devices:
 |modeminfo-serial-dell |Dell DW5821e modem support |
 |modeminfo-serial-fibocom |Fibocom LN668/NL678 modems support |
 |modeminfo-serial-xmm |Fibocom L850/L860 modems support |
+|modeminfo-serial-mikrotik |MikroTik R11e-LTE/R11e-LTE6 modems support |
 |modeminfo-serial-gosun |Gosuncnwelink GM510 support |
 |modeminfo-serial-tw |ThinkWill ML7820+ support |
 |modeminfo-serial-yuge |Yuge CLM920 support |
