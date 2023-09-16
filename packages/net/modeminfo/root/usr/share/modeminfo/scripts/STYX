@@ -4,7 +4,6 @@ function modem_data(){
     # hwinfo
     MANUF=$(echo "$O" | grep -i $FAMILY)
     MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
-    #echo $(echo "$O")
     DEVICE="$MANUF $MODEL"
     FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
     ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
