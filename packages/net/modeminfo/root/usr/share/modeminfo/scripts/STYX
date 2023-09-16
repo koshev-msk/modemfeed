@@ -1,8 +1,8 @@
 # STYX modems
 function modem_data(){
-	generic_data
-	# hwinfo
-	MANUF=$(echo "$O" | grep -i $FAMILY)
+    generic_data
+    # hwinfo
+    MANUF=$(echo "$O" | grep -i $FAMILY)
     MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
     #echo $(echo "$O")
     DEVICE="$MANUF $MODEL"
