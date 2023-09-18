@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.3.6
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.7
+PKG_RELEASE:=0
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -70,6 +70,13 @@ define Package/$(PKG_NAME)-serial-sierra
   SUBMENU:=Telephony
   DEPENDS:=+modeminfo +kmod-usb-serial-qualcomm +atinout
   TITLE:= Sierra Wireless EM7455 serial addon for modeminfo
+endef
+
+define Package/$(PKG_NAME)-serial-styx
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
+  TITLE:= STYX MG8224 serial addon for modeminfo
 endef
 
 define Package/$(PKG_NAME)-serial-dell
@@ -196,6 +203,11 @@ define Package/$(PKG_NAME)-serial-sierra/install
 	$(CP) ./root/usr/share/modeminfo/scripts/SIERRA* $(1)/usr/share/modeminfo/scripts
 endef
 
+define Package/$(PKG_NAME)-serial-styx/install
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/STYX* $(1)/usr/share/modeminfo/scripts
+endef
+
 define Package/$(PKG_NAME)-serial-dell/install
 	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
 	$(CP) ./root/usr/share/modeminfo/scripts/DELL* $(1)/usr/share/modeminfo/scripts
@@ -240,6 +252,7 @@ $(eval $(call BuildPackage,$(PKG_NAME)-serial-telit))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-xmm))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-mikrotik))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-sierra))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-styx))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-dell))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-gosun))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-tw))
