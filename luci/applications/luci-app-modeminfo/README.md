@@ -9,6 +9,8 @@ Supported devices:
  - Quectel EC200T/EC21/EC25/EP06/EM12/EM160R-GL
 
  - SimCom SIM7600E-H/SIM7906
+   
+ - STYX MG8224
 
  - Huawei E3372 (LTE)/ME909
 
