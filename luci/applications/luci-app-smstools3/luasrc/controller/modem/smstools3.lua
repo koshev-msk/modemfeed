@@ -6,7 +6,7 @@ local utl = require "luci.util"
 
 function index()
 	entry({"admin", "modem"},  firstchild(), "Modem", 45).acl_depends={"unauthenticated"}
-	entry({"admin", "modem", "sms"}, alias ("admin", "modem", "sms", "in_sms"), translate("Smstools3 SMS"), 11).acl_depends={"unauthenticated"}
+	entry({"admin", "modem", "sms"}, alias ("admin", "modem", "sms", "in_sms"), translate("Smstools3 SMS"), 21).acl_depends={"unauthenticated"}
 	entry({"admin", "modem", "sms", "in_sms"}, template("modem/sms/in"), translate("Incoming"), 22).acl_depends={"unauthenticated"}
 	entry({"admin", "modem", "sms", "out_sms"}, template("modem/sms/out"), translate("Outcoming"),23).acl_depends={"unauthenticated"}
 	entry({"admin", "modem", "sms", "send_sms"}, template("modem/sms/send"), translate("Push"), 24).acl_depends={"unauthenticated"}
