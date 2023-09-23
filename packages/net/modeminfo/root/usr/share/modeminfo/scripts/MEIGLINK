@@ -26,6 +26,34 @@ function modem_data(){
 			RSRQ=$(echo "$O" |awk -F "[\, ]" '/\^CELLINFO:/ {print $17}')
 			BWUL=$(echo "$O" |awk -F[,\ ] '/^\^CELLINFO:/ {print $14}')
 			BWDL=$(echo "$O" |awk -F[,\ ] '/^\^CELLINFO:/ {print $13}')
+
+			LTE_CA=$(echo "$O" | awk '/^\^CELLINFO: “PCC”/ {print $0}' | wc -l)
+			if [ $LTE_CA -gt 0 ]; then
+				CA=$(echo "$O" | awk '/^\^CELLINFO: “PCC”/ {print $6}')
+				BWC=$(echo "$O" | awk '/^\^CELLINFO: “SCC”/ {print $8}')
+				for cc in $CA; do
+					SC=$cc
+					SCC="$SCC+$SC"
+				done
+				case $BWDL in
+					1) BWCP=3 ;;
+					2) BWCP=5 ;;
+					3) BWCP=10 ;;
+					4) BWCP=15 ;;
+					5) BWCP=20 ;;
+				esac
+				for BW in $BWC; do
+					case $BW in
+						15) BWCC=3 ;;
+						25) BWCC=5 ;;
+						50) BWCC=10 ;;
+						75) BWCC=15 ;;
+						100) BWCC=20 ;;
+					esac
+					BWCA="$BWCA+$BWCC"
+				done
+				BWCA=$(($BWCP$BWCA))
+			fi
 		elif [ "$MODE" = "WCDMA" ]; then
 			EARFCN=$(echo "$O" |awk -F "[\, ]" '/\^CELLINFO:/ {print $11}')
 			CID=$(echo "$O" |awk -F "[\, ]" '/\+CGREG:/ {print $5}' | sed 's/"//g')
