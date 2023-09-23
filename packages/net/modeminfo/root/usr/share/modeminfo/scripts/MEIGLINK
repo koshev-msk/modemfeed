@@ -1,0 +1,13 @@
+# Meiglink modems
+function modem_data(){
+	generic_data
+	# hwinfo
+	MANUF=$(echo "$O" | grep -i ${FAMILY:0:4} | awk -F': ' '{print $2}')
+	MODEL=$(echo "$O" | grep -A1 -i ${FAMILY:0:4} | tail -1 | awk -F': ' '{print $2}')
+	DEVICE="$MANUF $MODEL"
+	FW=$(echo "$O" | grep -A2 -i ${FAMILY:0:4} | tail -1 | awk -F': ' '{print $2}')
+	ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
+	IMSI=$(echo "$O" | grep -A1 -i $FW | tail -1)
+	IMEI=$(echo "$O" | grep -A1 -i $ICCID | tail -1)
+	CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+TEMP: \"cpuss-usr\"/ {gsub("\"","");print $3}')
+}
