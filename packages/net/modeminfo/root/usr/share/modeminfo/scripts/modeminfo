@@ -42,6 +42,8 @@ function modem_family() {
 			FAMILY=DELL
 		elif (echo ${F} | grep -i sty >/dev/null); then
 			FAMILY=STYX
+		elif (echo ${F} | grep -i mei >/dev/null); then
+			FAMILY=MEIGLINK
 		elif (echo ${F} | grep -i mik >/dev/null); then
 			FAMILY=MIKROTIK
 		elif (echo ${F} | grep -i xmm >/dev/null); then
