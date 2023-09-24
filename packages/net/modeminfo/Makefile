@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.3.7
+PKG_VERSION:=0.3.8
 PKG_RELEASE:=0
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
@@ -77,6 +77,13 @@ define Package/$(PKG_NAME)-serial-styx
   SUBMENU:=Telephony
   DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
   TITLE:= STYX MG8224 serial addon for modeminfo
+endef
+
+define Package/$(PKG_NAME)-serial-meig
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
+  TITLE:= MEIGLink SLM750-R2, SLM820, SLM828 serial addom for modeminfo
 endef
 
 define Package/$(PKG_NAME)-serial-dell
@@ -208,6 +215,11 @@ define Package/$(PKG_NAME)-serial-styx/install
 	$(CP) ./root/usr/share/modeminfo/scripts/STYX* $(1)/usr/share/modeminfo/scripts
 endef
 
+define Package/$(PKG_NAME)-serial-meig/install
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/MEIGLINK* $(1)/usr/share/modeminfo/scripts
+endef
+
 define Package/$(PKG_NAME)-serial-dell/install
 	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
 	$(CP) ./root/usr/share/modeminfo/scripts/DELL* $(1)/usr/share/modeminfo/scripts
@@ -253,6 +265,7 @@ $(eval $(call BuildPackage,$(PKG_NAME)-serial-xmm))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-mikrotik))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-sierra))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-styx))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-meig))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-dell))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-gosun))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-tw))
