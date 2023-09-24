@@ -19,6 +19,8 @@ Supported devices:
  - HP LT4220
 
  - Dell DW5821e
+
+ - MEIGLink SLM750-R2/SLM820/SLM828
  
  - MikroTik R11e-LTE/R11e-LTE6
 
