@@ -14,7 +14,7 @@ function modem_data(){
 		if [ "$MODE" = "LTE" ]; then
 			EARFCN=$(echo "$O" |awk -F "[\, ]" '/\^CELLINFO:/ {print $13}')
 			RSRP=$(echo "$O" |awk -F "[\, ]" '/\^CELLINFO:/ {print $16}')
-			SINR=$(echo "$O" |awk -F "[\, ]" '/\^CELLINFO:/ {print $18/5-20}')
+			SINR=$(echo "$O" |awk -F "[\, ]" '/\^CELLINFO:/ {printf "%.0f\n", $18/5-20}')
 			PCI=$(echo "$O"  |awk -F "[\, ]" '/\^CELLINFO:/ {print $7}')
 			LAC=$(echo "$O"  |awk -F "[\, ]" '/\^CELLINFO:/ {print $10}')
 
