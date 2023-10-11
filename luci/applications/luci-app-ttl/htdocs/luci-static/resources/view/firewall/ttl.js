@@ -76,7 +76,7 @@ return view.extend({
 		o.value('proxy', 'Proxy');
 
 		o = s.option(form.Flag, 'advanced', _('Advanced Option'));
-		o.default = '1';
+		o.default = '0';
 		o.rmempty = false;
 
 		o = s.option(form.ListValue, 'inet', _('Inet Family'));
