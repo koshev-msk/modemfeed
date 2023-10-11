@@ -40,7 +40,7 @@ msgstr "Значение TTL"
 msgid "Select TTL value. Range 1 - 255"
 msgstr "Выбор значения TTL. От 1 до 255"
 
-msgid "Incoming ports route to proxy-server<br />Custom ports range: 0-65535'"
+msgid "Incoming ports route to proxy-server<br />Custom ports range: 0-65535"
 msgstr "Порты для перенаправления на прокси-сервер<br />Диапазон 0-65535"
 
 msgid "ALL Ports"
