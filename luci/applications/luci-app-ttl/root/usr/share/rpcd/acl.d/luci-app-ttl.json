@@ -1,0 +1,24 @@
+{
+	"luci-app-ttl": {
+		"description": "Grant access to TTL configuration",
+		"read": {
+			"file": {
+				"/etc/confug/ttl": [ "read" ]
+			},
+			"ubus": {
+				"file": [ "read" ],
+				"luci": [ "getConntrackHelpers" ]
+			},
+			"uci": [ "firewall" ]
+		},
+		"write": {
+			"file": {
+				"/etc/config/ttl": [ "write" ]
+			},
+			"ubus": {
+				"file": [ "write" ]
+			},
+			"uci": [ "firewall" ]
+		}
+	}
+}
