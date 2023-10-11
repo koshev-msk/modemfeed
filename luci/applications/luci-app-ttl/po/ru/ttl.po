@@ -28,8 +28,11 @@ msgstr "Для метода TTL интерфейс - исходящий<br />Д�
 msgid "Inet Family"
 msgstr "Протокол IP"
 
+msgid "Advanced Option"
+msgstr "Дополнительно" 
+
 msgid "Both"
-msgstr "Все"
+msgstr "Оба"
 
 msgid "TTL Value"
 msgstr "Значение TTL"
