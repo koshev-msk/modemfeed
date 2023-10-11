@@ -34,6 +34,9 @@ msgstr "Дополнительно"
 msgid "Both"
 msgstr "Оба"
 
+msgid "Ports"
+msgstr "Порты"
+
 msgid "TTL Value"
 msgstr "Значение TTL"
 
