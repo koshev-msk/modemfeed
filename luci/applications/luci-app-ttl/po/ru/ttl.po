@@ -22,7 +22,7 @@ msgstr "Выбор интерфейса"
 msgid "Method"
 msgstr "Способ"
 
-msgid "TTL method outgoing interface<br />Proxy method incoming interfcace"
+msgid "TTL method outgoing interface<br />Proxy method incoming interface"
 msgstr "Для метода TTL интерфейс - исходящий<br />Для метода прокси интерфейс - входящий"
 
 msgid "Inet Family"

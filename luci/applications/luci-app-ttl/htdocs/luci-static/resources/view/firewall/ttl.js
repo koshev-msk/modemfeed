@@ -71,7 +71,7 @@ return view.extend({
 		o.optional = true;
 
 		o = s.option(form.ListValue, 'method', _('Method'),
-			_('TTL method outgoing interface<br />Proxy method incoming interfcace'));
+			_('TTL method outgoing interface<br />Proxy method incoming interface'));
 		o.value('ttl', 'TTL');
 		o.value('proxy', 'Proxy');
 
