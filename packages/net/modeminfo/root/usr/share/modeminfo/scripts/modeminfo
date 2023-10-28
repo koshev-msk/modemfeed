@@ -34,36 +34,38 @@ function get_port() {
 function modem_family() {
 	if [ ! -f /tmp/modemdevice ]; then
 		F=$(atinout $RES/scripts/family.at $DEVPORT -)
-		if (echo ${F} | grep -i que >/dev/null); then
+		if (echo "${F}" | grep -i que >/dev/null); then
 			FAMILY=QUECTEL
-		elif (echo ${F} | grep -i sie >/dev/null); then
+		elif (echo "${F}" | grep -i sie >/dev/null); then
 			FAMILY=SIERRA
-		elif (echo ${F} | grep -i dell >/dev/null); then
+		elif (echo "${F}" | grep -i dell >/dev/null); then
 			FAMILY=DELL
-		elif (echo ${F} | grep -i sty >/dev/null); then
+		elif (echo "${F}" | grep -i sty >/dev/null); then
 			FAMILY=STYX
-		elif (echo ${F} | grep -i meig >/dev/null); then
+		elif (echo "${F}" | grep -i meig >/dev/null); then
 			FAMILY=MEIGLINK
-		elif (echo ${F} | grep -i mik >/dev/null); then
+		elif (echo "${F}" | grep -i mik >/dev/null); then
 			FAMILY=MIKROTIK
-		elif (echo ${F} | grep -i xmm >/dev/null); then
+		elif (echo "${F}" | grep -i xmm >/dev/null); then
 			FAMILY=INTEL
-		elif (echo ${F} | grep -i sim >/dev/null); then
+		elif (echo "${F}" | grep -i sim >/dev/null); then
 			FAMILY=SIMCOM
-		elif (echo ${F} | grep -i fib >/dev/null); then
+		elif (echo "${F}" | grep -i fib >/dev/null); then
 			FAMILY=FIBOCOM
-		elif (echo ${F} | grep -i qua >/dev/null); then
+		elif (echo "${F}" | grep -i qua >/dev/null); then
 			FAMILY=QUALCOMM
-		elif (echo ${F} | grep -i hua >/dev/null); then
+		elif (echo "${F}" | grep -i hua >/dev/null); then
 			FAMILY=HUAWEI
-		elif (echo ${F} | grep -i gos >/dev/null); then
+		elif (echo "${F}" | grep -i gos >/dev/null); then
 			FAMILY=GOSUN
-		elif (echo ${F} | grep -i tw >/dev/null); then
+		elif (echo "${F}" | grep -i tw >/dev/null); then
 			FAMILY=THINKWILL
-		elif (echo ${F} | grep -i yug >/dev/null); then
+		elif (echo "${F}" | grep -i yug >/dev/null); then
 			FAMILY=YUGE
-		elif (echo ${F} | grep -i zte >/dev/null); then
+		elif (echo "${F}" | grep -i zte >/dev/null); then
 			FAMILY=ZTE
+		elif (echo "${F}" | grep -i '^incorp' >/dev/null); then
+			FAMILY=A7XXX
 		else
 			FAMILY=GENERIC
 		fi

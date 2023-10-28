@@ -8,7 +8,7 @@ Supported devices:
 
  - Quectel EC200T/EC21/EC25/EP06/EM12/EM160R-GL
 
- - SimCom SIM7600E-H/SIM7906
+ - SimCom SIM7600E-H/SIM7906/A7600/A7906-M2
    
  - STYX MG8224
 
@@ -46,7 +46,8 @@ Supported devices:
 |modeminfo-serial-telit |Telit LN940 (HP LT4220) modem support |
 |modeminfo-serial-huawei |Huawei ME909/E3372(stick mode, LTE only) modems support|
 |modeminfo-serial-sierra |Sierra EM7455 modem support |
-|modeminfo-serial-simcom |SimCOM modems support |
+|modeminfo-serial-simcom |SimCOM Quaclomm chip modems support |
+|modeminfo-serial-simcom-a7xxx |SimCOM ASR chip modems support |
 |modeminfo-serial-dell |Dell DW5821e modem support |
 |modeminfo-serial-fibocom |Fibocom LN668/NL678 modems support |
 |modeminfo-serial-xmm |Fibocom L850/L860 modems support |
@@ -54,7 +55,9 @@ Supported devices:
 |modeminfo-serial-gosun |Gosuncnwelink GM510 support |
 |modeminfo-serial-tw |ThinkWill ML7820+ support |
 |modeminfo-serial-yuge |Yuge CLM920 support |
+|modeminfo-serial-meig |MEIGLink SLM750-R2/SLM820/SLM828 support |
 |modeminfo-serial-zte |ZTE MF823/MF823D support |
+|modeminfo-serial-styx |STYX MG8224 support |
 </details>
 
 <details>

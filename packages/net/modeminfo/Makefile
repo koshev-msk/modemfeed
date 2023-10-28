@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.3.8
-PKG_RELEASE:=3
+PKG_VERSION:=0.3.9
+PKG_RELEASE:=0
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -16,11 +16,18 @@ define Package/$(PKG_NAME)
   TITLE:=Signal information for 3G/LTE dongle
 endef
 
+define Package/$(PKG_NAME)-serial-simcom-a7xxx
+  PKGARCH:=all
+  SUBMENU:=Telephony
+  DEPENDS:=+modeminfo +kmod-usb-serial-option +kmod-usb-acm +atinout
+  TITLE:=SIMCOM A7600/A7906 serial addon for modeminfo
+endef
+
 define Package/$(PKG_NAME)-serial-simcom
   PKGARCH:=all
   SUBMENU:=Telephony
   DEPENDS:=+modeminfo +kmod-usb-serial-option +atinout
-  TITLE:=SIMCOM serial addon for modeminfo
+  TITLE:=SIMCOM SIM7600/SIM7906/SIM7912 serial addon for modeminfo
 endef
 
 define Package/$(PKG_NAME)-serial-huawei
@@ -170,6 +177,11 @@ define Package/$(PKG_NAME)/install
 	$(CP) ./root/etc/config/* $(1)/etc/config
 endef
 
+define Package/$(PKG_NAME)-serial-simcom-a7xxx/install
+	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
+	$(CP) ./root/usr/share/modeminfo/scripts/A7XXX* $(1)/usr/share/modeminfo/scripts
+endef
+
 define Package/$(PKG_NAME)-serial-simcom/install
 	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
 	$(CP) ./root/usr/share/modeminfo/scripts/SIMCOM* $(1)/usr/share/modeminfo/scripts
@@ -256,6 +268,7 @@ define Package/$(PKG_NAME)-telegram/install
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,$(PKG_NAME)-serial-simcom-a7xxx))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-simcom))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-huawei))
 $(eval $(call BuildPackage,$(PKG_NAME)-serial-quectel))
