@@ -31,8 +31,6 @@ method_ttl(){
 				SUFFIX="HL --hl-set"
 				if [ $iface ]; then
 					$T -t mangle -A PREROUTING -i $DEV -m hl --hl 1 -j HL --hl-inc $TTL_INC
-					$T -t mangle -A OUTPUT -o $DEV -j $SUFFIX $ttl
-					$T -t mangle -A POSTROUTING -o $DEV -j $SUFFIX $ttl
 				else
 					$T -t mangle -A PREROUTING -m hl --hl 1 -j HL --hl-inc $TTL_INC
 				fi
