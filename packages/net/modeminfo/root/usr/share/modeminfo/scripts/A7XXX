@@ -1,16 +1,16 @@
 function modem_data(){
 	generic_data
 	DATA=$(echo "$O" | grep -Ev '^$|^OK|^AT' | sort)
-	MANUF=$(echo "$DATA" | awk 'c&&! --c;/ZRSSI/{c=3}')
-	MODEL=$(echo "$DATA" | awk 'c&&! --c;/ZRSSI/{c=4}')
+	MANUF=$(echo "$DATA" | awk 'c&&! --c;/ZRSSI/{c=4}')
+	MODEL=$(echo "$DATA" | awk 'c&&! --c;/ZRSSI/{c=3}')
 	FW=$(echo "$DATA" | awk '/CGMR/{print $2}')
-	DEVICE="$MANUF $MODEL"
+	DEVICE="$MODEL"
 	TECH=$(echo "$DATA" | awk -F [,] '/\+COPS/{print $NF}')
 	ICCID=$(echo "$DATA" | awk '/ICCID:/{print $2}')
 	IMSI=$(echo "$DATA" | awk 'c&&! --c;/ZRSSI/{c=1}')
 	IMEI=$(echo "$DATA" | awk 'c&&! --c;/ZRSSI/{c=2}')
 	REGST=$(echo "$DATA" | awk -F[,] '/\'$CREG'/ {print $2}')
-	CHIPTEMP=$(echo "$DATA" | awk -F [,] '/\*RFTEMP/{printf "%.0f\n", ($2/10)}')
+	CHIPTEMP=$(echo "$DATA" | awk '/\+CPMUTEMP/{printf "%.0f\n", ($2/1000)}')
 	EARFCN=$(echo "$DATA" | awk -F[,\ ] '/^\+CPSI/ {print $9}')
 
 	case $TECH in
