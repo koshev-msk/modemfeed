@@ -54,7 +54,7 @@ return view.extend({
 	render: function() {
 		var m, s, o;
 
-		m = new form.Map('ttl', _('Antitetheting Config'),
+		m = new form.Map('ttl', _('Antitethering Config'),
 			briefInfo);
 
 		s = m.section(form.TypedSection, 'fw');
