@@ -10,7 +10,7 @@ msgstr "Требуется перезапуск сетевого экрана. <
 msgid "Restart Firewall" 
 msgstr "Перезапуск сетевого экрана"
 
-msgid "Antitetheting Config"
+msgid "Antitethering Config"
 msgstr "Настройки антитетеринга"
 
 msgid "TTL or Proxy antitether"
