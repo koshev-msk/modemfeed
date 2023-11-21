@@ -42,29 +42,34 @@ UCI_conf=$(uci show openvpn | awk -F [=] '/config/{gsub("'\''", "");print $2}')
 for cfg in $UCI_conf; do
 	if [ $config = $cfg ]; then
 		CFGIFACE=$(uci show network | awk -F [.] -v device=$dev '$0 ~ device {print $2}')
+		PROTO=$(ifstatus $CFGIFACE | jsonfilter -e '@["proto"]')
 		get_ns
 	fi
 done
 
-
-# Check peerdns option in uci interface section
-PEERDNS=$(uci -q get network.$CFGIFACE.peerdns)
-if [ "x$PEERDNS" != "x" -a $PEERDNS -eq 0 ]; then
-	unset_ns
-	exit 0
-fi
-
 # Hotplug action
-case $ACTION in
-	up)
-		unset_ns
-		set_ns
-		reload_config
-		logger -t "`basename $0`" "OpenVPN: adding NS attributes from $INSTANCE" 
-	;;
-	down)
-		unset_ns
-		reload_config
-		logger -t "`basename $0`" "OpenVPN: remove NS attributes from $INSTANCE"
+case $PROTO in 
+	none)
+		# Check peerdns option in uci interface section
+		PEERDNS=$(uci -q get network.$CFGIFACE.peerdns)
+		if [ "x$PEERDNS" != "x" -a $PEERDNS -eq 0 ]; then
+			unset_ns
+			exit 0
+		fi
+		case $ACTION in
+			up)
+				if  [ "$DNS" ]; then
+					unset_ns
+					set_ns
+					reload_config
+					logger -t "`basename $0`" "OpenVPN: adding DNS: $DNS from $INSTANCE" 
+				fi
+			;;
+			down)
+				unset_ns
+				reload_config
+				logger -t "`basename $0`" "OpenVPN: remove NS attributes from $INSTANCE"
+			;;
+		esac
 	;;
 esac
