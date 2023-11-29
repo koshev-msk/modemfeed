@@ -1,10 +1,21 @@
 {
 	"luci-app-modeminfo": {
-		"description": "Grant UCI access for luci-app-modeminfo",
+		"description": "Grant access to modeminfo configuration",
 		"read": {
+			"ubus": {
+				"file": [ "read" ],
+				"luci": [ "getConntrackHelpers" ]
+			},
+			"file": {
+				"/usr/bin/modeminfo": [ "exec" ]
+			},
 			"uci": [ "modeminfo" ]
 		},
 		"write": {
+			"ubus": {
+				"file": [ "write" ]
+			},
+		
 			"uci": [ "modeminfo" ]
 		}
 	}

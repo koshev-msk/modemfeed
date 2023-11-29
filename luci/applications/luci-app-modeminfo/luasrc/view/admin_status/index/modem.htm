@@ -1,4 +1,0 @@
-<%uci = require "luci.model.uci".cursor()%>
-<%if uci:get_first("modeminfo", "modeminfo", "index") then%>
-<%+modem/modemview%>
-<%end%>
