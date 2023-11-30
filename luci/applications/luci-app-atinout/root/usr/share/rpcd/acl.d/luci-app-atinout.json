@@ -1,7 +1,14 @@
 {
 	"luci-app-atinout": {
-		"description": "Grant UCI and file access for luci-app-atinout-mod",
+		"description": "Grant access to atcommands executables",
 		"read": {
+   			"cgi-io": [ "exec" ],
+    			"file": {
+				"/bin/echo": [ "exec" ],
+				"/usr/bin/atinout": [ "exec" ],
+				"/usr/bin/luci-app-atinout": [ "exec" ],
+				"/etc/atcommands.user": [ "read" ]
+			},
 			"uci": [ "atinout" ]
 		},
 		"write": {
@@ -12,9 +19,3 @@
 		}
 	}
 }
-
-
-
-
-
-			

@@ -1,8 +1,3 @@
 #!/bin/sh
 
-ARGS=$1
-DEVPORT=$(uci -q get atinout.general.atcport)
-
-if [ "$DEVPORT" ]; then 
-	echo "${ARGS}" | /usr/bin/atinout - ${DEVPORT} -
-fi
+echo $1 | atinout - $2 -

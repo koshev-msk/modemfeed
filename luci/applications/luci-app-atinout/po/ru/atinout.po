@@ -1,50 +1,53 @@
-﻿msgid ""
+msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
-
-"Language: ru\n"
-"Last-Translator: Konstantine Shevlakov <shevlakov@132lan.ru\n"
 
 msgid "AT Commands"
 msgstr "Команды AT"
 
-msgid "AT Commands Terminal"
-msgstr "Консоль команд AT"
-
 msgid "Configuration"
-msgstr "Настройкии"
+msgstr "Настройки"
 
-msgid "Web UI for sending AT Commands."
-msgstr "Веб-интерфейс для отправки АТ-команд"
+msgid "Please specify the AT command to send"
+msgstr "Выберите команду AT для отправки"
 
-msgid "User AT Commands"
-msgstr "Пользовательские команды"
+msgid "Please set the port for communication with the modem"
+msgstr "Выберите порт модема."
+
+msgid "User AT commands"
+msgstr "Пользовательские команды AT"
 
 msgid "Command to send"
-msgstr "Команда"
+msgstr "Команда к отправке"
 
-msgid "Reply"
-msgstr "Ответ"
+msgid "Clear form"
+msgstr "Очистить"
 
-msgid "Send Command"
+msgid "Send command"
 msgstr "Отправить"
 
-msgid "Sending commands to modem"
-msgstr "Комады для модема"
+msgid "Reply"
+msgstr "Ответ" 
 
-msgid "Please enter a AT Command"
-msgstr "Введите команду"
+msgid "User interface for handling AT commands using atinout."
+msgstr "Интерфейс для отсылки команд AT с использованием atinout."
 
-msgid "Atinout Configuration"
-msgstr "Конфигурация терминала"
-
-msgid "AT Commands Terminal Settings"
-msgstr "Пользовательские команды терминала"
-
-msgid "AT Command Sending Port"
-msgstr "Порт подключения"
+msgid "Configuration atinout"
+msgstr "Настройки atinout"
 
 msgid "Configuration panel for atinout."
-msgstr "Панель настроек."
+msgstr "Панель конфигурации atinout"
 
-msgid "Each line must have the following format: 'AT Command name;AT Command'. Save to file '/etc/atcommands.user'."
-msgstr "Формат записи: \"Описание команды;Команда AT\". Файл со списоком пользовательских команд '/etc/atcommands.user'."
+msgid "Port for communication with the modem"
+msgstr "AT порт модема"
+
+msgid "Select serial modem port."
+msgstr "Выберите последовательный порт."
+
+msgid "Please select a port"
+msgstr "Выберите порт"
+
+msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location '/etc/atcommands.user'."
+msgstr "Формат записи команд: 'Описание команды;Команда AT'. Содержаться в файле '/etc.atcommands.user'"
+
+msgid "Press [Enter] to send the command, press [Delete] to delete the command."
+msgstr "Нажмите [Enter] для отправки или [Delete] для удаления."

@@ -1,14 +1,23 @@
+#
+# Copyright 2022-2023 Rafał Wabik - IceG - From eko.one.pl forum
+#
+# Licensed to the GNU General Public License v3.0.
+#
+
 include $(TOPDIR)/rules.mk
-	
-LUCI_TITLE:=Web UI for atinout
-LUCI_DEPENDS:=+atinout +luci-compat
-PKG_LICENSE:=GPLv3
-PKG_VERSION:=0.0.4
-	
-define Package/luci-app-atinout/postrm
-	rm -rf /etc/config/atinout
+
+PKG_NAME:=luci-app-atinout
+LUCI_TITLE:=LuCI JS Support for AT commands
+MAINTAINER:=Rafał Wabik <4Rafal@gmail.com>
+LUCI_DESCRIPTION:=LuCI JS interface for the atinout.
+LUCI_DEPENDS:=+atinout
+LUCI_PKGARCH:=all
+PKG_VERSION:=0.1.0-0
+
+define Package/$(PKG_NAME)/conffiles
+/etc/atcommands.user
 endef
-	
+
 include $(TOPDIR)/feeds/luci/luci.mk
-	
+
 # call BuildPackage - OpenWrt buildroot signature

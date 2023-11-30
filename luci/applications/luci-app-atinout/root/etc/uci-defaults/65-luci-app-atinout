@@ -9,3 +9,4 @@ if [ ! -f /etc/atcommands.user  ]; then
 	echo "Demo command \"ATI\";ATI" > /etc/atcommands.user
 fi
 
+rm -rf /tmp/luci-*
