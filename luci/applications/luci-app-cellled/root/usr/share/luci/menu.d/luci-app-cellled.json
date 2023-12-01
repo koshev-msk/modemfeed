@@ -1,0 +1,34 @@
+{
+        "admin/modem": {
+                "title": "Modem",
+		"order": 45,
+                "action": {
+                        "type": "firstchild",
+                        "rescue": "true"
+                }
+         
+        },
+
+	"admin/modem/cellled": {
+		"title": "CellLED",
+		"order": "61",
+		"action": {
+			"type": "alias",
+			"path": "admin/modem/cellled/config"
+		},
+		"depends": {
+			"acl": "luci-app-cellled",
+			"uci": { "cellled": true }
+		}
+	},
+
+	"admin/modem/cellled/config": {
+		"title": "Configuration",
+		"order": 61,
+		"action": {
+			"type": "view",
+			"path": "modem/cellled"
+		}
+	}
+}
+

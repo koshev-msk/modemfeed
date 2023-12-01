@@ -1,0 +1,11 @@
+{
+	"luci-app-cellled": {
+		"description": "Grant UCI access for luci-app-cellled",
+		"read": {
+			"uci": [ "cellled" ]
+		},
+		"write": {
+			"uci": [ "cellled" ]
+		}
+	}
+}
