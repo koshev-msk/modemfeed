@@ -2,10 +2,16 @@
 	"luci-app-3proxy": {
 		"description": "Grant UCI access for luci-app-3proxy",
 		"read": {
-			"uci": [ "telegrambot" ]
+			"file": {
+				"/etc/3proxy.cfg": [ "read" ]
+			},
+			"uci": [ "3proxy" ]
 		},
 		"write": {
-			"uci": [ "telegrambot" ]
+			"file": {
+				"/etc/3proxy.cfg": [ "write" ]
+			},
+			"uci": [ "3proxy" ]
 		}
 	}
 }

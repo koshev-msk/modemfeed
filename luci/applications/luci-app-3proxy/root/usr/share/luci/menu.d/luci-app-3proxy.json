@@ -1,0 +1,13 @@
+{
+    "admin/services/3proxy": {
+		"title": "3proxy",
+		"action": {
+			"type": "view",
+			"path": "proxy/3proxy"
+		},
+		"depends": {
+			"acl": "luci-app-3proxy",
+			"uci": { "3proxy": true }
+		}
+	}
+}
