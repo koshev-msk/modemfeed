@@ -39,6 +39,9 @@ msgstr "Мин.значение %"
 msgid "Max.value %"
 msgstr "Макс.значение %"
 
+msgid "Quality"
+msgstr "Качество"
+
 msgid "Poor"
 msgstr "Ничтожное"
 
@@ -46,8 +49,8 @@ msgid "Bad"
 msgstr "Плохое"
 
 msgid "Fair"
-msgstr "Средний"
+msgstr "Среднее"
 
 msgid "Good"
-msgstr "Хороший"
+msgstr "Хорошее"
 
