@@ -28,7 +28,7 @@ msgstr "Отправить"
 msgid "Reply"
 msgstr "Ответ" 
 
-msgid "User interface for handling AT commands using atinout."
+msgid "User interface for handling AT commands using atinout utility."
 msgstr "Интерфейс для отсылки команд AT с использованием atinout."
 
 msgid "Configuration atinout"
@@ -46,8 +46,8 @@ msgstr "Выберите последовательный порт."
 msgid "Please select a port"
 msgstr "Выберите порт"
 
-msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location '/etc/atcommands.user'."
-msgstr "Формат записи команд: 'Описание команды;Команда AT'. Содержаться в файле '/etc.atcommands.user'"
+msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location <code>/etc/atcommands.user</code>."
+msgstr "Формат записи команд: 'Описание команды;Команда AT'. Содержаться в файле <code>/etc.atcommands.user</code>."
 
-msgid "Press [Enter] to send the command, press [Delete] to delete the command."
-msgstr "Нажмите [Enter] для отправки или [Delete] для удаления."
+msgid "Press [Enter] to send the command, press [Delete] to delete the command"
+msgstr "Нажмите [Enter] для отправки или [Delete] для удаления"

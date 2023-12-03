@@ -12,7 +12,7 @@ msgstr "Телеграм бот для ротеров на прошивке Lede
 msgid "Enable"
 msgstr "Включить"
 
-msgid "Enable bot"
+msgid "Enable Bot"
 msgstr "Включить бота"
 
 msgid "Bot Token"
