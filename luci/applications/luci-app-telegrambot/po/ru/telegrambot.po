@@ -13,7 +13,7 @@ msgid "Enable"
 msgstr "Включить"
 
 msgid "Enable bot"
-msgstr "Вклюить бота"
+msgstr "Включить бота"
 
 msgid "Bot Token"
 msgstr "Токен бота"
