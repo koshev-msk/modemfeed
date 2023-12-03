@@ -7,13 +7,18 @@
 				"luci": [ "getConntrackHelpers" ]
 			},
 			"file": {
-				"/usr/bin/modeminfo": [ "exec" ]
+				"/usr/bin/modeminfo": [ "exec" ],
+				"/bin/rm": [ "exec" ]
 			},
 			"uci": [ "modeminfo" ]
 		},
 		"write": {
 			"ubus": {
 				"file": [ "write" ]
+			},
+
+			"file": {
+				"/tmp/modemdevice": [ "write" ]
 			},
 		
 			"uci": [ "modeminfo" ]
