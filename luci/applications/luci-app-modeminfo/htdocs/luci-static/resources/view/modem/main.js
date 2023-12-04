@@ -74,7 +74,7 @@ return view.extend({
 	render: function(data){
 		var m, s, o;
 		L.resolveDefault(fs.exec_direct('/bin/rm', ['-rf', '/tmp/modemdevice']));
-		m = new form.JSONMap(this.formdata, _('Modeminfo: Network'), _('Celluar network'));
+		m = new form.JSONMap(this.formdata, _('Modeminfo: Network'), _('Cellular network'));
 		s= m.section(form.TypedSection, '', '', null);
 		s.anonymous = true;
 		if (data != null) {

@@ -80,7 +80,7 @@ msgid "Please select a port"
 msgstr "Пожалуйста выберите порт"
 
 msgid "Modeminfo: Configuration"
-msgstr "Modeminfo: Конфигурация"
+msgstr "Модеминфо: Конфигурация"
 
 msgid "Configuration panel of Modeminfo."
 msgstr "Страница конфигурации Modeminfo."
