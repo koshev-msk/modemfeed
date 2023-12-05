@@ -10,7 +10,7 @@
 'require tools.firewall as fwtool';
 'require tools.widgets as widgets';
 
-var briefInfo = _('Firewall restart required. <br>In Method proxy Proxy server must be configured in transparent mode on port 3128 tcp.<br>Disable masquerade recommened.');
+var briefInfo = _('Firewall restart required. <br />In Method proxy Proxy server must be configured in transparent mode on port 3128 tcp.<br />Disable masquerade recommened.');
 
 var rebootButton = E('button', {
         'class': 'btn cbi-button cbi-button-neutral',
