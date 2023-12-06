@@ -85,7 +85,7 @@ return view.extend({
 								if (json.chiptemp == '--') {
 									view.style.display = "none";
 								} else {
-									view.innerHTML = String.format(json.chiptemp+' &deg;C');
+									view.innerHTML = String.format(json.chiptemp+' °C');
 								}
 							}
 						});
