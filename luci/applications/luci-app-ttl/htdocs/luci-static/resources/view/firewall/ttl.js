@@ -12,6 +12,7 @@
 
 var briefInfo = _('Firewall restart required. <br />In Method proxy Proxy server must be configured in transparent mode on port 3128 tcp.<br />Disable masquerade recommened.');
 
+
 var rebootButton = E('button', {
         'class': 'btn cbi-button cbi-button-neutral',
         'click': ui.createHandlerFn(this, function() {
@@ -21,12 +22,12 @@ var rebootButton = E('button', {
 
 var FWrestart = form.DummyValue.extend({
         load: function() {
-       	        var setupButton = E('button', {
+       	        var rebootButton = E('button', {
                	                'class': 'cbi-button cbi-button-neutral',
                                 'click': ui.createHandlerFn(this, function() {
-       	                                                return handleAction('reload');
+       	                                                return handleAction();
                	                                }),
-                        }, _('Restart Firewall'));
+                        }, _('Restart'));
        	        return L.resolveDefault(fs.exec_direct('/etc/init.d/firewall'), ['restart']).then(L.bind(function(html) {
                	        this.default = E([
                        	        E('div', { 'class': 'cbi-value' }, [
@@ -45,19 +46,22 @@ var FWrestart = form.DummyValue.extend({
 });
 
 function handleAction(ev) {
-	if (ev === 'fwrestart') {
-		fs.exec('/etc/init.d/firewall', ['restart']);
-	}
+	return fs.exec_direct('/etc/init.d/firewall', [ 'restart' ])
+		 .catch(function(err) { ui.addNotification(null, E('p', {}, _('Unable to restart firewall: %s').format(err.message))) });
 }
 
+
+
+
 return view.extend({
+	
 	render: function() {
 		var m, s, o;
 
 		m = new form.Map('ttl', _('Antitethering Config'),
 			briefInfo);
 
-		s = m.section(form.TypedSection, 'fw');
+		s = m.section(form.TypedSection, 'ttl');
 		s.anonymous = true;
 		o = s.option(FWrestart);
 
