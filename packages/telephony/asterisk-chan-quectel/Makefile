@@ -52,7 +52,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--with-asterisk=$(STAGING_DIR)/usr/include \
-		--with-astversion=18 \
+		--with-astversion=20 \
 		--with-iconv=$(ICONV_PREFIX)/include
 
 TARGET_CFLAGS+= \
