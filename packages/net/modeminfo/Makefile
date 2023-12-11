@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
 PKG_VERSION:=0.3.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -97,6 +97,7 @@ $(eval $(call SerialPlugin,fibocom,+kmod-usb-serial-option,FIBOCOM NL668/678,FIB
 $(eval $(call SerialPlugin,telit,+kmod-usb-serial-option,TELIT LN940/T77W678/HP4220,QUALCOMM))
 $(eval $(call SerialPlugin,xmm,+kmod-usb-acm,FIBOCOM L850/L860 Intel XMM chips,INTEL))
 $(eval $(call SerialPlugin,mikrotik,+kmod-usb-acm,MikroTik R11e-LTE/R11e-LTE6,MIKROTIK))
+$(eval $(call SerialPlugin,meig,+kmod-usb-option,MEIGLink SLM750-R2/SLM820/SLM828,MEIGLINK))
 $(eval $(call SerialPlugin,sierra,+kmod-usb-serial-qualcomm,Sierra Wireless EM7455,SIERRA))
 $(eval $(call SerialPlugin,styx,+kmod-usb-serial-option,STYX MG8224,STYX))
 $(eval $(call SerialPlugin,dell,+kmod-usb-serial-option,Dell DW5821e,DELL))
