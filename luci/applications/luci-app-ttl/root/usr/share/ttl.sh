@@ -100,6 +100,9 @@ for s in $SECTIONS; do
 		ipv6) IPT="ip6tables" ;;
 		*) IPT="iptables ip6tables";;
 	esac
+	if ! [ -f /lib/modules/$(uname -r)/ip6table_nat.ko ]; then
+		IPT="iptables"
+	fi
 	DEV=$(ifstatus $iface | jsonfilter -e '@["l3_device"]')
 	case $method in
 		ttl) method_ttl ;;
