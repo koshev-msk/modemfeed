@@ -1,0 +1,38 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: applications/luci-app-mmconfig/luasrc/controller/modemconfig.lua:8
+msgid "Modem"
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/controller/modemconfig.lua:9
+msgid "Band config"
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:12
+msgid "Configure modem bands"
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:13
+msgid "Configuration 2G/3G/4G modem frequency bands."
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:13
+msgid "Choose bands cellular modem"
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:19
+msgid "Net Mode"
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:19
+msgid "Preffered Network mode select."
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:61
+msgid "Select modem"
+msgstr ""
+
+#: applications/luci-app-mmconfig/luasrc/model/cbi/modem/modemconfig.lua:72
+msgid "Maybe must reconnect cellular interface. <br /> If deselect all bands, then used default band modem config."
+msgstr ""

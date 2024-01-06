@@ -1,0 +1,123 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Modem"
+msgstr ""
+
+msgid "Modeminfo"
+msgstr ""
+
+msgid "Network"
+msgstr ""
+
+msgid "Hardware"
+msgstr ""
+
+msgid "Setup"
+msgstr ""
+
+msgid "Modeminfo: Network"
+msgstr ""
+
+msgid "No Registration"
+msgstr ""
+
+msgid "Registered"
+msgstr ""
+
+msgid "Searching"
+msgstr ""
+
+msgid "Denied"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Roaming"
+msgstr ""
+
+msgid "No Data"
+msgstr ""
+
+msgid "Network/Band/Bandwidth"
+msgstr ""
+
+msgid "Network/Band"
+msgstr ""
+
+msgid "Cellular network"
+msgstr ""
+
+msgid "Operator"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+
+msgid "Modeminfo: Hardware"
+msgstr ""
+
+msgid "Hardware and sim card info."
+msgstr ""
+
+msgid "Device"
+msgstr ""
+
+msgid "Firmware"
+msgstr ""
+
+msgid "Chiptemp"
+msgstr ""
+
+msgid "In automatic mode detect first answered DATA port."
+msgstr ""
+
+msgid "Please select a port"
+msgstr ""
+
+msgid "Modeminfo: Configuration"
+msgstr ""
+
+msgid "Configuration panel of Modeminfo."
+msgstr ""
+
+msgid "Use QMI"
+msgstr ""
+
+msgid "Get modem data via qmicli (experimental). Require install qmi-utils."
+msgstr ""
+
+msgid "Data port"
+msgstr ""
+
+msgid "Select serial port."
+msgstr ""
+
+msgid "Select qmi port."
+msgstr ""
+
+msgid "Show decimal"
+msgstr ""
+
+msgid "Show LAC and CID in decimal."
+msgstr ""
+
+msgid "Get device hardware name via mmcli utility if aviable."
+msgstr ""
+
+msgid "Name via mmcli"
+msgstr ""
+
+msgid "QMI proxy"
+msgstr ""
+
+msgid "Enable qmi-proxy mode."
+msgstr ""
+
+msgid "Index page"
+msgstr ""
+
+msgid "Short info on Overview page"
+msgstr ""
