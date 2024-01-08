@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\luci",
+    "\\luci\\applications",
+    "\\luci\\applications\\luci-app-atinout",
+    "\\luci\\applications\\luci-app-atinout\\po",
+    "\\luci\\applications\\luci-app-atinout\\po\\ru",
+    "\\luci\\applications\\luci-app-atinout\\po\\template",
+    "\\luci\\applications\\luci-app-atinout\\po\\zh_Hans",
+    "\\luci\\applications\\luci-app-smstools3",
+    "\\luci\\applications\\luci-app-smstools3\\po"
+  ],
+  "SelectedNode": "\\luci\\applications\\luci-app-atinout\\po\\ru\\atinout.po",
+  "PreviewInSolutionExplorer": false
+}
