@@ -10,7 +10,7 @@ if [ ! -f /etc/atcommands.user  ]; then
 	echo "ATI;ATI" >> /etc/atcommands.user
 	echo "EC20 Query IMEI;AT+EGMR=0,7" >> /etc/atcommands.user
 	echo "EC20 Change IMEI;AT+EGMR=1,7,\"865695069180140\"" >> /etc/atcommands.user
-	echo "SIM7X00 Query IMEI;AT+SIMEI?" > /etc/atcommands.user
+	echo "SIM7X00 Query IMEI;AT+SIMEI?" >> /etc/atcommands.user
 	echo "SIM7X00 Change IMEI;AT+SIMEI=866241026124456" >> /etc/atcommands.user
 fi
 
