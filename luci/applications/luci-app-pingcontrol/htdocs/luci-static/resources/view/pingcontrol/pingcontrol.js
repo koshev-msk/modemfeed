@@ -39,15 +39,9 @@ return view.extend({
 		o.textvalue = function(section_id) {
 			return uci.get('pingcontrol', section_id, 'iface');
 		}
-		
-		o = s.taboption('general',form.ListValue, 'ipv6', _('Inet family'));
-		o.value('', 'Auto');
-		o.value('0', 'IPv4');
-		o.value('1', 'IPv6');
-		default = '';
 
-		o = s.taboption('general',form.DynamicList, 'testip', _('Remote hosts or ip addresses'));
-		o.datatype = 'host';
+		o = s.taboption('general',form.DynamicList, 'testip', _('IP address or hostname of test servers'));
+		o.datatype = 'or(hostname,ipaddr("nomask"))';
 
 		o = s.taboption('general',form.Value, 'check_period', _('Period of check, sec'));
 		o.rmempty = false;
@@ -64,7 +58,7 @@ return view.extend({
 		o.datatype = 'and(uinteger,min(0),max(100))';
 		o.default = '0';
 
-		o = s.taboption('commands',form.Value, 'ping_ok', _('Ping ok'));
+		o = s.taboption('commands',form.Value, 'ping_ok', _('Successful ping'));
 		o.modalonly = true;
 
 		o = s.taboption('commands',form.Value, 'ping_lost', _('Ping lost'));

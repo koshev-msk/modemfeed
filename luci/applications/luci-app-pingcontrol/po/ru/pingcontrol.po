@@ -7,8 +7,8 @@ msgstr "Период проверки, сек"
 msgid "Ping interface"
 msgstr "Интерфейс для ping-запросов"
 
-msgid "Remote hosts or ip addresses"
-msgstr "Удалённые узлы или адреса"
+msgid "IP address or hostname of test servers"
+msgstr "IP-адрес или имя хоста тестовых серверов"
 
 msgid "Failed attempts before iface up/down"
 msgstr "Количество неудачных попыток до переподключения интерфейса"
@@ -22,8 +22,8 @@ msgstr "Имя конфигурации"
 msgid "Commands"
 msgstr "Команды"
 
-msgid "Ping ok"
-msgstr "Пинг в норме"
+msgid "Successful ping"
+msgstr "Пинг успешен"
 
 msgid "Ping lost"
 msgstr "Пинг потерян"

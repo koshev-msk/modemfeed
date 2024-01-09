@@ -2,13 +2,6 @@
 
 . /usr/share/libubox/jshn.sh
 
-if [ -e /var/run/pingcontrol.pid ] ; then
-	kill $(cat /var/run/pingcontrol.pid) &> /dev/null
-	rm /var/run/pingcontrol.pid &> /dev/null
-fi
-
-echo "$$" > /var/run/pingcontrol.pid
-
 INSTANCE=$1
 IFACE=$(uci -q get pingcontrol.$1.iface)
 CHECK_PERIOD=$(uci -q get pingcontrol.$1.check_period)
@@ -22,7 +15,6 @@ PING_RESTORED=$(uci -q get pingcontrol.$1.ping_restored)
 BEFORE_IFACE_DOWN=$(uci -q get pingcontrol.$1.before_iface_down)
 AFTER_IFACE_UP=$(uci -q get pingcontrol.$1.after_iface_up)
 BEFORE_REBOOT=$(uci -q get pingcontrol.$1.before_reboot)
-INET=$(uci -q get pingcontrol.$1.ipv6)
 
 host_up_count=0
 lost1=0
@@ -42,12 +34,8 @@ done
 while true; do
 	for IP in $TESTIP
 	do
-		case $INET in
-			0) FAMILY="-4" ;;
-			1) FAMILY="-6" ;;
-			*) FAMILY="";;
-		esac
-		if $(/bin/ping ${FAMILY} -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null); then
+		/bin/ping -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null
+		if [[ "$?" -eq "0" ]]; then
 			let host_up_count++
 		else
 			logger -t pingcontrol "$INSTANCE: Ping to host $IP lost"
@@ -62,20 +50,18 @@ while true; do
 	done
 
 	if [[ "$host_up_count" -gt "0" ]]; then
-		case $lost_flag in
-			0)
-				if [[ -n "$PING_OK" ]]; then
-					logger -t pingcontrol "$INSTANCE: Execute $PING_OK"
-					eval $PING_OK
-				fi
-			;;
-			1)
-				if [[ -n "$PING_RESTORED" ]]; then
-					logger -t pingcontrol "$INSTANCE: Execute $PING_RESTORED"
-					eval $PING_RESTORED 
-				fi
-			;;
-		esac
+		logger -t pingcontrol "$INSTANCE: Ping OK, reset counters"
+		if [[ "$lost_flag" -eq "1" ]]; then
+			if [[ -n "$PING_RESTORED" ]]; then
+				logger -t pingcontrol "$INSTANCE: Execute $PING_RESTORED"
+				eval $PING_RESTORED
+			fi
+		else
+			if [[ -n "$PING_OK" ]]; then
+				logger -t pingcontrol "$INSTANCE: Execute $PING_OK"
+				eval $PING_OK
+			fi
+		fi
 		host_up_count=0
 		lost1=0
 		lost2=0
@@ -110,9 +96,7 @@ while true; do
 				reboot
 			fi
 		fi
-	fi	
-
-	#logger -t pingcontrol "args: $1 $2 $3 $4 $5"
+	fi
 
 	sleep $CHECK_PERIOD
 done

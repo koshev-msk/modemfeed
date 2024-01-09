@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pingcontrol
 PKG_VERSION:=1
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/pingcontrol
 
 include $(INCLUDE_DIR)/package.mk
@@ -13,7 +13,6 @@ define Package/pingcontrol
   CATEGORY:=Utilities
   TITLE:=Network interface watchdog
   PKGARCH:=all
-  DEPENDS:=
 endef
 
 define Package/pingcontrol/description

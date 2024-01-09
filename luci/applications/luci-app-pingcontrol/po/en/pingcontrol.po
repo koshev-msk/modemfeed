@@ -7,8 +7,8 @@ msgstr "Period of check, sec"
 msgid "Ping interface"
 msgstr "Ping interface"
 
-msgid "IP address of remote server"
-msgstr "IP address of remote server"
+msgid "IP address or hostname of test servers"
+msgstr "IP address or hostname of test servers"
 
 msgid "Failed attempts before iface up/down"
 msgstr "Failed attempts before iface up/down"
