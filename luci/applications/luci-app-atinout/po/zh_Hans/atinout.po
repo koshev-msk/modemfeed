@@ -2,52 +2,52 @@ msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
 msgid "AT Commands"
-msgstr "ATÃüÁî"
+msgstr "ATå‘½ä»¤"
 
 msgid "Configuration"
-msgstr "ÅäÖÃ"
+msgstr "é…ç½®"
 
 msgid "Please specify the AT command to send"
-msgstr "ÇëÑ¡ÔñÒª·¢ËÍµÄ ATÃüÁî"
+msgstr "è¯·é€‰æ‹©è¦å‘é€çš„ ATå‘½ä»¤"
 
 msgid "Please set the port for communication with the modem"
-msgstr "ÇëÑ¡ÔñÓëµ÷ÖÆ½âµ÷Æ÷Í¨ĞÅµÄ¶Ë¿Ú"
+msgstr "è¯·é€‰æ‹©ä¸è°ƒåˆ¶è§£è°ƒå™¨é€šä¿¡çš„ç«¯å£"
 
 msgid "User AT commands"
-msgstr "ÓÃ»§×Ô¶¨Òå AT ÃüÁî"
+msgstr "ç”¨æˆ·è‡ªå®šä¹‰ AT å‘½ä»¤"
 
 msgid "Command to send"
-msgstr "´ı·¢ËÍÃüÁî"
+msgstr "å¾…å‘é€å‘½ä»¤"
 
 msgid "Clear form"
-msgstr "Çå³ı±íµ¥"
+msgstr "æ¸…é™¤è¡¨å•"
 
 msgid "Send command"
-msgstr "·¢ËÍÃüÁî"
+msgstr "å‘é€å‘½ä»¤"
 
 msgid "Reply"
-msgstr "»Ø¸´"
+msgstr "å›å¤"
 
 msgid "User interface for handling AT commands using atinout utility."
-msgstr "Ê¹ÓÃ atinout¹¤¾ß´¦Àí ATÃüÁîµÄÓÃ»§½çÃæ"
+msgstr "ä½¿ç”¨ atinoutå·¥å…·å¤„ç† ATå‘½ä»¤çš„ç”¨æˆ·ç•Œé¢"
 
 msgid "Configuration atinout"
-msgstr "atinout µÄÅäÖÃ"
+msgstr "atinout çš„é…ç½®"
 
 msgid "Configuration panel for atinout."
-msgstr "atinout µÄÅäÖÃÃæ°å"
+msgstr "atinout çš„é…ç½®é¢æ¿"
 
 msgid "Port for communication with the modem"
-msgstr "µ÷ÖÆ½âµ÷Æ÷Í¨ĞÅ¶Ë¿Ú"
+msgstr "è°ƒåˆ¶è§£è°ƒå™¨é€šä¿¡ç«¯å£"
 
 msgid "Select serial modem port."
-msgstr "Ñ¡Ôñ´®ĞĞµ÷ÖÆ½âµ÷Æ÷¶Ë¿Ú"
+msgstr "é€‰æ‹©ä¸²è¡Œè°ƒåˆ¶è§£è°ƒå™¨ç«¯å£"
 
 msgid "Please select a port"
-msgstr "ÇëÑ¡ÔñÒ»¸ö¶Ë¿Ú"
+msgstr "è¯·é€‰æ‹©ä¸€ä¸ªç«¯å£"
 
 msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location <code>/etc/atcommands.user</code>."
-msgstr "Ã¿ĞĞÓ¦×ñÑ­ÒÔÏÂ¸ñÊ½£º'ATÃüÁîÃèÊö;ATÃüÁî'¡£ÎªÁË·½±ãÓÃ»§£¬ÎÄ¼ş»á±»±£´æÔÚ<code>/etc/atcommands.user</code>Î»ÖÃ¡£"
+msgstr "æ¯è¡Œåº”éµå¾ªä»¥ä¸‹æ ¼å¼ï¼š'ATå‘½ä»¤æè¿°;ATå‘½ä»¤'ã€‚ä¸ºäº†æ–¹ä¾¿ç”¨æˆ·ï¼Œæ–‡ä»¶ä¼šè¢«ä¿å­˜åœ¨<code>/etc/atcommands.user</code>ä½ç½®ã€‚"
 
 msgid "Press [Enter] to send the command, press [Delete] to delete the command"
-msgstr "°´[Enter]¼ü·¢ËÍÃüÁî£¬°´[Delete]¼üÉ¾³ıÃüÁî"
+msgstr "æŒ‰[Enter]é”®å‘é€å‘½ä»¤ï¼ŒæŒ‰[Delete]é”®åˆ é™¤å‘½ä»¤"
