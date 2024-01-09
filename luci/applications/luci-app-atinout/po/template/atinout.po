@@ -26,28 +26,28 @@ msgid "Send command"
 msgstr ""
 
 msgid "Reply"
-msgstr "" 
-
-msgid "User interface for handling AT commands using sms-tool. More information about the sms-tool on the %seko.one.pl forum%s."
 msgstr ""
 
-msgid "Configuration sms-tool"
+msgid "User interface for handling AT commands using atinout utility."
 msgstr ""
 
-msgid "Configuration panel for sms-tool and gui application."
+msgid "Configuration atinout"
+msgstr ""
+
+msgid "Configuration panel for atinout."
 msgstr ""
 
 msgid "Port for communication with the modem"
 msgstr ""
 
-msgid "Select one of the available ttyUSBX ports."
+msgid "Select serial modem port."
 msgstr ""
 
 msgid "Please select a port"
 msgstr ""
 
-msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location '/etc/modem/atcommands.user'."
+msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location <code>/etc/atcommands.user</code>."
 msgstr ""
 
-msgid "Press [Enter] to send the command, press [Delete] to delete the command."
+msgid "Press [Enter] to send the command, press [Delete] to delete the command"
 msgstr ""
