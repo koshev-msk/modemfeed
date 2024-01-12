@@ -10,6 +10,15 @@ msgstr "调制解调器信息"
 msgid "Network"
 msgstr "网络"
 
+msgid "China Mobile"
+msgstr "中国移动"
+
+msgid "China Unicom"
+msgstr "中国联通"
+
+msgid "China Telecom"
+msgstr "中国电信"
+
 msgid "Hardware"
 msgstr "硬件"
 
