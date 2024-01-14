@@ -41,5 +41,13 @@ case $1 in
         RECEIVED) 
 		mv $2 /var/spool/sms/incoming/${NUM}_${BODY}
 		rm -f /var/spool/sms/incoming/*concat*
-		;;
+	;;
+	SENT)
+		if sed -e '/^$/ q' < "$2" | grep "^Alphabet: UCS" > /dev/null; then
+			TMPFILE=`mktemp /tmp/smsd_XXXXXX`
+			sed -e '/^$/ q' < "$2" | sed -e 's/Alphabet: UCS/Alphabet: UTF-8/g' > $TMPFILE
+			sed -e '1,/^$/ d' < $2 | iconv -f UNICODEBIG -t UTF-8 >> $TMPFILE
+			mv -f $TMPFILE $2
+		fi
+	;;
 esac

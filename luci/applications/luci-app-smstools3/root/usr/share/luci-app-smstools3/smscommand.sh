@@ -1,22 +1,23 @@
 #!/bin/sh
 
-SECTIONS=$(uci show smstools3 | awk -F [\]\[\@=] '/=command/{print $3}')
+#SECTIONS=$(uci show smstools3 | awk -F [\.][\]\[\@=] '/=command/{print $3}')
+SECTIONS=$(uci show smstools3 | awk -F [\.,=] '/=command/{print $2}')
 PHONE=$(uci -q get smstools3.@root_phone[0].phone)
 
 
 # smscommand function
 smscmd(){
         for s in $SECTIONS; do
-                CMD="$(uci -q get smstools3.@command[$s].command)"
+                CMD="$(uci -q get smstools3.${s}.command)"
                 MSG="$(echo $content)"
                 case $CMD in
                         *${MSG}*)
-                                ANSWER=$(uci -q get smstools3.@command[$s].answer)
+                                ANSWER=$(uci -q get smstools3.${s}.answer)
                                 if [ "$ANSWER" ]; then
                                         /usr/bin/sendsms $PHONE "$ANSWER"
                                 fi
-                                EXEC=$(uci -q get smstools3.@command[$s].exec)
-                                DELAY=$(uci -q get smstools3.@command[$s].delay)
+                                EXEC=$(uci -q get smstools3.${s}.exec)
+                                DELAY=$(uci -q get smstools3.${s}.delay)
                                 if [ $DELAY ]; then
                                         sleep $DELAY && $EXEC &
                                 else

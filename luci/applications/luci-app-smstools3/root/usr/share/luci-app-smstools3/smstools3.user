@@ -1,176 +1,23 @@
 #!/bin/sh
 
-# example script to manage router 
-# and resend messages to telegram
-# copy script to /etc
-
-# root phone numbers to manage device
-FNUMBER=""
-# target host respone to change anser channel
-TARGET=ya.ru
+# Simple resend incoming messages to telegram
 
 ROUTER=$(uci -q get system.@system[0].hostname)
 chat_id=$(uci -q get telegrambot.config.chat_id)
 token=$(uci -q get telegrambot.config.bot_token)
 
-# check link to send channel answer
-function link_(){
-	if $(ping -c4 ${TARGET} > /dev/null 2>&1); then
-		LINK=ON
-	else
-		LINK=OFF
-	fi
-}
-
-# generate messages
-function msg_(){
-	# answer setup file
-	if [ -f /tmp/smstools3.answer ]; then
-		STATE=$(cat /tmp/smstools3.answer)
-		case $STATE in
-			0) LINK=OFF ;;
-			1) LINK=ON ;;
-		esac
-	fi
-	# select channel to send answers
-	case $LINK in
-		OFF)
-			if [ $FNUMBER ]; then
-				/usr/bin/sendsms ${FNUMBER} "${TXT}"
-			fi
-		;;
-		ON)
-			if [ x$chat_id != x ] && [ x$token != x ]; then
-				/usr/bin/curl -d "chat_id=$chat_id&text=${TXT}" -X POST https://api.telegram.org/bot"$token"/sendMessage
-			else
-				if [ $FNUMBER ]; then
-					/usr/bin/sendsms ${FNUMBER} "${TXT}"
-				fi
-			fi
-		;;
-	esac
-}
-
 # parse incoming message
 if [ "$1" == "RECEIVED" ]; then
 	from=`grep "From:" $2 | awk -F ': ' '{printf $2}'`
-	content=$(sed -e '1,/^$/ d' < "$2")
-	ROOTN=0
-	# check ROOT messages
-	for n in ${FNUMBER}; do
-		if [ "$from" -eq "$n" ]; then
-			ROOTN=1
-			FNUMBER=$n
-		fi
-	done
-	if [ $ROOTN -eq 1 ]; then
-		COMMAND=$(echo $content | awk '{print $1}')
-		case $COMMAND in
-		# reboot device
-		reboot)
-			TXT="$ROUTER will be rebooted"
-			link_
-			sleep 5
-			msg_
-			sleep 10
-			reboot
-		;;
-		# restart router interface
-		restart)
-			RIFACE=$(echo $content | awk '{print $2}')
-			if [ $RIFACE ]; then
-				ifdown $RIFACE
-				sleep 3
-				ifup $RIFACE
-				sleep 20
-				link_
-				TXT="$ROUTER. Interfcae \"$RIFACE\" reload. LINK $LINK."
-				
-			else	
-				TXT="$ROUTER. Usage restart \"logical interface\""
-			fi
-			link_
-			msg_
-		;;
-		# manage device services
-		service)
-			SERVICE=$(echo $content | awk '{print $2}')
-			ACTION=$(echo $content | awk '{print $3}')
-			case $ACTION in
-				start|stop|restart|enable|disable) 
-					/etc/init.d/${SERVICE} ${ACTION}
-					TXT="$ROUTER. Service ${SERVICE} ${ACTION}"
-				;;
-				*) TXT="$ROUTER. Usage: service ${SERVICE} start|stop|restart|enable|disable" ;;
-			esac
-			link_
-			msg_
-		;;
-		# manage wireless radio
-		wifi)
-			ACTION=$(echo $content | awk '{print $2}')
-			case $ACTION in
-				up)
-					/sbin/wifi $ACTION
-					TXT="$ROUTER. Wireless enabled. OK"
-				;;
-				down)
-					/sbin/wifi $ACTION
-                                        TXT="$ROUTER. Wireless disabled. OK"
-				;;
-				
-				*) TXT="$ROUTER. Usage: $COMMAND [up|down]"
-				;;
-			esac
-			link_
-			msg_
-		;;
-		# manage answers channel
-		answer)
-			ACTION=$(echo $content | awk '{print $2}')
-			case $ACTION in
-				sms)
-					echo 0 > /tmp/smstools3.answer
-					TXT="$ROUTER. Answers sended via SMS. OK"
-					msg_
-				;;
-				tel)
-					echo 1 > /tmp/smstools3.answer
-					TXT="$ROUTER. Answers sended via Telegram. OK"
-					msg_
-				;;
-				auto)
-					rm /tmp/smstools3.answer
-					TXT="$ROUTER. Answers sended automatic channel alive."
-					link_
-					msg_
-				;;
-				*)
-					TXT="$ROUTER. Usage: answer [sms|tel|auto]"
-					msg_
-				;;
-			esac
-		;;
-		# print help
-		help)
-			TXT="$ROUTER. Usage: reboot|restart|service|wifi|answer help for more info."
-			link_
-			msg_
-		;;
-		*)
-			TXT="$ROUTER. Send message with text \"help\" for more info."
-			link_
-			msg_
-		;;
-		esac
-	else
-		# resent incoming messages to telegram
-		text=$(cat <<EOF
+	content=$(sed -e '1,/^$/ d' < "$2")	
+	text=$(cat <<EOF
 Hostname: $ROUTER
 $content
 From $from
 EOF
 )
-    		/usr/bin/curl -d "chat_id=$chat_id&text=$text" -X POST https://api.telegram.org/bot"$token"/sendMessage
+	# resent incoming messages to telegram
+	if [ x$chat_id != x ] && [ x$token != x ]; then
+		/usr/bin/curl -d "chat_id=$chat_id&text=$text" -X POST https://api.telegram.org/bot"$token"/sendMessage
 	fi
 fi
