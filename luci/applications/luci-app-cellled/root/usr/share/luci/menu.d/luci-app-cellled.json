@@ -13,21 +13,11 @@
 		"title": "CellLED",
 		"order": "61",
 		"action": {
-			"type": "alias",
-			"path": "admin/modem/cellled/config"
+			"type": "view",
+			"path": "cellled"
 		},
 		"depends": {
-			"acl": "luci-app-cellled",
 			"uci": { "cellled": true }
-		}
-	},
-
-	"admin/modem/cellled/config": {
-		"title": "Configuration",
-		"order": 61,
-		"action": {
-			"type": "view",
-			"path": "modem/cellled"
 		}
 	}
 }

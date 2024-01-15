@@ -2,6 +2,9 @@
 	"luci-app-cellled": {
 		"description": "Grant UCI access for luci-app-cellled",
 		"read": {
+			"file": {
+				"/usr/bin/nmcli": [ "exec" ]
+			},
 			"uci": [ "cellled" ]
 		},
 		"write": {
