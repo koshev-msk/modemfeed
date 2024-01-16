@@ -3,7 +3,7 @@
 'require view';
 'require uci';
 'require rpc';
-'require fs'
+'require fs';
 'require tools.widgets as widgets';
 
 
