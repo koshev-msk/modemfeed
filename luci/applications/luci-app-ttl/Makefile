@@ -10,12 +10,7 @@ LUCI_TITLE:=Antitethering module for luci-app-firewall
 LUCI_DEPENDS:= +luci-app-firewall +iptables-mod-ipopt +kmod-ipt-ipopt
 
 PKG_LICENSE:=Apache-2.0
-PKG_VERSION:=0.0.2-1
-
-define Package/luci-app-ttl/postrm
-	uci delete "firewall.@include[-1]" && \
-		rm -rf /etc/config/ttl
-endef
+PKG_VERSION:=0.0.3-0
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

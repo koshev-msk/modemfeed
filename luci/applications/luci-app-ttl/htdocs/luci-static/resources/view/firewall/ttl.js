@@ -10,48 +10,7 @@
 'require tools.firewall as fwtool';
 'require tools.widgets as widgets';
 
-var briefInfo = _('Firewall restart required. <br />In Method proxy Proxy server must be configured in transparent mode on port 3128 tcp.<br />Disable masquerade recommened.');
-
-
-var rebootButton = E('button', {
-        'class': 'btn cbi-button cbi-button-neutral',
-        'click': ui.createHandlerFn(this, function() {
-       	        return handleAction('fwrestart');
-        }),
-}, _('Restart'));
-
-var FWrestart = form.DummyValue.extend({
-        load: function() {
-       	        var rebootButton = E('button', {
-               	                'class': 'cbi-button cbi-button-neutral',
-                                'click': ui.createHandlerFn(this, function() {
-       	                                                return handleAction();
-               	                                }),
-                        }, _('Restart'));
-       	        return L.resolveDefault(fs.exec_direct('/etc/init.d/firewall'), ['restart']).then(L.bind(function(html) {
-               	        this.default = E([
-                       	        E('div', { 'class': 'cbi-value' }, [
-                               	                E('label', { 'class': 'cbi-value-title' },
-                                       	                _('Restart Firewall')
-                                                ),
-       	                                        E('div', { 'class': 'cbi-value-field', 'style': 'width:25vw' },
-               	                                                E('div', { 'class': 'cbi-section-node' }, [
-                       	                                                rebootButton,
-                               	                                ]),
-                                                ),
-       	                                ]),
-       	                        ]);
-               	}, this));
-        }
-});
-
-function handleAction(ev) {
-	return fs.exec_direct('/etc/init.d/firewall', [ 'restart' ])
-		 .catch(function(err) { ui.addNotification(null, E('p', {}, _('Unable to restart firewall: %s').format(err.message))) });
-}
-
-
-
+var briefInfo = _('In Method proxy Proxy server must be configured in transparent mode on port 3128 tcp.<br />Disable masquerade recommened.');
 
 return view.extend({
 	
@@ -63,12 +22,11 @@ return view.extend({
 
 		s = m.section(form.TypedSection, 'ttl');
 		s.anonymous = true;
-		o = s.option(FWrestart);
 
 		s = m.section(form.TypedSection, 'ttl', _('TTL or Proxy antitether'));
 		s.anonymous = true;
 		s.addremove = true;
-
+		
 		o = s.option(widgets.NetworkSelect, 'iface', _('Set interface'));
 		o.exclude = s.section;
 		o.nocreate = true;

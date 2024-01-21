@@ -3,22 +3,23 @@
 		"description": "Grant access to TTL configuration",
 		"read": {
 			"file": {
-				"/etc/confug/ttl": [ "read" ]
+				"/etc/init.d/ttl": [ "exec" ],
+				"/etc/init.d/firewall": [ "exec" ]
 			},
+			"cgi-io": [ "exec" ],
 			"ubus": {
-				"file": [ "read" ],
-				"luci": [ "getConntrackHelpers" ]
+				"file": [ "exec" ],
+				"uci": [ "changes", "get" ]
 			},
-			"uci": [ "firewall" ]
+			"uci": [ "ttl" ]
 		},
 		"write": {
-			"file": {
-				"/etc/config/ttl": [ "write" ]
-			},
+			"cgi-io": [ "exec" ],
 			"ubus": {
-				"file": [ "write" ]
+				"file": [ "exec" ],
+				"uci": [ "add", "apply", "confirm", "delete", "order", "rename", "set" ]
 			},
-			"uci": [ "firewall" ]
+			"uci": [ "ttl" ]
 		}
 	}
 }
