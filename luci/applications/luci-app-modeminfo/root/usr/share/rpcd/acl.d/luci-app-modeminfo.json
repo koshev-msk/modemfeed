@@ -8,17 +8,13 @@
 			},
 			"file": {
 				"/usr/bin/modeminfo": [ "exec" ],
-				"/bin/rm": [ "exec" ]
+				"/usr/share/modeminfo/scripts/rmtmp": [ "exec" ]
 			},
 			"uci": [ "modeminfo" ]
 		},
 		"write": {
 			"ubus": {
 				"file": [ "write" ]
-			},
-
-			"file": {
-				"/tmp/modemdevice": [ "write" ]
 			},
 		
 			"uci": [ "modeminfo" ]

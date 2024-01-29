@@ -88,7 +88,7 @@ function modem_data() {
 			COPS_MNC=$(echo $EEMGINFO | awk -F[','] '{print $2}')
 		fi
 	fi
-	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) -eq 1 ]; then
+	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
                 LAC=$(printf %d 0x$LAC)
                 CID=$(printf %d 0x$CID)
         fi

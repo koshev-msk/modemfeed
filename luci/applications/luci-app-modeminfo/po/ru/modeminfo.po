@@ -123,3 +123,18 @@ msgstr "На главную"
 
 msgid "Short info on Overview page"
 msgstr "Краткая информация о сети на главной странице"
+
+msgid "sec"
+msgstr "сек"
+
+msgid "none"
+msgstr "нет"
+
+msgid "Interval"
+msgstr "Интервал"
+
+msgid "Poll interval data"
+msgstr "Интервал обновления данных"
+
+msgid "General option"
+msgstr "Общие настройки"

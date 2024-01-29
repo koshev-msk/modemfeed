@@ -83,7 +83,7 @@ function modem_data(){
 		15000) BWDL=4 ;;
 		20000) BWDL=5 ;;
 	esac
-	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) -eq 1 ]; then
+	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
                 LAC=$LAC_NUM
                 CID=$CID_NUM
         fi

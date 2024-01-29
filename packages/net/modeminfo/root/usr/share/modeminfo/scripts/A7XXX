@@ -66,7 +66,7 @@ function modem_data(){
 			SINR=$(echo "$DATA" | awk -F [:,] '/\+ZRSSI/{printf "%.0f\n", $3}')
 		;;
 	esac
-	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) -eq 1 ]; then
+	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
                 LAC=$(printf %d 0x$LAC)
                 CID=$(printf %d 0x$CID)
         fi	

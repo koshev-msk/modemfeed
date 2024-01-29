@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.3.9
-PKG_RELEASE:=3
+PKG_VERSION:=0.4.0
+PKG_RELEASE:=0
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -106,4 +106,4 @@ $(eval $(call SerialPlugin,tw,+kmod-usb-serial-option,ThinkWill ML7820+,THINKWIL
 $(eval $(call SerialPlugin,yuge,+kmod-usb-serial-option,Yuge CLM920,YUGE))
 $(eval $(call SerialPlugin,zte,+kmod-usb-serial-option,ZTE MF823/MF823D,ZTE))
 $(eval $(call BuildPackage,$(PKG_NAME)-qmi))
-$(eval $(call BuildPackage,$(PKG_NAME)-telegram))
+#$(eval $(call BuildPackage,$(PKG_NAME)-telegram))

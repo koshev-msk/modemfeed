@@ -25,7 +25,7 @@ var callSerialPort = rpc.declare({
 		for (var i = 0; i < list.length; i++)
 			if (list[i].name.match(/^ttyACM/) || list[i].name.match(/^ttyUSB/))
 				rv.push(params.path + list[i].name);
-		return rv.sort();
+		return rv.sort((a, b) => a.name > b.name);
 	}
 });
 
@@ -58,8 +58,28 @@ return view.extend({
 	render: function(){
 		var m, s, o;
 		m = new form.Map('modeminfo', maindesc, mdesc);
-		s = m.section(form.TypedSection, 'modeminfo', '', null);
+
+		s = m.section(form.TypedSection, 'general', 'General option', null);
 		s.anonymous = true;
+
+		o = s.option(form.Flag, 'index', _('Index page'), idesc);
+		s.anonymous = true;
+		o.rmempty = true;
+
+		o = s.option(form.Flag, 'decimail', _('Show decimal'), lacdec);
+		o.rmempty = true;
+
+		o = s.option(form.ListValue, 'delay', _('Interval'), _('Poll interval data'));
+		o.value('', _('none'));
+		o.value('1', '1 '+_('sec'));
+		o.value('2', '2 '+_('sec'));
+		o.value('5', '5 '+_('sec'));
+		o.value('10', '10 '+_('sec'));
+		o.value('30', '30 '+_('sec'));
+
+		s = m.section(form.TypedSection, 'modeminfo', 'Devices setup', null);
+		s.anonymous = true;
+		s.addremove = true;
 
 		o = s.option(form.Flag, 'qmi_mode', _('Use QMI'), qfdesc);
 		o.rmempty = true;
@@ -88,9 +108,6 @@ return view.extend({
 		o.rmempty = true;
 		o.depends('qmi_mode', '1');
 
-		o = s.option(form.Flag, 'decimail', _('Show decimal'), lacdec);
-		o.rmempty = true;
-
 		o = s.option(form.Flag, 'mmcli_name', _('Name via mmcli'), mmdesc);
 		o.rmempty = true;
 		o.depends('qmi_mode', '0');
@@ -99,8 +116,6 @@ return view.extend({
 		o.rmempty = true;
 		o.depends('qmi_mode', '1');
 
-		o = s.option(form.Flag, 'index', _('Index page'), idesc);
-		o.rmempty = true;
 		return m.render();
 	}	
 });
