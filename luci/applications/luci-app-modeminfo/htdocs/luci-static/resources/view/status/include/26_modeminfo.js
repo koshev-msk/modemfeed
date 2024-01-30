@@ -59,7 +59,7 @@ return baseclass.extend({
 			
 			signal.innerHTML = String.format(
 				'<span class="ifacebadge">' + json.modem[i].cops  + " " +  
-				'<img src="%s"/></img><b>'+per.fontcolor(json.modem[i].csq_col) + "</b> " + 
+				'<img src="%s"/><b>'+per.fontcolor(json.modem[i].csq_col) + "</b> " + 
 				json.modem[i].mode+ca + '</span>', icon, p );
 			
 			modemTBL.append( 
