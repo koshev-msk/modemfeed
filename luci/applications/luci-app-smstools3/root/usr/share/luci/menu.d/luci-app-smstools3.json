@@ -14,6 +14,10 @@
 		"action": {
 			"type": "alias",
 			"path": "admin/modem/sms/in"
+		},
+		"depends": {
+			"uci": { "smstools3": true},
+			"acl": [ "luci-app-smstools3" ]
 		}
 	},
 
