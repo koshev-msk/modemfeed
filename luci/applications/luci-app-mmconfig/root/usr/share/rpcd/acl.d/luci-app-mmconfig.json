@@ -1,11 +1,24 @@
 {
 	"luci-app-mmconfig": {
-		"description": "Grant UCI access for luci-app-mmconfig",
+		"description": "Grant access to mmconfig configuration",
 		"read": {
-			"uci": [ "modemconfig" ]
+			"file": {
+				"/etc/init.d/mmconfig": [ "exec" ]
+			},
+			"cgi-io": [ "exec" ], 
+			"ubus": {
+				"file": [ "exec" ],
+				"uci": [ "changes", "get" ]
+			},
+			"uci": [ "mmconfig" ]
 		},
 		"write": {
-			"uci": [ "modemconfig" ]
+			"cgi-io": [ "exec" ],
+			"ubus": {
+				"file": [ "exec" ],
+				"uci": [ "add", "apply", "confirm", "delete", "order", "rename", "set" ]
+			},
+			"uci": [ "mmconfig" ]
 		}
 	}
 }
