@@ -9,7 +9,6 @@ start_service(){
 
 reload_service(){
 	/usr/share/modeminfo/mmconfig
-	echo "mm" >> /tmp/mmconfig.log
 }
 
 service_triggers() {
