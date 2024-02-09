@@ -69,6 +69,8 @@ function modem_family() {
 			FAMILY=GENERIC
 		fi
 		echo $FAMILY > /tmp/modem${s}device
+		uci -q set modeminfo.@modeminfo[${s}].family=$FAMILY
+		uci commit
 	else
 		FAMILY=$(cat /tmp/modem${s}device)
 	fi
