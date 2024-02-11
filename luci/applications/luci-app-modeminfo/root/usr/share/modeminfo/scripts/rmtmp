@@ -9,7 +9,7 @@ for s in $SECTIONS; do
 		CURFAM=GENERIC
 	fi
 	FAM=$(uci -q get modeminfo.@modeminfo[${s}].family)
-	if [ "$CURFAM" = "GENERIC" ] && [ "$FAM" != "$CURFAM" ]; then
+	if [ "$FAM" != "$CURFAM" ]; then
 		rm -rf /tmp/modem${s}device
 		uci delete modeminfo.@modeminfo[${s}].family
 		uci commit
