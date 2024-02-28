@@ -376,7 +376,7 @@ return view.extend({
 				if (document.getElementById('rssi'+i)) {
 					var view = document.getElementById('rssi'+i);
 					if (json.modem[i].rssi == '') {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						var rssi_min = -110;
 						rssi_bar(json.modem[i].rssi + ' dBm', rssi_min);
@@ -385,7 +385,7 @@ return view.extend({
 				if (document.getElementById('sinr'+i)) {
 					var view = document.getElementById('sinr'+i);
 					if (json.modem[i].sinr == "--" || netmode == "--") {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						if (netmode == "LTE") {
 							var sinr_min = -20;
@@ -400,7 +400,7 @@ return view.extend({
 				if (document.getElementById('rsrp'+i)) {
 					var view = document.getElementById('rsrp'+i);
 					if (json.modem[i].rsrp == "--") {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						var rsrp_min = -140;
 						rsrp_bar(json.modem[i].rsrp + " dBm", rsrp_min);
@@ -410,7 +410,7 @@ return view.extend({
 				if (document.getElementById('rsrq'+i)) {
 					var view = document.getElementById('rsrq'+i);
 					if (json.modem[i].rsrq == "--") {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						var rsrq_min = -20;
 						rsrq_bar(json.modem[i].rsrq + " dB", rsrq_min);

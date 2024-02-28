@@ -80,7 +80,7 @@ function modem_data(){
 		;;
 	esac
 
-	if [ $(uci -q get modeminfo.@modeminfo[0].decimail) = "1" ] ; then
+	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ] ; then
 		LAC=$LAC_NUM
 		CID=$CID_NUM
 	fi

@@ -31,7 +31,7 @@ return view.extend({
 				if (document.getElementById('device'+i)) {
 					var view = document.getElementById('device'+i);
 					if (json.modem[i].device == '--') {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						view.innerHTML = String.format(json.modem[i].device);
 					}
@@ -39,7 +39,7 @@ return view.extend({
 				if (document.getElementById('firmware'+i)) {
 					var view = document.getElementById('firmware'+i);
 					if (json.modem[i].firmware == '--') {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						view.innerHTML = String.format(json.modem[i].firmware);
 					}
@@ -47,7 +47,7 @@ return view.extend({
 				if (document.getElementById('imsi'+i)) {
 					var view = document.getElementById('imsi'+i);
 					if (json.modem[i].imsi == '--') {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						view.innerHTML = String.format(json.modem[i].imsi);
 					}
@@ -55,7 +55,7 @@ return view.extend({
 				if (document.getElementById('iccid'+i)) {
 					var view = document.getElementById('iccid'+i);
 					if (json.modem[i].iccid == '--') {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						view.innerHTML = String.format(json.modem[i].iccid);
 					}
@@ -64,7 +64,7 @@ return view.extend({
 				if (document.getElementById('imei'+i)) {
 					var view = document.getElementById('imei'+i);
 					if (json.modem[i].imei == '--') {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						view.innerHTML = String.format(json.modem[i].imei);
 					}
@@ -73,7 +73,7 @@ return view.extend({
 				if (document.getElementById('chiptemp'+i)) {
 					var view = document.getElementById('chiptemp'+i);
 					if (json.modem[i].chiptemp == '--') {
-						view.style.display = "none";
+						view = document.getElementById('--');
 					} else {
 						view.innerHTML = String.format(json.modem[i].chiptemp+' °C');
 					}
