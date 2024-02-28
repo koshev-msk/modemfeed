@@ -18,7 +18,7 @@ msgid "Network Bands"
 msgstr "Диапазоны сети"
 
 msgid "Current"
-msgstr "Текуший"
+msgstr "Текущий"
 
 msgid "List supported bands.<br />If deselect all bands, then used default band modem config."
 msgstr "Список поддерживаемых диапазонов.<br />Если не выбрано ни одного диапазона, используется конфигурация модема по умолчанию."

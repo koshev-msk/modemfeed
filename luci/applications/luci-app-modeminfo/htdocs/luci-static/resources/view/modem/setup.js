@@ -59,7 +59,7 @@ return view.extend({
 		var m, s, o;
 		m = new form.Map('modeminfo', maindesc, mdesc);
 
-		s = m.section(form.TypedSection, 'general', 'General option', null);
+		s = m.section(form.TypedSection, 'general', _('General option'), null);
 		s.anonymous = true;
 
 		o = s.option(form.Flag, 'index', _('Index page'), idesc);
@@ -77,7 +77,7 @@ return view.extend({
 		o.value('10', '10 '+_('sec'));
 		o.value('30', '30 '+_('sec'));
 
-		s = m.section(form.TypedSection, 'modeminfo', 'Devices setup', null);
+		s = m.section(form.TypedSection, 'modeminfo', _('Devices setup'), null);
 		s.anonymous = true;
 		s.addremove = true;
 

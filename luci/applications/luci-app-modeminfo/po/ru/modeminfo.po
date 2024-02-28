@@ -138,3 +138,6 @@ msgstr "Интервал обновления данных"
 
 msgid "General option"
 msgstr "Общие настройки"
+
+msgid "Devices setup"
+msgstr "Настройки устройств"
