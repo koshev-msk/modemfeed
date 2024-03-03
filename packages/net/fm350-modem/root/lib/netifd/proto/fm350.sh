@@ -13,9 +13,9 @@ proto_fm350_init_config() {
 	proto_config_add_string "apn"
 	proto_config_add_string "pdp"
 	proto_config_add_string "delay"
-	proto_config_add_string "username"
-	proto_config_add_string "password"
-	proto_config_add_string "auth"
+	#proto_config_add_string "username"
+	#proto_config_add_string "password"
+	#proto_config_add_string "auth"
 	proto_config_add_defaults
 }
 
@@ -29,11 +29,11 @@ proto_fm350_setup() {
 	[ -z $ifname ] && {
 		devname=$(basename $device)
 		case "$devname" in
-			*ttyACM*)
+			*ttyUSB*)
 				echo "Setup fm350 interface $interface with port ${device}"
 				devpath="$(readlink -f /sys/class/tty/$devname/device)"
 				echo "Found path $devpath"
-				hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
+				hwaddr="$(ls -1 $devpath/../../*/net/*/*address*)"
 				for h in $hwaddr; do
 					if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
 						ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
@@ -55,15 +55,15 @@ proto_fm350_setup() {
 	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP"
 	echo "Setting up $ifname"
 	[ -n "$delay" ] && sleep "$delay" || sleep 5
-	[ -n "$username" ] && [ -n "$password" ] && {
-		echo "Using auth type is: $auth"
-		case $auth in
-			pap) AUTH=1 ;;
-			chap) AUTH=2 ;;
-			*) AUTH=0 ;;
-		esac
-		AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/fm350-auth.gcom >/dev/null 2>&1
-	}
+	# [ -n "$username" ] && [ -n "$password" ] && {
+	# 	echo "Using auth type is: $auth"
+	# 	case $auth in
+	# 		pap) AUTH=1 ;;
+	# 		chap) AUTH=2 ;;
+	# 		*) AUTH=0 ;;
+	# 	esac
+	# 	AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/fm350-auth.gcom >/dev/null 2>&1
+	# }
 	APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/fm350-connect.gcom >/dev/null 2>&1
 	proto_init_update "$ifname" 1
 	proto_add_data
@@ -71,7 +71,7 @@ proto_fm350_setup() {
 	DATA=$(gcom -d $device -s /etc/gcom/fm350-config.gcom)
 	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2>&1
 	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2>&1
-	ns=$(echo "$DATA" | awk -F [,] '/^\+XDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
+	ns=$(echo "$DATA" | awk -F [,] '/^\+GTDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
 	dns1=$(echo "$ns" | grep -v "0.0.0.0" | tail -1)
 	if ! [ $ip4addr ]; then
 		proto_notify_error "$interface" CONFIGURE_FAILED
