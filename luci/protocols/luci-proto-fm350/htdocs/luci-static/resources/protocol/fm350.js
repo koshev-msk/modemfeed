@@ -11,7 +11,7 @@ var callFileList = rpc.declare({
 	filter: function(list, params) {
 		var rv = [];
 		for (var i = 0; i < list.length; i++)
-			if (list[i].name.match(/^ttyACM/))
+			if (list[i].name.match(/^ttyUSB/))
 				rv.push(params.path + list[i].name);
 		return rv.sort();
 	}
@@ -73,15 +73,19 @@ return network.registerProtocol('fm350', {
 			return true;
 		};
 
-		s.taboption('general', form.Value, 'username', _('PAP/CHAP username'));
+		// TODO: How to set APN auth?
+		// o = s.taboption('general', form.Value, 'username', _('PAP/CHAP username'));
+		// o.readonly = true;
 
-		o = s.taboption('general', form.Value, 'password', _('PAP/CHAP password'));
+		// o = s.taboption('general', form.Value, 'password', _('PAP/CHAP password'));
+		// o.readonly = true;
 
-		o = s.taboption('general', form.ListValue, 'auth', _('Auth Type'));
-		o.value('auto', 'Auto');
-		o.value('pap', 'PAP');
-		o.value('chap', 'CHAP');
-		o.default = 'auto';
+		// o = s.taboption('general', form.ListValue, 'auth', _('Auth Type'));
+		// o.value('auto', 'Auto');
+		// o.value('pap', 'PAP');
+		// o.value('chap', 'CHAP');
+		// o.default = 'auto';
+		// o.readonly = true;
 
 		o = s.taboption('advanced', form.Value, 'delay', _('Modem init timeout'), _('Maximum amount of seconds to wait for the modem to become ready'));
 		o.placeholder = '10';
