@@ -7,7 +7,6 @@ opengt
  send "AT+CMEE=2^m"
  send "AT+COPS=0^m"
  send "AT+CGPIAF=1,0,0,0^m"
- send "AT+XDNS=1,1^m"
  send "AT+CGDCONT=1^m"
  send "AT+CGDCONT=1,\""
  send $env("PDP")

@@ -8,6 +8,6 @@ opengt
  get 1 "" $s
  print $s
 
- send "AT+GTDNS?^m"
+ send "AT+GTDNS=1^m"
  get 1 "" $s
  print $s
