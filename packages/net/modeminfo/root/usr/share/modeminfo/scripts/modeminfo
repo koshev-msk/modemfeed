@@ -46,7 +46,7 @@ function modem_family() {
 		elif (echo "${F}" | grep -i mik >/dev/null); then
 			FAMILY=MIKROTIK
 		elif (echo "${F}" | grep -i fm350 >/dev/null); then
-		    FAMILY=FIBOCOMFM350
+			FAMILY=FM350
 		elif (echo "${F}" | grep -i xmm >/dev/null); then
 			FAMILY=INTEL
 		elif (echo "${F}" | grep -i sim >/dev/null); then
