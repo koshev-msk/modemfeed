@@ -2,14 +2,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fm350-modem
 PKG_VERSION:=0.0.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
   PKGARCH:=all
-  DEPENDS:=+comgt +kmod-usb-acm +kmod-usb-net-rndis
+  DEPENDS:=+comgt +kmod-usb-acm +kmod-usb-serial-option +kmod-usb-net-rndis
   TITLE:=Fibocom FM350 protocol
 endef
 
