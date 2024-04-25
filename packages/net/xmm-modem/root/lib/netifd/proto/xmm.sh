@@ -32,13 +32,19 @@ proto_xmm_setup() {
 			*ttyACM*)
 				echo "Setup xmm interface $interface with port ${device}"
 				devpath="$(readlink -f /sys/class/tty/$devname/device)"
-				echo "Found path $devpath"
-				hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
-				for h in $hwaddr; do
-					if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
-						ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
-					fi
-				done
+				[ -n $devpath ] && {
+					echo "Found path $devpath"
+					hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
+					for h in $hwaddr; do
+						if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
+							ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
+						fi
+					done
+				} || {
+					echo "Device path not found!"
+					proto_notify_error "$interface" NO_DEVICE_FOUND
+					return 1
+				}
 			;;
 		esac
 	}
