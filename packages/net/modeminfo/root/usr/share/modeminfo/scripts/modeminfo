@@ -99,6 +99,10 @@ function get_csq(){
 function get_cops() {
 	# COPS
 	COPS_NUM=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,2/ {print $2}')
+	# Fibocom FM350 only?
+	if ! [ $COPS_NUM ]; then
+		COPS_NUM=$(echo "$O" | awk -F[\"] '/^\+COPS:/ {print $2}')
+	fi
 	if [ "x$COPS_NUM" != "x" ]; then
 		COPS_MCC=${COPS_NUM:0:3}
 		COPS_MNC=${COPS_NUM:3:3}
