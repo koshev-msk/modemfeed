@@ -4,7 +4,15 @@ opengt
  set senddelay 0.02
  waitquiet 0.2 0.2
 
- send "AT+XGAUTH=1,"
+ send "AT+EIAAPN=\""
+ send $env("APN")
+ send ",\""
+ send "0"
+ send ",\""
+ send $env("PDP")
+ send ",\""
+ send $env("PDP")
+ send ",\""
  send $env("AUTH")
  send ",\""
  send $env("USER")

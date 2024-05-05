@@ -55,15 +55,15 @@ proto_fm350_setup() {
 	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP"
 	echo "Setting up $ifname"
 	[ -n "$delay" ] && sleep "$delay" || sleep 5
-	# [ -n "$username" ] && [ -n "$password" ] && {
-	# 	echo "Using auth type is: $auth"
-	# 	case $auth in
-	# 		pap) AUTH=1 ;;
-	# 		chap) AUTH=2 ;;
-	# 		*) AUTH=0 ;;
-	# 	esac
-	# 	AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/fm350-auth.gcom >/dev/null 2>&1
-	# }
+	[ -n "$username" ] && [ -n "$password" ] && {
+	 	echo "Using auth type is: $auth"
+	 	case $auth in
+	 		pap) AUTH=1 ;;
+	 		chap) AUTH=2 ;;
+	 		*) AUTH=0 ;;
+	 	esac
+	 	APN=$apn PDP=$pdp AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/fm350-auth.gcom >/dev/null 2>&1
+	}
 	APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/fm350-connect.gcom >/dev/null 2>&1
 	proto_init_update "$ifname" 1
 	proto_add_data
