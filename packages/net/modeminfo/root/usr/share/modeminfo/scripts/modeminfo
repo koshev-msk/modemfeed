@@ -45,7 +45,7 @@ function modem_family() {
 			FAMILY=MEIGLINK
 		elif (echo "${F}" | grep -i mik >/dev/null); then
 			FAMILY=MIKROTIK
-		elif (echo "${F}" | grep -i fm350 >/dev/null); then
+		elif (echo "${F}" | grep -Ei 'fm350|mt68' >/dev/null); then
 			FAMILY=FM350
 		elif (echo "${F}" | grep -i xmm >/dev/null); then
 			FAMILY=INTEL
