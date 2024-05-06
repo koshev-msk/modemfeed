@@ -32,7 +32,7 @@ proto_xmm_setup() {
 			*ttyACM*)
 				echo "Setup xmm interface $interface with port ${device}"
 				devpath="$(readlink -f /sys/class/tty/$devname/device)"
-				[ -n $devpath ] && {
+				[ "${devpath}x" != "x" ] && {
 					echo "Found path $devpath"
 					hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
 					for h in $hwaddr; do
@@ -41,6 +41,7 @@ proto_xmm_setup() {
 						fi
 					done
 				} || {
+					[ -n $delay ] && sleep $delay || sleep 5
 					echo "Device path not found!"
 					proto_notify_error "$interface" NO_DEVICE_FOUND
 					return 1
