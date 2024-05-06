@@ -13,9 +13,9 @@ proto_fm350_init_config() {
 	proto_config_add_string "apn"
 	proto_config_add_string "pdp"
 	proto_config_add_string "delay"
-	#proto_config_add_string "username"
-	#proto_config_add_string "password"
-	#proto_config_add_string "auth"
+	proto_config_add_string "username"
+	proto_config_add_string "password"
+	proto_config_add_string "auth"
 	proto_config_add_defaults
 }
 
@@ -32,13 +32,20 @@ proto_fm350_setup() {
 			*ttyUSB*)
 				echo "Setup fm350 interface $interface with port ${device}"
 				devpath="$(readlink -f /sys/class/tty/$devname/device)"
-				echo "Found path $devpath"
-				hwaddr="$(ls -1 $devpath/../../*/net/*/*address*)"
-				for h in $hwaddr; do
-					if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
-						ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
-					fi
-				done
+				[  "${devpath}x" != "x" ] && {
+					echo "Found path $devpath"
+					hwaddr="$(ls -1 $devpath/../../*/net/*/*address*)"
+					for h in $hwaddr; do
+						if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
+							ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
+						fi
+					done
+				} || {
+					[ -n "$delay" ] && sleep "$delay" || sleep 5
+					echo "Device path not found!"
+					proto_notify_error "$interface" NO_DEVICE_FOUND
+					return 1
+				}
 			;;
 		esac
 	}
