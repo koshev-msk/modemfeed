@@ -12,9 +12,10 @@ proto_fm350_init_config() {
 	proto_config_add_string "device:device"
 	proto_config_add_string "apn"
 	proto_config_add_string "pdp"
-	proto_config_add_string "delay"
+	proto_config_add_bool "delay"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
+	proto config_add_bool "profile"
 	proto_config_add_string "auth"
 	proto_config_add_defaults
 }
@@ -23,9 +24,10 @@ proto_fm350_setup() {
 	local interface="$1"
 	local devname devpath hwaddr ip4addr ip4mask dns1 dns2 defroute lladdr
 	local name ifname proto extendprefix auth username password
-	local device ifname auth username password apn pdp pincode delay $PROTO_DEFAULT_OPTIONS
-	json_get_vars device ifname auth username password apn pdp pincode delay $PROTO_DEFAULT_OPTIONS
+	local device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
+	json_get_vars device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
 	[ "$metric" = "" ] && metric="0"
+	[ "$profile" = "" ] && profile="1"
 	[ -z $ifname ] && {
 		devname=$(basename $device)
 		case "$devname" in
@@ -62,20 +64,20 @@ proto_fm350_setup() {
 	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP"
 	echo "Setting up $ifname"
 	[ -n "$delay" ] && sleep "$delay" || sleep 5
-	[ -n "$username" ] && [ -n "$password" ] && {
+	[ -n "$username" -a -n "$password" ] && {
 	 	echo "Using auth type is: $auth"
 	 	case $auth in
 	 		pap) AUTH=1 ;;
 	 		chap) AUTH=2 ;;
 	 		*) AUTH=0 ;;
 	 	esac
-	 	APN=$apn PDP=$pdp AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/fm350-auth.gcom >/dev/null 2>&1
+	 	CID=$profile AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/fm350-auth.gcom >/dev/null 2>&1
 	}
-	APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/fm350-connect.gcom >/dev/null 2>&1
+	CID=$profile APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/fm350-connect.gcom >/dev/null 2>&1
 	proto_init_update "$ifname" 1
 	proto_add_data
 	proto_close_data
-	DATA=$(gcom -d $device -s /etc/gcom/fm350-config.gcom)
+	DATA=$(CID=$profile gcom -d $device -s /etc/gcom/fm350-config.gcom)
 	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2>&1
 	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2>&1
 	ns=$(echo "$DATA" | awk -F [,] '/^\+GTDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
@@ -132,9 +134,10 @@ proto_fm350_setup() {
 
 proto_fm350_teardown() {
 	local interface="$1"
-	local device
-	device=$(uci -q get network.$interface.device)
-	gcom -d $device -s /etc/gcom/fm350-disconnect.gcom >/dev/null 2>&1
+	local device profile
+	json_get_vars device profile
+	[ "$profile" = "" ] && profile="1"
+	CID=$profile gcom -d $device -s /etc/gcom/fm350-disconnect.gcom >/dev/null 2>&1
 	echo "Modem $device disconnected"
 	proto_kill_command "$interface"
 }

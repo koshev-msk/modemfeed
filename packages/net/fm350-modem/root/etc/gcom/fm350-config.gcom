@@ -4,10 +4,14 @@ opengt
  set senddelay 0.02
  waitquiet 0.2 0.2
 
- send "AT+CGPADDR=1^m"
+ send "AT+CGPADDR="
+ send $env("CID")
+ send "^m"
  get 1 "" $s
  print $s
 
- send "AT+GTDNS=1^m"
+ send "AT+GTDNS="
+ send $env("CID")
+ send "^m"
  get 1 "" $s
  print $s

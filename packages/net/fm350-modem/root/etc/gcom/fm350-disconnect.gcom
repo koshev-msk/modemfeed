@@ -4,4 +4,6 @@ opengt
  set senddelay 0.02
  waitquiet 0.2 0.2
 
- send "AT+CGACT=0^m"
+ send "AT+CGACT=0,"
+ send $env("CID")
+ send "^m"
