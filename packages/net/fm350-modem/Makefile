@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fm350-modem
 PKG_VERSION:=0.0.2
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=
 
 include $(INCLUDE_DIR)/package.mk
