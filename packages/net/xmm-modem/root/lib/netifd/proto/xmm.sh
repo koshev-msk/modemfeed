@@ -12,10 +12,11 @@ proto_xmm_init_config() {
 	proto_config_add_string "device:device"
 	proto_config_add_string "apn"
 	proto_config_add_string "pdp"
-	proto_config_add_string "delay"
+	proto_config_add_boolean "delay"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
 	proto_config_add_string "auth"
+	proto_config_add_boolean "profile"
 	proto_config_add_defaults
 }
 
@@ -23,8 +24,9 @@ proto_xmm_setup() {
 	local interface="$1"
 	local devname devpath hwaddr ip4addr ip4mask dns1 dns2 defroute lladdr
 	local name ifname proto extendprefix auth username password
-	local device ifname auth username password apn pdp pincode delay $PROTO_DEFAULT_OPTIONS
-	json_get_vars device ifname auth username password apn pdp pincode delay $PROTO_DEFAULT_OPTIONS
+	local device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
+	json_get_vars device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
+	[ "$profile" = "" ] && profile="1"
 	[ "$metric" = "" ] && metric="0"
 	[ -z $ifname ] && {
 		devname=$(basename $device)
@@ -69,13 +71,13 @@ proto_xmm_setup() {
 			chap) AUTH=2 ;;
 			*) AUTH=0 ;;
 		esac
-		AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/xmm-auth.gcom >/dev/null 2>&1
+		CID=$profile AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/xmm-auth.gcom >/dev/null 2>&1
 	}
-	APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2>&1
+	CID=$profile APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2>&1
 	proto_init_update "$ifname" 1
 	proto_add_data
 	proto_close_data
-	DATA=$(gcom -d $device -s /etc/gcom/xmm-config.gcom)
+	DATA=$(CID=$profile gcom -d $device -s /etc/gcom/xmm-config.gcom)
 	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2>&1
 	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2>&1
 	ns=$(echo "$DATA" | awk -F [,] '/^\+XDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
@@ -132,8 +134,9 @@ proto_xmm_setup() {
 
 proto_xmm_teardown() {
 	local interface="$1"
-	local device
-	device=$(uci -q get network.$interface.device)
+	local device profile
+	json_get_vars device profile
+	[ "$profile" = "" ] && profile="1"
 	gcom -d $device -s /etc/gcom/xmm-disconnect.gcom >/dev/null 2>&1
 	echo "Modem $device disconnected"
 	proto_kill_command "$interface"
