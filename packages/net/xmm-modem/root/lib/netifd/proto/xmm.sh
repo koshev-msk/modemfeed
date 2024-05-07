@@ -71,7 +71,7 @@ proto_xmm_setup() {
 			chap) AUTH=2 ;;
 			*) AUTH=0 ;;
 		esac
-		CID=$profile AUTH=$AUTH USER=$username PASS=$password gcom -d "$device" -s /etc/gcom/xmm-auth.gcom >/dev/null 2>&1
+		CID=$profile AUTH=$AUTH USER="$username" PASS="$password" gcom -d "$device" -s /etc/gcom/xmm-auth.gcom >/dev/null 2>&1
 	}
 	CID=$profile APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2>&1
 	proto_init_update "$ifname" 1
