@@ -12,10 +12,10 @@ proto_fm350_init_config() {
 	proto_config_add_string "device:device"
 	proto_config_add_string "apn"
 	proto_config_add_string "pdp"
-	proto_config_add_boolean "delay"
+	proto_config_add_int "delay"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
-	proto config_add_boolean "profile"
+	proto config_add_int "profile"
 	proto_config_add_string "auth"
 	proto_config_add_defaults
 }
