@@ -34,6 +34,9 @@ function modem_data(){
 		esac
 	fi
 	EARFCN=$(echo "$O" | awk -F[,\ ] '/^\^HFREQINFO/ {print $4}')
+	if [ "x${EARFCN}" = "x" ]; then
+		EARFCN=$(echo "$O" | awk -F[,\ ] '/^\^MONSC/ {print $5}')
+	fi
 	BWDx=$(echo "$O" | awk -F[,\ ] '/^\^HFREQINFO/ {print $6}')
 	RSRx=$(echo "$O" | awk -F[,:] '/^\^LTERSRP:/ {print $2}')
 	if [ "x$RSRx" != "x" ]; then
