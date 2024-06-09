@@ -32,7 +32,18 @@ function get_port() {
 
 function modem_family() {
 	if [ ! -f /tmp/modem${s}device ]; then
-		F=$(atinout $RES/scripts/family.at $DEVPORT - | grep -vi "ready")
+		comport=$(uci -q get modeminfo.@modeminfo[${s}].device | awk -F [\/] '{print $NF}')
+		case $comport in
+			*ttyUSB*)
+				F=$(cat $(readlink -f /sys/class/tty/$comport/device/../../manufacturer))
+				F="$F $(cat $(readlink -f /sys/class/tty/$comport/device/../../product))"
+			;;
+			*ttyACM*)
+				F=$(cat $(readlink -f /sys/class/tty/$comport/device/../manufacturer))
+				F="$F $(cat $(readlink -f /sys/class/tty/$comport/device/../product))"
+			;;
+		esac
+
 		if (echo "${F}" | grep -i que >/dev/null); then
 			FAMILY=QUECTEL
 		elif (echo "${F}" | grep -i sie >/dev/null); then
@@ -47,12 +58,15 @@ function modem_family() {
 			FAMILY=MIKROTIK
 		elif (echo "${F}" | grep -Ei 'fm350|mt68' >/dev/null); then
 			FAMILY=FM350
-		elif (echo "${F}" | grep -i xmm >/dev/null); then
+		elif (echo "${F}" | grep -i int >/dev/null); then
 			FAMILY=INTEL
 		elif (echo "${F}" | grep -i sim >/dev/null); then
 			FAMILY=SIMCOM
 		elif (echo "${F}" | grep -i fib >/dev/null); then
-			FAMILY=FIBOCOM
+			case $comport in
+				ttyUSB*) FAMILY=FIBOCOM ;;
+				ttyACM*) FAMILY=INTEL ;;
+			esac
 		elif (echo "${F}" | grep -i qua >/dev/null); then
 			FAMILY=QUALCOMM
 		elif (echo "${F}" | grep -i hua >/dev/null); then
