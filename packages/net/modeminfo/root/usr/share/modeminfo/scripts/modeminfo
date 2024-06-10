@@ -31,64 +31,22 @@ function get_port() {
 }
 
 function modem_family() {
-	if [ ! -f /tmp/modem${s}device ]; then
-		comport=$(uci -q get modeminfo.@modeminfo[${s}].device | awk -F [\/] '{print $NF}')
-		case $comport in
-			*ttyUSB*)
-				F=$(cat $(readlink -f /sys/class/tty/$comport/device/../../manufacturer))
-				F="$F $(cat $(readlink -f /sys/class/tty/$comport/device/../../product))"
-			;;
-			*ttyACM*)
-				F=$(cat $(readlink -f /sys/class/tty/$comport/device/../manufacturer))
-				F="$F $(cat $(readlink -f /sys/class/tty/$comport/device/../product))"
-			;;
-		esac
-
-		if (echo "${F}" | grep -i que >/dev/null); then
-			FAMILY=QUECTEL
-		elif (echo "${F}" | grep -i sie >/dev/null); then
-			FAMILY=SIERRA
-		elif (echo "${F}" | grep -i dell >/dev/null); then
-			FAMILY=DELL
-		elif (echo "${F}" | grep -i sty >/dev/null); then
-			FAMILY=STYX
-		elif (echo "${F}" | grep -i meig >/dev/null); then
-			FAMILY=MEIGLINK
-		elif (echo "${F}" | grep -i mik >/dev/null); then
-			FAMILY=MIKROTIK
-		elif (echo "${F}" | grep -Ei 'fm350|mt68' >/dev/null); then
-			FAMILY=FM350
-		elif (echo "${F}" | grep -i int >/dev/null); then
-			FAMILY=INTEL
-		elif (echo "${F}" | grep -i sim >/dev/null); then
-			FAMILY=SIMCOM
-		elif (echo "${F}" | grep -i fib >/dev/null); then
-			case $comport in
-				ttyUSB*) FAMILY=FIBOCOM ;;
-				ttyACM*) FAMILY=INTEL ;;
-			esac
-		elif (echo "${F}" | grep -i qua >/dev/null); then
-			FAMILY=QUALCOMM
-		elif (echo "${F}" | grep -i hua >/dev/null); then
-			FAMILY=HUAWEI
-		elif (echo "${F}" | grep -i gos >/dev/null); then
-			FAMILY=GOSUN
-		elif (echo "${F}" | grep -i tw >/dev/null); then
-			FAMILY=THINKWILL
-		elif (echo "${F}" | grep -i yug >/dev/null); then
-			FAMILY=YUGE
-		elif (echo "${F}" | grep -i zte >/dev/null); then
-			FAMILY=ZTE
-		elif (echo "${F}" | grep -i '^incorp' >/dev/null); then
-			FAMILY=A7XXX
-		else
-			FAMILY=GENERIC
-		fi
-		echo $FAMILY > /tmp/modem${s}device
-		uci -q set modeminfo.@modeminfo[${s}].family=$FAMILY
-		uci commit
-	else
-		FAMILY=$(cat /tmp/modem${s}device)
+	comport=$(uci -q get modeminfo.@modeminfo[${s}].device | awk -F [\/] '{print $NF}')
+	case $comport in
+		*ttyUSB*|*ttyHS*)
+			VID=$(cat $(readlink -f /sys/class/tty/$comport/device/../../idVendor))
+			PID=$(cat $(readlink -f /sys/class/tty/$comport/device/../../idProduct))
+		;;
+		*ttyACM*)
+			VID=$(cat $(readlink -f /sys/class/tty/$comport/device/../idVendor))
+			PID=$(cat $(readlink -f /sys/class/tty/$comport/device/../idProduct))
+		;;
+		*) exit 0 ;;
+	esac
+	VIDPID=${VID}${PID}
+	FAMILY=$(awk -F [\;] '/'$VIDPID'/{print toupper($2)}' $RES/modem.list)
+	if [ ! $FAMILY ]; then
+		FAMILY=GENERIC
 	fi
 }
 
@@ -113,10 +71,6 @@ function get_csq(){
 function get_cops() {
 	# COPS
 	COPS_NUM=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,2/ {print $2}')
-	# Fibocom FM350 only?
-	if ! [ $COPS_NUM ]; then
-		COPS_NUM=$(echo "$O" | awk -F[\"] '/^\+COPS:/ {print $2}')
-	fi
 	if [ "x$COPS_NUM" != "x" ]; then
 		COPS_MCC=${COPS_NUM:0:3}
 		COPS_MNC=${COPS_NUM:3:3}
