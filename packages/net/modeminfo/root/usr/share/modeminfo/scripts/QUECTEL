@@ -3,11 +3,11 @@ function modem_data(){
 	generic_data
 	# hwinfo
         MANUF=$(echo "$O" | grep -i $FAMILY)
-        MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
-        DEVICE="$MANUF $MODEL"
+	MDL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
+	DEVICE="$MANUF $MDL"
         FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
         ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-	case $MODEL in
+	case $MDL in
 		*EC200*)
 		        IMSI=$(echo "$O" | grep -A3 -i $FAMILY | tail -1)
 		        IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
@@ -32,7 +32,7 @@ function modem_data(){
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
-		case $MODEL in
+		case $MDL in
 			# EC200 send incorrect RSSI value, use value from AT+CSQ
 			*EC200*) continue ;;
 			*) CSQ_RSSI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $17}') ;;
@@ -79,7 +79,7 @@ function modem_data(){
 		ECIO=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
 		SINR=$ECIO
 	fi
-	case $MODEL in                                                                                            
+	case $MDL in
 		*EM160*) CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP: \"cpu-usr\"/ {gsub("\"","");print $3}') ;;
 		*)
 			CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $3}')
