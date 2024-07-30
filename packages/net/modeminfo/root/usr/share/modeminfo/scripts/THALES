@@ -1,5 +1,6 @@
 modem_data(){
         # hwinfo
+	O=$(echo "$O" | grep -Ev 'OK|^$')
         MANUF=$(echo "$O" | grep -i $FAMILY)
         MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
         DEVICE="$MANUF $MODEL"
