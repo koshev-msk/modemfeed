@@ -11,8 +11,8 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ndpi-netfilter
-PKG_REV:=9a6412b70daf21034e1ae93980585a2edd79a70d
-PKG_VERSION:=10242023-flow_info-4
+PKG_REV:=d824fc1ffc4b148f2f545c365790f897c220963f
+PKG_VERSION:=07092024-flow_info-4
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -55,16 +55,11 @@ MAKE_FLAGS += \
 INCLUDE_SRC += -I../../src/include/ -I../../src/lib/third_party/include/
 CFLAGS += -g -O2 -fPIC -DPIC -DNDPI_LIB_COMPILATION
 
-NDPI_NETLIST += ndpi_network_list_compile
-YAML_LIST = ndpi_network_list_*.yaml
-
 #MAKE_FLAGS += \
 #    NDPI_PATH=$(PKG_BUILD_DIR)/ndpi-netfilter
 
 define Build/Compile
-	(cd $(PKG_BUILD_DIR)/src/lib && $(HOSTCC) $(CFLAGS) $(INCLUDE_SRC) ndpi_network_list_compile.c -o $(NDPI_NETLIST) && \
-		./$(NDPI_NETLIST) -o ndpi_network_list.c.inc $(YAML_LIST) && \
-		$(MAKE) $(MAKE_FLAGS) -C $(PKG_BUILD_DIR)/ndpi-netfilter)
+	$(MAKE) $(MAKE_FLAGS) -C $(PKG_BUILD_DIR)/ndpi-netfilter
 endef
 
 define Package/iptables-mod-ndpi/install

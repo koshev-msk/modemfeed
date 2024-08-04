@@ -1,0 +1,26 @@
+--- a/ndpi-netfilter/src/Makefile
++++ b/ndpi-netfilter/src/Makefile
+@@ -4,15 +4,21 @@ NDPI_PRO := ${NDPI_SRC}/lib/protocols
+ ccflags-y += -I${src}/${NDPI_SRC}/include -I${src}/${NDPI_SRC}/lib -I${src}/../libre -I${src}/${NDPI_SRC}/lib/third_party/include 
+ ccflags-y += -DHAVE_CONFIG_H -DNDPI_LIB_COMPILATION -DOPENDPI_NETFILTER_MODULE -DNDPI_DETECTION_SUPPORT_IPV6
+ #ccflags-y += -DUSE_GLOBAL_CONTEXT
+-ccflags-y += -g -Wno-declaration-after-statement
++ccflags-y += -g -Wno-declaration-after-statement -Werror=frame-larger-than=4096
+ # Needed for pahole
+ ccflags-y += -femit-struct-debug-detailed=any
+ 
++ifeq ($(KERNEL_RELEASE),5.15)
++ifeq ($(ARCH),arm64)
++	ccflags-y += -mno-outline-atomics
++endif
++endif
++
+ ifndef $(KERNEL_DIR)
+ KERNEL_DIR := /lib/modules/$(shell uname -r)/build
+ endif
+ 
+-ifeq ($(shell test -f $(KERNEL_DIR)/source/include/linux/skbuff.h && grep -c userid $(KERNEL_DIR)/source/include/linux/skbuff.h),1)
++ifeq ($(shell test -f $(KERNEL_DIR)/include/linux/skbuff.h && grep -qc userid $(KERNEL_DIR)/include/linux/skbuff.h),1)
+ ccflags-y += -DUSE_HACK_USERID=1
+ endif
+ 
