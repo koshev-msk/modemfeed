@@ -1,3 +1,4 @@
+#B
 #
 # Copyright (C) 2013-2015 OpenWrt.org
 #
@@ -8,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=accel-ppp
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=1.13.0
 
 PKG_SOURCE_PROTO:=git
@@ -73,10 +74,6 @@ define Package/$(PKG_NAME)/install
 		$(PKG_INSTALL_DIR)/usr/lib/accel-ppp/*.so \
 		$(1)/usr/lib/accel-ppp/
 
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/lib/accel-ppp/libtriton.so \
-		$(1)/usr/lib/
-
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/accel-ppp/radius/dictionary.* \
 		$(1)/usr/share/accel-ppp/radius/
@@ -93,6 +90,16 @@ define Package/$(PKG_NAME)/install
 		files/accel-ppp.conf \
 		$(1)/etc/accel-ppp
 
+endef
+
+define Package/$(PKG_NAME)/postinst
+if [ -f /usr/lib/accel-ppp/libtriton.so ]; then
+	ln -s /usr/lib/accel-ppp/libtriton.so /usr/lib/
+fi
+endef
+
+define Package/$(PKG_NAME)/prerm
+rm -rf /usr/lib/libtriton.so
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
