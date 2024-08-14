@@ -1,0 +1,51 @@
+--- a/accel-pppd/ctrl/ipoe/arp.c
++++ b/accel-pppd/ctrl/ipoe/arp.c
+@@ -13,7 +13,6 @@
+ #include <netinet/ip.h>
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
+-#include <linux/if_arp.h>
+ #include <linux/if_packet.h>
+ 
+ #include "list.h"
+ #include "triton.h"
+--- a/accel-pppd/ctrl/ipoe/ipoe.c.orig
++++ b/accel-pppd/ctrl/ipoe/ipoe.c
+@@ -15,7 +15,6 @@
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
+ #include <linux/if.h>
+-#include <linux/if_arp.h>
+ #include <linux/route.h>
+ 
+ #include <pcre.h>
+--- a/accel-pppd/ctrl/pppoe/pppoe.c
++++ b/accel-pppd/ctrl/pppoe/pppoe.c
+@@ -11,7 +11,6 @@
+ #include <net/ethernet.h>
+ #include <netpacket/packet.h>
+ #include <arpa/inet.h>
+-#include <printf.h>
+ 
+ #include "crypto.h"
+ 
+--- a/accel-pppd/include/ap_session.h
++++ b/accel-pppd/include/ap_session.h
+@@ -5,6 +5,7 @@
+ 
+ #include "triton.h"
+ #include "ap_net.h"
++#include "pthread.h"
+ 
+ //#define AP_SESSIONID_LEN 16
+ #define AP_IFNAME_LEN 16
+--- a/accel-pppd/session_backup.c
++++ b/accel-pppd/session_backup.c
+@@ -5,6 +5,7 @@
+ #include <unistd.h>
+ #include <netinet/in.h>
+ 
++#include "pthread.h"
+ #include "events.h"
+ #include "triton.h"
+ #include "log.h"
