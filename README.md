@@ -34,6 +34,6 @@ make -j$((`nproc` + 1)) package/feeds/modemfeed/<package_name>/compile
 
 or `make menuconfig` menu to include package(s) firmware in Buildroot
 
-# Precompiled packages
+# Precompiled packages 21 and 23 branch
 
-http://openwrt.132lan.ru/packages/21.02/packages/
+http://openwrt.132lan.ru/packages/
