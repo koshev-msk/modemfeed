@@ -19,7 +19,6 @@ proto_t2s_init_config(){
 	proto_config_add_string "username"
 	proto_config_add_string "password"
 	proto_config_add_string "opts"
-	proto_config_add_string "testing"
 	proto_config_add_int "mtu"
 	proto_config_add_int "port"
 	proto_config_add_int "fwmark"
@@ -120,7 +119,7 @@ proto_t2s_setup(){
 			;;
 		esac
 	}
-	
+
 	case $proxy in
 		direct|reject) ARGS="-proxy ${proxy}://" ;;
 		# TODO
@@ -156,7 +155,6 @@ proto_t2s_setup(){
 	proto_add_data
 	proto_close_data
 	ip tuntap add mode tun dev $interface
-	ip link set dev $interface up
 	proto_set_keep 1
 	proto_add_ipv4_address $ipaddr $netmask
 	[ $gateway ] && {
@@ -167,12 +165,10 @@ proto_t2s_setup(){
 	proto_send_update "$interface"
 	proto_run_command "$interface" /usr/sbin/tun2socks \
 		-device "$interface" $ARGS
-	set > /tmp/proto_up.log
 }
 
 proto_t2s_teardown(){
 	local interface="$1"
-	set > /tmp/proto_down.log
 	proto_kill_command "$interface"
 	ip tuntap del mode tun dev $interface
 }
