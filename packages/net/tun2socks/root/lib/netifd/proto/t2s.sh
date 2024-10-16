@@ -71,7 +71,7 @@ proto_t2s_setup(){
 	ifname=$interface
 	[ "$metric" = "" ] && metric="0"
 	[ "$proxy" = "" ] && proxy=socks5
-
+	[ "$loglevel" = "" ] && loglevel=error
 	[ "$host" -a "$port" ] && {
 		case "$proxy" in
 			http) ARGS="-proxy ${proxy}://${host}:${port}" ;;
@@ -135,7 +135,7 @@ proto_t2s_setup(){
 		proto_set_available "$interface" 0
 	}
 
-	[ "$loglevel" = "" ] && loglevel=error && {
+	[ "$loglevel" ] && {
 		ARGS="$ARGS -loglevel $loglevel"
 	}
 
