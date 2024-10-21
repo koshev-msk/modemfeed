@@ -170,8 +170,6 @@ proto_t2s_setup(){
 	proto_send_update "$interface"
 	proto_run_command "$interface" /usr/sbin/tun2socks \
 		-device "$interface" $ARGS
-
-	set > /tmp/proto_up.log
 }
 
 proto_t2s_teardown(){
