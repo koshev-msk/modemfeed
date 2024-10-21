@@ -19,11 +19,11 @@ proto_t2s_init_config(){
 	proto_config_add_string "username"
 	proto_config_add_string "password"
 	proto_config_add_string "opts"
+	proto_config_add_string "sockpath"
 	proto_config_add_int "mtu"
-	proto_config_add_int "port"
 	proto_config_add_int "fwmark"
-	proto_config_add_bool "socket"
-	proto_config_add_bool "base64enc"
+	proto_config_add_boolean "socket"
+	proto_config_add_boolean "base64enc"
 	proto_config_add_defaults
 }
 
@@ -64,57 +64,58 @@ proto_t2s_setup(){
 	local interface="$1"
 	local ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark 
 	local base64enc socket obfs_host port mtu
-	local username password opts $PROTO_DEFAULT_OPTIONS
+	local username password opts sockpath $PROTO_DEFAULT_OPTIONS
 	json_get_vars ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark
 	json_get_vars base64enc socket obfs_host port mtu
-	json_get_vars username password opts $PROTO_DEFAULT_OPTIONS
+	json_get_vars username password opts sockpath $PROTO_DEFAULT_OPTIONS
 	ifname=$interface
 	[ "$metric" = "" ] && metric="0"
 	[ "$proxy" = "" ] && proxy=socks5
 	[ "$loglevel" = "" ] && loglevel=error
-	[ "$host" -a "$port" ] && {
+	[ "$host" ] && {
 		case "$proxy" in
-			http) ARGS="-proxy ${proxy}://${host}:${port}" ;;
+			http) ARGS="-proxy ${proxy}://${host}" ;;
 			socks4)
 				[ "$username" ] && {
-					ARGS="-proxy ${proxy}://${username}@${host}:${port}"
+					ARGS="-proxy ${proxy}://${username}@${host}"
 				} || {
-					ARGS="-proxy ${proxy}://${host}:${port}"
+					ARGS="-proxy ${proxy}://${host}"
 				}
 			;;
 			socks5)
 				[ "$username" -a "$password" ] && {
-					ARGS="-proxy ${proxy}://${username}:${password}@${host}:${port}"
+					ARGS="-proxy ${proxy}://${username}:${password}@${host}"
 				} || {
-					ARGS="-proxy ${proxy}://${host}:${port}"
+					ARGS="-proxy ${proxy}://${host}"
 				}
 			;;
 			ss)
 				#check_encrypt
 				[ "$encrypt" -a "$password" ] && {
-					# TODO 
-					#[ "$base64enc" = "1" ] && {
-					#	[ "$obfs_host" ] && {
-					#		ARGS="-proxy ${proxy}://base64_encode(${encrypt}:${password})@${host}:${port}/\<\?obfs=http\;obfs-host=$obfs_host\>"
-					#	} || {
-					#		ARGS="-proxy ${proxy}://base64_encode(${encrypt}:${password})@${host}:${port}"
-					#	}
-					#} || {
+					[ "$base64enc" = "1" ] && {
+						base64gen=$(echo ${encrypt}:${password} | base64)
 						[ "$obfs_host" ] && {
-							ARGS="-proxy ${proxy}://${encrypt}:${password}@${host}:${port}/\<\?obfs=http\;obfs-host=$obfs_host\>"
+							ARGS="-proxy ${proxy}://${base64gen}@${host}/\<\?obfs=http\;obfs-host=$obfs_host\>"
 						} || {
-							ARGS="-proxy ${proxy}://${encrypt}:${password}@${host}:${port}"
+							ARGS="-proxy ${proxy}://${base64gen}@${host}"
 						}
-					#}
+					} || {
+						[ "$obfs_host" ] && {
+							ARGS="-proxy ${proxy}://${encrypt}:${password}@${host}/\<\?obfs=http\;obfs-host=$obfs_host\>"
+						} || {
+							ARGS="-proxy ${proxy}://${encrypt}:${password}@${host}"
+						}
+					}
 				} || {
-					ARGS="-proxy ${proxy}://${host}:${port}"
+					proto_notify_error "$interface" CONFIGURE_FAILED
+					proto_set_available "$interface" 0
 				}
 			;;
 			relay)
 				[ "$username" -a "$password" ] && {
-					ARGS="-proxy ${proxy}://${encrypt}:${password}@${host}:${port}/\<nodelay=false\>"
+					ARGS="-proxy ${proxy}://${encrypt}:${password}@${host}/\<nodelay=false\>"
 				} || {
-					ARGS="-proxy ${proxy}://${host}:${port}/\<nodelay=false\>"
+					ARGS="-proxy ${proxy}://${host}/\<nodelay=false\>"
 				}
 			;;
 		esac
@@ -122,12 +123,16 @@ proto_t2s_setup(){
 
 	case $proxy in
 		direct|reject) ARGS="-proxy ${proxy}://" ;;
-		# TODO
-		#socks5)
-		#	[ "$socket" ] && {
-		#		ARGS="-proxy ${proxy}://${socket}"
-		#	}
-		#;;
+		socks5)
+			[ "$socket" ] &&  {
+				[ "$sockpath" ] && {
+					ARGS="-proxy ${proxy}://${sockpath}"
+				} || {
+					proto_notify_error "$interface" CONFIGURE_FAILED
+					proto_set_available "$interface" 0
+				}
+			}
+		;;
 	esac
 
 	[ "x${ARGS}" = "x" ] && {
@@ -165,6 +170,8 @@ proto_t2s_setup(){
 	proto_send_update "$interface"
 	proto_run_command "$interface" /usr/sbin/tun2socks \
 		-device "$interface" $ARGS
+
+	set > /tmp/proto_up.log
 }
 
 proto_t2s_teardown(){

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tun2socks
 PKG_VERSION:=2.5.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/xjasonlyu/tun2socks.git
@@ -29,7 +29,8 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   TITLE:=tun to socks proxy redirector written on golang
   URL:=https://github.com/xjasonlyu/tun2socks
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-tun +ip-full
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle \
+	   +kmod-tun +ip-full +coreutils-base64
 endef
 
 define Package/$(PKG_NAME)/install

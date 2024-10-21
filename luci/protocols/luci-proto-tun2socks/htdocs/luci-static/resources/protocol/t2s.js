@@ -38,6 +38,7 @@ return network.registerProtocol('t2s', {
 	renderFormOptions: function(s) {
 		var dev = this.getL3Device() || this.getDevice(), o;
 
+
                 o = s.taboption('general', form.ListValue, 'proxy', _('Proxy Type'));
 		o.value('http', 'HTTP');
                 o.value('socks4', 'SOCKS4');
@@ -50,9 +51,8 @@ return network.registerProtocol('t2s', {
                 o.rmempty = true;
 		
 		// TODO
-		//o = s.taboption('general', form.Flag, 'socket', _('Use Socket'), _('Use Unix Domain Socket instead address'));
-		//o.depends({'proxy': 'socks5' });
-		//o.rmempty = true;
+		o = s.taboption('general', form.Flag, 'socket', _('Use Socket'), _('SOCKS5 only!<br />Use Unix Domain Socket instead address'));
+		o.rmempty = true;
 
 		o = s.taboption('general', form.Value, 'ipaddr', _('IPv4 Address'));
 		o.datatype = 'ip4addr("nomask")';
@@ -70,15 +70,13 @@ return network.registerProtocol('t2s', {
 		o.depends({'proxy': /http|socks4|socks5|relay|ss/ });
 		o.rmempty = false;
 
-		o = s.taboption('general', form.Value, 'host', _('Proxy Address'), _('IP-address or FQDN hostname proxy'));
-		o.datatype = 'or(hostname,ip4addr("nomask"))';
-		o.depends({'proxy': /http|socks4|socks5|relay|ss/ });
+		o = s.taboption('general', form.Value, 'host', _('Proxy Address'), _('IP-address or FQDN hostname proxy<br/>Format: <code>host:port</code>'));
+		o.datatype = 'or(hostport,ipaddrport)';
+		o.depends({'socket': '0', 'proxy': /http|socks4|socks5|relay|ss/ });
 		o.rmempty = true;
 
-		o = s.taboption('general', form.Value, 'port', _('Proxy PORT'));
-		o.datatype = 'range(1, 65535)';
-		o.depends({'proxy': /http|socks4|socks5|relay|ss/ });
-		o.rmempty = true;
+		o = s.taboption('general', form.Value, 'sockpath', _('Unix Socket'), _('Path to Unix Socket<br/>Format: <code>/path/to/unix.socket</code>'));
+		o.depends({'socket': '1' , 'proxy': 'socks5' });
 
 		o = s.taboption('general', form.Flag, 'advanced', _('Autentification'), _('Authentification and encryption.'));
 		o.depends({'proxy': /socks4|socks5|relay|ss/ });
@@ -115,10 +113,10 @@ return network.registerProtocol('t2s', {
 		o = s.taboption('general', form.Value, 'password', _('Proxy Password'));
 		o.password = true;
 		o.depends({'advanced': '1', 'proxy': /socks5|relay|ss/ });
-		// TODO
-		//o = s.taboption('general',form.Flag, 'base64enc', _('Encrypt base64'));
-		//o.depends({'advanced': '1', 'proxy': 'ss' });
-		//o.rmempty = true;
+
+		o = s.taboption('general',form.Flag, 'base64enc', _('Encrypt base64'));
+		o.depends({'advanced': '1', 'proxy': 'ss' });
+		o.rmempty = true;
 
 		o = s.taboption('advanced', form.Value, 'mtu', _('Set MTU'), _('Set device maximum transmission unit'));
 		o.placeholder = dev ? (dev.getMTU() || '1500') : '1500';
