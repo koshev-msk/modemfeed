@@ -1,4 +1,4 @@
-# OpenWrt netifd protocol handler for tun2sock go application
+# OpenWrt netifd protocol handler for tun2socks go application
 
 # How-to configure tun2socks interface
 The config stored in /etc/config/network. Example configuration:
