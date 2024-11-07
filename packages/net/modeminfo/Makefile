@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
 PKG_VERSION:=0.4.2
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -90,11 +90,10 @@ define Package/$(PKG_NAME)-telegram/install
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
-$(eval $(call SerialPlugin,simcom-a7xxx,+kmod-usb-serial-option +kmod-usb-acm,SIMCOM A7600/A7906,A7XXX))
-$(eval $(call SerialPlugin,simcom,+kmod-usb-serial-option,SIMCOM SIM7600/SIM7906/SIM7912,SIMCOM))
+$(eval $(call SerialPlugin,simcom,+kmod-usb-serial-option +kmod-usb-acm,SIMCOM SIM7600/SIM7906/SIM7912/A7600/A7906,SIMCOM))
 $(eval $(call SerialPlugin,huawei,+kmod-usb-serial-option,HUAWEI,HUAWEI))
 $(eval $(call SerialPlugin,quectel,+kmod-usb-serial-option,QUECTEL,QUECTEL))
-$(eval $(call SerialPlugin,fibocom,+kmod-usb-serial-option,FIBOCOM NL668/678,FIBOCOM))
+$(eval $(call SerialPlugin,fibocom,+kmod-usb-serial-option +kmod-usb-acm,FIBOCOM NL668/678/FM150/FM190/FM350,FIBOCOM))
 $(eval $(call SerialPlugin,telit,+kmod-usb-serial-option,TELIT LN940/T77W678/HP4220,QUALCOMM))
 $(eval $(call SerialPlugin,xmm,+kmod-usb-acm,FIBOCOM L850/L860 Intel XMM chips,INTEL))
 $(eval $(call SerialPlugin,mikrotik,+kmod-usb-acm,MikroTik R11e-LTE/R11e-LTE6,MIKROTIK))
@@ -106,7 +105,6 @@ $(eval $(call SerialPlugin,gosun,+kmod-usb-serial-option,Gosuncnwelink GM510,GOS
 $(eval $(call SerialPlugin,tw,+kmod-usb-serial-option,ThinkWill ML7820+,THINKWILL))
 $(eval $(call SerialPlugin,yuge,+kmod-usb-serial-option,Yuge CLM920,YUGE))
 $(eval $(call SerialPlugin,zte,+kmod-usb-serial-option,ZTE MF823/MF823D,ZTE))
-$(eval $(call SerialPlugin,fm350,+kmod-usb-acm,FIBOCOM FM350,FM350))
 $(eval $(call SerialPlugin,thales,+kmod-usb-serial-option,Thales MV31-W T99W175,THALES))
 $(eval $(call BuildPackage,$(PKG_NAME)-qmi))
 $(eval $(call BuildPackage,$(PKG_NAME)-telegram))
