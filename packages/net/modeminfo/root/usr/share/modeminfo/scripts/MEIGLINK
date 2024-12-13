@@ -12,6 +12,7 @@ function modem_data(){
 	IMEI=$(echo "$DATA" | grep -A1 -i $ICCID | tail -1)
 	CHIPTEMP=$(echo "$DATA" | awk -F[,\ ] '/^\+TEMP: \"cpuss-usr\"/ {gsub("\"","");print $3}')
 	# signal info
+	CSQ_RSSI=$(echo "$DATA" | awk -F [,\ ] '/^\$QCSQ/{gsub(":","");print $2}')
 	case $MODE in
 		*LTE*)
 			BSP=$(echo "$DATA" |awk -F "[\, ]" '/\^CELLINFO:/{print $0}' | head -1)
