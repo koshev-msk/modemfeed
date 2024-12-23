@@ -6,8 +6,8 @@
 
 # Get NameServers and Domain search
 get_ns(){
-	DNS=$(env |  awk '/dhcp-option DNS/{gsub("'\''", "");print $3}')
-	DOMAIN=$(env |  awk '/dhcp-option DOMAIN/{gsub("'\''", "");print $3}')
+	DNS=$(env |  awk '/dhcp-option DNS/{gsub("'\''", "");print $NF}')
+	DOMAIN=$(env |  awk '/dhcp-option DOMAIN/{gsub("'\''", "");print $NF}')
 }
 
 # Setting up NameServers and Domain
@@ -51,13 +51,12 @@ done
 case $PROTO in 
 	none)
 		# Check peerdns option in uci interface section
-		PEERDNS=$(uci -q get network.$CFGIFACE.peerdns)
-		if [ "x$PEERDNS" != "x" -a $PEERDNS -eq 0 ]; then
-			unset_ns
-			exit 0
-		fi
+		PEERDNS=$(uci -q get network.$CFGIFACE.dns)
 		case $ACTION in
 			up)
+				if [ "x${PEERDNS}" != "x" ]; then
+					exit 0
+				fi
 				if  [ "$DNS" ]; then
 					unset_ns
 					set_ns
