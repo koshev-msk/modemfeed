@@ -83,6 +83,10 @@ function modem_data(){
 			ch_to_band $sca
 			SCC=$SCC+$SC
 		done
+		# Fix 7+7+7 wrong CA
+		if [ "$(ch_to_band $EARCFCN)" = "7" -a "$SCC" = "+7+7" ]; then
+			SCC="+7"
+		fi
 	else
 		REGST=$(echo "$O" | awk -F[,] '/\+CREG/ {print $2}')
         	LAC=$(echo "$O" | awk -F [,] '/\+CREG/{gsub("\"","");print $3}')
