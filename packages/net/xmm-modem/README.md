@@ -7,12 +7,13 @@ The config stored in /etc/config/network. Example configuration:
 config interface 'wwan'
 	option device '/dev/ttyACM0' # Device serial port
 	option proto 'xmm'
-	option pdp 'ip' # Connect method IPV4/6 version
-	option apn 'internet' # APN Cellular
-	option delay '10' # Delay interface to connect
-	optiom auth 'auto' # Auth type (auto, pap or chap)
-	option username 'username' # username 
-	option password 'password' # password
+	option pdp 'ip'			# Connect method IPV4/6 version
+	option profile '0'		# PDP context. (default: 1)
+	option apn 'internet'		# APN Cellular
+	option delay '10'		# Delay interface to connect.
+	optiom auth 'auto'		# Auth type (auto, pap or chap)
+	option username 'username'	# username 
+	option password 'password'	# password
 ```
 
 # How-to configure interface via LuCi
