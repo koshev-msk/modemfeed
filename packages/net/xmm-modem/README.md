@@ -5,7 +5,7 @@ Intel XMM 7360/7650 LTE-A Pro modem
 The config stored in /etc/config/network. Example configuration:
 ```
 config interface 'wwan'
-	option device '/dev/ttyACM0' # Device serial port
+	option device '/dev/ttyACM0'	# Device serial port
 	option proto 'xmm'
 	option pdp 'ip'			# Connect method IPV4/6 version
 	option profile '0'		# PDP context. (default: 1)
