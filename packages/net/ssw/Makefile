@@ -1,20 +1,21 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=fm350-modem
-PKG_VERSION:=0.0.2
-PKG_RELEASE:=2
-PKG_MAINTAINER:=
+PKG_NAME:=ssw
+PKG_VERSION:=0.0.1
+PKG_RELEASE:=1
+PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
   PKGARCH:=all
-  DEPENDS:=+comgt +kmod-usb-acm +kmod-usb-serial-option +kmod-usb-net-rndis
-  TITLE:=Fibocom FM350 protocol
+  DEPENDS:=+modemmanager +mwan3
+  TITLE:=SIM-card switcher and tracker
 endef
 
 define Package/$(PKG_NAME)/description
-	Simple connect to cellular for Fibocom FM350 module
+	SIM-card tracker for HuastLink HC-G60 and ZBTLint ZBT-WE2806-A
+	or similar CPE-routers with two SIM slots and one 4g/5G modem
 endef
 
 

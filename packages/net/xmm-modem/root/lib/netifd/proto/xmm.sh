@@ -26,34 +26,55 @@ proto_xmm_setup() {
 	local name ifname proto extendprefix auth username password
 	local device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
 	json_get_vars device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
+
 	[ "$profile" = "" ] && profile="1"
 	[ "$metric" = "" ] && metric="0"
+	[ "$delay" = "" ] && delay="5"
+	sleep $delay
 	[ -z $ifname ] && {
 		devname=$(basename $device)
-		case "$devname" in
-			*ttyACM*)
-				echo "Setup xmm interface $interface with port ${device}"
-				devpath="$(readlink -f /sys/class/tty/$devname/device)"
-				[ "${devpath}x" != "x" ] && {
-					echo "Found path $devpath"
-					hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
-					for h in $hwaddr; do
-						if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
-							ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
-						fi
-					done
-				} || {
-					[ -n $delay ] && sleep $delay || sleep 5
-					echo "Device path not found!"
-					proto_notify_error "$interface" NO_DEVICE_FOUND
-					return 1
-				}
+		devpath="$(readlink -f /sys/class/tty/$devname/device)"
+		VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idVendor))
+		PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idProduct))
+		if ! [ $VID ]; then
+			VID=$(cat $(readlink -f /sys/class/tty/ttyUSB4/device/../../idVendor))
+			PID=$(cat $(readlink -f /sys/class/tty/ttyUSB4/device/../../idProduct))
+		fi
+		VIDPID=$VID$PID
+		case $VIDPID in
+			8087095a) PREFIX="xmm" ;;
+			0e8d7126|0e8d7127) PREFIX="fm350" ;;
+			*)
+				echo "Modem not supported!"
+				proto_notify_error "NOT_SUPPORTED"
+				return 1
 			;;
 		esac
+		case "$devname" in
+			*ttyACM*|*ttyUSB*)
+				case $VIDPID in
+					8087095a) hwaddr="$(ls -1 $devpath/../*/net/*/*address*)" ;;
+					0e8d7126|0e8d7127) hwaddr="$(ls -1 $devpath/../../*/net/*/*address*)" ;;
+				esac
+			;;
+		esac
+		echo "Setup $PREFIX interface $interface with port ${device}"
+		[ "${devpath}x" != "x" ] && {
+			echo "Found path $devpath"
+			for h in $hwaddr; do
+				if [ "$(cat ${h})" = "00:00:11:12:13:14" ]; then
+					ifname=$(echo ${h} | awk -F [\/] '{print $(NF-1)}')
+				fi
+			done
+		} || {
+			echo "Device path not found!"
+			proto_notify_error "$interface" NO_DEVICE_FOUND
+			return 1
+		}
 	}
 
 	[ -n "$ifname" ] && {
-		echo "Found interface $ifname"
+	echo "Found interface $ifname"
 	} || {
 		echo "The interface could not be found."
 		proto_notify_error "$interface" NO_IFACE
@@ -71,22 +92,30 @@ proto_xmm_setup() {
 			chap) AUTH=2 ;;
 			*) AUTH=0 ;;
 		esac
-		CID=$profile AUTH=$AUTH USER="$username" PASS="$password" gcom -d "$device" -s /etc/gcom/xmm-auth.gcom >/dev/null 2>&1
+		CID=$profile AUTH=$AUTH USER="$username" PASS="$password" gcom -d "$device" -s /etc/gcom/${PREFIX}-auth.gcom >/dev/null 2>&1
 	}
-	CID=$profile APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2>&1
+
+	CID=$profile APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/${PREFIX}-connect.gcom >/dev/null 2>&1
 	proto_init_update "$ifname" 1
 	proto_add_data
 	proto_close_data
-	DATA=$(CID=$profile gcom -d $device -s /etc/gcom/xmm-config.gcom)
+	DATA=$(CID=$profile gcom -d $device -s /etc/gcom/${PREFIX}-config.gcom)
 	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2>&1
 	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2>&1
-	ns=$(echo "$DATA" | awk -F [,] '/^\+XDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
+	case $VIDPID in
+		8087095a)
+			ns=$(echo "$DATA" | awk -F [,] '/^\+XDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
+		;;
+		0e8d7126|0e8d7127)
+			ns=$(echo "$DATA" | awk -F [,] '/^\+GTDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
+		;;
+	esac
 	dns1=$(echo "$ns" | grep -v "0.0.0.0" | tail -1)
 	if ! [ $ip4addr ]; then
 		proto_notify_error "$interface" CONFIGURE_FAILED
 		return 1
 	fi
-	
+
 	case $ip4addr in
 		*FE80*)
 			lladdr=$ip4addr
@@ -117,8 +146,8 @@ proto_xmm_setup() {
 		proto_add_data
 		proto_close_data
 		proto_send_update "$interface"
-	
 	}
+
 	[ "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] && {
 		ip -6 address add ${lladdr}/64 dev $ifname >/dev/null 2>&1
 		json_init
@@ -143,4 +172,5 @@ proto_xmm_teardown() {
 }
 
 add_protocol xmm
+
 

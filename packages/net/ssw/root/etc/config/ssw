@@ -1,0 +1,11 @@
+
+config modem 'modem'
+	option gpio 'modem'
+	option value '1'
+
+config sim 'sim'
+	option gpio 'sim'
+	option value '1'
+
+config failover 'failover'
+
