@@ -34,9 +34,10 @@ proto_xmm_setup() {
 	[ -z $ifname ] && {
 		devname=$(basename $device)
 		devpath="$(readlink -f /sys/class/tty/$devname/device)"
-		VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idVendor))
-		PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idProduct))
-		if ! [ $VID ]; then
+		if [ -r $(readlink -f /sys/class/tty/$devname/device/../idVendor) ]; then
+			VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idVendor))
+			PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idProduct))
+		else
 			VID=$(cat $(readlink -f /sys/class/tty/ttyUSB4/device/../../idVendor))
 			PID=$(cat $(readlink -f /sys/class/tty/ttyUSB4/device/../../idProduct))
 		fi
@@ -46,7 +47,7 @@ proto_xmm_setup() {
 			0e8d7126|0e8d7127) PREFIX="fm350" ;;
 			*)
 				echo "Modem not supported!"
-				proto_notify_error "NOT_SUPPORTED"
+				proto_notify_error "$interface" NO_DEVICE_SUPPORT
 				return 1
 			;;
 		esac
