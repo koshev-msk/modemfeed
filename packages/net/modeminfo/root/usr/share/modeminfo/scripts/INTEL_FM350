@@ -2,7 +2,10 @@
 function modem_data(){
     generic_data
     # AT+CSQ not correct RSSI value data use AT+CESQ
-    CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CESQ/ {print $2}')
+    RSSI_RAW=$(echo "$O" | awk -F[,\ ] '/^\+CESQ/ {print $2}')
+    # Need correct value!
+    CSQ_RSSI=$(($RSSI_RAW-110))
+    CSQ=$((113-(2*$RSSI_RAW)))
     [ "x$CSQ" = "x" ] && CSQ=-1
     if [ $CSQ -ge 0 -a $CSQ -le 31 ]; then
         CSQ_PER=$(($CSQ * 100/31))
@@ -10,7 +13,9 @@ function modem_data(){
         [ $CSQ -ge 10 ] && CSQ_COL="red"
         [ $CSQ -ge 15 ] && CSQ_COL="orange"
         [ $CSQ -ge 20 ] && CSQ_COL="green"
-        CSQ_RSSI=$((2 * CSQ - 113))
+    elif [ $CSQ -ge 32 -a $CSQ -le 50 ]; then
+ 	CSQ_PER="100"
+	CSQ_COL="green"
     else
         CSQ_PER="0"
         CSQ_COL="black"
