@@ -167,11 +167,11 @@ proto_xmm_teardown() {
 	local device profile
 	json_get_vars device profile
 	[ "$profile" = "" ] && profile="1"
-	gcom -d $device -s /etc/gcom/xmm-disconnect.gcom >/dev/null 2>&1
+	CID=$profile gcom -d $device -s /etc/gcom/xmm-disconnect.gcom >/dev/null 2>&1
 	echo "Modem $device disconnected"
 	proto_kill_command "$interface"
 }
 
-add_protocol xmm
+[-n "$INCLUDE_ONLY" ] || add_protocol xmm
 
 
