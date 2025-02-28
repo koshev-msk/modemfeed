@@ -172,6 +172,6 @@ proto_xmm_teardown() {
 	proto_kill_command "$interface"
 }
 
-[-n "$INCLUDE_ONLY" ] || add_protocol xmm
+[ -n "$INCLUDE_ONLY" ] || add_protocol xmm
 
 
