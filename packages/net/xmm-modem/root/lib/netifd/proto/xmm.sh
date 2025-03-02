@@ -38,8 +38,8 @@ proto_xmm_setup() {
 			VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idVendor))
 			PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idProduct))
 		else
-			VID=$(cat $(readlink -f /sys/class/tty/ttyUSB4/device/../../idVendor))
-			PID=$(cat $(readlink -f /sys/class/tty/ttyUSB4/device/../../idProduct))
+			VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../../idVendor))
+			PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../../idProduct))
 		fi
 		VIDPID=$VID$PID
 		case $VIDPID in
