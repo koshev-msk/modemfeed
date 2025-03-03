@@ -111,11 +111,8 @@ proto_xmm_setup() {
 			ns=$(echo "$DATA" | awk -F [,] '/^\+GTDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
 		;;
 	esac
+
 	dns1=$(echo "$ns" | grep -v "0.0.0.0" | tail -1)
-	if ! [ $ip4addr ]; then
-		proto_notify_error "$interface" CONFIGURE_FAILED
-		return 1
-	fi
 
 	case $ip4addr in
 		*FE80*)
@@ -144,13 +141,13 @@ proto_xmm_setup() {
 			proto_add_dns_server "$dns1"
 			echo "Using IPv4 DNS: $dns1"
 		fi
-		proto_add_data
-		proto_close_data
-		proto_send_update "$interface"
 	}
 
+	proto_add_data
+	proto_close_data
+	proto_send_update "$interface"
+
 	[ "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] && {
-		ip -6 address add ${lladdr}/64 dev $ifname >/dev/null 2>&1
 		json_init
 		json_add_string name "${interface}_6"
 		json_add_string ifname "@$interface"
