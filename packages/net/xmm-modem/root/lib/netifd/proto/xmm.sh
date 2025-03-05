@@ -6,6 +6,11 @@
 init_proto "$@"
 
 
+valid_ip4(){
+	/bin/ipcalc.sh "$(echo ${1}/${ip4mask} | grep -v 0.0.0.0 | tail -1)"
+}
+
+
 proto_xmm_init_config() {
 	no_device=1
 	available=1
@@ -85,7 +90,6 @@ proto_xmm_setup() {
 	pdp=$(echo $pdp | awk '{print toupper($0)}')
 	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP"
 	echo "Setting up $ifname"
-	[ -n "$delay" ] && sleep "$delay" || sleep 5
 	[ -n "$username" ] && [ -n "$password" ] && {
 		echo "Using auth type is: $auth"
 		case $auth in
@@ -128,7 +132,7 @@ proto_xmm_setup() {
 	ip link set dev $ifname arp off
 	echo "PDP type is: $pdp"
 	[ "$pdp" = "IP" -o "$pdp" = "IPV4V6" ] && {
-		if ! [ "$(echo $ip4addr | grep 0.0.0.0)" ]; then
+		if [ "$(valid_ip4 $ip4addr)" ]; then
 			echo "Set IPv4 address: ${ip4addr}/${ip4mask}"
 			proto_add_ipv4_address $ip4addr $ip4mask
 			proto_add_ipv4_route "0.0.0.0" 0 $defroute $ip4addr
@@ -137,7 +141,7 @@ proto_xmm_setup() {
 			proto_notify_error "$interface" CONFIGURE_FAILED
 			return 1
 		fi
-		if ! [ "$(echo $dns1 | grep 0.0.0.0)" ]; then
+		if [ "$(valid_ip4 $dns1)" ]; then
 			proto_add_dns_server "$dns1"
 			echo "Using IPv4 DNS: $dns1"
 		fi
