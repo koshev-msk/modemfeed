@@ -4,14 +4,25 @@
 # written by Konstantin Shevlakov <shevlakov@132lan.ru>
 
 START=99
+USE_PROCD=1
 
-start(){
-        CONFIG_PROXY=$(uci -q get 3proxy.@3proxy[0].config)
-		if [ -n $CONFIG_PROXY ]; then
-			/usr/bin/3proxy $CONFIG_PROXY
-		fi
+
+load_config(){
+	config_get config $1 config
 }
 
-stop(){
-        killall 3proxy
+start_service(){
+	config_load 3proxy
+	local config
+	config_foreach load_config
+       	[ -n $config ] || config=/etc/3proxy.cfg
+	procd_open_instance
+	procd_set_param command /usr/bin/3proxy $config
+	procd_set_param stdout 1
+	procd_close_instance
 }
+
+stop_service(){
+	killall 3proxy
+}
+
