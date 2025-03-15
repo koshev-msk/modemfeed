@@ -36,7 +36,7 @@ NODE="SW SIM"
 
 # Get Variables
 get_vars(){
-	for v in enable interval revert rsrp times_rsrp; do
+	for v in enable interval revert rsrp times_rsrp apn1 apn2; do
 		eval $v=$(uci -q get ssw.failover.${v} 2>/dev/nul)
 	done
 	for d in modem sim; do
@@ -54,8 +54,10 @@ sw_sim(){
 		0) next_sim=1 ;;
 		1) next_sim=0 ;;
 	esac
+
 	echo "0" > /sys/class/gpio/$modem_gpio/value
 	echo "$next_sim" > /sys/class/gpio/$sim_gpio/value
+
 	if [ "$modem_value" = "1" ]; then
 		sleep 2
 		echo "1" > /sys/class/gpio/$modem_gpio/value
@@ -63,6 +65,7 @@ sw_sim(){
 			/etc/init.d/smstools3 restart
 		fi
 	fi
+	set > /tmp/apn.ssw
 }
 
 # Revert rule switch
@@ -73,7 +76,7 @@ sw_rule(){
 	# Revert SIM card to default slot
 	if [ "$cur_sim" -ne "$sim_value" ]; then
 		if [ "$(date +%s)" -gt "$SWDATE" ]; then
-			logger -t "$NODE" "Revert to default SIM slot."
+			logger -t "$NODE" "Revert to default SIM slot with $apn"
 			sw_sim
 		fi
 	fi
@@ -125,8 +128,18 @@ while true; do
 		monitor_mwan3
 		if [ "$cnt" -eq "$times_rsrp" ]; then
 			if [ "$link_status" = "0" -o "$mon_rsrp" = "0" ]; then
+				case $cur_sim in
+					0) apn=$apn1 ;;
+					1) apn=$apn2 ;;
+				esac
+				iface=$(uci show network | awk -F [.] '/devices/{gsub("'\''","");print $2}' | tail -1)
+				if [ "$apn" ]; then
+					uci set network.$iface.apn="$apn"
+					uci commit network
+					reload_config network
+				fi
 				logger -t "$NODE" "Modem interface: $iface is average RSRP=${RSRP} dBm. Min. value ${rsrp} dBm."
-				logger -t "$NODE" "Switch SIM-card slot"
+				logger -t "$NODE" "Switch SIM-card slot with $apn"
 				if [ "$revert" = "1" ]; then
 					if [ "$cur_sim" -eq "$sim_value" ]; then 
 						FBT=${FBT:=$((($interval+$times_rsrp)*2))}
