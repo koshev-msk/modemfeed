@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# protocol handler for INTEL-like modem
+# XMM7530 XMM7650 T700 chipsents
+# by Konstatntine Shevlakov 2024-2025 <shevlakov@132lan.ru>
+
 . /lib/functions.sh
 . /lib/functions/network.sh
 . ../netifd-proto.sh
@@ -7,7 +11,7 @@ init_proto "$@"
 
 
 valid_ip4(){
-	/bin/ipcalc.sh "$(echo ${1}/${ip4mask} | grep -v 0.0.0.0 | tail -1)"
+	/bin/ipcalc.sh "${1}/${ip4mask}" > /dev/null 2&>1
 }
 
 
@@ -39,32 +43,43 @@ proto_xmm_setup() {
 	[ -z $ifname ] && {
 		devname=$(basename $device)
 		devpath="$(readlink -f /sys/class/tty/$devname/device)"
-		if [ -r $(readlink -f /sys/class/tty/$devname/device/../idVendor) ]; then
-			VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idVendor))
-			PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idProduct))
-		else
-			VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../../idVendor))
-			PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../../idProduct))
-		fi
-		VIDPID=$VID$PID
-		case $VIDPID in
-			8087095a) PREFIX="xmm" ;;
-			0e8d7126|0e8d7127) PREFIX="fm350" ;;
-			*)
-				echo "Modem not supported!"
-				proto_notify_error "$interface" NO_DEVICE_SUPPORT
-				return 1
-			;;
-		esac
 		case "$devname" in
 			*ttyACM*|*ttyUSB*)
+				if [ -r $(readlink -f /sys/class/tty/$devname/device/../idVendor) ]; then
+					VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idVendor))
+					PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../idProduct))
+				else
+					VID=$(cat $(readlink -f /sys/class/tty/$devname/device/../../idVendor))
+					PID=$(cat $(readlink -f /sys/class/tty/$devname/device/../../idProduct))
+				fi
+				VIDPID=$VID$PID
 				case $VIDPID in
-					8087095a) hwaddr="$(ls -1 $devpath/../*/net/*/*address*)" ;;
-					0e8d7126|0e8d7127) hwaddr="$(ls -1 $devpath/../../*/net/*/*address*)" ;;
+					8087095a)
+						PREFIX="xmm"
+						hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
+						XMMDNS="XDNS"
+					;;
+					0e8d7126|0e8d7127)
+						PREFIX="fm350"
+						hwaddr="$(ls -1 $devpath/../../*/net/*/*address*)"
+						XMMDNS="GTDNS"
+					;;
+					*)
+						echo "Modem not suppurted!"
+						proto_notify_error "$interface" NO_DEVICE_SUPPORT
+					;;
 				esac
+			;;
+			*)
+				echo "AT port not valid!"
+				proto_notify_error "$interface" NO_PORT_FOUND
 			;;
 		esac
 		echo "Setup $PREFIX interface $interface with port ${device}"
+		! $(DEVPORT=$device gcom -s /etc/gcom/probeport.gcom) && {
+			echo "AT port not answer!"
+			proto_notify_error $interface NO_PORT_ANSWER
+		}
 		[ "${devpath}x" != "x" ] && {
 			echo "Found path $devpath"
 			for h in $hwaddr; do
@@ -80,7 +95,7 @@ proto_xmm_setup() {
 	}
 
 	[ -n "$ifname" ] && {
-	echo "Found interface $ifname"
+		echo "Found interface $ifname"
 	} || {
 		echo "The interface could not be found."
 		proto_notify_error "$interface" NO_IFACE
@@ -107,16 +122,7 @@ proto_xmm_setup() {
 	DATA=$(CID=$profile gcom -d $device -s /etc/gcom/${PREFIX}-config.gcom)
 	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2>&1
 	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2>&1
-	case $VIDPID in
-		8087095a)
-			ns=$(echo "$DATA" | awk -F [,] '/^\+XDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
-		;;
-		0e8d7126|0e8d7127)
-			ns=$(echo "$DATA" | awk -F [,] '/^\+GTDNS: /{gsub("\r|\"",""); print $2" "$3}' | sed 's/^[[:space:]]//g')
-		;;
-	esac
-
-	dns1=$(echo "$ns" | grep -v "0.0.0.0" | tail -1)
+	ns=$(echo "$DATA" | awk -F [,] '/^\+'$XMMDNS': /{gsub("\r|\"",""); gsub("0.0.0.0",""); print $2" "$3}' | sed 's/^[[:space:]]//g' | uniq)
 
 	case $ip4addr in
 		*FE80*)
@@ -128,23 +134,32 @@ proto_xmm_setup() {
 			defroute=$(echo $ip4addr | awk -F [.] '{print $1"."$2"."$3".1"}')
 		;;
 	esac
+
+	for n in $ns; do
+		$(valid_ip4 $n) && {
+			dns1="$dns1 $n"
+		} || {
+			echo "DNS: $n invalid"
+		}
+	done
+
 	proto_set_keep 1
 	ip link set dev $ifname arp off
 	echo "PDP type is: $pdp"
 	[ "$pdp" = "IP" -o "$pdp" = "IPV4V6" ] && {
-		if [ "$(valid_ip4 $ip4addr)" ]; then
+		$(valid_ip4 $ip4addr) && [ "$ip4addr" != "0.0.0.0" ] && {
 			echo "Set IPv4 address: ${ip4addr}/${ip4mask}"
 			proto_add_ipv4_address $ip4addr $ip4mask
 			proto_add_ipv4_route "0.0.0.0" 0 $defroute $ip4addr
-		else
+		} || {
 			echo "Failed to configure interface"
 			proto_notify_error "$interface" CONFIGURE_FAILED
 			return 1
-		fi
-		if [ "$(valid_ip4 $dns1)" ]; then
+		}
+		[ -n "$dns1" ] && {
 			proto_add_dns_server "$dns1"
 			echo "Using IPv4 DNS: $dns1"
-		fi
+		}
 	}
 
 	proto_add_data
