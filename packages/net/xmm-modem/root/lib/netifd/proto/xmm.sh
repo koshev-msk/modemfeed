@@ -135,11 +135,11 @@ proto_xmm_setup() {
 		;;
 	esac
 
-	for n in $ns; do
+	for n in $(echo $ns); do
 		$(valid_ip4 $n) && {
-			dns1="$dns1 $n"
-		} || {
-			echo "DNS: $n invalid"
+			[ ! "$(echo $dns1 | grep $n)" ] && {
+				dns1="$dns1 $n"
+			}
 		}
 	done
 
