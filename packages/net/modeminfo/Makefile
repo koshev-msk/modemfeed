@@ -70,7 +70,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) ./root/usr/bin/* $(1)/usr/bin
 	$(CP) ./root/usr/share/modeminfo/modeminfo $(1)/usr/share/modeminfo/
-	$(CP) ./root/usr/share/modeminfo/mccmnc.dat  $(1)/usr/share/modeminfo/
 	$(CP) ./root/usr/share/modeminfo/scripts/*.gcom  $(1)/usr/share/modeminfo/scripts/
 	$(CP) ./root/usr/share/modeminfo/scripts/ch_to_band  $(1)/usr/share/modeminfo/scripts/
 	$(CP) ./root/usr/share/modeminfo/modem.list  $(1)/usr/share/modeminfo/
