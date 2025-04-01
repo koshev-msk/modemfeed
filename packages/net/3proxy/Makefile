@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
-PKG_VERSION:=0.9.4
-PKG_RELEASE:=3
+PKG_VERSION:=0.9.5
+PKG_RELEASE:=0
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -10,7 +10,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/z3APA3A/3proxy.git
-PKG_SOURCE_VERSION:=346880eb2e73836385e5f7648f738efcece580ac
+PKG_SOURCE_VERSION:=f23fc4fc4458606a257a9f26bc37251fc60e1cc7
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -74,12 +74,14 @@ endef
 define Package/$(PKG_NAME)-common/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/ftppr \
-	$(PKG_BUILD_DIR)/bin/mycrypt \
+		$(PKG_BUILD_DIR)/bin/mycrypt \
 		$(PKG_BUILD_DIR)/bin/pop3p \
 		$(PKG_BUILD_DIR)/bin/smtpp \
 		$(PKG_BUILD_DIR)/bin/tcppm \
 		$(PKG_BUILD_DIR)/bin/udppm \
 		$(PKG_BUILD_DIR)/bin/socks \
+		$(PKG_BUILD_DIR)/bin/proxy \
+		$(PKG_BUILD_DIR)/bin/tlspr \
 		$(1)/usr/bin
 endef
 
