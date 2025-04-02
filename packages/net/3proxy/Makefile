@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
 PKG_VERSION:=0.9.5
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -52,7 +52,7 @@ define Build/Configure
 	$(CP) $(PKG_BUILD_DIR)/Makefile.Linux $(PKG_BUILD_DIR)/Makefile
 endef
 
-define Package.$(PKG_NAME)/conffiles
+define Package/$(PKG_NAME)/conffiles
 /etc/config/3proxy
 /etc/3proxy.cfg
 endef
