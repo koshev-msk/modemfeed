@@ -79,7 +79,7 @@ function get_cops() {
 	#		COPS="$COPS_MCC $COPS_MNC"
 	#	fi
 	#fi
-	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,0/ {print $2}' | awk '{for(i=1;i<=NF;i++){l=tolower($i);if(!seen[l]++)printf("%s ",$i)}print""}')	
+	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,0/ {print $2}' | awk '{for(i=NF;i>=1;i--){w=tolower($i);if(!s[w]++)r=r?$i" "r:$i} print r}')	
 }
 
 # Get Registration data
