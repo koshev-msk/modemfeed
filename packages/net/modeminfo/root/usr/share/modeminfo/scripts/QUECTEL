@@ -80,12 +80,13 @@ function modem_data(){
 		SINR=$ECIO
 	fi
 	case $MDL in
+		*EM12*) CHIPTEMP=$(echo "$O" | awk -F'[,\ ]' '/^\+QTEMP/ {gsub("\"",""); print $3}') ;;
 		*EM160*) CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP: \"cpu-usr\"/ {gsub("\"","");print $3}') ;;
 		*)
 			CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $3}')
 			# Quectel EM1X modem temp sensors
 			if [ ! $(echo "$CHIPTEMP" | grep "^?[0-9]+$") ] || [ $CHIPTEMP -eq 255 ]; then
-				CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {gsub("\"",""); print $3}')
+				CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {gsub("\"",""); print $2}')
 			fi
 		;;
 	esac
