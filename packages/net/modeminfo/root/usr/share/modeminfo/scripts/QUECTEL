@@ -12,7 +12,7 @@ function modem_data(){
 		        IMSI=$(echo "$O" | grep -A3 -i $FAMILY | tail -1)
 		        IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
 		;;
-                *EC21*|*EC25*|*EP06*|*EM160*)
+                *EC21*|*EC25*|*EP06*|*EM12*|*EM160*)
                         IMSI=$(echo "$O" | grep -A1 -i $FW | tail -1)
                         IMEI=$(echo "$O" | grep -A1 -i $ICCID | tail -1)
 		;;
@@ -80,6 +80,7 @@ function modem_data(){
 		SINR=$ECIO
 	fi
 	case $MDL in
+		*EM12*) CHIPTEMP=$(echo "$O" | awk -F'[,\ ]' '/^\+QTEMP/ {gsub("\"",""); print $3}') ;;
 		*EM160*) CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP: \"cpu-usr\"/ {gsub("\"","");print $3}') ;;
 		*)
 			CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $3}')
