@@ -26,6 +26,7 @@ proto_xmm_init_config() {
 	proto_config_add_string "password"
 	proto_config_add_string "auth"
 	proto_config_add_int "profile"
+	proto_config_add_int "maxfail"
 	proto_config_add_defaults
 }
 
@@ -33,12 +34,13 @@ proto_xmm_setup() {
 	local interface="$1"
 	local devname devpath hwaddr ip4addr ip4mask dns1 dns2 defroute lladdr
 	local name ifname proto extendprefix auth username password
-	local device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
-	json_get_vars device ifname auth username password apn pdp profile pincode delay $PROTO_DEFAULT_OPTIONS
+	local device ifname auth username password apn pdp profile maxfail pincode delay $PROTO_DEFAULT_OPTIONS
+	json_get_vars device ifname auth username password apn pdp profile maxfail pincode delay $PROTO_DEFAULT_OPTIONS
 
 	[ "$profile" = "" ] && profile="1"
 	[ "$metric" = "" ] && metric="0"
 	[ "$delay" = "" ] && delay="5"
+	[ "$maxfail" = "" ] && maxfail="5"
 	sleep $delay
 	[ -z $ifname ] && {
 		devname=$(basename $device)
@@ -65,8 +67,10 @@ proto_xmm_setup() {
 						XMMDNS="GTDNS"
 					;;
 					*)
-						echo "Modem not suppurted!"
+						echo "Modem not supported!"
 						proto_notify_error "$interface" NO_DEVICE_SUPPORT
+						proto_set_available "$interface" 0
+						return 1
 					;;
 				esac
 			;;
@@ -76,10 +80,7 @@ proto_xmm_setup() {
 			;;
 		esac
 		echo "Setup $PREFIX interface $interface with port ${device}"
-		! $(DEVPORT=$device gcom -s /etc/gcom/probeport.gcom) && {
-			echo "AT port not answer!"
-			proto_notify_error $interface NO_PORT_ANSWER
-		}
+
 		[ "${devpath}x" != "x" ] && {
 			echo "Found path $devpath"
 			for h in $hwaddr; do
@@ -102,6 +103,22 @@ proto_xmm_setup() {
 		proto_set_available "$interface" 0
 		return 1
 	}
+
+	# probes for AT port
+	for p in $(seq 1 $maxfail); do
+		! $(DEVPORT=$device gcom -s /etc/gcom/probeport.gcom) && {
+			if [ "$p" -eq "$maxfail" ]; then
+				echo "AT port not answer!"
+				proto_notify_error "$interface" NO_PORT_ANSWER
+				proto_set_available "$interface" 0
+				return 1
+			fi
+		} || {
+			break
+		}
+		sleep 3
+	done
+
 	pdp=$(echo $pdp | awk '{print toupper($0)}')
 	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP"
 	echo "Setting up $ifname"
