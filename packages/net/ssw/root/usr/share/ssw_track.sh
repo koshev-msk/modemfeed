@@ -128,18 +128,35 @@ while true; do
 		monitor_mwan3
 		if [ "$cnt" -eq "$times_rsrp" ]; then
 			if [ "$link_status" = "0" -o "$mon_rsrp" = "0" ]; then
-				case $cur_sim in
-					0) apn=$apn1 ;;
-					1) apn=$apn2 ;;
-				esac
-				iface=$(uci show network | awk -F [.] '/devices/{gsub("'\''","");print $2}' | tail -1)
-				if [ "$apn" ]; then
-					uci set network.$iface.apn="$apn"
-					uci commit network
-					reload_config network
+
+				if [ "$sim_value" -eq "$cur_sim" ]; then
+					apn=$apn2
+				else
+					apn=$apn1
 				fi
-				logger -t "$NODE" "Modem interface: $iface is average RSRP=${RSRP} dBm. Min. value ${rsrp} dBm."
-				logger -t "$NODE" "Switch SIM-card slot with $apn"
+				
+				iface=$(uci show network | awk -F [.] '/devices/{gsub("'\''","");print $2}' | tail -1)
+				if [ $RSRP ]; then
+					if [ "$mon_rsrp" = "0" ]; then
+						logger -t "$NODE" "Modem interface: $iface is average RSRP= ${RSRP} dBm. Min. value ${rsrp} dBm."
+					fi
+					if [ "$link_status" = "0" ]; then
+						logger -t "$NODE" "Modem interface: $iface is loss connectivity"
+					fi
+				else
+					logger -t "$NODE" "WARNING: RSRP value not exist. Please check \"Resfesh signal\" option of modem interface!"
+				fi
+				if [ "${#apn}" -gt "0" ]; then
+					uci set network.$iface.apn="$apn"
+					logger -t "$NODE" "Switch SIM-card slot with APN: $apn"
+				else
+					logger -t "$NODE" "WARNING: APN not defined. Switch SIM-card slot with default APN."
+					uci set network.$iface.apn="internet"
+				fi
+
+				uci commit network
+				reload_config network
+
 				if [ "$revert" = "1" ]; then
 					if [ "$cur_sim" -eq "$sim_value" ]; then 
 						FBT=${FBT:=$((($interval+$times_rsrp)*2))}
