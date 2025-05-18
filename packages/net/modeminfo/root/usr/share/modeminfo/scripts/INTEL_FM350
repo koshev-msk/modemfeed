@@ -13,7 +13,7 @@ function modem_data(){
         [ $CSQ -ge 10 ] && CSQ_COL="red"
         [ $CSQ -ge 15 ] && CSQ_COL="orange"
         [ $CSQ -ge 20 ] && CSQ_COL="green"
-    elif [ $CSQ -ge 32 -a $CSQ -le 50 ]; then
+    elif [ $CSQ -ge 32 -a $CSQ -le 98 ]; then
  	CSQ_PER="100"
 	CSQ_COL="green"
     else
