@@ -198,7 +198,7 @@ return view.extend({
 					    }
 					}
 
-					var lactac = parts.join(' / ').replace(' ', ' ').replace('/ /', '/ ');
+					var lactac = parts.join(' / ').replace(' ', ' ').replace('/ /', '/ ').replace('/ /', '/ ')
 
 					var UMTS_MODES = new Set([
 						"3G", "UMTS", "HSPA", "HSUPA", "HSDPA", "HSPA+", 
