@@ -173,38 +173,44 @@ return view.extend({
 					({ frul, offset, ulfreq, dlfreq, band } = bandConfig);
 
 				}
+					
 					var carrier = "";
-					var bcc;
-					var freq;
-					var distance;
-					var lactac;
-					var calte;
-					var namebnd;
+					var bcc, freq, distance, calte, namebnd;
 					var dist = (json.modem[i].distance)
-					if (json.modem[i].enbid && json.modem[i].cell && json.modem[i].pci) {
-						var namecid = "LAC/CID/eNB ID-Cell/PCI";
-						var lactac = json.modem[i].lac + " / " + json.modem[i].cid + " / " + json.modem[i].enbid + "-" + json.modem[i].cell +" / " +json.modem[i].pci;
-					} else if (json.modem[i].enbid && json.modem[i].cell) { 
-						var namecid = "LAC/CID/eNB ID-Cell";
-						var lactac = json.modem[i].lac + " / " + json.modem[i].cid + " / " + json.modem[i].enbid + "-" + json.modem[i].cell;
-					} else if (json.modem[i].enbid) {
-						var namecid = "LAC/CID/eNB ID";
-						var lactac = json.modem[i].lac + " / " + json.modem[i].cid + " / " + json.modem[i].enbid;
-					} else {
-						var namecid = "LAC/CID";
-						var lactac = json.modem[i].lac + " / " + json.modem[i].cid;
+
+					var { enbid, cell, pci, lac, cid } = json.modem[i];
+
+					const parts = [lac, cid];
+					var namecid = "LAC/CID";
+
+					if (enbid) {
+					    parts.push(enbid);
+					    namecid += "/eNB ID";
+    
+					    if (cell) {
+					        parts.push(`-${cell}`);
+					        namecid += "-Cell";
+        
+					        if (pci) {
+					            parts.push(`/${pci}`);
+					            namecid += "/PCI";
+					        }
+					    }
 					}
-					var carrier;
-					var bcc;
+
+					var lactac = parts.join(' ');
+	
+					var UMTS_MODES = new Set([
+						"3G", "UMTS", "HSPA", "HSUPA", "HSDPA", "HSPA+", 
+						"WCDMA", "DC-HSPA+", "HSDPA+HSUPA", "HSDPA,HSUPA"
+					]);
+
+					var bcc, scc, cid;
 					var bca = "";
-					var scc;
-					var cid;
 					var arfcn = json.modem[i].arfcn + " (" + dlfreq + " / " + ulfreq + " MHz)";
 					// name channels and signal/noise  
 					if (netmode == "LTE") {
 						var calte = (json.modem[i].lteca)
-						var carrier;
-						var scc;
 						var bwca = json.modem[i].bwca;
 						distance = " ~"+ dist +" km";
 						if (calte > 0) {
@@ -224,17 +230,7 @@ return view.extend({
 						}
 						var namech = "EARFCN";
 						var namesnr = "SINR";
-					} else if (netmode == 
-						"3G" || netmode == 
-						"UMTS" || netmode == 
-						"HSPA" || netmode == 
-						"HSUPA" || netmode == 
-						"HSDPA" || netmode == 
-						"HSPA+" || netmode == 
-						"WCDMA" || netmode == 
-						"DC-HSPA+" || netmode == 
-						"HSDPA+HSUPA" || netmode ==
-						"HSDPA,HSUPA") {
+					} else if (UMTS_MODES.has(netmode)) {
 						var namech = "UARFCN";
 						var namesnr = "ECIO";
 						var namecid = "LAC/CID";
