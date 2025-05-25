@@ -173,7 +173,7 @@ return view.extend({
 					({ frul, offset, ulfreq, dlfreq, band } = bandConfig);
 
 				}
-					
+
 					var carrier = "";
 					var bcc, freq, distance, calte, namebnd;
 					var dist = (json.modem[i].distance)
@@ -186,11 +186,11 @@ return view.extend({
 					if (enbid) {
 					    parts.push(enbid);
 					    namecid += "/eNB ID";
-    
+
 					    if (cell) {
-					        parts.push(`-${cell}`);
-					        namecid += "-Cell";
-        
+					        parts.push(`/${cell}`);
+					        namecid += "/Cell";
+
 					        if (pci) {
 					            parts.push(`/${pci}`);
 					            namecid += "/PCI";
@@ -198,8 +198,8 @@ return view.extend({
 					    }
 					}
 
-					var lactac = parts.join(' ');
-	
+					var lactac = parts.join(' / ').replace(' ', ' ').replace('/ /', '/ ');
+
 					var UMTS_MODES = new Set([
 						"3G", "UMTS", "HSPA", "HSUPA", "HSDPA", "HSPA+", 
 						"WCDMA", "DC-HSPA+", "HSDPA+HSUPA", "HSDPA,HSUPA"
