@@ -23,12 +23,21 @@ load_config_failover(){
 	done
 }
 
+reload_iface(){
+	[ "$iface" ] &&  {
+		for i in $iface; do
+			ifup $i
+		done
+	}
+}
+
 start_service(){
 	config_load ssw
 	config_foreach load_config_gpio modem
 	config_foreach load_config_gpio sim
 	modem_cur=$(cat /sys/class/gpio/$modem_gpio/value)
 	sim_cur=$(cat /sys/class/gpio/$sim_gpio/value)
+	iface=$(uci show network | awk -F [.] '/devices/{gsub("'\''","");print $2}' | tail -1)
 	if [ "$modem_value" = "$modem_cur" -a "$sim_value" = "$sim_cur" ]; then
 		continue
 	elif [ "$modem_value" = "$modem_cur" -a "$modem_value" = "1" ]; then
@@ -40,6 +49,7 @@ start_service(){
 		if [ -x /etc/init.d/smstools3 ]; then
 			/etc/init.d/smstools3 restart
 		fi
+		sleep 30 && reload_iface &
 	else
 		logger -t "SIM SW" "modem powered changed"
 		echo "$sim_value" > /sys/class/gpio/$sim_gpio/value
@@ -47,6 +57,7 @@ start_service(){
 		if [ -x /etc/init.d/smstools3 ]; then
 			/etc/init.d/smstools3 restart
 		fi
+		sleep 30 && reload_iface &
 	fi
 	#config_foreach load_config_failover failover
 	procd_open_instance

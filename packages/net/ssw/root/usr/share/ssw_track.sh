@@ -117,6 +117,15 @@ monitor_rsrp(){
 	fi
 }
 
+# reload iface
+reload_iface(){
+	[ "$iface" ] && {
+		for i in $iface; do
+			ifup $i
+		done
+	}
+}
+
 # Stuff
 cnt=1
 while true; do
@@ -134,7 +143,6 @@ while true; do
 				else
 					apn=$apn1
 				fi
-				
 				iface=$(uci show network | awk -F [.] '/devices/{gsub("'\''","");print $2}' | tail -1)
 				if [ $RSRP ]; then
 					if [ "$mon_rsrp" = "0" ]; then
@@ -167,10 +175,10 @@ while true; do
 						logger -t "$NODE" "Back to default SIM-slot after $(date -d @${SWDATE})"
 					fi
 				fi
-				sw_sim
+				sw_sim && sleep 20 && reload_iface &
 			fi
 			if [ "$revert" = "1" ]; then
-				sw_rule
+				sw_rule && sleep 20 && reload_iface &
 			fi
 			cnt=0
 		else
