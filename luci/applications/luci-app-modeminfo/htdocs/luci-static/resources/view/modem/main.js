@@ -28,60 +28,46 @@ return view.extend({
 			var json = JSON.parse(res);
 			for (var i = 0; i < json.modem.length; i++) {
 				// progressbar cellular metric
-				function rssi_bar(v, m) {
-					var pg = document.querySelector('#rssi'+i)
-					var vn = parseInt(v) || 0;
-					var mn = parseInt(m) || 100;
-					if (vn > -50) { vn = -50 };
-					if (vn < -110) { vn = -110 };
-					var pc =  Math.floor(100*(1-(-50 - vn)/(-50 - mn)));
-					pg.firstElementChild.style.width = pc + '%';
+				const progressConfig = {
+					rssi: {
+						selector: '#rssi', min: -110, max: -50,
+						calc: (vn, mn) => Math.floor(100 * (1 - (-50 - vn) / (-50 - mn)))
+					},
+					rsrp: {
+						selector: '#rsrp', min: -140, max: -50,
+						calc: (vn, mn) => Math.floor(120 * (1 - (-50 - vn) / (-70 - mn)))
+					},
+					sinr: {
+						selector: '#sinr', min: -20, max: 30,
+						calc: (vn, mn) => Math.floor(100 - (100 * (1 - ((mn - vn) / (mn - 30)))))
+					},
+					rsrq: {
+						selector: '#rsrq', min: -20, max: 0,
+						calc: (vn, mn) => Math.floor(115 - (100 / mn) * vn)
+					},
+					ecio: {
+						selector: '#ecio', min: -24, max: 0,	calc: (vn, mn) => Math.floor(100 - (100 / mn) * vn)
+					}
+				};
+
+
+				function updateProgressBar(type, value, max, i) {
+					const config = progressConfig[type];
+					if (!config) return;
+
+					const pg = document.querySelector(`${config.selector}${i}`);
+					if (!pg) return;
+
+					const vn = Math.max(config.min, Math.min(config.max, parseInt(value) || 0));
+					const mn = parseInt(max) || 100;
+					const pc = config.calc(vn, mn);
+
+					pg.firstElementChild.style.width = `${pc}%`;
 					pg.style.width = '%d%%';
 					pg.firstElementChild.style.animationDirection = "reverse";
-					pg.setAttribute('title', '%s'.format(v));
+					pg.setAttribute('title', '%s'.format(value));
 				}
-				function rsrp_bar(v, m) {
-					var pg = document.querySelector('#rsrp'+i)
-					var vn = parseInt(v) || 0;
-					var mn = parseInt(m) || 100;
-					if (vn > -50) { vn = -50 };
-					if (vn < -140) { vn = -140 };
-					var pc =  Math.floor(120*(1-(-50 - vn)/(-70 - mn)));
-					pg.firstElementChild.style.width = pc + '%';
-					pg.style.width = '%d%%';
-					pg.firstElementChild.style.animationDirection = "reverse";
-					pg.setAttribute('title', '%s'.format(v));
-				}
-				function sinr_bar(v, m) {
-					var pg = document.querySelector('#sinr'+i)
-					var vn = parseInt(v) || 0;
-					var mn = parseInt(m) || 100;
-					var pc = Math.floor(100-(100*(1-((mn - vn)/(mn - 30)))));
-					pg.firstElementChild.style.width = pc + '%';
-					pg.style.width = '%d%%';
-					pg.firstElementChild.style.animationDirection = "reverse";
-					pg.setAttribute('title', '%s'.format(v));
-				}
-				function rsrq_bar(v, m) {
-					var pg = document.querySelector('#rsrq'+i)
-					var vn = parseInt(v) || 0;
-					var mn = parseInt(m) || 100;
-					var pc = Math.floor(115-(100/mn)*vn);
-					pg.firstElementChild.style.width = pc + '%';
-					pg.style.width = '%d%%';
-					pg.firstElementChild.style.animationDirection = "reverse";
-					pg.setAttribute('title', '%s'.format(v));
-				}
-				function ecio_bar(v,m) {
-					var pg = document.querySelector('#sinr'+i)
-					var vn = parseInt(v) || 0
-					var mn = parseInt(m) || 100
-					var pc = Math.floor(100-(100/mn)*vn);
-					pg.firstElementChild.style.width = pc + '%';
-					pg.style.width = '%d%%';
-					pg.firstElementChild.style.animationDirection = "reverse";
-					pg.setAttribute('title', '%s'.format(v));
-				}
+
 				// icon signal streigh
 				var icn;
 				var signalIcons = [
@@ -248,7 +234,8 @@ return view.extend({
 					} else {
 						namebnd = _('Network/Band');
 				}
-				
+
+				// data by element	
 				if (document.getElementById('status'+i)){
 					var view = document.getElementById('status'+i);
 					if (rg == 1 || rg == 6 || rg == 9) {
@@ -316,8 +303,7 @@ return view.extend({
 					if (json.modem[i].rssi == '') {
 						view = document.getElementById('--');
 					} else {
-						var rssi_min = -110;
-						rssi_bar(json.modem[i].rssi + ' dBm', rssi_min);
+						updateProgressBar('rssi', json.modem[i].rssi + ' dBm', -110, i);
 					}
 				}
 				if (document.getElementById('sinr'+i)) {
@@ -326,11 +312,9 @@ return view.extend({
 						view = document.getElementById('--');
 					} else {
 						if (netmode == "LTE") {
-							var sinr_min = -20;
-							sinr_bar(json.modem[i].sinr + " dB", sinr_min);
+							updateProgressBar('sinr', json.modem[i].sinr + ' dB', -20, i);
 						} else {
-							var sinr_min = -24;
-							ecio_bar(json.modem[i].sinr + " dB", sinr_min);
+							updateProgressBar('ecio', json.modem[i].sinr + ' dB', -24, i);
 						}
 					}
 				}
@@ -340,8 +324,7 @@ return view.extend({
 					if (json.modem[i].rsrp == "--") {
 						view = document.getElementById('--');
 					} else {
-						var rsrp_min = -140;
-						rsrp_bar(json.modem[i].rsrp + " dBm", rsrp_min);
+						updateProgressBar('rsrp', json.modem[i].rsrp + ' dBm', -140, i);
 					}
 				}
 
@@ -350,8 +333,7 @@ return view.extend({
 					if (json.modem[i].rsrq == "--") {
 						view = document.getElementById('--');
 					} else {
-						var rsrq_min = -20;
-						rsrq_bar(json.modem[i].rsrq + " dB", rsrq_min);
+						updateProgressBar('rsrq', json.modem[i].rsrq + ' dB', -20, i);
 					}
 				}
 			};
