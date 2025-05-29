@@ -46,7 +46,8 @@ return view.extend({
 						calc: (vn, mn) => Math.floor(115 - (100 / mn) * vn)
 					},
 					ecio: {
-						selector: '#ecio', min: -24, max: 0,	calc: (vn, mn) => Math.floor(100 - (100 / mn) * vn)
+						selector: '#sinr', min: -24, max: 0,
+						calc: (vn, mn) => Math.floor(100 - (100 / mn) * vn)
 					}
 				};
 
