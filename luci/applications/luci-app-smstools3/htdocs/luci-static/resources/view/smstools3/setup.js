@@ -72,7 +72,7 @@ return view.extend({
 		for (var k in leds)
 			for (var i = 0; i < leds[k].triggers.length; i++)
 				triggers[i] = leds[k].triggers[i];
-		
+
 		m = new form.Map('smstools3', _('Smstools3: Setup'), _('Configure smstools3 daemon.'));
 		s = m.section(form.TypedSection, 'sms', null);
 		//s.tab('general', _('General'));
@@ -81,12 +81,12 @@ return view.extend({
 
 		o = s.option(form.Flag, 'decode_utf', _('Decode SMS'), _('Decode Incoming messages to UTF-8 codepage.'));
 		o.rmempty = true;
-		
+
 		o = s.option(form.ListValue, 'storage', _('SMS Storage'), _('Select storage to save SMS.'));
 		o.value('temporary', _('Temporary'));
 		o.value('persistent', _('Persistent'));
 		o.default = 'temporary';
-		
+
 		o = s.option(form.ListValue, 'loglevel', _('Loglevel'), _('Logging output.'));
 		o.value('1', _('Emergency'));
 		o.value('2', _('Alert'));
@@ -97,7 +97,7 @@ return view.extend({
 		o.value('7', _('Info'));
 		o.value('8', _('Debug'));
 		o.default = '5';
-		
+
 		o = s.option(form.Flag, 'led_enable', _('LED'), _('LED indicate to Incoming messages.'));
 		o.rmempty = true;
 
@@ -145,6 +145,10 @@ return view.extend({
 
 		o = s.option(form.Flag, 'sig_check', _('Ignore signal level'), _('Some devices do not support Bit Error Rate'));
 		o.rmempty = true;
+
+                o = s.option(form.Flag, 'enable', _('Enable'));
+                o.modalonly = false;
+                o.editable = true;
 
 		return m.render();
 	}
