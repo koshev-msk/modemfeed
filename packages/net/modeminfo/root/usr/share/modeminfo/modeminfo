@@ -4,7 +4,7 @@ SECTIONS=$(echo $(uci show modeminfo | awk -F [\]\[\@=] '/=modeminfo/{print $3}'
 
 get_vars(){
 	for v in device device_qmi qmi_proxy decimail qmi_mode;  do
-		eval $v=$(uci -q get modeminfo.@modeminfo[${s}].${v} 2>/dev/nul)
+		eval $v=$(uci -q get modeminfo.@modeminfo[${s}].${v} 2>/dev/null)
 	done
 }
 
