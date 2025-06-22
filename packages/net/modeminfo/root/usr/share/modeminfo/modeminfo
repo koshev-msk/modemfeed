@@ -12,7 +12,7 @@ get_vars(){
 
 cleanup(){
 	CURRENT_PID=$$
-	ps ww | grep "/bin/sh.*modeminfo" | grep -v grep | awk '{print $1}' | grep -v "^$CURRENT_PID\$" | xargs -r kill -9 >/dev/null 2>$1
+	ps ww | grep "/bin/sh.*modeminfo" | grep -v grep | awk '{print $1}' | grep -v "^$CURRENT_PID\$" | xargs -r kill -9 >/dev/null 2>&1
 	ps ww | grep "atinout" | grep -v grep | awk '{print $1}' | xargs -r kill -9 >/dev/null 2>&1
 }
 
