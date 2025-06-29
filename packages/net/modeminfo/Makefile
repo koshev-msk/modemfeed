@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
 PKG_VERSION:=0.4.3
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
