@@ -1,0 +1,11 @@
+--- a/nat64_factory.h
++++ b/nat64_factory.h
+@@ -90,7 +90,7 @@ static inline void factory_translate_ip4
+ 		break;
+ 	case IPPROTO_ICMPV6:
+ 		dst->csum = csum_partial(skb_transport_header(dst), dst->len - sizeof(struct ipv6hdr), 0);
+-		icmp_hdr(dst)->checksum = csum_ipv6_magic(&ip6h->saddr, &ip6h->daddr, payload_len, nexthdr, dst->csum);
++		icmp_hdr(dst)->checksum = csum_partial(dst, payload_len, 0);
+ 		break;
+ 	}
+ 
