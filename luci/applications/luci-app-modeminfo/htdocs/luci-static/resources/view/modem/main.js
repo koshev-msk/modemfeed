@@ -69,21 +69,23 @@ return view.extend({
 					pg.setAttribute('title', '%s'.format(value));
 				}
 
-				// icon signal streigh
+				// icon signal strength
 				var icn;
-				var signalIcons = [
-					{ max: -1, icn: 'signal-none.png' },
-					{ max: 0, icn: 'signal-none.png' },
-					{ max: 10, icn: 'signal-0.png' },
-					{ max: 25, icn: 'signal-0-25.png' },
-					{ max: 50, icn: 'signal-25-50.png' },
-					{ max: 75, icn: 'signal-50-75.png' },
-					{ max: Infinity, icn: 'signal-75-100.png' }
-				];
 
+				var signalIcons = [
+                                        { max: -1, icn: 'signal-000-000.svg' },
+                                        { max: 0, icn: 'signal-000-000.svg' },
+                                        { max: 10, icn: 'signal-000-000.svg' },
+                                        { max: 25, icn: 'signal-000-025.svg' },
+                                        { max: 50, icn: 'signal-025-050.svg' },
+                                        { max: 75, icn: 'signal-050-075.svg' },
+                                        { max: Infinity, icn: 'signal-075-100.svg' }
+                                ];
+				
 				var p = json.modem[i].csq_per || 0;
+
 				var { icn } = signalIcons.find(({ max }) => p <= max);
-				var icon = L.resource(`icons/${icn}`);
+				var icon = L.resource(`view/modem/icons/${icn}`);
 
 				// Registration Status
 				var regStatuses = new Map([
