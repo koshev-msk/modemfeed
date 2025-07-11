@@ -54,6 +54,7 @@ define Package/natflow-boot
   CATEGORY:=X
   SUBMENU:=Fast Forward Stacks
   TITLE:=natflow boot init scripts
+  PKGARCH:=all
   DEPENDS:= +kmod-natflow
 endef
 
