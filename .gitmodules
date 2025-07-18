@@ -1,0 +1,6 @@
+[submodule "luci-app-gpoint"]
+	path = luci-app-gpoint
+	url = git@github.com:Kodo-kakaku/luci-app-gpoint.git
+[submodule "luci/applications/luci-app-gpoint"]
+	path = luci/applications/luci-app-gpoint
+	url = git@github.com:Kodo-kakaku/luci-app-gpoint.git
