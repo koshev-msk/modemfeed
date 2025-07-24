@@ -1,0 +1,11 @@
+--- a/qbadblock.c
++++ b/qbadblock.c
+@@ -56,7 +56,7 @@ printf("\r * Всего дефектны
+ //* Сканирование на ошибки ECC
+ //* flag=0 - все ошибки, 1 - только корректируемые
+ //********************************************************8 
+-void ecc_scan(start,len,flag) {
++void ecc_scan(unsigned int start, unsigned int len, int flag) {
+   
+ int blk;
+ int errcount=0;

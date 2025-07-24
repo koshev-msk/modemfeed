@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qtools
 PKG_VERSION:=0.0.1
-PKG_RELEASE:=0~cross
+PKG_RELEASE:=1~cross
 
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 PKG_LICENSE:=LICENSE
