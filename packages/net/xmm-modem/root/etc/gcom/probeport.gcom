@@ -8,7 +8,18 @@ waitquiet 2 0.5
 send "AT^m"
 waitfor 2 "OK"
 if % = -1 goto timeout
+if % = 0 goto continue
+exit 0
+
+:continue
+send "AT+CPIN?^m"
+waitfor 2 "+CME ERROR:"
+if % = 0 goto simerr
 exit 0
 
 :timeout
   exit 1
+
+:simerr
+  exit 2
+

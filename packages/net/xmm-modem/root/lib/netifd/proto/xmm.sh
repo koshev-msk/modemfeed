@@ -104,18 +104,28 @@ proto_xmm_setup() {
 		return 1
 	}
 
-	# probes for AT port
+	# probes for AT port and SIM-card
 	for p in $(seq 1 $maxfail); do
-		! $(DEVPORT=$device gcom -s /etc/gcom/probeport.gcom) && {
-			if [ "$p" -eq "$maxfail" ]; then
-				echo "AT port not answer!"
-				proto_notify_error "$interface" NO_PORT_ANSWER
-				proto_set_available "$interface" 0
-				return 1
-			fi
-		} || {
-			break
-		}
+		DEVPORT=$device gcom -s /etc/gcom/probeport.gcom
+		DEVERR=$?
+		[ "$DEVERR" = "0" ] && break
+		if [ "$p" -eq "$maxfail" ]; then
+			case $DEVERR in
+				1)
+					echo "AT port not answer!"
+					proto_notify_error "$interface" NO_PORT_ANSWER
+					proto_set_available "$interface" 0
+					return 1
+				;;
+				2)
+					echo "SIM-card not insert!"
+					proto_notify_error "$interface" NO_SIM_CARD
+					proto_set_available "$interface" 0
+					return 1
+				;;
+			esac
+		fi
+	
 		sleep 3
 	done
 
