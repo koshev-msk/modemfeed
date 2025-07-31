@@ -41,7 +41,7 @@ method_proxy(){
 
 	[ "$proxy" ] && {
 		IPADDR=${proxy%:*}
-		END=${proxy#*:}
+		END=${IPADDR}:${proxy#*:}
 	} || {
 	        # get ipaddress from iface if not defined
 		case $fam in

@@ -42,18 +42,26 @@ method_ttl(){
 method_proxy(){
 
 	for T in $IPT; do
-		case $T in
-			iptables)
-				IPADDR=$(ifstatus $ifn | jsonfilter -e '@["ipv4-address"][*]["address"]')
-				END="${IPADDR}:3128"
-			;;
-			ip6tables)
-				for a in $(ifstatus $ifn | jsonfilter -e '@["ipv6-prefix-assignment"][*]["local-address"]["address"]'); do
-					IPADDR="$a"
-				done
-				END="[$IPADDR]:3128"
-			;;
-		esac
+		[ "$proxy" ] && {
+			IPADDR=${proxy%:*}
+			case $T in
+				iptables) END=${IPADDR}:${proxy#*:} ;;
+				ip6tables) END="[${IPADDR}]:${proxy#*:}" ;;
+			esac
+	        } || {
+			case $T in
+				iptables)
+					IPADDR=$(ifstatus $ifn | jsonfilter -e '@["ipv4-address"][*]["address"]')
+					END="${IPADDR}:3128"
+				;;
+				ip6tables)
+					for a in $(ifstatus $ifn | jsonfilter -e '@["ipv6-prefix-assignment"][*]["local-address"]["address"]'); do
+						IPADDR="$a"
+					done
+					END="[$IPADDR]:3128"
+				;;
+			esac
+		}
 
 		$T -t nat -A PROXY -i $DEV -j FIXPROXY
 
