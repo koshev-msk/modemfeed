@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=Antitethering module for luci-app-firewall
-LUCI_DEPENDS:= +luci-app-firewall
+#LUCI_DEPENDS:= +luci-app-firewall
 
 PKG_LICENSE:=Apache-2.0
-PKG_VERSION:=0.0.4
-PKG_RELEASE:=1
+PKG_VERSION:=0.0.5
+PKG_RELEASE:=0
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

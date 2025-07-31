@@ -1,11 +1,13 @@
 method_ttl(){
-	if [ ! $ttl ]; then
-		ttl=64
-	fi
-	case $(($ttl % 2)) in
-		0) TTL_INC=4 ;;
-		*) TTL_INC=5 ;;
-	esac
+
+	ttl=${ttl:=64}
+
+	#case $(($ttl % 2)) in
+	#	0) TTL_INC=$(($ttl-1)) ;;
+	#	*) TTL_INC=$ttl ;;
+	#esac
+	TTL_INC=$(($ttl-1))
+
 	for T in $IPT; do
 		case $T in
 			iptables)
@@ -33,19 +35,20 @@ method_ttl(){
 			$T -t mangle -A TTL_OUT -j $SUFFIX $ttl
 			$T -t mangle -A TTL_POST -j $SUFFIX $ttl
 		fi
-	done				
+	done
 }
 
 
 method_proxy(){
+
 	for T in $IPT; do
 		case $T in
 			iptables)
-				IPADDR=$(ifstatus $iface | jsonfilter -e '@["ipv4-address"][*]["address"]')
+				IPADDR=$(ifstatus $ifn | jsonfilter -e '@["ipv4-address"][*]["address"]')
 				END="${IPADDR}:3128"
 			;;
 			ip6tables)
-				for a in $(ifstatus $iface | jsonfilter -e '@["ipv6-prefix-assignment"][*]["local-address"]["address"]'); do
+				for a in $(ifstatus $ifn | jsonfilter -e '@["ipv6-prefix-assignment"][*]["local-address"]["address"]'); do
 					IPADDR="$a"
 				done
 				END="[$IPADDR]:3128"
@@ -53,7 +56,7 @@ method_proxy(){
 		esac
 
 		$T -t nat -A PROXY -i $DEV -j FIXPROXY
-		
+
 		case $ports in
 			all)
 				$T -t nat -A FIXPROXY ! -d ${IPADDR} \
@@ -78,7 +81,7 @@ method_proxy(){
 			;;
 		esac
 	done
-}	
+}
 
 # check nat66 module
 if [ -f /lib/modules/$(uname -r)/ip6table_nat.ko ]; then
@@ -102,15 +105,15 @@ for T in $IPT; do
 done
 
 # Create and flush nat table
-#for T in $IPT; do
-#	for t in N F; do
-#		$T -t nat -${t} PROXY
-#		$T -t nat -${t} FIXPROXY
-#	done
-#	for a in D I; do
-#		$T -t nat -${a} PREROUTING -j PROXY
-#	done
-#done
+for T in $IPT; do
+	for t in N F; do
+		$T -t nat -${t} PROXY
+		$T -t nat -${t} FIXPROXY
+	done
+	for a in D I; do
+		$T -t nat -${a} PREROUTING -j PROXY
+	done
+done
 
 for s in $SECTIONS; do
 	if [ "$s" ]; then
@@ -118,6 +121,13 @@ for s in $SECTIONS; do
 	else
 		exit 0
 	fi
+
+        [ -n $iface ] && {
+                ifn=$iface
+        } || {
+                ifn=lan
+        }
+
 	case $inet in
 		ipv4) IPT="iptables" ;;
 		ipv6) IPT="ip6tables" ;;
@@ -127,9 +137,8 @@ for s in $SECTIONS; do
 		IPT="iptables"
 	fi
 	DEV=$(ifstatus $iface | jsonfilter -e '@["l3_device"]')
-	#case $method in
-	#	ttl) method_ttl ;;
-	#	proxy) method_proxy ;;
-	#esac
-	method_ttl
+	case $method in
+		ttl) method_ttl ;;
+		proxy) method_proxy ;;
+	esac
 done

@@ -4,10 +4,11 @@
 SECTIONS=$(echo $(uci show ttl | awk -F [\]\[\@=] '/=ttl/{print $3}'))
 
 get_vars(){
-	for v in method advanced inet ports ttl iface; do
+	for v in method advanced inet ports ttl iface proxy; do
 		eval $v=$(uci -q get ttl.@ttl[${s}].${v} 2>/dev/nul)
 	done
 }
+
 
 # check iptables or nft 
 #
