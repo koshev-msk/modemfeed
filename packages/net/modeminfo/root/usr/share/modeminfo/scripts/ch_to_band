@@ -1,47 +1,51 @@
-ch_to_band(){
-	case $MODE in
-	LTE*)
-		if [ $1 -ge 0 ] && [ $1 -le 599 ]; then
-			SC=1
-		elif [ $1 -ge 600 ] && [ $1 -le 1199 ]; then
-			SC=2
-		elif [ $1 -ge 1200 ] && [ $1 -le 1949 ]; then
-			SC=3
-		elif [ $1 -ge 1950 ] && [ $1 -le 2399 ]; then
-			SC=4
-		elif [ $1 -ge 2400 ] && [ $1 -le 2469 ]; then
-			SC=5
-		elif [ $1 -ge 2750 ] && [ $1 -le 3449 ]; then
-			SC=7
-		elif [ $1 -ge 3450 ] && [ $1 -le 3799 ]; then
-			SC=8
-		elif [ $1 -ge 6150 ] && [ $1 -le 6449 ]; then
-			SC=20
-		elif [ $1 -ge 9210 ] && [ $1 -le 9659 ]; then
-			SC=28
-		elif [ $1 -ge 9870 ] && [ $1 -le 9919 ]; then
-			SC=31
-		elif [ $1 -ge 37750 ] && [ $1 -le 38249 ]; then
-			SC=38
-		elif [ $1 -ge 38650 ] && [ $1 -le 39649 ]; then
-			SC=40
-		else
-			SC=0
-		fi
-	;;
-	*)
-		if [ $1 -ge 1 ] && [ $1 -le 124 ]; then
-			SC=GSM900
-		elif [ $1 -ge 512 ] && [ $1 -le 885 ]; then
-			SC=DCS1800
-		elif [ $1 -ge 955 ] && [ $1 -le 1023 ]; then
-			SC=DCS900
-		elif [ $1 -ge 2937 ] && [ $1 -le 3088 ]; then
-			SC=UMTS900
-		elif [ $1 -ge 10562 ] && [ $1 -le 10838 ]; then
-			SC=IMT2100
-		fi
-	;;	
-	esac
+#!/usr/bin/awk -f
+
+function find_band(value, bands) {
+    for (i in bands) {
+        split(bands[i], parts, /[-:]/)
+        if (value >= parts[1] && value <= parts[2]) {
+            return parts[3]
+        }
+    }
+    return ""
 }
 
+BEGIN {
+    if (ARGC < 3) {
+        print "Usage: " ARGV[0] " <MODE> <CHANNEL>"
+        exit 1
+    }
+
+    mode = ARGV[1]
+    value = ARGV[2]
+    ARGC = 1
+
+    # LTE Bands
+    lte_bands[0] = "0-599:1"
+    lte_bands[1] = "600-1199:2"
+    lte_bands[2] = "1200-1949:3"
+    lte_bands[3] = "1950-2399:4"
+    lte_bands[4] = "2400-2469:5"
+    lte_bands[5] = "2750-3449:7"
+    lte_bands[6] = "3450-3799:8"
+    lte_bands[7] = "6150-6449:20"
+    lte_bands[8] = "9210-9659:28"
+    lte_bands[9] = "9870-9919:31"
+    lte_bands[10] = "37750-38249:38"
+    lte_bands[11] = "38650-39649:40"
+
+    # Other Bands
+    other_bands[0] = "1-124:GSM900"
+    other_bands[1] = "512-885:DCS1800"
+    other_bands[2] = "955-1023:DCS900"
+    other_bands[3] = "2937-3088:UMTS900"
+    other_bands[4] = "10562-10838:IMT2100"
+
+    if (mode ~ /^LTE/) {
+        result = find_band(value, lte_bands)
+        print (result != "" ? result : 0)
+    } else {
+        result = find_band(value, other_bands)
+        print (result != "" ? result : "")
+    }
+}

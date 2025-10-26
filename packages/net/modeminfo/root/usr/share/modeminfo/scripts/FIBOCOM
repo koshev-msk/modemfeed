@@ -1,4 +1,10 @@
 # Fibocom modems NL668/NL678
+
+function ch_to_band(){
+	/usr/share/modeminfo/scripts/ch_to_band $1 $2
+}
+
+
 function modem_data(){
 	generic_data
 	MANUF=$(echo "$O" | awk -F [:,] '/\+CGMI/{gsub("\"","");print $2}')
@@ -48,7 +54,6 @@ function modem_data(){
 		esac
 		if [ "$EARFCN" = "$PCH" ] && [ "$PCI" = "$PCICA" ]; then
 			LTE_CA=1
-			. /usr/share/modeminfo/scripts/ch_to_band
 			case $MODEL in
 				*FM*)
 					SCH=$(echo "$LTE_Cx" | awk -F [,] '/^\SCC\d/{print  $2" "$5}')
@@ -56,8 +61,7 @@ function modem_data(){
 						case $s in
 							0|1) ;;
 							*)
-								ch_to_band $s
-								SCC="$SCC+$SC"
+								SCC="$SCC+$(ch_to_band $MODE $s)"
 							;;
 						esac
 					done
@@ -85,8 +89,7 @@ function modem_data(){
 						*100*) BWCx=20 ;;
 					esac
 					BWCA=$(echo $BWPx $BWCx | awk '{print $1+$2}')
-					ch_to_band $SCH
-					SCC="+$SC"
+					SCC="+$(ch_to_band $MODEM $SCH)"
 				;;
 			esac
 		fi 

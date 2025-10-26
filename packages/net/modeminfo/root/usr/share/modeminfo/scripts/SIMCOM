@@ -1,4 +1,8 @@
 # SimCom SIM7600E-H
+function ch_to_band(){
+        /usr/share/modeminfo/scripts/ch_to_band $1 $2
+}
+
 modem_data(){
 	# get hardware info
 	MANUF=$(echo "$O" | grep -i ${FAMILY} | head -1)
@@ -38,13 +42,11 @@ modem_data(){
 			ENBID=$(printf %d 0x$ENBx)
 			LTE_CA=$(echo "$O" | grep -i CA_Scell | wc -l)
                         if [ $LTE_CA -gt 0 ]; then
-				. /usr/share/modeminfo/scripts/ch_to_band
 				LTE_CA=1
 				SCH=$(echo "$O" | awk -F[:,] '/CA_Scell/{print $3}')
 				SBW=$(echo "$O" | awk -F[:,] '/CA_Scell/{print $6}')
 				for ch in $SCH; do
-					ch_to_band $ch
-					SCC="$SCC+$SC"
+					SCC="$SCC+$(ch_to_band $MODE $ch)"
 				done
 				for bwc in $SBW; do
 					case $bwc in

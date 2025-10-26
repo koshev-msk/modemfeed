@@ -1,4 +1,10 @@
 # Fibocom FM350 parse data
+#
+
+function ch_to_band(){
+	/usr/share/modeminfo/scripts/ch_to_band $1 $2
+}
+
 function modem_data(){
     generic_data
     # AT+CSQ not correct RSSI value data use AT+CESQ
@@ -20,7 +26,7 @@ function modem_data(){
         CSQ_PER="0"
         CSQ_COL="black"
     fi
-    . /usr/share/modeminfo/scripts/ch_to_band
+
     MANUF=$(echo "$O" | awk -F [:,] '/\+CGMI/{gsub("\"","");print $2}')
     MODEL=$(echo "$O" | awk -F [:,] '/\+CGMM/{gsub("\"","");print $2}')
     DEVICE="$MANUF $MODEL"
@@ -55,8 +61,7 @@ function modem_data(){
         if [ $LTE_CA -ge 1 ]; then
             SCx=$(echo "$O" | awk -F [:,] '/SCC/{print $6}')
             for sca in $SCx; do
-                ch_to_band $sca
-                SCC=$SCC+$SC
+                SCC="$SCC+$(ch_to_band $MODE $sca)"
             done
             BWCx=$(echo "$O" | awk -F [:,] '/SCC/{printf "%.0f\n", $7}')
             for ca in $BWCx; do

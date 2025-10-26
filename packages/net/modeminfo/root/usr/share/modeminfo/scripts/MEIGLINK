@@ -1,4 +1,8 @@
 # Meiglink modems
+function ch_to_band(){
+        /usr/share/modeminfo/scripts/ch_to_band $1 $2
+}
+
 function modem_data(){
 	generic_data
 	# hwinfo
@@ -39,13 +43,10 @@ function modem_data(){
 			LTE_CA=$(echo "$DATA" | awk '/\^CELLINFO: / {print $0}' | wc -l)
 			if [ $LTE_CA -gt 0 ]; then
 
-				. /usr/share/modeminfo/scripts/ch_to_band
-
 				CA=$(echo "$DATA" | awk -F "[\, ]" '/\^CELLINFO: \"SCC\"/ {print $6}')
 				BWC=$(echo "$DATA" | awk -F "[\, ]" '/\^CELLINFO: \"SCC\"/ {print $7}')
 				for cc in $CA; do
-					ch_to_band $cc
-					SCC="$SCC+$SC"
+					SCC="$SCC+$(ch_to_band $MODE $cc)"
 				done
 				case $BWDL in
 					1) BWCP=3 ;;

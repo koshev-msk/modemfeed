@@ -1,6 +1,11 @@
+# Parser DATA form XMM and T7xx modems
+
+function ch_to_band(){
+        /usr/share/modeminfo/scripts/ch_to_band $1 $2
+}
+
 function modem_data(){
 	generic_data
-	. /usr/share/modeminfo/scripts/ch_to_band
 	FW=$(echo "$O" | awk '/\+GTPKGVER/{gsub("\"",""); print $2}')
 	ICCID=$(echo "$O" | awk '/CCID:/{print $2}')
 	IMSI=$(echo "$O" | grep -A1 CCID | tail -1)
@@ -14,7 +19,7 @@ function modem_data(){
 		RSRP=$(echo "$O" | awk -F [:,] '/\+RSRP:/{printf "%.0f\n", $4}')
 		RSRQ=$(echo "$O" | awk -F [:,] '/\+RSRQ:/{printf "%.0f\n", $4}')
 		REGST=$(echo "$O" | awk -F[,] '/\+CEREG/ {print $2}')
-        	LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $3}')
+		LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $3}')
 	        CID=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $4}')
 		# ! SINR formula needs to be checked !
 		SINR=$(echo "$O" | awk -F [:,] '/\+XMCI: 4/{gsub(/"/,""); printf "%.0f\n", $13/4+5}')
@@ -80,16 +85,15 @@ function modem_data(){
                         BWCA=$(($BWCA+$N))
                 done
 		for sca in $SCx; do
-			ch_to_band $sca
-			SCC=$SCC+$SC
+			SCC="$SCC+$(ch_to_band $MODE $sca)"
 		done
 		# Fix 7+7+7 wrong CA
-		if [ "$(ch_to_band $EARCFCN)" = "7" -a "$SCC" = "+7+7" ]; then
+		if [ "$(ch_to_band $MODE $EARCFCN)" = "7" -a "$SCC" = "+7+7" ]; then
 			SCC="+7"
 		fi
 	else
 		REGST=$(echo "$O" | awk -F[,] '/\+CREG/ {print $2}')
-        	LAC=$(echo "$O" | awk -F [,] '/\+CREG/{gsub("\"","");print $3}')
+		LAC=$(echo "$O" | awk -F [,] '/\+CREG/{gsub("\"","");print $3}')
 	        CID=$(echo "$O" | awk -F [,] '/\+CREG/{gsub("\"","");print $4}')
 		EARFCN=$(echo "$O" | awk -F [:,] '/\+RSCP:/{print $3}')
 		SINx=$(echo "$O" | awk -F [:,] '/\+XCESQ:/{print $6}')

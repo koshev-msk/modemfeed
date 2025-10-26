@@ -103,7 +103,7 @@ for s in $SECTIONS; do
 	unset BWCA SCC SC BWDx BWPx BWCx BWDL LTE_CA \
                 DEVICE COPS MODE CSQ_PER LAC CSQ_RSSI \
                 SINR RSRP IMEI REGST EARFCN CHIPTEMP FW \
-                ICCID IMSI RSRQ
+                ICCID IMSI RSRQ DISTANCE
 done
 
 echo "]}"
