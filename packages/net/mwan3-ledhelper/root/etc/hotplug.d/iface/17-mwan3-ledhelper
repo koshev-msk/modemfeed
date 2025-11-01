@@ -1,0 +1,78 @@
+#!/bin/sh
+
+mwan3_led_trigger() {
+        local INTERFACE="$1"
+        local ACTION="$2"
+
+        # LED state function
+        set_led() {
+                local led_name="$1"
+                local value="$2"
+                local led_path="/sys/class/leds/${led_name}/brightness"
+
+                # Set state LED
+                echo "$value" > "$led_path" 2>/dev/null
+        }
+
+        # Get config values
+        handle_led_config() {
+                local iface led_on led_off
+
+                config_get iface "$1" iface
+                config_get led_on "$1" led_on
+                config_get led_off "$1" led_off
+
+                # Check interface
+                [ "$iface" != "$INTERFACE" ] && return
+
+                case "$ACTION" in
+                        connected)
+                                # Selected LED led_on
+                                set_led "$led_on" 255
+                                # if defined led_off
+                                [ -n "$led_off" ] && set_led "$led_off" 0
+                        ;;
+                        disconnected)
+	                        if [ -n "$led_off" ]; then
+        	                        # if defined led_off
+                	                set_led "$led_off" 255
+	                        fi
+        	                # Off flashing LED led_on
+                	        set_led "$led_on" 0
+                        ;;
+			ifdown)
+				set_led "$led_on" 0
+				if [ -n "$led_off" ]; then
+					set_led "$led_off" 0
+				fi
+			;;
+                esac
+        }
+
+        # get config
+        config_load mwan3_led
+        config_foreach handle_led_config led
+}
+
+[ -f "/etc/config/mwan3_led" ] && {
+	. /lib/functions.sh
+	. /lib/mwan3/mwan3.sh
+	initscript=/etc/init.d/mwan3
+	. /lib/functions/procd.sh
+
+	[ "$MWAN3_SHUTDOWN" != 1 ] && procd_lock
+
+	[ "$MWAN3_SHUTDOWN" != 1 ] && ! /etc/init.d/mwan3 running && {
+		exit 0
+	}
+
+	config_load mwan3
+
+	config_get_bool enabled "$INTERFACE" enabled 0
+	[ "${enabled}" -eq 1 ] || {
+		exit 0
+	}
+	mwan3_led_trigger $INTERFACE $ACTION
+}
+
+exit 0

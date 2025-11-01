@@ -1,0 +1,4 @@
+config led 'modem'
+        option iface 'modem' # mwan3 tracking interface
+        option led_on 'blue:wan'  # flash led on online state (offlline is disable)
+	option led_off 'red:wan'  # flash led on offline state (online is disable)
