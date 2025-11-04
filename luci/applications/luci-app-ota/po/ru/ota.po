@@ -3,7 +3,7 @@
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Konstantine Shevlakov <shevlakov@132lan.ru>\n"
 
-msgid "OTA update"
+msgid "OTA Update"
 msgstr "Обновление OTA"
 
 msgid "Update Available"
