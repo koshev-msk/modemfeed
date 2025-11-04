@@ -140,3 +140,9 @@ msgstr "Общие настройки"
 
 msgid "Devices setup"
 msgstr "Настройки устройств"
+
+msgid "Wait devices information"
+msgstr "Ожидание ответа от устройств"
+
+msgid "Error loading information"
+msgstr "Получение данных завершилось ошибкой"

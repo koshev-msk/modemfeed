@@ -1,4 +1,4 @@
-'use strict';                                                                                              
+'use strict';
 'require baseclass';
 'require form';
 'require fs';
@@ -17,59 +17,92 @@
 
 return baseclass.extend({
 	title: _('Cellular network'),
-	
+
 	load: async function() {
 		uci.load('modeminfo');
-		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'));
+
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error('Timeout: modeminfo execution took too long'));
+			}, 30000); // 30 sec timeout
+
+			fs.exec_direct('/usr/bin/modeminfo')
+				.then(result => {
+					clearTimeout(timeout);
+					resolve(result);
+				})
+				.catch(error => {
+					clearTimeout(timeout);
+					reject(error);
+				});
+		}).catch(error => {
+			console.error('Error loading modeminfo:', error);
+			return '';
+		});
 	},
-	
+
 	render: function(data){
-		var json = JSON.parse(data);
-		var index = uci.sections('modeminfo', 'general');
-		let modemTBL = E('div', { 'class': 'cbi-section' });
-		
-		if (json.modem && index[0].index == "1"){
-			for (var i = 0; i < json.modem.length; i++) {
-				var signal = document.createElement('div');
-				var icn;
-				var signalIcons = [
-					{ max: -1, icn: 'signal-000-000.svg' },
-					{ max: 0, icn: 'signal-000-000.svg' },
-					{ max: 10, icn: 'signal-000-000.svg' },
-					{ max: 25, icn: 'signal-000-025.svg' },
-					{ max: 50, icn: 'signal-025-050.svg' },
-					{ max: 75, icn: 'signal-050-075.svg' },
-					{ max: Infinity, icn: 'signal-075-100.svg' }
-				];
+		if (!data || data.trim() === '') {
+			return E('div', { 
+				'class': 'cbi-section',
+				'style': 'color: #999; text-align: center;'
+			}, _('Wait devices information'));
+		}
 
-				var p = json.modem[i].csq_per || 0;
-				var { icn } = signalIcons.find(({ max }) => p <= max);
-				var icon = L.resource(`view/modem/icons/${icn}`);
+		try {
+			var json = JSON.parse(data);
+			var index = uci.sections('modeminfo', 'general');
+			let modemTBL = E('div', { 'class': 'cbi-section' });
 
-				var per = p+'%';
-				
-				var ca;
-				if (json.modem[i].lteca > 0) {
-					ca = "+";
-				} else {
-					ca = "";
-				}
-			
-				signal.innerHTML = String.format(
-					'<span class="ifacebadge">' + json.modem[i].cops  + " " +  
-					'<img src="%s"/><b>'+per.fontcolor(json.modem[i].csq_col) + "</b> " + 
-					json.modem[i].mode+ca + '</span>', icon, p );
-			
-				modemTBL.append( 
-					E('table', { 'class': 'table' }, [
-						E('tr', { 'class': 'tr' }, [
-							E('td', { 'class': 'td left', 'width': '33%' }, [ json.modem[i].device ]),
-							E('td', { 'class': 'td left', 'id': 'device' }, [ signal ])
+			if (json.modem && index[0].index == "1"){
+				for (var i = 0; i < json.modem.length; i++) {
+					var signal = document.createElement('div');
+					var icn;
+					var signalIcons = [
+						{ max: -1, icn: 'signal-000-000.svg' },
+						{ max: 0, icn: 'signal-000-000.svg' },
+						{ max: 10, icn: 'signal-000-000.svg' },
+						{ max: 25, icn: 'signal-000-025.svg' },
+						{ max: 50, icn: 'signal-025-050.svg' },
+						{ max: 75, icn: 'signal-050-075.svg' },
+						{ max: Infinity, icn: 'signal-075-100.svg' }
+					];
+
+					var p = json.modem[i].csq_per || 0;
+					var { icn } = signalIcons.find(({ max }) => p <= max);
+					var icon = L.resource(`view/modem/icons/${icn}`);
+
+					var per = p+'%';
+
+					var ca;
+					if (json.modem[i].lteca > 0) {
+						ca = "+";
+					} else {
+						ca = "";
+					}
+
+					signal.innerHTML = String.format(
+						'<span class="ifacebadge">' + json.modem[i].cops  + " " +  
+						'<img src="%s"/><b>'+per.fontcolor(json.modem[i].csq_col) + "</b> " + 
+						json.modem[i].mode+ca + '</span>', icon, p );
+
+					modemTBL.append( 
+						E('table', { 'class': 'table' }, [
+							E('tr', { 'class': 'tr' }, [
+								E('td', { 'class': 'td left', 'width': '33%' }, [ json.modem[i].device ]),
+								E('td', { 'class': 'td left', 'id': 'device' }, [ signal ])
+							])
 						])
-					])
-				);
+					);
+				};
+				return modemTBL;
 			};
-			return modemTBL;
-		};
+		} catch (error) {
+			console.error('Error parsing modeminfo data:', error);
+			return E('div', { 
+				'class': 'cbi-section',
+				'style': 'color: #999; text-align: center;'
+			}, _('Error loading information'));
+		}
 	},
 });
