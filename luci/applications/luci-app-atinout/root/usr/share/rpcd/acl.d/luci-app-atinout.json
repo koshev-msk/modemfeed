@@ -8,14 +8,12 @@
 				"/usr/bin/atinout": [ "exec" ],
 				"/usr/bin/luci-app-atinout": [ "exec" ],
 				"/etc/atcommands.user": [ "read" ]
-			},
-			"uci": [ "atinout" ]
+			}
 		},
 		"write": {
 			"file": {
 				"/etc/atcommands.user": [ "write" ]
-			},
-			"uci": [ "atinout" ]
+			}
 		}
 	}
 }

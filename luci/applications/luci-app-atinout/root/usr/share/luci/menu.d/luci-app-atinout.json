@@ -16,8 +16,7 @@
 			"path": "admin/modem/atinout/atcommands"
 		},
 		"depends": {
-			"acl": [ "luci-app-atinout" ],
-			"uci": { "atinout": true }
+			"acl": [ "luci-app-atinout" ]
 		}
 	},
 	

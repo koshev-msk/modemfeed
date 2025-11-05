@@ -3,13 +3,12 @@
 'require form';
 'require fs';
 'require ui';
-'require uci';
 'require view';
 
 /*
 	Copyright 2022-2023 Rafał Wabik - IceG - From eko.one.pl forum
 
-	Modified for atinout by Konstantine Shevlakov <shevlakov@132lan.ru> 2023
+	Modified for atinout by Konstantine Shevlakov <shevlakov@132lan.ru> 2025
 
 	Licensed to the GNU General Public License v3.0.
 */
@@ -29,7 +28,7 @@ return view.extend({
 			res.stderr = res.stderr?.replace(/(?=\n)$|\s*|\s*$|\n\n+/gm, "") || '';
 
 			dom.content(out, [ res.stdout || '', res.stderr || '' ]);
-			
+
 		}).catch(function(err) {
 			ui.addNotification(null, E('p', [ err ]))
 		}).finally(function() {
@@ -78,7 +77,7 @@ return view.extend({
 	scanPorts: function() {
 		return fs.list('/dev').then(function(devices) {
 			var ports = [];
-			
+
 			if (devices) {
 				devices.forEach(function(device) {
 					var name = device.name;
@@ -87,7 +86,7 @@ return view.extend({
 					}
 				});
 			}
-			
+
 			ports.sort();
 			return ports;
 		}).catch(function(err) {
@@ -99,22 +98,22 @@ return view.extend({
 	updatePortList: function() {
 		var self = this;
 		var portSelect = document.getElementById('portselect');
-		
+
 		if (!portSelect) return;
-		
+
 		portSelect.disabled = true;
 		var currentValue = portSelect.value;
-		
+
 		this.scanPorts().then(function(ports) {
 			var currentPort = currentValue;
-			
+
 			while (portSelect.firstChild) {
 				portSelect.removeChild(portSelect.firstChild);
 			}
-			
+
 			var emptyOption = E('option', { value: '' }, _('-- Select port --'));
 			portSelect.appendChild(emptyOption);
-			
+
 			ports.forEach(function(port) {
 				var option = E('option', { value: port }, port);
 				if (port === currentPort) {
@@ -122,9 +121,9 @@ return view.extend({
 				}
 				portSelect.appendChild(option);
 			});
-			
+
 			portSelect.disabled = false;
-			
+
 			// if ports not found
 			if (ports.length === 0) {
 				ui.addNotification(null, E('p', _('No ttyUSB or ttyACM ports found')), 'info');
@@ -134,8 +133,7 @@ return view.extend({
 
 	load: function() {
 		return Promise.all([
-			L.resolveDefault(fs.read_direct('/etc/atcommands.user'), null),
-			uci.load('atinout')
+			L.resolveDefault(fs.read_direct('/etc/atcommands.user'), null)
 		]);
 	},
 
@@ -167,7 +165,7 @@ return view.extend({
 							)
 						]) 
 					]),
-					
+
 					E('div', { 'class': 'cbi-value' }, [
 						E('label', { 'class': 'cbi-value-title' }, [ _('Modem Port') ]),
 						E('div', { 'class': 'cbi-value-field' }, [
@@ -190,7 +188,7 @@ return view.extend({
 							])
 						])
 					]),
-					
+
 					E('div', { 'class': 'cbi-value' }, [
 						E('label', { 'class': 'cbi-value-title' }, [ _('Command to send') ]),
 						E('div', { 'class': 'cbi-value-field' }, [
@@ -213,7 +211,7 @@ return view.extend({
 											document.getElementById('cmdvalue').focus();
 										}
 									}
-								}																							
+								}
 							}),
 						])
 					]),

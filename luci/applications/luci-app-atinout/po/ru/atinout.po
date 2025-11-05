@@ -54,3 +54,6 @@ msgstr "Список команд успешно сохранён"
 
 msgid "Error saving list: "
 msgstr "Ошибка сохраниения: "
+
+msgid "No ttyUSB or ttyACM ports found"
+msgstr "Последовательные порты модема не обнаружены"
