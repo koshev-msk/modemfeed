@@ -1,10 +1,8 @@
 'use strict';
-'require form';
 'require fs';
 'require view';
-'require uci';
 'require ui';
-'require tools.widgets as widgets'
+'require rpc';
 
 /*
 	Copyright 2022-2023 Rafał Wabik - IceG - From eko.one.pl forum
@@ -14,42 +12,54 @@
 	Licensed to the GNU General Public License v3.0.
 */
 
-
 var cmddesc = _("Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location <code>/etc/atcommands.user</code>."); 
 
 return view.extend({
 	load: function() {
-		return fs.list('/dev').then(function(devs) {
-			return devs.filter(function(dev) {
-				return dev.name.match(/ttyUSB/) || dev.name.match(/ttyAC/);
-			});
+		return fs.read('/etc/atcommands.user').catch(function(err) {
+			return '';
 		});
 	},
 
-	render: function(devs) {
-		var m, s, o;
-		m = new form.Map('atinout', _('Configuration'), _('Configuration panel for atinout.'));
-
-		s = m.section(form.TypedSection, 'atinout', '', _(''));
-		s.anonymous = true;
-
-		o = s.option(form.Value, 'atc_port', _('Port for communication with the modem'), 
-			_("Select serial modem port."));
-		devs.sort((a, b) => a.name > b.name);
-		devs.forEach(dev => o.value('/dev/' + dev.name));
+	render: function(content) {
+		var content = content || '';
 		
-		o.placeholder = _('Please select a port');
-		o.rmempty = false;
+		return E('div', { 'class': 'cbi-map' }, [
+			E('div', { 'class': 'cbi-map-descr' }, _('AT Commands Configuration')),
+			E('div', { 'class': 'cbi-section' }, [
+				E('div', { 'class': 'cbi-section-descr' }, cmddesc),
+				E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('User AT commands')),
+					E('div', { 'class': 'cbi-value-field' }, [
+						E('textarea', {
+							'class': 'cbi-input-textarea',
+							'rows': 20,
+							'style': 'width: 100%',
+							'name': 'atcommands'
+						}, content),
+						E('div', { 'class': 'cbi-button' }, [
+							E('button', {
+								'class': 'cbi-button cbi-button-save',
+								'click': ui.createHandlerFn(this, 'saveCommands')
+							}, _('Save'))
+						])
+					])
+				])
+			])
+		]);
+	},
 
-		o = s.option(form.TextValue, '_tmpl', _('User AT commands'), cmddesc);
-		o.rows = 20;
-		o.cfgvalue = function(section_id) {
-			return fs.trimmed('/etc/atcommands.user');
-		};
-		o.write = function(section_id, formvalue) {
-			return fs.write('/etc/atcommands.user', formvalue.trim().replace(/\r\n/g, '\n') + '\n');
-		};
+	saveCommands: function(ev) {
+		var textarea = document.querySelector('textarea[name="atcommands"]');
+		var commands = textarea.value.trim().replace(/\r\n/g, '\n') + '\n';
+		
+		return fs.write('/etc/atcommands.user', commands).then(function() {
+			ui.addNotification(null, E('p', _('AT commands saved successfully')), 'info');
+		}).catch(function(err) {
+			ui.addNotification(null, E('p', _('Error saving AT commands: ') + err.message), 'error');
+		});
+	},
 
-		return m.render();
-	}
+	handleSave: null,
+	handleReset: null
 });
