@@ -13,7 +13,7 @@ LUCI_DESCRIPTION:=LuCI JS interface for the atinout.
 LUCI_DEPENDS:=+atinout
 LUCI_PKGARCH:=all
 PKG_VERSION:=0.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 define Package/$(PKG_NAME)/conffiles
 /etc/atcommands.user

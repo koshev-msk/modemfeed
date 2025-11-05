@@ -43,8 +43,14 @@ msgstr "Порт модема"
 msgid "-- Select port --"
 msgstr "-- Выберите порт --"
 
-msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location <code>/etc/atcommands.user</code>."
-msgstr "Формат записи команд: 'Описание команды;Команда AT'. Содержатся в файле <code>/etc.atcommands.user</code>."
+msgid "Each line must have the following format: <code>AT command description;AT+COMMAND</code>.<br />For user convenience, the file is saved to the location <code>/etc/atcommands.user</code>."
+msgstr "Формат записи команд: <code>Описание команды;Команда AT</code>.<br /> Пользовательские команды содержатся в файле <code>/etc/atcommands.user</code>."
 
 msgid "Press [Enter] to send the command, press [Delete] to delete the command"
 msgstr "Нажмите [Enter] для отправки или [Delete] для удаления"
+
+msgid "AT commands list saved successfully"
+msgstr "Список команд успешно сохранён"
+
+msgid "Error saving list: "
+msgstr "Ошибка сохраниения: "
