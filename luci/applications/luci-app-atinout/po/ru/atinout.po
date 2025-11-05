@@ -37,14 +37,11 @@ msgstr "Настройки atinout"
 msgid "Configuration panel for atinout."
 msgstr "Панель конфигурации atinout"
 
-msgid "Port for communication with the modem"
-msgstr "AT порт модема"
+msgid "Modem Port"
+msgstr "Порт модема"
 
-msgid "Select serial modem port."
-msgstr "Выберите последовательный порт."
-
-msgid "Please select a port"
-msgstr "Выберите порт"
+msgid "-- Select port --"
+msgstr "-- Выберите порт --"
 
 msgid "Each line must have the following format: 'At command description;AT command'. For user convenience, the file is saved to the location <code>/etc/atcommands.user</code>."
 msgstr "Формат записи команд: 'Описание команды;Команда AT'. Содержатся в файле <code>/etc.atcommands.user</code>."
