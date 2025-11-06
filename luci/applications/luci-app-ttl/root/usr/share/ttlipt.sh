@@ -105,7 +105,7 @@ for T in $IPT; do
 			$T -t mangle -${t} ${c}
 		done
 	done
-	for a in D A; do
+	for a in D I; do
 		$T -t mangle -${a} PREROUTING -j TTLFIX
 		$T -t mangle -${a} OUTPUT -j TTL_OUT
 		$T -t mangle -${a} POSTROUTING -j TTL_POST
