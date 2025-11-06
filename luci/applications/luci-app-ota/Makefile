@@ -11,7 +11,7 @@ LUCI_TITLE:=Simple OTA Update for OpenWrt
 
 PKG_LICENSE:=Apache-2.0
 PKG_VERSION:=0.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
