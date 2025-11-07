@@ -1,0 +1,65 @@
+/* Custom checkbox and radio styles for green theme */
+input[type="checkbox"],
+input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    background: #fff;
+    position: relative;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+input[type="checkbox"] {
+    border-radius: 3px;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #2e7d32;
+    border-color: #2e7d32;
+}
+
+input[type="checkbox"]:checked::before {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+input[type="radio"] {
+    border-radius: 50%;
+}
+
+input[type="radio"]:checked {
+    background-color: #2e7d32;
+    border-color: #2e7d32;
+}
+
+input[type="radio"]:checked::after {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+    border-color: #2e7d32;
+}
+
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+}
