@@ -1,0 +1,13 @@
+<svg width="135" height="30" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="unifiedGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#4ab622"/>
+            <stop offset="50%" stop-color="#2f910b"/>
+            <stop offset="100%" stop-color="#227f00"/>
+        </linearGradient>
+    </defs>
+    <text x="70" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="url(#unifiedGreen)">MERONA</text>
+    <rect x="15" y="70" width="50" height="40" fill="url(#unifiedGreen)"/>
+    <rect x="75" y="40" width="50" height="70" fill="url(#unifiedGreen)"/>
+    <rect x="135" y="10" width="50" height="100" fill="url(#unifiedGreen)"/>
+</svg>

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ "$PKG_UPGRADE" != 1 ]; then
+	uci get luci.themes.Merona >/dev/null 2>&1 || \
+	uci batch <<-EOF
+		set luci.themes.Merona=/luci-static/merona
+		set luci.main.mediaurlbase=/luci-static/merona
+		commit luci
+	EOF
+fi
+
+exit 0
