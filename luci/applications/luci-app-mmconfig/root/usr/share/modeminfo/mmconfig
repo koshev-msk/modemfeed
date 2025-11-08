@@ -10,7 +10,7 @@ get_vars(){
 }
 
 for m in $(seq 0 5); do
-	get_vars >/dev/null 2&>1
+	get_vars >/dev/null 2>&1
 	if [ ${dev} ]; then
 		if ! [ $bands ]; then
 			bands=$(echo $(mmcli -J -m $dev | jsonfilter -e '@["modem"]["generic"]["supported-bands"].*') | awk '{gsub("\ ","\|"); print $0}')

@@ -80,7 +80,7 @@ case $1 in
 
 		# Get aviable profiles
 		! [ -f /tmp/profiles.json ] && {
-			wget ${URL_BASE}/targets/${DISTRIB_TARGET}/profiles.json -O /tmp/profiles.json > /dev/null 2&>1
+			wget ${URL_BASE}/targets/${DISTRIB_TARGET}/profiles.json -O /tmp/profiles.json > /dev/null 2>&1
 		}
 
 		! [ -f /tmp/profiles.json ] && {
@@ -91,7 +91,7 @@ case $1 in
 		# Get changelog
 		[ -f /tmp/profiles.json ] && {
 			[ ! -f /tmp/changelog.txt ] && {
-				wget ${URL_BASE}/changelog.txt -O /tmp/changelog.txt > /dev/null 2&>1
+				wget ${URL_BASE}/changelog.txt -O /tmp/changelog.txt > /dev/null 2>&1
 			} || {
 				break
 			}
@@ -145,7 +145,7 @@ for b in $BASE_BOARD; do
 			if [ -f /tmp/update.lock ]; then
 				echo "Download firmware $FILE"
 				echo "from $URL_BASE"
-				wget $URL_BASE/targets/${DISTRIB_TARGET}/$FILE -O /tmp/firmware.bin > /dev/null 2&>1
+				wget $URL_BASE/targets/${DISTRIB_TARGET}/$FILE -O /tmp/firmware.bin > /dev/null 2>&1
 				case $? in
 					0) echo "Download complete." ;;
 					*) echo "No updates for this board: $BOARD" && remove_files && exit 0 ;;

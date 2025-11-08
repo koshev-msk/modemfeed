@@ -11,7 +11,7 @@ init_proto "$@"
 
 
 valid_ip4(){
-	/bin/ipcalc.sh "${1}/${ip4mask}" > /dev/null 2&>1
+	/bin/ipcalc.sh "${1}/${ip4mask}" > /dev/null 2>&1
 }
 
 
