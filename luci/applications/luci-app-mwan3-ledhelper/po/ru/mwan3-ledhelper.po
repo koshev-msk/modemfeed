@@ -13,10 +13,10 @@ msgid "Set interface"
 msgstr "Интерфейс"
 
 msgid "Select LED online"
-msgstr "LED в \"сети\""
+msgstr "LED \"в сети\""
 
 msgid "Select LED offline"
-msgstr "LED в \"не сети\""
+msgstr "LED \"вне сети\""
 
 msgid "Not Use"
 msgstr "Не использовать"
