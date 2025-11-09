@@ -13,6 +13,9 @@ msgstr "Выберите команду AT для отправки"
 msgid "Please set the port for communication with the modem"
 msgstr "Выберите порт модема."
 
+msgid "Please select a port for communication with the modem"
+msgstr "Выберите порт модема."
+
 msgid "User AT commands"
 msgstr "Пользовательские команды AT"
 
