@@ -89,7 +89,7 @@ function modem_data(){
 						*100*) BWCx=20 ;;
 					esac
 					BWCA=$(echo $BWPx $BWCx | awk '{print $1+$2}')
-					SCC="+$(ch_to_band $MODEM $SCH)"
+					SCC="+$(ch_to_band $MODE $SCH)"
 				;;
 			esac
 		fi 
