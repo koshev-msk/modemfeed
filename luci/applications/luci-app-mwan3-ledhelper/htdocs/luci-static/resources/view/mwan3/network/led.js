@@ -93,7 +93,7 @@ return view.extend({
         Object.keys(leds).sort().forEach(function(name) {
             o.value(name);
         });
-        o.value('', _('Not Use'));
+        o.value('', _('Exclude'));
         o.default = '';
         o.rmempty = true;
 
@@ -101,7 +101,7 @@ return view.extend({
         Object.keys(leds).sort().forEach(function(name) {
             o.value(name);
         });
-	o.value('', _('Not Use'));
+	o.value('', _('Exclude'));
 	o.default = '';
 	o.rmempty = true;
 

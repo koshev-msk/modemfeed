@@ -12,11 +12,11 @@ msgstr "Имя"
 msgid "Set interface"
 msgstr "Интерфейс"
 
+msgid "Exclude"
+msgstr "Не использовать"
+
 msgid "Select LED online"
 msgstr "LED \"в сети\""
 
 msgid "Select LED offline"
 msgstr "LED \"вне сети\""
-
-msgid "Not Use"
-msgstr "Не использовать"
