@@ -22,6 +22,7 @@ proto_xmm_init_config() {
 	proto_config_add_string "apn"
 	proto_config_add_string "pdp"
 	proto_config_add_int "delay"
+	proto_config_add_string "pincode"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
 	proto_config_add_string "auth"
@@ -128,6 +129,14 @@ proto_xmm_setup() {
 	
 		sleep 3
 	done
+
+	if [ -n "$pincode" ]; then
+		PINCODE="$pincode" gcom -d "$device" -s /etc/gcom/setpin.gcom || {
+			proto_notify_error "$interface" PIN_FAILED
+			proto_block_restart "$interface"
+			return 1
+		}
+	fi
 
 	pdp=$(echo $pdp | awk '{print toupper($0)}')
 	[ "$pdp" = "IP" -o "$pdp" = "IPV6" -o "$pdp" = "IPV4V6" ] || pdp="IP"
