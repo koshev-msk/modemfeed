@@ -152,7 +152,12 @@ do
 						("/reboot")
                                                 	(echo "Call $cmd" | logger -t "telegram_bot" -p daemon.info)&
 	                                                RETURN_TEXT="Command executed!"
-							reply_to_msg $msg_id $origin "\${RETURN_TEXT}" && touch /etc/banner && sleep 5 && reboot
+							reply_to_msg $msg_id $origin "\${RETURN_TEXT}" 
+							UPTIME=$(awk '{printf "%0.0f\n", $1}' /proc/uptime)
+							# fix bootloop commands. Add timeout 3 min
+							[ "$UPTIME" -ge "180" ] && {
+								touch /etc/banner && sleep 5 && reboot
+							}
 							;;
 						("/wol")
 							(echo "Call $cmd [$parms]" | logger -t "telegram_bot" -p daemon.info)&
