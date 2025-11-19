@@ -10,6 +10,7 @@ SW_BEFORE_MODRES=$(uci -q get pingcontrol.$1.sw_before_modres)
 SW_BEFORE_SYSRES=$(uci -q get pingcontrol.$1.sw_before_sysres)
 
 PING_OK=$(uci -q get pingcontrol.$1.ping_ok)
+SILENT=$(uci -q get pingcontrol.$1.ping_silent)
 PING_LOST=$(uci -q get pingcontrol.$1.ping_lost)
 PING_RESTORED=$(uci -q get pingcontrol.$1.ping_restored)
 BEFORE_IFACE_DOWN=$(uci -q get pingcontrol.$1.before_iface_down)
@@ -34,8 +35,15 @@ done
 while true; do
 	for IP in $TESTIP
 	do
-		/bin/ping -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null
-		if [[ "$?" -eq "0" ]]; then
+		[ -n $IFNAME ] && {
+			/bin/ping -w5 -c1 -s8 -I $IFNAME $IP &> /dev/null
+			STATUS=$?
+		} || {
+			/bin/ping -w5 -c1 -s8 $IP &> /dev/null
+			STATUS=$?
+		}
+
+		if [[ "${STATUS}" -eq "0" ]]; then
 			let host_up_count++
 		else
 			logger -t pingcontrol "$INSTANCE: Ping to host $IP lost"
@@ -50,7 +58,9 @@ while true; do
 	done
 
 	if [[ "$host_up_count" -gt "0" ]]; then
-		logger -t pingcontrol "$INSTANCE: Ping OK, reset counters"
+		[ ${SILENT} != "1" ] && {
+			logger -t pingcontrol "$INSTANCE: Ping OK, reset counters"
+		}
 		if [[ "$lost_flag" -eq "1" ]]; then
 			if [[ -n "$PING_RESTORED" ]]; then
 				logger -t pingcontrol "$INSTANCE: Execute $PING_RESTORED"
@@ -58,8 +68,10 @@ while true; do
 			fi
 		else
 			if [[ -n "$PING_OK" ]]; then
-				logger -t pingcontrol "$INSTANCE: Execute $PING_OK"
-				eval $PING_OK
+				[ ${SILENT} != "1" ] && {
+					logger -t pingcontrol "$INSTANCE: Execute $PING_OK"
+					eval $PING_OK
+				}
 			fi
 		fi
 		host_up_count=0
