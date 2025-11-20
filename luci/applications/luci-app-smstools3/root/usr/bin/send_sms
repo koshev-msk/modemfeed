@@ -1,0 +1,232 @@
+#!/bin/ash
+# This script send a text sms at the command line by creating
+# a sms file in the outgoing queue.
+
+# $1 is the destination phone number.
+# $2 is the message text.
+# $3 is the modem name (optional) - from smsd.conf section names
+# If you leave $2 or both empty, the script will ask you.
+# If you give more than 2 arguments, last is taken as a text and
+# all other are taken as destination numbers.
+# If a destination is asked, you can type multiple numbers
+# delimited with spaces.
+
+# Keys for example: "password" and "keke":
+# KEYS="5f4dcc3b5aa765d61d8327deb882cf99 4a5ea11b030ec1cfbc8b9947fdf2c872 "
+
+KEYS=""
+
+# When creating keys, remember to use -n for echo:
+# echo -n "key" | md5sum
+
+smsd_group="smsd"
+SMSD_CONF="/etc/smsd.conf"
+
+# Will need echo which accepts -n argument:
+ECHO=echo
+case `uname` in
+	SunOS) ECHO=/usr/ucb/echo ;;
+esac
+
+# get lst modems from smsd.conf
+get_modems_from_conf() {
+	if [ -f "$SMSD_CONF" ]; then
+		grep -E '^\[.*\]$' "$SMSD_CONF" | sed 's/\[\(.*\)\]/\1/' | grep -v '^global$' | tr '\n' ' '
+	else
+		echo ""
+	fi
+}
+
+modem_exists() {
+	local modem=$1
+	if [ -f "$SMSD_CONF" ]; then
+		grep -q "^\[$modem\]$" "$SMSD_CONF"
+		return $?
+	else
+		return 1
+	fi
+}
+
+get_first_modem() {
+	local modems=$(get_modems_from_conf)
+	if [ -n "$modems" ]; then
+		echo "$modems" | awk '{print $1}'
+	else
+		echo ""
+	fi
+}
+
+check_modem_availability() {
+	local modem=$1
+	if ps | grep -v grep | grep -q smsd; then
+		echo "Using modem: $modem" >&2
+		return 0
+	else
+		local device=$(grep -A 10 "^\[$modem\]" "$SMSD_CONF" 2>/dev/null | grep "device\s*=" | head -1 | awk -F= '{print $2}' | tr -d ' ')
+		if [ -n "$device" ] && [ -e "$device" ]; then
+			return 0
+		else
+			return 1
+		fi
+	fi
+}
+
+if ! [ -z "$KEYS" ]; then
+	printf "Key: "
+	read KEY
+	if [ -z "$KEY" ]; then
+		echo "Key required, stopping."
+		exit 1
+	fi
+	KEY=`$ECHO -n "$KEY" | md5sum | awk '{print $1;}'`
+	if ! echo "$KEYS" | grep "$KEY" >/dev/null; then
+		echo "Incorrect key, stopping."
+		exit 1
+	fi
+fi
+
+DEST=$1
+TEXT=$2
+MODEM_NAME=$3
+
+case $# in
+	0)
+		printf "Destination(s): "
+		read DEST
+		if [ -z "$DEST" ]; then
+			echo "No destination, stopping."
+			exit 1
+		fi
+		printf "Text: "
+		read TEXT
+		if [ -z "$TEXT" ]; then
+			echo "No text, stopping."
+			exit 1
+		fi
+	;;
+	1)
+		printf "Text: "
+		read TEXT
+		if [ -z "$TEXT" ]; then
+			echo "No text, stopping."
+			exit 1
+		fi
+	;;
+	2) destinations=$DEST ;;
+	3)
+		destinations=$DEST
+		TEXT=$2
+		MODEM_NAME=$3
+	;;
+	*)
+		n=$#
+		while [ $n -gt 1 ]; do
+			if [ $n -eq 2 ]; then
+				if modem_exists "$1"; then
+					MODEM_NAME=$1
+				else
+					if [ -z "$TEXT" ]; then
+						TEXT=$1
+					else
+						destinations="$destinations $1"
+					fi
+				fi
+			else
+				destinations="$destinations $1"
+			fi
+			shift
+			n=`expr $n - 1`
+		done
+		if [ -z "$TEXT" ]; then
+			TEXT=$1
+		fi
+	;;
+esac
+
+if [ -z "$destinations" ] && [ -n "$DEST" ]; then
+	destinations=$DEST
+fi
+
+AUTO_SELECTED=false
+if [ -z "$MODEM_NAME" ]; then
+	MODEM_NAME=$(get_first_modem)
+	if [ -n "$MODEM_NAME" ]; then
+		AUTO_SELECTED=true
+		echo "No modem specified, auto-selected: $MODEM_NAME"
+	else
+		echo "Error: No modems found in configuration and no modem specified."
+		exit 1
+	fi
+else
+	if ! modem_exists "$MODEM_NAME"; then
+		echo "Warning: Modem '$MODEM_NAME' not found in config."
+		MODEM_NAME=$(get_first_modem)
+		if [ -n "$MODEM_NAME" ]; then
+			AUTO_SELECTED=true
+			echo "Auto-selected available modem: $MODEM_NAME"
+		else
+			echo "Error: No modems available in configuration."
+			exit 1
+		fi
+	fi
+fi
+
+if ! check_modem_availability "$MODEM_NAME"; then
+	echo "Warning: Modem '$MODEM_NAME' might not be available."
+	ALL_MODEMS=$(get_modems_from_conf)
+	for alt_modem in $ALL_MODEMS; do
+		if [ "$alt_modem" != "$MODEM_NAME" ] && check_modem_availability "$alt_modem"; then
+			echo "Switching to alternative modem: $alt_modem"
+			MODEM_NAME=$alt_modem
+			AUTO_SELECTED=true
+			break
+		fi
+	done
+fi
+
+echo "-- "
+echo "Text: $TEXT"
+echo "Modem: $MODEM_NAME"
+[ "$AUTO_SELECTED" = "true" ] && echo "Note: Modem was auto-selected"
+
+ALPHABET=""
+if which iconv > /dev/null 2>&1; then
+	if ! $ECHO -n "$TEXT" | iconv -t ISO-8859-15 >/dev/null 2>&1; then
+		ALPHABET="Alphabet: UCS"
+	fi
+fi
+
+group=""
+if [ -f /etc/group ]; then
+	if grep $smsd_group: /etc/group >/dev/null; then
+		group=$smsd_group
+	fi
+fi
+
+for destination in $destinations; do
+	echo "To: $destination"
+
+	TMPFILE=`mktemp /tmp/smsd_XXXXXX`
+
+	$ECHO "To: $destination" >> $TMPFILE
+	[ -n "$ALPHABET" ] && $ECHO "$ALPHABET" >> $TMPFILE
+	[ -n "$MODEM_NAME" ] && $ECHO "Modem: $MODEM_NAME" >> $TMPFILE
+	$ECHO "" >> $TMPFILE
+	if [ -z "$ALPHABET" ]; then
+		$ECHO -n "$TEXT" >> $TMPFILE
+	else
+		$ECHO -n "$TEXT" | iconv -t UNICODEBIG >> $TMPFILE
+	fi
+
+	if [ "x$group" != x ]; then
+		chgrp $group $TMPFILE
+	fi
+
+	chmod 0660 $TMPFILE
+
+	FILE=`mktemp /var/spool/sms/outgoing/send_XXXXXX`
+	mv $TMPFILE $FILE
+	echo "Message queued: $FILE"
+done
+
+echo "SMS will be sent via modem: $MODEM_NAME"

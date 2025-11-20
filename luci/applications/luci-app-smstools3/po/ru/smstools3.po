@@ -38,8 +38,8 @@ msgstr "Отправитель"
 msgid "Smstools3: Incoming messages"
 msgstr "Smstools3: Входящие сообщения"
 
-msgid "Remove SMS"
-msgstr "Удалить СМС"
+msgid "Remove All SMS"
+msgstr "Удалить все СМС"
 
 msgid "Refresh"
 msgstr "Обновить"
@@ -247,3 +247,15 @@ msgstr "Индикация входящих сообщений."
 
 msgid "Select LED"
 msgstr "Выберите LED"
+
+msgid "Any modem (default)"
+msgstr "Любой доступный"
+
+msgid "Are you sure you want to delete this message?"
+msgstr "Вы уверены, что хотите удалить это сообщение?"
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "Delete this message"
+msgstr "Удалить это сообщение"

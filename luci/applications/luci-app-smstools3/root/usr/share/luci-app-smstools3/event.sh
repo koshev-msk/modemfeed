@@ -2,98 +2,132 @@
 
 killall smsd
 
-# General settings
+. /lib/functions.sh
+
+# Modems in system config
+MODEMS=""
+config_load smstools3
+
+get_modem_names() {
+	local modem_name="$1"
+	MODEMS="${MODEMS}${MODEMS:+, }$modem_name"
+}
+
+config_foreach get_modem_names modem
+
+# General settings using config_get
 DECODE=$(uci -q get smstools3.@sms[0].decode_utf)
 STORAGE=$(uci -q get smstools3.@sms[0].storage)
 LOG=$(uci -q get smstools3.@sms[0].loglevel)
 LED_EN=$(uci -q get smstools3.@sms[0].led_enable)
 
-# Modems in system config
-MODEMS=$(echo $(uci show smstools3 | grep -Ev '@sms|root_phone' | awk -F [.] '/enable/{split($2,a,"="); print a[1]","}') | sed 's/.$//')
+# Set default loglevel if not set
+[ -z "$LOG" ] && LOG="5"
+
 
 if [ ! -d /root/sms ]; then
-	mkdir /root/sms
+	mkdir -p /root/sms
 	for d in checked failed incoming outgoing sent; do
-		mkdir /root/sms/${d}
+		mkdir -p /root/sms/${d}
 	done
 fi
 
-case $STORAGE in
+case "$STORAGE" in
 	persistent)
-		if [ -d  /var/spool/sms ]; then
+		if [ -d /var/spool/sms ]; then
 			mv /var/spool/sms /var/spool/sms_tmp
-			ln -s /root/sms /var/spool/sms
+			ln -sf /root/sms /var/spool/sms
 		fi
-		;;
+	;;
 	temporary)
-		if [ -d  /var/spool/sms_tmp ]; then
+		if [ -d /var/spool/sms_tmp ]; then
 			rm -f /var/spool/sms
 			mv /var/spool/sms_tmp /var/spool/sms
 		fi
-		;;
+	;;
 esac
 
 # template config
-echo -e "devices = $MODEMS"
-echo -e "incoming = /var/spool/sms/incoming\noutgoing = /var/spool/sms/outgoing"
-echo -e "checked = /var/spool/sms/checked\nfailed = /var/spool/sms/failed\nsent = /var/spool/sms/sent"
-echo -e "receive_before_send = no\ndate_filename = 1\ndate_filename_format = %s"
+echo "devices = $MODEMS"
+echo "incoming = /var/spool/sms/incoming"
+echo "outgoing = /var/spool/sms/outgoing"
+echo "checked = /var/spool/sms/checked"
+echo "failed = /var/spool/sms/failed"
+echo "sent = /var/spool/sms/sent"
+echo "receive_before_send = no"
+echo "date_filename = 1"
+echo "date_filename_format = %s"
 echo "eventhandler = /usr/share/luci-app-smstools3/led.sh"
 
-if [ "$DECODE" ]; then
-        echo "decode_unicode_text = yes"
-        echo "incoming_utf8 = yes"
-fi
-echo -e "receive_before_send = no\nautosplit = 3"
-if [ "$LOG" ]; then
-	echo "loglevel = $LOG"
-fi
+[ -n "$DECODE" ] && {
+	echo "decode_unicode_text = yes"
+	echo "incoming_utf8 = yes"
+}
 
-MODEMS=$(echo $MODEMS | tr -d ',')
+echo "receive_before_send = no"
+echo "autosplit = 4"
 
-for m in $MODEMS; do
+[ -n "$LOG" ] && echo "loglevel = $LOG"
 
-	UI=$(uci -q get smstools3.${m}.ui)
-	DEVICE=$(uci -q get smstools3.${m}.device)
-	PIN=$(uci -q get smstools3.${m}.pin)
-	INIT_=$(uci -q get smstools3.${m}.init)
-	NET_CHECK=$(uci -q get smstools3.${m}.net_check)
-	SIG_CHECK=$(uci -q get smstools3.${m}.sig_check)
-	ENABLE=$(uci -q get smstools3.${m}.enable)
+# Process each modem using config_foreach
+process_modem() {
+	local modem_name="$1"
+	local UI DEVICE PIN INIT_ NET_CHECK SIG_CHECK ENABLE
 
-	[ "$ENABLE" = "1" ] && {
-		echo ""
-		echo "[${m}]"
-		case $INIT_ in
-        		huawei) INIT_STRING="init = AT+CPMS=\"SM\";+CNMI=2,0,0,2,1" ;;
-	        	intel) INIT_STRING="init = AT+CPMS=\"SM\"" ;;
-			asr) INIT_STRING="init = AT+CPMS=\"SM\",\"SM\",\"SM\"" ;;
-		        *)INIT_STRING="init = AT+CPMS=\"ME\",\"ME\",\"ME\"" ;;
+	config_get UI "$modem_name" ui
+	config_get DEVICE "$modem_name" device
+	config_get PIN "$modem_name" pin
+	config_get INIT_ "$modem_name" init
+	config_get NET_CHECK "$modem_name" net_check
+	config_get SIG_CHECK "$modem_name" sig_check
+	config_get ENABLE "$modem_name" enable
+
+	[ "$ENABLE" = "1" ] || return 0
+
+	echo ""
+	echo "[${modem_name}]"
+
+	case "$INIT_" in
+		huawei) echo "init = AT+CPMS=\"SM\";+CNMI=2,0,0,2,1" ;;
+		intel) echo "init = AT+CPMS=\"SM\"" ;;
+		asr) echo "init = AT+CPMS=\"SM\",\"SM\",\"SM\"" ;;
+		*) echo "init = AT+CPMS=\"ME\",\"ME\",\"ME\"" ;;
+	esac
+
+	echo "device = $DEVICE"
+
+	case "$SIG_CHECK" in
+		1) echo "signal_quality_ber_ignore = yes" ;;
+	esac
+
+	case "$NET_CHECK" in
+		0) echo "check_network = 0" ;;
+		1) echo "check_network = 1" ;;
+		2) echo "check_network = 2" ;;
+	esac
+
+	[ -z "$UI" ] && echo "detect_unexpected_input = no"
+
+	echo "incoming = yes"
+
+	# PIN validation
+	[ -n "$PIN" ] && {
+		case "$PIN" in
+			''|*[!0-9]*)
+				logger -t luci-app-smstools3 "invalid pin for modem $modem_name"
+			;;
+			*)
+				if [ ${#PIN} -ne 4 ]; then
+					logger -t luci-app-smstools3 "invalid pin length for modem $modem_name"
+				else
+					 echo "pin = $PIN"
+				fi
+			;;
 		esac
-		echo $INIT_STRING
-		echo "device = $DEVICE"
-		case $SIG_CHECK in
-			1) echo "signal_quality_ber_ignore = yes" ;;
-		esac
-		case $NET_CHECK in
-			0) echo "check_network = 0" ;;
-			1) echo "check_network = 1" ;;
-			2) echo "check_network = 2" ;;
-		esac
-		if [ ! "$UI" ]; then
-        		echo -e "detect_unexpected_input = no"
-		fi
-		echo "incoming = yes"
-		case $PIN in
-        		''|*[!0-9]*) logger -t luci-app-smstools3 "invalid pin" ;;
-	        	*)
-	        	if  [ "$(echo "$PIN" | awk '{print length}')" -lt "4" ] || [ "$(echo "$PIN" | awk '{print length}')" -gt "4" ]; then
-        	        	logger -t luci-app-smstools3 "invalid pin"
-	        	else
-        	        	echo "pin = $PIN"
-		        fi
-        		;;
-		esac
-		echo "baudrate = 115200"
 	}
-done
+
+	echo "baudrate = 115200"
+}
+
+# Process all modems
+config_foreach process_modem modem

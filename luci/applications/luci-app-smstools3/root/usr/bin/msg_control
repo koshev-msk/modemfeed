@@ -3,6 +3,7 @@
 IFS=$'\n'
 
 function send_msg(){
+	local filename=$(basename "$2")
 	modem=$(echo "$1" | awk '/Modem:/{print $2}')
 	to=$(echo "$1" | awk '/To:/{print $2}')
 	sent=$(echo "$1" | awk '/Sent:/{gsub("Sent: ","");print $0}')
@@ -13,11 +14,12 @@ function send_msg(){
 	modem_json=$(jq -Rn --arg str "$modem" '$str')
 	msg_json=$(jq -Rn --arg str "$msg" '$str')
 
-	string="{ \"modem\": $modem_json, \"to\": \"$to\", \"sent\": \"$sent\", \"time\": \"$time\", \"content\": $msg_json },"
+	string="{ \"filename\": \"$filename\", \"modem\": $modem_json, \"to\": \"$to\", \"sent\": \"$sent\", \"time\": \"$time\", \"content\": $msg_json },"
 }
 
 
 function recv_msg(){
+	local filename=$(basename "$2")
 	local modem from srecv drecv msg
 	modem=$(echo "$1" | awk '/Modem:/{print $2}')
 	from=$(echo "$1" | awk '/From:/{print $2}')
@@ -32,7 +34,7 @@ function recv_msg(){
 	drecv_json=$(jq -Rn --arg str "$drecv" '$str')
 	msg_json=$(jq -Rn --arg str "$msg" '$str')
 
-	string="{ \"modem\": $modem_json, \"from\": $from_json, \"srecv\": $srecv_json, \"drecv\": $drecv_json, \"content\": $msg_json },"
+	string="{ \"filename\": \"$filename\", \"modem\": $modem_json, \"from\": $from_json, \"srecv\": $srecv_json, \"drecv\": $drecv_json, \"content\": $msg_json },"
 }
 
 
@@ -42,7 +44,7 @@ case $1 in
 		echo "{ \"sent\": ["
 		for m in $MSG; do
 			f=$(cat $m)
-			send_msg "$f"
+			send_msg "$f" "$m"
 			json="$json $string"
 		done
 		echo -e $json | sed 's/.$//'
@@ -53,7 +55,7 @@ case $1 in
 		echo "{ \"recv\": ["
 		for m in $MSG; do
 			f=$(cat $m)
-			recv_msg "$f"
+			recv_msg "$f" "$m"
 			json="$json $string"
 		done
 			echo -e $json | sed 's/.$//'
@@ -61,4 +63,13 @@ case $1 in
 	;;
 	rmsent) rm -rf /var/spool/sms/sent/* ;;
 	rmrecv) rm -rf /var/spool/sms/incoming/* ;;
+	delete)
+		if [ -n "$2" ]; then
+			if [ -f "/var/spool/sms/incoming/$2" ]; then
+				rm -f "/var/spool/sms/incoming/$2"
+			elif [ -f "/var/spool/sms/sent/$2" ]; then
+				rm -f "/var/spool/sms/sent/$2"
+			fi
+		fi
+	;;
 esac

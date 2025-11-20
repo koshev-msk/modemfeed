@@ -3,7 +3,7 @@
 		"description": "Grant UCI access for luci-app-smstools3",
 		"read": {
 			"file": {
-				"/usr/bin/sendsms": [ "exec" ],
+				"/usr/bin/send_sms": [ "exec" ],
 				"/usr/bin/msg_control": [ "exec" ],
 				"/etc/init.d/luci-sms": [ "exec" ],
 				"/usr/share/luci-app-smstools3/led.sh": [ "exec" ],

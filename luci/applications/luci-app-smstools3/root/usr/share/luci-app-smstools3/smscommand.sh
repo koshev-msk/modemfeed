@@ -4,40 +4,69 @@
 SECTIONS=$(uci show smstools3 | awk -F [\.,=] '/=command/{print $2}')
 PHONE=$(uci -q get smstools3.@root_phone[0].phone)
 
+# Функция для отправки SMS
+send_sms() {
+    local phone="$1"
+    local message="$2"
+    local modem="$3"
+    
+    if [ -n "$modem" ] && [ "$modem" != "" ]; then
+        # Используем указанный модем
+        /usr/bin/sendsms "$phone" "$message" "$modem"
+    else
+        # Авто-выбор модема
+        /usr/bin/sendsms "$phone" "$message"
+    fi
+}
 
 # smscommand function
 smscmd(){
-        for s in $SECTIONS; do
-                CMD="$(uci -q get smstools3.${s}.command)"
-                MSG="$(echo $content)"
-                case $CMD in
-                        *${MSG}*)
-                                ANSWER=$(uci -q get smstools3.${s}.answer)
-                                if [ "$ANSWER" ]; then
-                                        /usr/bin/sendsms $PHONE "$ANSWER"
-                                fi
-                                EXEC=$(uci -q get smstools3.${s}.exec)
-                                DELAY=$(uci -q get smstools3.${s}.delay)
-                                if [ $DELAY ]; then
-                                        sleep $DELAY && $EXEC &
-                                else
-                                        $EXEC
-                                fi
-                        ;;
-                esac
-        done
+    local message_modem="$1"
+    
+    for s in $SECTIONS; do
+        CMD="$(uci -q get smstools3.${s}.command)"
+        MSG="$(echo $content)"
+        COMMAND_MODEM=$(uci -q get smstools3.${s}.modem)
+        
+        # Проверяем, подходит ли команда по содержанию и модему
+        case $MSG in
+            *${CMD}*)
+                # Если для команды указан конкретный модем, проверяем совпадение
+                if [ -n "$COMMAND_MODEM" ] && [ "$COMMAND_MODEM" != "" ]; then
+                    if [ "$message_modem" != "$COMMAND_MODEM" ]; then
+                        # Команда предназначена для другого модема, пропускаем
+                        continue
+                    fi
+                fi
+                
+                # Выполняем команду
+                ANSWER=$(uci -q get smstools3.${s}.answer)
+                if [ "$ANSWER" ]; then
+                    send_sms "$PHONE" "$ANSWER" "$COMMAND_MODEM"
+                fi
+                EXEC=$(uci -q get smstools3.${s}.exec)
+                DELAY=$(uci -q get smstools3.${s}.delay)
+                if [ $DELAY ]; then
+                    sleep $DELAY && $EXEC &
+                else
+                    $EXEC
+                fi
+            ;;
+        esac
+    done
 }
 
 # parse incoming message
 if [ "$1" == "RECEIVED" ]; then
-	from=`grep "From:" $2 | awk -F ': ' '{printf $2}'`
-	content=$(sed -e '1,/^$/ d' < "$2")
-	# check ROOT messages
-	for n in ${PHONE}; do
-		if [ "$from" -eq "$n" ]; then
-			PHONE=$n
-			smscmd
-		fi
-	done
+    from=`grep "From:" $2 | awk -F ': ' '{printf $2}'`
+    content=$(sed -e '1,/^$/ d' < "$2")
+    message_modem=`grep "Modem:" $2 | awk -F ': ' '{printf $2}'`
+    
+    # check ROOT messages
+    for n in ${PHONE}; do
+        if [ "$from" -eq "$n" ]; then
+            PHONE=$n
+            smscmd "$message_modem"
+        fi
+    done
 fi
-
