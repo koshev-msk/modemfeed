@@ -10,6 +10,12 @@ msgstr "Интерфейс для ping-запросов"
 msgid "IP address or hostname of test servers"
 msgstr "IP-адрес или имя хоста тестовых серверов"
 
+msgid "Silent mode"
+msgstr "Тихий режим"
+
+msgid "Do not log success ping"
+msgstr "Не журналировать успешные попытки"
+
 msgid "Failed attempts before iface up/down"
 msgstr "Количество неудачных попыток до переподключения интерфейса"
 
