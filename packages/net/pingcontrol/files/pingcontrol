@@ -58,7 +58,7 @@ while true; do
 	done
 
 	if [[ "$host_up_count" -gt "0" ]]; then
-		[ ${SILENT} != "1" ] && {
+		[ "${SILENT}" != "1" ] && {
 			logger -t pingcontrol "$INSTANCE: Ping OK, reset counters"
 		}
 		if [[ "$lost_flag" -eq "1" ]]; then
@@ -68,7 +68,7 @@ while true; do
 			fi
 		else
 			if [[ -n "$PING_OK" ]]; then
-				[ ${SILENT} != "1" ] && {
+				[ "${SILENT}" != "1" ] && {
 					logger -t pingcontrol "$INSTANCE: Execute $PING_OK"
 					eval $PING_OK
 				}

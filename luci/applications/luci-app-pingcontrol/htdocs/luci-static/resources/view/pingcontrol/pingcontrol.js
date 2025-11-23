@@ -43,6 +43,9 @@ return view.extend({
 		o = s.taboption('general',form.DynamicList, 'testip', _('IP address or hostname of test servers'));
 		o.datatype = 'or(hostname,ipaddr("nomask"))';
 
+		o = s.taboption('general',form.Flag, 'ping_silent', _('Silent mode'), _('Do not log success ping'));
+
+
 		o = s.taboption('general',form.Value, 'check_period', _('Period of check, sec'));
 		o.rmempty = false;
 		o.datatype = 'and(uinteger,min(20))';
