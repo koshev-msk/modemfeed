@@ -31,103 +31,136 @@ function get_port() {
 }
 
 function modem_family() {
-	comport=$(uci -q get modeminfo.@modeminfo[${s}].device | awk -F [\/] '{print $NF}')
-	case $comport in
-		*ttyUSB*|*ttyHS*)
-			VID=$(cat $(readlink -f /sys/class/tty/$comport/device/../../idVendor))
-			PID=$(cat $(readlink -f /sys/class/tty/$comport/device/../../idProduct))
-		;;
-		*ttyACM*)
-			VID=$(cat $(readlink -f /sys/class/tty/$comport/device/../idVendor))
-			PID=$(cat $(readlink -f /sys/class/tty/$comport/device/../idProduct))
-		;;
-		*) exit 0 ;;
-	esac
-	VIDPID=${VID}${PID}
-	FAMILY=$(awk -F [\;] '/'$VIDPID'/{print toupper($2)}' $RES/modem.list)
-	if [ ! $FAMILY ]; then
-		FAMILY=GENERIC
-	fi
+    FAMILY=$(uci -q get modeminfo.@modeminfo[${s}].device | awk -F/ -v res="$RES" '
+        function read_file(path) {
+            value = ""
+            if ((getline value < path) > 0) {
+                close(path)
+                return value
+            }
+            return ""
+        }
+        
+        {
+            comport = $NF
+            if (comport ~ /ttyUSB|ttyHS/) {
+                device_path = "/sys/class/tty/" comport "/device/../.."
+            } else if (comport ~ /ttyACM/) {
+                device_path = "/sys/class/tty/" comport "/device/.."
+            } else {
+                print "GENERIC"
+                exit
+            }
+            
+            vid = read_file(device_path "/idVendor")
+            pid = read_file(device_path "/idProduct")
+            
+            if (vid == "" || pid == "") {
+                print "GENERIC"
+                exit
+            }
+            
+            vidpid = vid pid
+            modem_list = res "/modem.list"
+            
+           # Read modem.list file
+            while ((getline line < modem_list) > 0) {
+                if (line ~ /^#/ || line == "") continue  # пропускаем комментарии и пустые строки
+                split(line, parts, ";")
+                if (parts[1] == vidpid) {
+                    close(modem_list)
+                    print toupper(parts[2])
+                    exit
+                }
+            }
+            close(modem_list)
+            print "GENERIC"
+        }
+    ')
 }
 
 # get CSQ
 function get_csq(){
-	CSQ=$(echo "$O" | awk -F[,\ ] '/^\+CSQ/ {print $2}')
-	[ "x$CSQ" = "x" ] && CSQ=-1
-	if [ $CSQ -ge 0 -a $CSQ -le 31 ]; then
-		CSQ_PER=$(($CSQ * 100/31))
-		CSQ_COL="red"
-		[ $CSQ -ge 10 ] && CSQ_COL="red"
-		[ $CSQ -ge 15 ] && CSQ_COL="orange"
-		[ $CSQ -ge 20 ] && CSQ_COL="green"
-		CSQ_RSSI=$((2 * CSQ - 113))
-	else 
-		CSQ_PER="0"
-		CSQ_COL="black"
-	fi
+    eval $(echo "$O" | awk -F[:,] '
+        /^\+CSQ/ {
+            csq = $2
+            if (csq == "" || csq < 0 || csq > 31) {
+                print "CSQ=-1; CSQ_PER=0; CSQ_COL=\"black\"; CSQ_RSSI=0"
+                exit
+            }
+            
+            # Percentage calc
+            csq_per = int(csq * 100 / 31)
+            
+            # Color
+            if (csq >= 20) csq_col = "green"
+            else if (csq >= 15) csq_col = "orange" 
+            else if (csq >= 10) csq_col = "red"
+            else csq_col = "red"
+            
+            # RSSI calc
+            csq_rssi = 2 * csq - 113
+            
+            printf "CSQ=%d; CSQ_PER=%d; CSQ_COL=\"%s\"; CSQ_RSSI=%d", csq, csq_per, csq_col, csq_rssi
+            exit
+        }
+        
+        END {
+            if (!csq) print "CSQ=-1; CSQ_PER=0; CSQ_COL=\"black\"; CSQ_RSSI=0"
+        }
+    ')
 }
 
 # Get MCC or MNC 
 function get_cops() {
-	# COPS
-	#COPS_NUM=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,2/ {print $2}')
-	#if [ "x$COPS_NUM" != "x" ]; then
-	#	COPS_MCC=${COPS_NUM:0:3}
-	#	COPS_MNC=${COPS_NUM:3:3}
-	#	COPS=$(awk -F[\;] '/'$COPS_NUM'/ {print $2}' $RES/mccmnc.dat)
-	#	if [ "x$COPS" = "x" ]; then
-	#		COPS="$COPS_MCC $COPS_MNC"
-	#	fi
-	#fi
 	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,0/ {print $2}' | awk '{for(i=NF;i>=1;i--){w=tolower($i);if(!s[w]++)r=r?$i" "r:$i} print r}')	
 }
 
 # Get Registration data
 function get_reg_data(){
-	for CREG in "+CREG" "+CGREG" "+CEREG"; do
-		REGST=$(echo "$O" | awk -F[,] '/\'$CREG'/ {print $2}')
-		if [ "$REGST" ]; then
-			break
-		fi
-	done
+	REGST=$(echo "$O" | awk -F',' '/\+CREG|\+CGREG|\+CEREG/ {print $2; exit}')
 }
 
 function generic_data(){
-	TECH=$(echo "$O" | awk -F[,] '/^\+COPS/ {print $4}')
-	case "$TECH" in
-		2*) MODE="UMTS";;
-		0*|3*) MODE="EDGE";;
-		4*) MODE="HSDPA";;
-		5*) MODE="HSUPA";;
-		6*) MODE="HSPA";;
-		7*) MODE="LTE";;
-		 *) MODE="--";;
-	esac
+    MODE=$(echo "$O" | awk -F, '
+        /^\+COPS/ {
+            modes["2"] = "UMTS"
+            modes["0"] = modes["3"] = "EDGE"
+            modes["4"] = "HSDPA"
+            modes["5"] = "HSUPA"
+            modes["6"] = "HSPA"
+            modes["7"] = "LTE"
+            
+            prefix = substr($4, 1, 1)
+            print (prefix in modes ? modes[prefix] : "--")
+        }')
 }
 
 # name device via mmcli utility
 mmcli_name(){
-	MMCLI=$(uci -q get modeminfo.@modeminfo[${s}].mmcli_name)
-	if [ "$MMCLI" = "1" ]; then
-		if [ -x /usr/bin/mmcli ]; then
-			MODEM=$(mmcli -L | awk '{print $1}' | awk -F [/] '{print $NF}')
-			for mm in $MODEM; do
-				MMCLIMEI=$(mmcli -m $mm -J | jsonfilter -e '@["modem"].*["imei"]')
-				IMEI=$(echo $IMEI | tr -d ' ')
-				if [ "$IMEI" = "$MMCLIMEI" ]; then
-					MANUF=$(mmcli -m $mm -J | jsonfilter -e '@["modem"].*["manufacturer"]' | awk '{gsub("\r", ""); print $0}')
-					MODEL=$(mmcli -m $mm -J | jsonfilter -e '@["modem"].*["model"]' | awk '{gsub("\r", ""); print $0}')
-					if [ -n "$(echo "$MODEL" | grep "${MANUF}")" ]; then
-						DEVICE="$MODEL"
-					else
-						DEVICE="$MANUF $MODEL"
-					fi
-				fi
-			done
-		fi
-	fi
-}
+    [ "$(uci -q get modeminfo.@modeminfo[${s}].mmcli_name)" = "1" ] || return
+    [ -x /usr/bin/mmcli ] || return
 
+    DEVICE=$(mmcli -L | awk '{print $1}' | awk -F/ '{print $NF}' | while read -r mm; do
+        DATA=$(mmcli -m "$mm" -J 2>/dev/null)
+
+        # Parse MANUF and MODEL mmcli json output
+        get_vars(){
+            jsonfilter -s "$DATA" \
+                -e "MANUF=$['modem'].*['manufacturer']" \
+                -e "MODEL=$['modem'].*['model']"
+        }
+
+        eval $(get_vars) 2>/dev/null
+
+        # check DEVICE name
+        case "$MODEL" in
+            *"$MANUF"*) echo "$MODEL" ;;
+            *) echo "$MANUF $MODEL" ;;
+        esac
+        break
+    done)
+}
 
 function get_data_in(){
 	modem_family
