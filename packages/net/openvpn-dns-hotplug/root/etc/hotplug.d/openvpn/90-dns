@@ -1,7 +1,7 @@
 #!/bin/sh
 # Get DNS, Domain Search via OpenVPN client hotplug script
-# Written by Konstantine Shevlakov at <shevlakov@132lan.ru> 2022
-# OpenWrt 21 file location: /etc/hotplug.d/openvpn
+# Written by Konstantine Shevlakov at <shevlakov@132lan.ru> 2025
+# OpenWrt 21 or higher file location: /etc/hotplug.d/openvpn
 
 
 # Get NameServers and Domain search
@@ -12,28 +12,49 @@ get_ns(){
 
 # Setting up NameServers and Domain
 set_ns(){
-	if [ "x$CFGIFACE" != "x" ]; then
-		for ns in $DNS; do
-			if [ "x$ns" != "x" ]; then
-				uci -q add_list network.$CFGIFACE.dns=$ns
-			fi
-		done
-		for dn in $DOMAIN; do
-			if [ "x$dn" != "x" ]; then
-				uci -q add_list network.$CFGIFACE.dns_search=$dn
-			fi
-		done
+	if [ -z "$CFGIFACE" ]; then
+		return 1
 	fi
-	uci -q commit network
+    
+    # check interface in uci conf
+    if ! ubus call network.interface.$CFGIFACE status >/dev/null 2>&1; then
+        return 1
+    fi
+    
+    # DNS processing
+    if [ -n "$DNS" ]; then
+        local dns_list=""
+        for ns in $DNS; do
+            [ -n "$ns" ] && dns_list="${dns_list:+$dns_list,}\"$ns\""
+        done
+        
+        if [ -n "$dns_list" ]; then
+            ubus call network.interface.$CFGIFACE set_dns "{\"dns\":[$dns_list]}" || {
+                return 1
+            }
+        fi
+    fi
+    
+    # domain search process
+    if [ -n "$DOMAIN" ]; then
+        local domain_list=""
+        for dn in $DOMAIN; do
+            [ -n "$dn" ] && domain_list="${domain_list:+$domain_list,}\"$dn\""
+        done
+        
+        if [ -n "$domain_list" ]; then
+            ubus call network.interface.$CFGIFACE set_search "{\"search\":[$domain_list]}" || {
+                return 1
+            }
+        fi
+    fi
 }
 
 # Delete NameServers and Domain
 unset_ns(){
-	if [ "x$CFGIFACE" != "x" ]; then
-		uci -q delete network.$CFGIFACE.dns
-		uci -q delete network.$CFGIFACE.dns_search
-	fi
-	uci -q commit network
+    [ -n "$CFGIFACE" ] || return 1
+    ubus call network.interface.$CFGIFACE set_dns "{'dns':[]}" 2>/dev/null
+    ubus call network.interface.$CFGIFACE set_search "{'search':[]}" 2>/dev/null
 }
 
 

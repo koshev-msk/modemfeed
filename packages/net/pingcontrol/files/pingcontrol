@@ -70,8 +70,8 @@ while true; do
 			if [[ -n "$PING_OK" ]]; then
 				[ "${SILENT}" != "1" ] && {
 					logger -t pingcontrol "$INSTANCE: Execute $PING_OK"
-					eval $PING_OK
 				}
+					eval $PING_OK
 			fi
 		fi
 		host_up_count=0
