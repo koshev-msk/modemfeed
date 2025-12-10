@@ -10,7 +10,8 @@ config_load smstools3
 
 get_modem_names() {
 	local modem_name="$1"
-	MODEMS="${MODEMS}${MODEMS:+, }$modem_name"
+	config_get ENABLE "$modem_name" enable
+	[ "$ENABLE" = "1" ] && MODEMS="${MODEMS}${MODEMS:+, }$modem_name"
 }
 
 config_foreach get_modem_names modem
