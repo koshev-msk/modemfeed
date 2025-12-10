@@ -113,16 +113,16 @@ process_modem() {
 
 	# PIN validation
 	[ -n "$PIN" ] && {
-		case "$PIN" in
-			''|*[!0-9]*)
+		case "${PIN#}" in
+			*[!0-9]*)
 				logger -t luci-app-smstools3 "invalid pin for modem $modem_name"
 			;;
-			*)
-				if [ ${#PIN} -ne 4 ]; then
+			*[0-9]*)
+				[ ${#PIN} -lt 4 -a ${#PIN} -gt 8 ] && {
+					echo "pin = $PIN"
+				} || {
 					logger -t luci-app-smstools3 "invalid pin length for modem $modem_name"
-				else
-					 echo "pin = $PIN"
-				fi
+				}
 			;;
 		esac
 	}
