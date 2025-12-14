@@ -3,7 +3,8 @@
 		"description": "Grant UCI access for luci-app-3proxy",
 		"read": {
 			"file": {
-				"/etc/3proxy.cfg": [ "read" ]
+				"/etc/3proxy.cfg": [ "read" ],
+				"/etc/init.d/3proxy": [ "exec" ]
 			},
 			"uci": [ "3proxy" ]
 		},
