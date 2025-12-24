@@ -20,10 +20,10 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
-  SECTION:=net
-  CATEGORY:=Network
-  MAINTAINER := Andrei Safonov <andrey.safonov@gmail.com>
-  TITLE:=Tool for flashing QUalcomm T99W175 modems
+  SECTION:=utils
+  CATEGORY:=Utilites
+  MAINTAINER := Andrey Safonov <andrey.safonov@gmail.com>
+  TITLE:=Tool for flashing Qualcomm T99W175 modems
   URL:=https://github.com/andrewz1/flash_fox/
   DEPENDS:=+libusb-1.0 +zlib
 endef
