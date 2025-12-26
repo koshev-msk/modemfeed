@@ -8,6 +8,8 @@ init_proto "$@"
 proto_t2s_init_config(){
 	no_device=1
 	available=1
+	proto_config_add_string "network"
+	proto_config_add_int "ip_manual"
 	proto_config_add_string "ipaddr"
 	proto_config_add_string "netmask"
 	proto_config_add_string "gateway"
@@ -60,13 +62,72 @@ check_encrypt(){
 	esac
 }
 
+getaddr() {
+	local network="${1:-10.0.0.0/8}"
+
+	awk -v network="$network" '
+	BEGIN {
+		srand()
+		split(network, parts, "/")
+		network_ip = parts[1]
+		prefix = parts[2] == "" ? 24 : int(parts[2])
+
+		split(network_ip, octets, ".")
+		o1 = int(octets[1])
+		o2 = int(octets[2])
+		o3 = int(octets[3])
+		o4 = int(octets[4])
+
+		if (prefix <= 8) {
+			r2 = int(rand() * 256)
+		} else if (prefix <= 16) {
+			bits = prefix - 8
+			max = bits > 0 ? 2^(8 - bits) - 1 : 0
+			r2 = o2 + int(rand() * (max + 1))
+		} else {
+			r2 = o2
+		}
+
+		if (prefix <= 16) {
+			r3 = int(rand() * 256)
+		} else if (prefix <= 24) {
+			bits = prefix - 16
+			max = bits > 0 ? 2^(8 - bits) - 1 : 0
+			r3 = o3 + int(rand() * (max + 1))
+		} else {
+			r3 = o3
+		}
+
+		if (prefix <= 24) {
+			base4 = int(rand() * 64) * 4
+		} else {
+			bits = prefix - 24
+			max = bits > 0 ? 2^(8 - bits) - 1 : 0
+			base4 = o4 + (int(rand() * (max + 1)) * 4)
+			base4 = and(base4, 252)
+			if (base4 > 252) base4 = 252
+		}
+
+		net_ip = o1 "." r2 "." r3 "." base4
+		gw_ip = o1 "." r2 "." r3 "." (base4 + 1)
+		dev_ip = o1 "." r2 "." r3 "." (base4 + 2)
+
+		print "GENIPADDR=" dev_ip
+		print "GENIPMASK=255.255.255.252"
+		print "GENIPNET=" net_ip "/30"
+		print "GENIPGW=" gw_ip
+	}
+	'
+}
+
+
 proto_t2s_setup(){
 	local interface="$1"
-	local ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark 
-	local base64enc socket obfs_host port mtu
+	local network ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark 
+	local ip_manual base64enc socket obfs_host port mtu
 	local username password opts sockpath $PROTO_DEFAULT_OPTIONS
-	json_get_vars ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark
-	json_get_vars base64enc socket obfs_host port mtu
+	json_get_vars network ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark
+	json_get_vars ip_manual base64enc socket obfs_host port mtu
 	json_get_vars username password opts sockpath $PROTO_DEFAULT_OPTIONS
 	ifname=$interface
 	[ "$metric" = "" ] && metric="0"
@@ -140,20 +201,16 @@ proto_t2s_setup(){
 		proto_set_available "$interface" 0
 	}
 
-	[ "$loglevel" ] && {
-		ARGS="$ARGS -loglevel $loglevel"
-	}
-
-	[ "$fwmark" ] && {
-		ARGS="$ARGS -fwmark $fwmark"
-	}
-
-	[ "$mtu" ] && {
-		ARGS="$ARGS -mtu $mtu"
-	}
-
-	[ "$opts" ] && {
-		 ARGS="$ARGS $opts"
+	[ "$loglevel" ] && ARGS="$ARGS -loglevel $loglevel"
+	[ "$fwmark" ] && ARGS="$ARGS -fwmark $fwmark"
+	[ "$mtu" ] && ARGS="$ARGS -mtu $mtu"
+	[ "$opts" ] && ARGS="$ARGS $opts"
+	! [ "$ip_manual" = "1" ] && {
+		eval $(getaddr $network)
+		ipaddr=$GENIPADDR
+		netmask=$GENIPMASK
+		gateway=$GENIPGW
+		echo "Assign $ipaddr mask $netmask gw $gateway"
 	}
 
 	proto_init_update "$interface" 1
@@ -178,4 +235,4 @@ proto_t2s_teardown(){
 	ip tuntap del mode tun dev $interface
 }
 
-add_protocol t2s
+[ -n "$INCLUDE_ONLY" ] || add_protocol t2s
