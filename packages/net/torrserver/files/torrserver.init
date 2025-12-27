@@ -1,0 +1,46 @@
+#!/bin/sh /etc/rc.common
+# Simple proc.d init script by koshev-msk
+# <shevlakov@132lan.ru> 2025
+
+USE_PROCD=1
+START=99
+STOP=01
+NAME=torrserver
+BINDIR=/usr/bin
+
+start_service() {
+	config_load torrserver
+	config_get enabled "$CONFIG_SECTION" enabled
+	config_get port "$CONFIG_SECTION" port
+	config_get ssl "$CONFIG_SECTION" address
+	config_get ssl "$CONFIG_SECTION" ssl
+	config_get ssl_port "$CONFIG_SECTION" ssl_port
+	config_get ssl_key "$CONFIG_SECTION" ssl_key
+	config_get ssl_cert "$CONFIG_SECTION" ssl_cert
+	config_get path "$CONFIG_SECTION" path
+	
+	[ "$enabled" != "1" ] && return 1
+	[ ! -d "$path" ] && mkdir -p $path
+
+	procd_open_instance
+	procd_set_param command ${BINDIR}/${NAME}
+
+        procd_set_param respawn 300 5 5
+        procd_set_param limits nofile="unlimited"
+
+	[ -n $address ] && procd_append_param command -i $address
+	procd_append_param command -d "$path"
+	procd_append_param command -p "$port"
+	
+	[ "$ssl" = "1" ] && {
+		procd_append_param command --ssl
+		procd_append_param command -sslport "$ssl_port"
+		[ -f "$ssl_key" ] && procd_append_param command --sslkey "$ssl_key"
+		[ -f "$ssl_cert" ] && procd_append_param command --sslcert "$ssl_cert"
+	}
+	
+	procd_set_param env GIN_MODE=release
+	procd_set_param stdout 1
+	procd_set_param pidfile /var/run/${NAME}.pid
+	procd_close_instance
+}
