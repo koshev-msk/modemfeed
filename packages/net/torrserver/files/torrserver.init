@@ -12,7 +12,7 @@ start_service() {
 	config_load torrserver
 	config_get enabled "$CONFIG_SECTION" enabled
 	config_get port "$CONFIG_SECTION" port
-	config_get ssl "$CONFIG_SECTION" address
+	config_get address "$CONFIG_SECTION" address
 	config_get ssl "$CONFIG_SECTION" ssl
 	config_get ssl_port "$CONFIG_SECTION" ssl_port
 	config_get ssl_key "$CONFIG_SECTION" ssl_key
