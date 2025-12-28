@@ -28,7 +28,7 @@ start_service() {
         procd_set_param respawn 300 5 5
         procd_set_param limits nofile="unlimited"
 
-	[ -n $address ] && procd_append_param command -i $address
+	[ $address ] && procd_append_param command -i $address
 	procd_append_param command -d "$path"
 	procd_append_param command -p "$port"
 	
