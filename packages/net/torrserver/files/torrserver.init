@@ -34,7 +34,7 @@ start_service() {
 	
 	[ "$ssl" = "1" ] && {
 		procd_append_param command --ssl
-		procd_append_param command -sslport "$ssl_port"
+		procd_append_param command --sslport "$ssl_port"
 		[ -f "$ssl_key" ] && procd_append_param command --sslkey "$ssl_key"
 		[ -f "$ssl_cert" ] && procd_append_param command --sslcert "$ssl_cert"
 	}
