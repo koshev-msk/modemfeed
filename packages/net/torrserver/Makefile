@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=torrserver
-PKG_VERSION:=1.36
+PKG_VERSION:=136
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
