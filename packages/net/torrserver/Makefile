@@ -1,13 +1,15 @@
 # Makefile build Torrserver MatriX for OpenWrt SDK
-# add node repository in feed.conf.default for build OpenWrt current branch: e.g 24.10
+# add node repository in feeds.conf.default for build OpenWrt current branch: e.g 24.10
 # src-git node https://github.com/nxhack/openwrt-node-packages.git;openwrt-24.10
+# and optional for compress binary via upx
+# src-git upx https://github.com/kuoruan/openwrt-upx.git
 # Copyright (c) Konstantine Shevlakov 2025 at <shevlakov@132lan.ru>
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=torrserver
 PKG_VERSION:=136
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/YouROK/TorrServer.git
@@ -18,7 +20,7 @@ PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host
+PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host upx/host
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
@@ -72,8 +74,23 @@ define Package/$(PKG_NAME)/description
 endef
 
 GO_HOST:=$(STAGING_DIR_HOSTPKG)/bin/go
+UPX:=$(STAGING_DIR_HOST)/bin/upx
+UPX_AVAILABLE:=$(shell [ -x "$(UPX)" ] && echo yes || echo no)
 TARGET_CC:=$(TARGET_CROSS)gcc
 TARGET_CXX:=$(TARGET_CROSS)g++
+
+
+ifeq ($(UPX_AVAILABLE),yes)
+define upxcompress
+	@echo "Compressing $(PKG_NAME) with UPX..."
+	$(UPX) --lzma --best $(1)
+endef
+else
+define upxcompress
+	@echo "UPX not found at $(UPX)"
+	@echo "Skipping compression of $(PKG_NAME)"
+endef
+endif
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -109,6 +126,7 @@ define Build/Compile
 		-tags=nosqlite \
 		-o $(PKG_INSTALL_DIR)/$(PKG_NAME) \
 		./cmd
+	$(call upxcompress,$(PKG_INSTALL_DIR)/$(PKG_NAME))
 endef
 
 define Package/$(PKG_NAME)/install	
