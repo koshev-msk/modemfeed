@@ -18,7 +18,7 @@ msgstr "Редактируйте файл настройки."
 msgid "Save"
 msgstr "Сохранить"
 
-msgstr "Restart 3proxy"
+msgid "Restart 3proxy"
 msgstr "Перезапустить 3proxy"
 
 msgid "Configuration saved successfully"
