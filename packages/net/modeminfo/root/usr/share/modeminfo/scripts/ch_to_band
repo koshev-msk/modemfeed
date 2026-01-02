@@ -33,6 +33,7 @@ BEGIN {
     lte_bands[9] = "9870-9919:31"
     lte_bands[10] = "37750-38249:38"
     lte_bands[11] = "38650-39649:40"
+    lte_bands[11] = "39650-41589:41"
 
     # Other Bands
     other_bands[0] = "1-124:GSM900"

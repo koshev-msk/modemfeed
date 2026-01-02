@@ -117,7 +117,8 @@ return view.extend({
 						{ min: 9210, max: 9659, frdl: 758, frul: 703, offset: 9210, band: "28" },
 						{ min: 9870, max: 9919, frdl: 452.5, frul: 462.5, offset: 9870, band: "31" },
 						{ min: 37750, max: 38249, frdl: 2570, frul: 2570, offset: 37750, band: "38" },
-						{ min: 38650, max: 39649, frdl: 2300, frul: 2300, offset: 38650, band: "40" }
+						{ min: 38650, max: 39649, frdl: 2300, frul: 2300, offset: 38650, band: "40" },
+						{ min: 39650, max: 41589, frdl: 2496, frul: 2496, offset: 39650, band: "41" }
 					];
 
 					var bandConfig = lteBands.find(b => rfcn >= b.min && rfcn <= b.max) || {
