@@ -23,7 +23,9 @@ var callSerialPort = rpc.declare({
 	filter: function(list, params) {
 		var rv = [];
 		for (var i = 0; i < list.length; i++)
-			if (list[i].name.match(/^ttyACM/) || list[i].name.match(/^ttyUSB/))
+			if (list[i].name.match(/^ttyACM/) ||
+				list[i].name.match(/^ttyUSB/) ||
+				list[i].name.match(/^wwan\d+at\d+/))
 				rv.push(params.path + list[i].name);
 		return rv.sort((a, b) => a.name > b.name);
 	}

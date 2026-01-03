@@ -4,7 +4,7 @@ LUCI_TITLE:=Information dashboard for 3G/LTE dongle
 LUCI_DEPENDS:=+modeminfo
 PKG_LICENSE:=GPLv3
 PKG_VERSION:=0.4.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
