@@ -30,7 +30,7 @@ modem_data(){
 		EARFCN=$(echo "$O" | awk -F [:,] '/QCRSRQ/{print $3}')
 		RSRP=$(echo "$O" | awk '/RSRP.*dBm|PCC RxM RSRP/{print $(NF); exit}')
 		RSRQ=$(echo "$O" | awk -F [:,] '/QCRSRQ/{gsub("\"",""); printf "%.0f\n", $4}')
-		SINR=$(echo "$O" | awk -F [:,] '/QCSQ/{printf $3}')
+		SINR=$(echo "$O" | awk '/SINR \(dB\):/{if($NF+0==$NF){printf "%.0f\n", $NF} else{print "--"}; exit}')
 		CSQ_RSSI=$(echo "$O" | awk -F [:,] '/QCSQ/{print $NF}')
 		LTE_CA=$(echo "$O" | awk '/^SCC[0-9]* RxM RSSI:/{count++} END{print count}')
 		BWDx=$(echo "$O" | awk '/LTE bw/{print $6}')
