@@ -113,7 +113,7 @@ function get_csq(){
 
 # Get MCC or MNC 
 function get_cops() {
-	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,0/ {print $2}' | awk '{for(i=NF;i>=1;i--){w=tolower($i);if(!s[w]++)r=r?$i" "r:$i} print r}')	
+	COPS=$(echo "$O" | awk -F[\"] '/^\+COPS:\s?.,[0-9]+/ {print $2}' | awk '{for(i=NF;i>=1;i--){w=tolower($i);if(!s[w]++)r=r?$i" "r:$i} print r}')	
 }
 
 # Get Registration data
@@ -129,7 +129,7 @@ function generic_data(){
             modes["4"] = "HSDPA"
             modes["5"] = "HSUPA"
             modes["6"] = "HSPA"
-            modes["7"] = "LTE"
+            modes["7"] = modes["13"] = "LTE"
             
             prefix = substr($4, 1, 1)
             print (prefix in modes ? modes[prefix] : "--")

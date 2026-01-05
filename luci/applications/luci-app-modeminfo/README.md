@@ -14,7 +14,7 @@ Supported devices:
 
  - Huawei E3372 (LTE)/MU709/ME909
 
- - Sierra Wireless EM7455
+ - Sierra Wireless EM7455/EM9191
 
  - HP LT4220
 
@@ -45,7 +45,7 @@ Supported devices:
 |modeminfo-serial-quectel |Quectel modems support |
 |modeminfo-serial-telit |Telit LN940 (HP LT4220) modem support |
 |modeminfo-serial-huawei |Huawei MU709/ME909/E3372(stick mode, LTE only) modems support|
-|modeminfo-serial-sierra |Sierra EM7455 modem support |
+|modeminfo-serial-sierra |Sierra EM7455/EM9191 modem support |
 |modeminfo-serial-simcom |SimCOM modems support |
 |modeminfo-serial-dell |Dell DW5821e/DW5829e modem support |
 |modeminfo-serial-fibocom |Fibocom LN668/NL678/NL952/FM150/FM190 modems support |

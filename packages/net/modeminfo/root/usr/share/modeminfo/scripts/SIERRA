@@ -11,34 +11,40 @@ modem_data(){
 	TECH=$(echo "$O" | awk -F[,\ ] '/^\*CNTI/ {print $3}' | sed 's|/|,|g')
 	if [ "x$TECH" != "x" ]; then
 		MODE="$TECH"
+		case $MODE in
+			NONE) MODE=LTE ;;
+		esac
 	fi
 	if [ $MODE = "LTE" ]; then
 		# Sierra 73XX series
-		LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $3}')
-		CID=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $5}')
-		EARFCN=$(echo "$O" | awk '/LTE Rx chan:/{print $4}')
-		RSRP=$(echo "$O" |  awk '/RSRP/{print $3}' | head -1)
-		RSRQ=$(echo "$O" | awk '/RSRQ/{printf "%.0f\n", $3}' |head -1)
-		SINx=$(echo "$O" | awk '/SINR/{print $6}' |head -1)
-		SINR=$(echo $SINx | awk '{printf "%.0f\n", $0}')
-		CSQ_RSSI=$(echo "$O" | awk '/PCC RxM RSSI:/{print $4}')
-		LTE_CA=$(echo "$O" | awk '/SCC RxM RSSI:/{print $0}' |wc -l)
+		case $MODEL in
+			*73*|*74*)
+				LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $3}')
+				CID=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $5}')
+			;;
+			*)
+				LAC=$(echo "$O" | awk -F'[,]' '/\+CEREG/{gsub("\"","");print $3}')
+				CID=$(echo "$O" | awk -F'[,]' '/\+CEREG/{gsub("\"","");print $4}')
+			;;
+		esac
+		EARFCN=$(echo "$O" | awk -F [:,] '/QCRSRQ/{print $3}')
+		RSRP=$(echo "$O" | awk '/RSRP.*dBm|PCC RxM RSRP/{print $(NF); exit}')
+		RSRQ=$(echo "$O" | awk -F [:,] '/QCRSRQ/{gsub("\"",""); printf "%.0f\n", $4}')
+		SINR=$(echo "$O" | awk -F [:,] '/QCSQ/{printf $3}')
+		CSQ_RSSI=$(echo "$O" | awk -F [:,] '/QCSQ/{print $NF}')
+		LTE_CA=$(echo "$O" | awk '/^SCC[0-9]* RxM RSSI:/{count++} END{print count}')
 		BWDx=$(echo "$O" | awk '/LTE bw/{print $6}')
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
 		PCI=$(echo "$O" | awk -F [:,] '/QCRSRQ:/{print $2}')
 		if [ $LTE_CA -ge 1 ]; then
-			CA=$(echo "$O" | awk -F [:] '/LTE Scell band/{gsub("B","");print $3}')
-			for cc in "$CA"; do
-				SC=$cc
-				SCC="$SCC+$cc"
-			done
-			bw=$(echo "$O" |awk '/LTE Scell bw:/{gsub("bw:","");print $3}')
-			for bwc in $bw; do	
-				bwcc="$bwcc+$bwc"
-			done
-			BWCA=$(($BWDx$bwcc))
+			SCC=$(echo "$O" | awk -F [:] '/LTE Scell band/{gsub("B","");printf "%s", "+"$NF} END{print ""}')
+			[ $SCC ] || SCC=$(echo "$O" | awk '/LTE SCC[1-5] band:/{gsub("B", ""); printf "%s", "+"$NF} END{print ""}')
+			case $MODEL in
+				*73*|*74*) BWCA=$(echo "$O" | awk  -v bwdx=$BWDx -F [:] '/LTE Scell bw:/{sum += $2} END{print sum + bwdx}') ;;
+				*) BWCA=$(echo "$O" | awk -v bwdx=$BWDx '/LTE SCC[1-9] bw/{sum += $5} END{print sum + bwdx}') ;;
+			esac
 		fi
 		case $BWDx in
 			3) BWDL=1 ;;
@@ -47,11 +53,6 @@ modem_data(){
 			15) BWDL=4 ;;
 			20) BWDL=5 ;;
 		esac
-		# Sierra 74XX series
-		if [ "x$SINx" = "x" ]; then
-			SINR=$(echo "$O" | awk '/SINR/{printf "%.0f\n", $3}' |head -1)
-			RSRP=$(echo "$O" |  awk '/RSRP/{print $7}' | head -1)
-		fi
 	else
 		LAC=$(echo "$O" | awk -F [,] '/\+CGREG/{gsub("\"","");print $3}')
                 CID=$(echo "$O" | awk -F [,] '/\+CGREG/{gsub("\"","");print $4}')
