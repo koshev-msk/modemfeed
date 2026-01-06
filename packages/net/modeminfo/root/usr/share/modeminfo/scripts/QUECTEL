@@ -22,39 +22,26 @@ function modem_data(){
 		;;
 	esac
 	# signal info
+	set -- $(echo "$O" | awk -F [,\ ] '/^\+QENG/ {print $6, $7, $8, $9, $10, $13, $14, $15, $16, $17 ,$18}')
 	if [ "$MODE" = "LTE" ]; then
-		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $10}')
-		RSRP=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $15}')
-		SINR=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $18}')
-		PCI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $9}')
-		CID=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $8}')
-		LAC=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $14}')
+		CID=${3}; PCI=${4}; EARFCN=${5}; BWDL=${6}; LAC=${7}; RSRP=${8}; RSRQ=${9}; SINR=${11};
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
 		case $MDL in
 			# EC200 send incorrect RSSI value, use value from AT+CSQ
 			*EC200*) ;;
-			*) CSQ_RSSI=$(echo "$O" |awk -F "[\, ]" '/\+QENG:/{print $17}') ;;
+			*) CSQ_RSSI=${10} ;;
                 esac
-		RSRQ=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $16}')
-		BWUL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $12}')
-		BWDL=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
 		LTE_CA=$(echo "$O" | awk '/^\+QCAINFO/{print $0}' | wc -l)
 		if [ $LTE_CA -ge 2 ]; then
 			SCC=$(echo "$O" | awk -F [,] '/^\+QCAINFO.*"scc"/{for(i=1;i<=NF;i++) if($i~/BAND/){gsub(/[^0-9]/,"",$i); printf "+"$i}} END{print ""}')
 			BWCA=$(echo "$O" | awk -F [,] -v bwdl=$BWDL '/^\+QCAINFO.*"scc"/{sum+=$3/5} END{print sum + (bwdl==1 ? 3 : bwdl*5 - 5)}')
 		fi
 	elif [ "$MODE" = "EDGE" ]; then
-		LAC=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $6}')
-		CID=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $7}')
-		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $10}')
+		LAC=$1; CID=$2; EARFCN=$5
 	else
-		LAC=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $7}')
-		CID=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $8}')
-		EARFCN=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $9}')
-		ECIO=$(echo "$O" |awk -F[,\ ] '/^\+QENG/ {print $13}')
-		SINR=$ECIO
+		LAC=$2; CID=$3; EARFCN=$4; SINR=$6
 	fi
 	case $MDL in
 		*EM12*) CHIPTEMP=$(echo "$O" | awk -F'[,\ ]' '/^\+QTEMP/ {gsub("\"",""); print $3}') ;;
