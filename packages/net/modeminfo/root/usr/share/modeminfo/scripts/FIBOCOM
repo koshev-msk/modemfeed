@@ -1,52 +1,48 @@
 # Fibocom modems NL668/NL678/NL952/FM150/FM190
 
-function ch_to_band(){
-        /usr/share/modeminfo/scripts/ch_to_band $1 $2
-}
-
-
 function modem_data(){
 	generic_data
-	MANUF=$(echo "$O" | awk -F [:,] '/\+CGMI/{gsub("\"","");print $2}')
-	MODEL=$(echo "$O" | awk -F [:,] '/\+CGMM/{gsub("\"","");print $2}')
-	DEVICE="$MANUF $MODEL"
-	FW=$(echo "$O" | awk -F [:,] '/\+CGMR/{gsub("\"","");print $2}')
-	ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-	IMSI=$(echo "$O" | awk -F [:,] '/\+CIMI/{gsub("\"","");print $2}')
-	IMEI=$(echo "$O" | awk -F [:,] '/\+CGSN/{gsub("\"","");print $2}')
-	NETWORK=$(echo "$O"| grep -A2 'service cell' | awk 'NR ==2{print}')
-	EARFCN=$(echo "$NETWORK" | awk -F [,] '{print $7}')
+	OIFS="$IFS"
+	IFS="|"
+	set -- $(echo "$O" | awk -F'[:,]' '
+		/\+CGMI/ {gsub("\"",""); manuf=$2}
+		/\+CGMM/ {gsub("\"",""); model=$2}
+		/\+CGMR/ {gsub("\"",""); fw=$2}
+		/\+CIMI/ {gsub("\"",""); imsi=$2}
+		/\+CGSN/ {gsub("\"",""); imei=$2}
+		/ICCID:/ {gsub("\r",""); iccid=$2}
+		END {print manuf "|" model "|" fw "|" imsi "|" imei "|" iccid}')
+	DEVICE="${1} ${2}"; MANUF="${1}"; MODEL="${2}"; FW="${3}"; IMSI="${4}"; IMEI="${5}"; ICCID="${6}"
+	IFS="$OIFS"
+	unset
+	NETWORK=$(echo "$O" | awk '/\+GTCCINFO:/ {getline; getline; print}')
+	OIFS="$IFS"
+	IFS="|"
+	set -- $(echo "$NETWORK" | awk -F',' '{
+		print $4 "|" $5 "|" $6 "|" \
+		sprintf("%.0f", -20 + ($14/2)) "|" \
+		sprintf("%.0f", $13 - 140) "|" \
+		sprintf("%.0f", $11/4 + 5) "|" $7 "|" $8 "|" $10}')
+
+	EARFCN=${7}
+
 	case $MODEL in
 		*FM*|*952*) EARFCN=$(printf %d 0x${EARFCN}) ;;
 	esac
 	if [ "$MODE" = "LTE" ]; then
-		case $MODEL in
-			*952*)
-				LAC=$(echo "$NETWORK" |awk -F[,\ ] '{print $5}')
-				CID=$(echo "$NETWORK" |awk -F[,\ ] '{print $6}')
-			;;
-			*)
-				LAC=$(echo "$O" |awk -F[,\ ] '/^\+CEREG/{gsub("\"","");print $4}')
-				CID=$(echo "$O" |awk -F[,\ ] '/^\+CEREG/{gsub("\"","");print $5}')
-			;;
-		esac
-		RSRQ=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", -20+($14/2)}')
-		RSRP=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", $13-140}')
-		SINR=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", $11/4+5}')
+		LAC=$2; CID=$3; RSRQ=${4}; RSRP=${5}; SINR=${6}; PCI=${8}; BWDx=${9}
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
-		PCI=$(echo "$NETWORK" | awk -F [,] '{print $8}')
 		case $MODEL in
 			*FM*|*952*) PCI=$(printf %d 0x${PCI}) ;;
 		esac
-		BWDx=$(echo "$NETWORK" | awk -F [,] '{print $10}')
 		case $BWDx in
-			15) BWDL=1; BWPx=1.3 ;;
-			25) BWDL=2; BWPx=5 ;;
-			50) BWDL=3; BWPx=10 ;;
-			75) BWDL=4; BWPx=15 ;;
-			100) BWDL=5; BWPx=20 ;;
+			15) BWDL=1 ;;
+			25) BWDL=2 ;;
+			50) BWDL=3 ;;
+			75) BWDL=4 ;;
+			100) BWDL=5 ;;
 		esac
 		case $MODEL in
 			*FM*|*952*)
@@ -60,55 +56,29 @@ function modem_data(){
 				PCICA=$(echo "$LTE_Cx" | awk -F [,] '/^\+GTCAINFO: 1/{print $4}')
 			;;
 		esac
+
 		if [ "$EARFCN" = "$PCH" ] && [ "$PCI" = "$PCICA" ]; then
 			LTE_CA=$(($(echo "$LTE_Cx" | wc -l) -1))
 			case $MODEL in
 				*FM*|*952*)
-					SCH=$(echo "$LTE_Cx" | awk -F [,] '/^\SCC\d/{print  $2" "$5}')
-					if [ -n "$SCH" ]; then
-						for s in $SCH; do
-							case $s in
-								0|1) ;;
-								*) SCC="$SCC+$(ch_to_band $MODE $s)" ;;
-							esac
-						 done
-					fi
-					BWSx=$(echo "$LTE_Cx" | awk -F [,] '/^\SCC\d/{print  $6}')
-					if [ -n "$BWSx" ]; then
-						for b in $BWSx; do
-							case $b in
-								*15*) BWCx=1.3 ;;
-								*20*) BWCx=5 ;;
-								*50*) BWCx=10 ;;
-								*75*) BWCx=15 ;;
-								*100*) BWCx=20 ;;
-							esac
-							BWCx=${BWCx:-0}
-							BWCA=$((${BWCA:-0}+$BWCx))
-						done
-					fi
-					BWCA=$((${BWPx:-0}+${BWCA:-0}))
+					SCC=$(echo "$LTE_Cx" | awk -F'[,]' -v mode="$MODE" '
+						/^SCC\d:/ && $5 > 1 {
+							cmd = "/usr/share/modeminfo/scripts/ch_to_band " mode " " $5
+							cmd | getline band
+							close(cmd)
+							printf "%s%s", (++n?"+":""), band
+						}')
+					BWCA=$(echo "$LTE_Cx" | awk -F [,] -v bwp="${BWDx:-0}" '/^\SCC\d/{sum+=$6/5} END {print sum + (bwp==15 ? 1.3 : bwp/5)}')
 				;;
 				*)
-					SCH=$(echo "$LTE_Cx" | awk -F [,] '/^\+GTCAINFO: 2\,/{print $(NF-1)}')
-					BWSx=$(echo "$LTE_Cx" | awk -F [,] '/^\+GTCAINFO: 2\,/{print $NF}')
-					if [ -n "$BWSx" ]; then
-						case $BWSx in
-							*15*) BWCx=1.3 ;;
-							*20*) BWCx=5 ;;
-							*50*) BWCx=10 ;;
-							*75*) BWCx=15 ;;
-							*100*) BWCx=20 ;;
-						esac
-						BWCx=${BWCx:-0}
-						BWPx=${BWPx:-0}
-						BWCA=$(echo $BWPx $BWCx | awk '{print $1+$2}')
-					else
-						BWCA=${BWPx:-0}
-					fi
-					if [ -n "$SCH" ]; then
-						SCC="+$(ch_to_band $MODE $SCH)"
-					fi
+					SCC=$(echo "$O" | awk -F'[,]' -v mode="$MODE" '
+						/\+GTCAINFO: 2/ && $4 > 1 {
+							cmd = "/usr/share/modeminfo/scripts/ch_to_band " mode " " $4
+							cmd | getline band
+							close(cmd)
+							printf "%s%s\n", (++n?"+":""), band }')
+
+					BWCA=$(echo "$LTE_Cx" | awk -F [,] -v bwp="${BWDx:-0}" '/\+GTCAINFO: 2/ && $NF > 1 {sum+=$NF/5} END {print sum + (bwp==15 ? 1.3 : bwp/5)}')
 				;;
 			esac
 		else
@@ -123,11 +93,18 @@ function modem_data(){
 		fi
 		SINR=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", $NF/2-24}')
 	fi
+	IFS="$OIFS"
 	LAC_NUM=$(printf %d 0x$LAC)
 	CID_NUM=$(printf %d 0x$CID)
-	CHIPTEMP=$(echo "$O" | awk '/\+MTSM/{print $2}')
+	CHIPTEMP=$(echo "$O" | awk '/\+MTSM/{printf "%0.f\n", $2}')
 	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
-		LAC=$LAC_NUM
-		CID=$CID_NUM
+		case $MODEL in
+			*FM*|*952*) LAC=$LAC_NUM; CID=$CID_NUM ;;
+		esac
+	else
+		case $MODEL in
+			*FM*|*952*) ;;
+			*) LAC=$(printf "%x\n" $LAC); CID=$(printf "%x\n" $CID) ;;
+		esac
 	fi
 }
