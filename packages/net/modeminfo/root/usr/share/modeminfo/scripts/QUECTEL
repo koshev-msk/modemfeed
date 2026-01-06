@@ -39,9 +39,9 @@ function modem_data(){
 			BWCA=$(echo "$O" | awk -F [,] -v bwdl=$BWDL '/^\+QCAINFO.*"scc"/{sum+=$3/5} END{print sum + (bwdl==1 ? 3 : bwdl*5 - 5)}')
 		fi
 	elif [ "$MODE" = "EDGE" ]; then
-		LAC=$1; CID=$2; EARFCN=$5
+		LAC=${1}; CID=${2}; EARFCN=${5}
 	else
-		LAC=$2; CID=$3; EARFCN=$4; SINR=$6
+		LAC=${2}; CID=${3}; EARFCN=${4}; SINR=${6}
 	fi
 	case $MDL in
 		*EM12*) CHIPTEMP=$(echo "$O" | awk -F'[,\ ]' '/^\+QTEMP/ {gsub("\"",""); print $3}') ;;
