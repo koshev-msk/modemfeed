@@ -20,11 +20,11 @@
 return view.extend({
 
 	load: function(data) {
-		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'));
+		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'), '{"modem": []}');
 	},
 
 	polldata: poll.add(function() {
-		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo')).then(function(res) {
+		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'), '{"modem": []}').then(function(res) {
 			var json = JSON.parse(res);
 			for (var i = 0; i < json.modem.length; i++) {
 				// progressbar cellular metric
@@ -252,7 +252,7 @@ return view.extend({
 						if( dist== "--" || dist == "" || dist == "0.00"){
 							view.innerHTML = String.format(json.modem[i].cops + " (" + reg + ')<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ json.modem[i].csq_col +'"><b>%d%%</b></p></span>', icon, p);
 						} else {
-							viev.innerHTML = String.format(json.modem[i].cops + " (" + reg + ')<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ json.modem[i].csq_col +'"><b>%d%%</b></p></span>' + distance, icon, p);
+							view.innerHTML = String.format(json.modem[i].cops + " (" + reg + ')<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ json.modem[i].csq_col +'"><b>%d%%</b></p></span>' + distance, icon, p);
 						}
 					} else {
 						view.innerHTML = String.format(reg);
