@@ -19,7 +19,7 @@ function modem_data(){
 	IFS="|"
 	 
 	set -- $(echo "$O" | awk -F'[\,]' '
-		/^\$QCSQ/ {split(substr($0, index($0,":")+1), a, ","); qcsq = a[1]; ecio = $3}
+		/^\$QCSQ/ {split(substr($0, index($0,":")+1), a, ","); qcsq = a[1]; ecio = $2}
 		/^\+CSQ:/ {split($1,b,":\ "); csq = b[2]}
 		/^\^CELLINFO:/ {
 			split($1, p, ":"); mode = p[2]
