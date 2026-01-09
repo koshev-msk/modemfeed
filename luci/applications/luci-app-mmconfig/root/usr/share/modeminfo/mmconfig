@@ -1,32 +1,34 @@
 #!/bin/sh
 
-# Copyright (C) Konstantine Shevlakov <shevlakov@132lan.ru> 2024
+. /lib/functions.sh
 
-get_vars(){
-	dev=$(uci get mmconfig.@modem[0].device${m})
-	net=$(uci get mmconfig.@modem[0].network${m} | awk -F [\;] '{gsub("allowed:\ |preferred:\ ","");gsub("\, ","\|");print $1}' | tr -d ' ')
-	netpref=$(uci get mmconfig.@modem[0].network${m} | awk -F [\;] '{gsub("allowed:\ |preferred:\ ","");gsub("\, ","\|");print $2}' |tr -d ' ')
-	bands=$(uci get mmconfig.@modem[0].bands${m} | awk '{gsub(" ","\|");print $0}')
+# get vars
+
+get_mm_config(){
+	local device bands preffer
+	config_get device $1 device
+	config_get bands $1 bands
+	config_get preffer $1 preffer
+
+	mmcli -m $device > /dev/null 2>&1 && {
+		
+		setpref=$(echo "$preffer" | awk -F'[:;]' '{ gsub(/[ \t]+/, "", $0); print "--set-"$1"-modes="$2"  --set-"$3"-mode="$4}')
+		setbands=$(echo $bands | awk -v OFS='|' '{$1=$1}1')
+		defbands=$(mmcli -J -m $device | jsonfilter -e '@["modem"]["generic"]["supported-bands"].*' | awk '{bands = (NR==1 ? $1 : bands "|"$1)} END {print bands}')
+		curbands=$(mmcli -J -m $device | jsonfilter -e '@["modem"]["generic"]["current-bands"].*' | awk '{bands = (NR==1 ? $1 : bands "|"$1)} END {print bands}')
+		curpref=$(mmcli -J -m $device | jsonfilter -e '@["modem"]["generic"]["current-modes"]')
+		[ -n "$bands" ] || {
+			setbands=$defbands
+		}
+		[ "$curbands" = "$setbands" ] && [ "$preffer" = "$curpref" ] || {
+			modemif=$(uci show network | grep "$device" | awk -F [.] '{print $2}')
+			[ "$preffer" = "$curpref" ] ||	mmcli -m $device $setpref
+			[ "$curbands" = "$setbands" ] || mmcli -m $device --set-current-bands="$setbands"
+			sleep 3
+			ifup $modemif
+		}
+	}
 }
 
-for m in $(seq 0 5); do
-	get_vars >/dev/null 2>&1
-	if [ ${dev} ]; then
-		if ! [ $bands ]; then
-			bands=$(echo $(mmcli -J -m $dev | jsonfilter -e '@["modem"]["generic"]["supported-bands"].*') | awk '{gsub("\ ","\|"); print $0}')
-		fi
-		if [ $bands ]; then
-			mmcli -m $dev --set-allowed-modes="$net" --set-preferred-mode="$netpref"
-			mmcli -m $dev --set-current-bands="$bands"
-		else
-			mmcli -m $dev --set-allowed-modes="$net" --set-preferred-mode="$netpref"
-		fi
-		WWANIF="$WWANIF $(uci  show network | grep "$dev" |awk -F [.] '{print $2}')"
-	else
-		break
-	fi
-done
-
-for wwan in $WWANIF; do
-	ifup $wwan
-done
+config_load mmconfig
+config_foreach get_mm_config modem
