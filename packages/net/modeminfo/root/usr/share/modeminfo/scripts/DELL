@@ -1,69 +1,59 @@
 modem_data(){
         # hwinfo
-        MANUF=$(echo "$O" | grep -i $FAMILY)
-        MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
-        DEVICE="$MANUF $MODEL"
-        FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
-        ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-        IMEI=$(echo "$O" | grep -A1 -i ICCID | tail -1)
-        IMSI=$(echo "$O" | grep -A2 -i ICCID | tail -1)
+	OIFS="$IFS"
+	IFS="|"
+	set -- $(echo "$O" | awk -v family=$FAMILY '
+		$0 == family {manufacturer=$1; getline model; getline fw}
+		/^ICCID:/{iccid=$2; getline imei; getline imsi}
+		/^PA|xo_therm_buf:/ {sub(/C/, "", $2); split($0,arr,":"); if (arr[2] !="") temp = arr[2]; else temp=$2 }
+		END {print manufacturer "|" model "|" fw "|" iccid "|" imei "|" imsi "|" temp }')
+	DEVICE="${1} ${2}"; MANUF=${1}; MODEL=${2}; FW=${3}; ICCID=${4}; IMEI=${5}; IMSI=${6}; CHIPTEMP=${7}
+	IFS="$OIFS"
+	unset OIFS
 	generic_data
+	# get signal info
+	set -- $(echo "$O" | awk -v mode="$MODE" '
+		BEGIN { lac=""; cid=""; earfcn=""; pci=""; bw=""; bwc=""; rsrp=""; rssi=""; rsrq=""; sinr=""; rscp=""; csq=""; lte_ca=0 }
+		# LTE Carrier Aggregation
+		/SCC[0-9]+ info:/ {lte_ca++}
+    		# LTE 
+		mode == "LTE" {
+			if (/\+CEREG/) { gsub(/"/, ""); split($0, arr, ","); lac = arr[3]; cid = arr[5]}
+			if (/EARFCN\(DL\/UL\):/ && earfcn == "") {split($0, arr, /[ \/]/); earfcn = arr[3]}
+			if (/PCI\)/ && pci == "") {gsub("\)","",$0); gsub("\("," ",$0); pci=$NF}
+			if (/^RSRP:/ && rsrp == "") {sub(/dBm/, "", $2); rsrp = sprintf("%.0f", $2)}
+			if (/^RSSI:/ && rssi == "") {sub(/dBm/, "", $2); rssi = sprintf("%.0f", $2)}
+			if (/^RSRQ:/ && rsrq == "") {sub(/dB/, "", $2); rsrq = sprintf("%.0f", $2)}
+			if (/^RS-SINR:/ && sinr == "") {sub(/dB/, "", $2); sinr = sprintf("%.0f", $2)}
+			if (/^RS-SNR:/ && sinr == "") {sub(/dB/, "", $2);sinr = sprintf("%.0f", $2)}
+			if (/PCC info/ && bwc == "") { bwc = sprintf("%.0f", $8); map[3]=1; map[5]=2; map[10]=3; map[15]=4; map[20]=5; bw=map[bwc] }
+		}
+    
+		# Other mode (3G)
+		mode != "LTE" {
+			if (/\+CREG/) {gsub(/"/, "");split($0, arr, ",");lac = arr[3]; cid = arr[4]}
+			if (/Active channel/ && earfcn == "") {split($0, arr, /:/); gsub(/ /, "", arr[2]); earfcn = arr[2]}
+			if (/QCSQ/ && csq == "") { split($0, arr, /[:,]/); rscp = arr[2]; sinr = arr[3]; rssi = arr[6] }
+		
+		}
+    
+		END {print lac, cid, earfcn, rssi, sinr, pci, bw, bwc, rsrp, rsrq, rscp, csq, lte_ca}')
+		
+	LAC=${1}; CID=${2}; EARFCN=${3}; CSQ_RSSI=${4}; SINR=${5}
 	if [ "$MODE" = "LTE" ]; then
-		LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $3}')
-                CID=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $5}')
-		EARFCN=$(echo "$O" | awk -F [\:/] '/ARFCN/{gsub(" ","", $3); print $3}' | head -1)
-		PCI=$(echo "$O" | awk -F [\(,\)] '/PCI/{print $4}')
-		RSRP=$(echo "$O" | awk '/^RSRP/{gsub("dBm",""); printf "%.0f\n", $2}' | head -1)
-		CSQ_RSSI=$(echo "$O" | awk '/^RSSI/{gsub("dBm",""); printf "%.0f\n", $2}' | head -1)
-		RSRQ=$(echo  "$O" | awk '/^RSRQ/{gsub("dB",""); printf "%.0f\n", $2}')
-		SINR=$(echo  "$O" | awk '/^RS-SINR/{gsub("dB",""); printf "%.0f\n", $2}')
-		if [ ! $SINR ]; then
-			SINR=$(echo  "$O" | awk '/^RS-SNR/{gsub("dB",""); printf "%.0f\n", $2}')
-		fi
+		PCI=${6}; BWDL=${7}; BWDx=${8}; RSRP=${9}; RSRQ=${10}; LTE_CA=${11}
 		ENBx=$(echo $CID | sed -e 's/..$//')
                 CELL=$(printf %d 0x${CID: -2})
                 ENBID=$(printf %d 0x$ENBx)
-		BWDx=$(echo "$O" | awk '/PCC info/{printf "%.0f\n",$8}')
-		LTE_CA=$(echo "$O" | awk '/SCC\d info:/{print $0}' | wc -l)
-		case $BWDx in
-			3) BWDL=1 ;;
-			5) BWDL=2 ;;
-			10) BWDL=3 ;;
-			15) BWDL=4 ;;
-			20) BWDL=5 ;;
-		esac
 		if [ $LTE_CA -ge 1 ]; then
-                        CA=$(echo "$O" | awk '/SCC\d info:/{print $5}')
-                        for cc in $CA; do
-                                SC=$(echo $cc | sed -e 's/LTE_B//g' -e 's/.$//')
-                                SCC="$SCC+$SC"
-                        done
-                        bw=$(echo "$O" |awk '/SCC\d info:/{printf "%.0f\n",$8}')
-                        for bwc in $bw; do
-                                bwcc="$bwcc+$bwc"
-                        done
-                        BWCA=$(($BWDx$bwcc))
-			unset BWDx CA bwcc bwc
-                fi
-	else
-		LAC=$(echo "$O" | awk -F [,] '/\+CREG/{gsub("\"","");print $3}')
-                CID=$(echo "$O" | awk -F [,] '/\+CREG/{gsub("\"","");print $4}')
-		EARFCN=$(echo "$O" | awk -F [\:/] '/Active channel/{gsub(" ","", $2); print $2}')
-		RSCP=$(echo "$O" | awk -F [\:\ ,\)/] '/RSCP/{gsub("dBm|)",""); printf "%.0f\n", $7}')
-		CSQ_RSSI=$(echo "$O" | awk -F [:,] '/QCSQ/{print $2}')
-                SINR=$(echo "$O" | awk -F [:,] '/QCSQ/{print $3}') 
-                if [ $SINR -le -24 ]; then                                    
-                        SINR=-24                            
-                elif [ $SINR -ge 0 ]; then                                      
-                        SINR=0                                                                        
+			SCC=$(echo "$O" | awk '/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}} END { print scc }')
+			BWCA=$(echo "$O" | awk -v bwc=$BWDx '/^SCC[0-9]+ info:/ { sum += sprintf("%.0f", $8)} END { print sum + bwc }')
+			unset BWDx
                 fi
 		
 	fi
-	LAC_NUM=$(printf %d 0x$LAC)
-        CID_NUM=$(printf %d 0x$CID)
         if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
-                LAC=$LAC_NUM
-                CID=$CID_NUM
+                LAC=$(printf %d 0x$LAC)
+                CID=$(printf %d 0x$CID)
         fi
-	CHIPTEMP=$(echo "$O" | awk -F [:] '/^PA|xo_therm_buf:/{gsub("C", ""); print $2}')
 }
