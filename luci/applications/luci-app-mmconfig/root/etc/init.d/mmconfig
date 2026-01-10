@@ -8,9 +8,9 @@ check_modems(){
 	for m in $(mmcli -L | awk '{print $1}'); do
 	        devm=$(mmcli -m ${m} -J | jsonfilter -e '@["modem"]["generic"]["device"]')
         	uci show mmconfig | grep "$devm" || {
-	                echo "uci secrion not found"
+	                echo "uci section not found"
                 	secname=$(uci show mmconfig | tail -1 | awk -F [.] '{num = $2; gsub(/[^0-9]/, "", num); if(num != "") printf "%s%d\n", substr($2, 1, length($2)-length(num)), num+1; else print $0 "1"}')
-        	        [ $secname ] || secname = modem1
+        	        [ $secname ] || secname=modem1
 	                uci set mmconfig.${secname}=modem
                 	uci set mmconfig.${secname}.device=$devm
         	        uci commit
