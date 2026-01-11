@@ -23,7 +23,7 @@ modem_data(){
 			if (/^\+CEREG/ && model !~ /73|74/) {gsub("\"","");split($0,a,","); lac=a[3]; cid=a[4]}
 			if (/LTE bw/) {bwc = $6; bw = map[bwc]}
 			if (/LTE Rx chan:/) { earfcn=$4 }
-			if (/LTE CA state:/) { ca = $4; lte_ca = (ca~/INACTIVE/) ? 0 : 1 }
+			if (/LTE CA state:/) { ca = $4; lte_ca = (ca ~ /INACTIVE|NOT/) ? 0 : 1 }
 			if (/PCC RxM RSSI:/){rssi=$4; rsrp=$7}
 			if (/RSRQ/) {rsrq = sprintf("%.0f",$3); getline; sinr = sprintf("%.0f",$3);exit}
 		}
