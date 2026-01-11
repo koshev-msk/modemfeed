@@ -1,39 +1,49 @@
 modem_data(){
 	# hwdata
-	MANUF=$(echo "$O" | grep -i $FAMILY)
-        MODEL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
+	OIFS="$IFS"
+	IFS="|"
+	set -- $(echo "$O" | awk -v family=$FAMILY '
+		BEGIN{IGNORECASE=1} $0 ~ family {manuf=$0; getline model; getline fw}
+		/^ICCID:/{iccid=$2; getline imsi; getline imei}
+		/Temperature:/{temp=$5}
+		END { print manuf "|" model "|" fw "|" iccid "|" imsi "|" imei "|" temp}')
+
+	MANUF=${1}; MODEL=${2}; FW=${3}; ICCID=${4}; IMSI=${5}; IMEI=${6}; CHIPTEMP=${7}
+	IFS="$OIFS"
+	unset OIFS
         DEVICE="$MANUF $MODEL"
-        FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
-        ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-        IMSI=$(echo "$O" | grep -A1 -i ICCID | tail -1)
-        IMEI=$(echo "$O" | grep -A2 -i ICCID | tail -1)
 	# Sierra cell data
 	TECH=$(echo "$O" | awk -F[,\ ] '/^\*CNTI/ {print $3}' | sed 's|/|,|g')
+	OIFS="$IFS"
+	IFS="|"
+	set -- $(echo "$O" | awk -v tech=$TECH -v model=$MODEL '
+		BEGIN { map[3]=1; map[5]=2; map[10]=3; map[15]=4; map[20]=5 }
+		tech ~ "LTE" {
+			if (/^\+CEREG/ && model ~ /73|74/) {gsub("\"","");split($0,a,","); lac=a[3]; cid=a[5]}
+			if (/^\+CEREG/ && model !~ /73|74/) {gsub("\"","");split($0,a,","); lac=a[3]; cid=a[4]}
+			if (/LTE bw/) {bwc = $6; bw = map[bwc]}
+			if (/LTE Rx chan:/) { earfcn=$4 }
+			if (/LTE CA state:/) { ca = $4; lte_ca = (ca~/INACTIVE/) ? 0 : 1 }
+			if (/PCC RxM RSSI:/){rssi=$4; rsrp=$7}
+			if (/RSRQ/) {rsrq = sprintf("%.0f",$3); getline; sinr = sprintf("%.0f",$3);exit}
+		}
+		tech !~ "LTE" {
+			if (/^\+CGREG/) {gsub("\"","");split($0,a,","); lac=a[3]; cid=a[4]}
+			if (/channel:/) {earfcn=$3}
+			if (/QCSQ/) {split($0,a,",|:"); rssi=a[2]; sinr=a[3]}
+		}
+		END { print earfcn "|" lac "|" cid "|" rssi "|" sinr "|" rsrp "|" rsrq "|" bwc "|" bw "|" lte_ca}')
+
+	EARFCN=${1}; LAC=${2}; CID=${3}; CSQ_RSSI=${4}; SINR=${5}; RSRP=${6}; RSRQ=${7}; BWDx=${8}; BWDL=${9}; LTE_CA=${10}
+	unset OIFS
 	if [ "x$TECH" != "x" ]; then
 		MODE="$TECH"
 		case $MODE in
 			NONE) MODE=LTE ;;
 		esac
 	fi
+
 	if [ $MODE = "LTE" ]; then
-		# Sierra 73XX series
-		case $MODEL in
-			*73*|*74*)
-				LAC=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $3}')
-				CID=$(echo "$O" | awk -F [,] '/\+CEREG/{gsub("\"","");print $5}')
-			;;
-			*)
-				LAC=$(echo "$O" | awk -F'[,]' '/\+CEREG/{gsub("\"","");print $3}')
-				CID=$(echo "$O" | awk -F'[,]' '/\+CEREG/{gsub("\"","");print $4}')
-			;;
-		esac
-		EARFCN=$(echo "$O" | awk -F [:,] '/QCRSRQ/{print $3}')
-		RSRP=$(echo "$O" | awk '/RSRP.*dBm|PCC RxM RSRP/{print $(NF); exit}')
-		RSRQ=$(echo "$O" | awk -F [:,] '/QCRSRQ/{gsub("\"",""); printf "%.0f\n", $4}')
-		SINR=$(echo "$O" | awk '/SINR \(dB\):/{if($NF+0==$NF){printf "%.0f\n", $NF} else{print "--"}; exit}')
-		CSQ_RSSI=$(echo "$O" | awk -F [:,] '/QCSQ/{print $NF}')
-		LTE_CA=$(echo "$O" | awk '/^SCC[0-9]* RxM RSSI:/{count++} END{print count}')
-		BWDx=$(echo "$O" | awk '/LTE bw/{print $6}')
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
@@ -46,29 +56,10 @@ modem_data(){
 				*) BWCA=$(echo "$O" | awk -v bwdx=$BWDx '/LTE SCC[1-9] bw/{sum += $5} END{print sum + bwdx}') ;;
 			esac
 		fi
-		case $BWDx in
-			3) BWDL=1 ;;
-			5) BWDL=2 ;;
-			10) BWDL=3 ;;
-			15) BWDL=4 ;;
-			20) BWDL=5 ;;
-		esac
-	else
-		LAC=$(echo "$O" | awk -F [,] '/\+CGREG/{gsub("\"","");print $3}')
-                CID=$(echo "$O" | awk -F [,] '/\+CGREG/{gsub("\"","");print $4}')
-		EARFCN=$(echo "$O" | awk '/channel:/{print $3}')
-		SINR=$(echo "$O" | awk -F [:,] '/QCSQ/{print $3}')
-		if [ $SINR -ge 0 ]; then
-			SINR=0
-		elif [ $SINR -le -20 ]; then
-			SINR=-20
-		fi
 	fi
-	CHIPTEMP=$(echo "$O" | awk '/Temperature:/{print $5}')
-	LAC_NUM=$(printf %d 0x$LAC)
-	CID_NUM=$(printf %d 0x$CID)
+
 	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
-		LAC=$LAC_NUM
-		CID=$CID_NUM
+		LAC=$(printf %d 0x$LAC)
+		CID=$(printf %d 0x$CID)
 	fi
 }
