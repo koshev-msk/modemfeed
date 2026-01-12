@@ -17,6 +17,10 @@
 	
 */
 
+const REGISTERED_STATUSES = [1, 6, 9];
+const ROAMING_STATUSES = [3, 5, 7, 10];
+
+
 return view.extend({
 
 	load: function(data) {
@@ -26,6 +30,7 @@ return view.extend({
 	polldata: poll.add(function() {
 		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'), '{"modem": []}').then(function(res) {
 			var json = JSON.parse(res);
+			if (!json || !json.modem || !Array.isArray(json.modem)) return;
 			for (var i = 0; i < json.modem.length; i++) {
 				// progressbar cellular metric
 				const progressConfig = {
@@ -67,6 +72,36 @@ return view.extend({
 					pg.style.width = '%d%%';
 					pg.firstElementChild.style.animationDirection = "reverse";
 					pg.setAttribute('title', '%s'.format(value));
+				}
+
+				function formatDistance(dist) {
+					if (!dist || dist === "--" || dist === "" || dist === "0.00") {
+						return '';
+					}
+					return ' ~' + dist + ' km';
+				}
+
+				function formatModemStatus(modem, icon, reg) {
+					var rg = parseInt(modem.reg) || 0;
+					var p = modem.csq_per || 0;
+					var cops = modem.cops || '--';
+					var color = modem.csq_col || '#000000';
+    
+					var distanceHtml = formatDistance(modem.distance);
+    					var iconHtml = icon ? '<img class="modem-signal-icon" src="' + icon + '"/>' : '';
+    
+					var percentWithColor = p + '%';   
+					if (REGISTERED_STATUSES.includes(rg)) {
+						return '<span class="ifacebadge">' + cops + ' ' + iconHtml + 
+						' <b style="color:' + color + '">' + percentWithColor + '</b>' + 
+						distanceHtml + '</span>';
+					 } else if (ROAMING_STATUSES.includes(rg)) {
+						return '<span class="ifacebadge">' + cops + ' (' + reg + ') ' + iconHtml + 
+						' <b style="color:' + color + '">' + percentWithColor + '</b>' + 
+						distanceHtml + '</span>';
+					} else {
+						return '<span class="ifacebadge">' + (reg || '--') + '</span>';
+					}
 				}
 
 				// icon signal strength
@@ -239,25 +274,12 @@ return view.extend({
 						namebnd = _('Network/Band');
 				}
 
-				// data by element	
-				if (document.getElementById('status'+i)){
-					var view = document.getElementById('status'+i);
-					if (rg == 1 || rg == 6 || rg == 9) {
-						if( dist== "--" || dist == "" || dist == "0.00"){
-							view.innerHTML = String.format(json.modem[i].cops +'<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ json.modem[i].csq_col +'"><b>%d%%</b></p></span>', icon, p);
-						} else {
-							view.innerHTML = String.format(json.modem[i].cops +'<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ json.modem[i].csq_col +'"><b>%d%%</b></p></span>' + distance, icon, p);
-						}
-					} else if (rg == 3 || rg == 5 || rg == 7 || rg == 10) {
-						if( dist== "--" || dist == "" || dist == "0.00"){
-							view.innerHTML = String.format(json.modem[i].cops + " (" + reg + ')<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ json.modem[i].csq_col +'"><b>%d%%</b></p></span>', icon, p);
-						} else {
-							view.innerHTML = String.format(json.modem[i].cops + " (" + reg + ')<img style="padding-left: 10px;" src="%s"/>'  + " " +  '<span class="ifacebadge"><p style="color:'+ json.modem[i].csq_col +'"><b>%d%%</b></p></span>' + distance, icon, p);
-						}
-					} else {
-						view.innerHTML = String.format(reg);
-					}
-				}
+				// data by element
+
+                                if (document.getElementById('status'+i)) {
+                                        var view = document.getElementById('status'+i);
+                                        view.innerHTML = formatModemStatus(json.modem[i], icon, reg);
+                                }
 
 				if (document.getElementById('mode'+i)){
 					var view = document.getElementById('mode'+i);

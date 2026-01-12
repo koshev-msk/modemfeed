@@ -27,6 +27,7 @@ return view.extend({
 	polldata: poll.add(function() {
 		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo')).then(function(res) {
 			var json = JSON.parse(res);
+			if (!json || !json.modem || !Array.isArray(json.modem)) return;
 			for (var i = 0; i < json.modem.length; i++) {
 				if (document.getElementById('device'+i)) {
 					var view = document.getElementById('device'+i);
