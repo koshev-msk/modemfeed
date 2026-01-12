@@ -1,0 +1,50 @@
+# Expample parser file
+# define function "modem_data"
+# optionally include function "generic_data"
+# finction generic data declare next variables:
+# MODE="LTE"	- form: AT+COPS: 0,1,"Provider GSM",7		last arg
+# CSQ=24	- form: AT+CSQ: 24,99				second arg
+# CSQ_RSSI	- calculate form: CSQ/31*100 in dBm
+# CSQ_PER	- calculate form: CSQ*2-113 in dB
+# COPS		- form: AT+COPS: 0,1,"Provider GSM",7		trid arg
+# LAC		- form: AT+CREG: CREG: 2,1,"ABCD","ABCDEF0"	trid arg
+# TAC		- form: AT+CREG: CREG: 2,1,"ABCD","ABCDEF0"	four arg
+# incoming other data define variable "O"
+function modem_data() {
+	generic_gata
+#parse next variables:
+#hardware modem and sim information
+	MANUF="Example Manufacturer"		# Modem Manufacrurer. E.g Huawei
+	MODEL="Example Model"			# Modem model. E.g ME909
+	FW="Firmware modem version"
+	ICCID="12345678901234567890"		# 20 digit Integrated Circuit Card Identifier
+	IMSI="123456789012345"			# 15 digit International Mobile Subscriber Identity
+	IMEI="123456789012345"			# 15 digit International Mobile Equipment Identity
+	CHIPTEMP="50"				# Chip Themperature integer celsius
+
+#for LTE modem signal
+	EARFCN=3200				# E-UTRA Absolute Radio Frequency Channel Number.In LTE
+	RSRP=-96				# Reference Signal Received Power in dBm
+	RSRQ=-11				# Reference Signal Received Quality in dB
+	SINR=13					# Signal to Interference + Noise Ratio in dB
+	BWDL=3					# Bandwith Download channel: 1 - 3MHz; 2 - 5MHz; 3 - 10MHz; 4 - 15MHz; 5 - 20MHz
+	PCI=345					# Physical Cell ID
+
+#for LTE-A (LTE+) signal
+	SCC=+7+1				# Lte CA Dowmload bands
+	BWCA=60					# LTE CA Summ download Bandwith: BWDL+(SCC1+SCCN) in MHz
+# Calc next data
+	CELL=$(printf %d 0x${CID: -2})		# a unique number identifying a specific cell tower (base station) in a mobile network
+	ENBID=$(printf %d 0x$ENBx)		# a type of cellular base station used in LTE networks
+
+# for 3G/UMTS signal
+	EARFCN					# UTRA Absolute Radio Frequency Channel Number.In 3G/UMTS/WCDMA
+	SINR					# Energy per Chip to Interference/Noise ratio in 3G networks
+# for 2G/EDGE
+	EARFCN					# Absolute Radio Frequency Channel Number in 2G/GSM
+# calc next variables for decimal show LAC/TAC option 
+	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
+		LAC=$(printf %d 0x$LAC)		# decimal LAC (ABCD) 43981
+		CID=$(printf %d 0x$CID)		# decimal CID (ABCDEF0) 180150000
+	fi
+}

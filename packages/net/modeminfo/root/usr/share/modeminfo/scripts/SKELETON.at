@@ -1,0 +1,9 @@
+# A custom at commants respone modem to parse
+ATE0
+AT+CSQ
+AT+COPS=3,0; +COPS?
+AT+CREG=2; +CREG?
+AT+CGREG=2; +CGREG?
+AT+CEREG?
+AT+CGMI; +CGMM; +CGMR; +ICCID; +CGSN; +CIMI
+# Proprietary commands for parse
