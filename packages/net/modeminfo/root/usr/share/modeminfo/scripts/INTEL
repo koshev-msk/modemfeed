@@ -23,7 +23,7 @@ function modem_data(){
 			map[1]=15; map[2]=25; map[3]=50; map[4]=75; map[5]=100
 			csq_range["black"] = "0:0"; csq_range["red"] = "1:10"
 			csq_range["orange"] = "11:20"; csq_range["green"] = "21:50"
-			rsrp = bwc = csq = rssi = 0; csq_col = "black"; csq_per="0"
+			rsrp = bwc = csq = rssi = csq_per = 0; csq_col = "black";
 		}
 		# text color percentage
 		function get_csq_color(csq_raw_val) {
