@@ -327,16 +327,25 @@ return view.extend({
 				if (document.getElementById('rssi'+i)) {
 					var view = document.getElementById('rssi'+i);
 					if (json.modem[i].rssi == '') {
-						view = document.getElementById('--');
+						view.textContent = '--';
 					} else {
 						updateProgressBar('rssi', json.modem[i].rssi + ' dBm', -110, i);
 					}
 				}
+				
+				
 				if (document.getElementById('sinr'+i)) {
-					var view = document.getElementById('sinr'+i);
-					if (json.modem[i].sinr == "--" || netmode == "--") {
-						view = document.getElementById('--');
+					var sinrElement = document.getElementById('sinr'+i);
+					var sinrParent = sinrElement ? sinrElement.parentElement : null;
+				
+					if (!json.modem[i].sinr || json.modem[i].sinr === "--" || json.modem[i].sinr === "") {
+						if (sinrParent && sinrParent.parentElement) {
+							sinrParent.parentElement.style.display = 'none';
+						}
 					} else {
+						if (sinrParent && sinrParent.parentElement) {
+							sinrParent.parentElement.style.display = '';
+						}
 						if (netmode == "LTE") {
 							updateProgressBar('sinr', json.modem[i].sinr + ' dB', -20, i);
 						} else {
@@ -346,19 +355,33 @@ return view.extend({
 				}
 				
 				if (document.getElementById('rsrp'+i)) {
-					var view = document.getElementById('rsrp'+i);
-					if (json.modem[i].rsrp == "--") {
-						view = document.getElementById('--');
+					var rsrpElement = document.getElementById('rsrp'+i);
+					var rsrpParent = rsrpElement ? rsrpElement.parentElement : null;
+					
+					if (!json.modem[i].rsrp || json.modem[i].rsrp === "--" || json.modem[i].rsrp === "") {
+						if (rsrpParent && rsrpParent.parentElement) {
+							rsrpParent.parentElement.style.display = 'none';
+						}
 					} else {
+						if (rsrpParent && rsrpParent.parentElement) {
+							rsrpParent.parentElement.style.display = '';
+						}
 						updateProgressBar('rsrp', json.modem[i].rsrp + ' dBm', -140, i);
 					}
 				}
-
+				
 				if (document.getElementById('rsrq'+i)) {
-					var view = document.getElementById('rsrq'+i);
-					if (json.modem[i].rsrq == "--") {
-						view = document.getElementById('--');
+					var rsrqElement = document.getElementById('rsrq'+i);
+					var rsrqParent = rsrqElement ? rsrqElement.parentElement : null;
+					
+					if (!json.modem[i].rsrq || json.modem[i].rsrq === "--" || json.modem[i].rsrq === "") {
+						if (rsrqParent && rsrqParent.parentElement) {
+							rsrqParent.parentElement.style.display = 'none';
+						}
 					} else {
+						if (rsrqParent && rsrqParent.parentElement) {
+							rsrqParent.parentElement.style.display = '';
+						}
 						updateProgressBar('rsrq', json.modem[i].rsrq + ' dB', -20, i);
 					}
 				}
@@ -374,20 +397,6 @@ return view.extend({
 		s = m.section(form.TypedSection, 'general', null);
 		var json = JSON.parse(data);
 	
-		// for future use
-		/*	
-		var vendors = [];
-		var duplicate_modem_index = 1;
-		json.modem.forEach(obj => {
-  			const device = obj.device;
-  			if (!vendors.includes(device)) {
-    			vendors.push(device);
-  			} else {
-    			vendors.push(device+" ("+duplicate_modem_index+")");
-    			duplicate_modem_index++;
-  			}
-		});
-		*/
 		for (var i = 0; i < json.modem.length; i++) {
 			let status = 'status'+i;
 			let mode = 'mode'+i;
@@ -402,9 +411,7 @@ return view.extend({
 			let rsrp = 'rsrp'+i;
 			let rsrq = 'rsrq'+i;
 			let m = i+1;
-			//s.tab("modem" + i, vendors[i]);
-			//o = json.modem.length > 1 ? s.taboption('modem'+i, form.HiddenValue, 'generic') : s.option(form.HiddenValue, 'generic');
-
+			
 			if ( json.modem.length > 1 ) {
 				s.tab("modem" + i, _('Modem')+' '+m);
 				o = s.taboption('modem'+i, form.HiddenValue, 'generic');
