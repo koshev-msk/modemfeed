@@ -21,12 +21,12 @@ BEGIN {
     ARGC = 1
 
     # LTE Bands
-    lte_bands[0] = "0-599:B1"
+    lte_bands[0] = "0-599:1"
     lte_bands[1] = "600-1199:2"
-    lte_bands[2] = "1200-1949:B3"
+    lte_bands[2] = "1200-1949:3"
     lte_bands[3] = "1950-2399:4"
     lte_bands[4] = "2400-2469:5"
-    lte_bands[5] = "2750-3449:B7"
+    lte_bands[5] = "2750-3449:7"
     lte_bands[6] = "3450-3799:8"
     lte_bands[7] = "6150-6449:20"
     lte_bands[8] = "9210-9659:28"
