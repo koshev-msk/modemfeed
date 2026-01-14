@@ -2,8 +2,7 @@
 
 function modem_data(){
 	generic_data
-	OIFS="$IFS"
-	IFS="|"
+	OIFS="$IFS"; IFS="|" # Get hw and sim info
 	set -- $(echo "$O" | awk -F'[:,]' '
 		/\+CGMI/ {gsub("\"",""); manuf=$2}
 		/\+CGMM/ {gsub("\"",""); model=$2}
@@ -14,15 +13,13 @@ function modem_data(){
 		/\+MTSM/ {temp = sprintf("%0.f\n", $2)}
 		END { print manuf "|" model "|" fw "|" imsi "|" imei "|" iccid "|" temp }')
 	DEVICE="${1} ${2}"; MANUF="${1}"; MODEL="${2}"; FW="${3}"; IMSI="${4}"; IMEI="${5}"; ICCID="${6}" CHIPTEMP=${7}
-	IFS="$OIFS"
-	unset OIFS
-	OIFS="$IFS"
-	IFS="|"
+	IFS="$OIFS"; unset OIFS
+	OIFS="$IFS"; IFS="|" # Get Signal info
 	set -- $(echo "$O" | awk -v model=$MODEL -v mode=$MODE '
 		BEGIN { map[15]=1; map[25]=2; map[50]=3; map[75]=4; map[100]=5 }
-		mode ~ /LTE/ {
-			if (/^\PCC:/) { lte_ca++; split($0, ca, ","); pch = ca[3]; pcica = ca[2] }
-			if (/^\+GTCAINFO: 1/ && pch == "") { lte_ca++; split($0, ca, ","); pch = ca[5]; pcica = ca[4] }
+		mode ~ /LTE/ { # LTE mode
+			if (/^\PCC:/ && model~/952|FM/) { lte_ca++; split($0, ca, ","); pch = ca[3]; pcica = ca[2] }
+			if (/^\+GTCAINFO: 1/) { lte_ca++; split($0, ca, ","); pch = ca[5]; pcica = ca[4] }
 			if (/\+GTCCINFO:/) { getline; getline; split($0, f, ",")
 				lac = (model~/952|FM/) ? sprintf("%d","0x"f[5]) : f[5]
 				cid = (model~/952|FM/) ? sprintf("%d","0x"f[6]) : f[6]
@@ -31,7 +28,7 @@ function modem_data(){
 				rsrq = sprintf("%.0f", -20 + (f[14]/2)); rsrp = sprintf("%.0f", f[13] - 140)
 				sinr = sprintf("%.0f", f[11]/4 + 5); bwc = f[10]; bw=map[bwc]}
 		}
-		mode !~ /LTE/ {
+		mode !~ /LTE/ { # 3G mode
 			if (/CNTI/) { split($0, f, ",")
 				tech = f[2] }
 			if (/\+GTCCINFO:/) { getline; getline; split($0, f, ",")
@@ -44,45 +41,46 @@ function modem_data(){
 		END { print  earfcn "|" lac "|" cid "|" tech "|" rsrq "|" rsrp "|" sinr "|" pci "|" bwc "|" bw "|" lte_ca "|" pcica "|" pch }
 		
 	')
-	
+	# Define variables
 	EARFCN=${1}; LAC=${2}; CID=${3}; SINR=${7}
+	IFS="$OIFS"; unset OIFS
 
 	if [ "$MODE" = "LTE" ]; then
 		RSRQ=${5}; RSRP=${6}; PCI=${8}; BWDx=${9}; BWDL=${10}; PCICA=${12}; PCH=${13}; LTE_CA=${11}
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
-		case $MODEL in
-			*FM*|*952*) LTE_Cx=$(echo "$O" | awk '/PCC|SCC/{print}') ;;
-			*) LTE_Cx=$(echo "$O" | awk '/^\+GTCAINFO/{print}') ;;
-		esac
 
 		if [ "$EARFCN" = "$PCH" ] && [ "$PCI" = "$PCICA" ]; then
-			case $MODEL in
-				*FM*|*952*)
-					SCC=$(echo "$LTE_Cx" | awk -F'[,]' -v mode="$MODE" '
-						/^SCC\d:/ && $5 > 1 {
-							cmd = "/usr/share/modeminfo/scripts/ch_to_band " mode " " $5
-							cmd | getline band; close(cmd); printf "%s%s", (++n?"+":""), band }')
-					BWCA=$(echo "$LTE_Cx" | awk -F [,] -v bwp="${BWDx:-0}" '/^\SCC\d/{sum+=$6/5} END {print sum + (bwp==15 ? 1.3 : bwp/5)}')
-				;;
-				*)
-					SCC=$(echo "$O" | awk -F'[,]' -v mode="$MODE" '
-						/\+GTCAINFO: 2/ && $4 > 1 {
-							cmd = "/usr/share/modeminfo/scripts/ch_to_band " mode " " $4
-							cmd | getline band; close(cmd); printf "%s%s\n", (++n?"+":""), band }')
-					BWCA=$(echo "$LTE_Cx" | awk -F [,] -v bwp="${BWDx:-0}" '/\+GTCAINFO: 2/ && $NF > 1 {sum+=$NF/5} END {print sum + (bwp==15 ? 1.3 : bwp/5)}')
-				;;
-			esac
-		else
-			BWCA=${BWPx:-0}
+			OIFS="$IFS"; IFS="|" # Get LTE-A bandwith and CA bands
+			set -- $(echo "$O" | awk -F'[,]' -v model="$MODEL" -v mode="$MODE" -v bwp="${BWDx:-0}" '
+				BEGIN { scc = ""; sum = 0; bwp_num = (bwp == 15 ? 1.3 : bwp/5) }
+				function earfcn_to_band(channel) {
+					if (channel <= 1) return ""
+						cmd = "/usr/share/modeminfo/scripts/ch_to_band " mode " " channel
+						cmd | getline band
+						close(cmd)
+						return band
+					}
+				{
+				if (model ~ /FM|952/ && /^SCC[0-9]+:/) {
+					chan_field = 5; bw_field = 6
+				} else if (/\+\+GTCAINFO: 2/) {
+					chan_field = 4; bw_field = NF
+				} else next
+			        if ($chan_field > 1) {
+					band = earfcn_to_band($chan_field)
+					if (band != "") scc = scc "+" band
+					sum += $bw_field/5; bwca = sum + bwp_num
+				}
+			} END { print scc "|" bwca }')
+			SCC=${1}; BWCA=${2}
+			IFS="$OIFS"; unset OIFS
 		fi
 	else
 		TECH=${4}
 		[ "x$TECH" != "x" ] && MODE="$TECH"
 	fi
-	IFS="$OIFS"
-	unset OIFS
 	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
 		LAC=$(printf %d 0x$LAC); CID=$(printf %d 0x$CID)
 	fi
