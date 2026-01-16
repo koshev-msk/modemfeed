@@ -1,19 +1,21 @@
 modem_data(){
         # hwinfo
-	OIFS="$IFS"
-	IFS="|"
+	OIFS="$IFS"; IFS="|"
 	set -- $(echo "$O" | awk -v family=$FAMILY '
 		$0 == family {manufacturer=$1; getline model; getline fw}
 		/^ICCID:/{iccid=$2; getline imei; getline imsi}
 		/^PA|xo_therm_buf:/ {sub(/C/, "", $2); split($0,arr,":"); if (arr[2] !="") temp = arr[2]; else temp=$2 }
 		END {print manufacturer "|" model "|" fw "|" iccid "|" imei "|" imsi "|" temp }')
 	DEVICE="${1} ${2}"; MANUF=${1}; MODEL=${2}; FW=${3}; ICCID=${4}; IMEI=${5}; IMSI=${6}; CHIPTEMP=${7}
-	IFS="$OIFS"
-	unset OIFS
+	IFS="$OIFS"; unset OIFS
 	generic_data
 	# get signal info
+	OIFS="$IFS"; IFS="|"
 	set -- $(echo "$O" | awk -v mode="$MODE" '
-		BEGIN { lac=""; cid=""; earfcn=""; pci=""; bw=""; bwc=""; rsrp=""; rssi=""; rsrq=""; sinr=""; rscp=""; csq=""; lte_ca=0 }
+		BEGIN {
+			lac=""; cid=""; earfcn=""; pci=""; bw=""; bwc=""; rsrp=""; rssi=""; rsrq=""; sinr=""; rscp=""; csq=""; lte_ca=0
+			map[3]=1; map[5]=2; map[10]=3; map[15]=4; map[20]=5
+		}
 		# LTE Carrier Aggregation
 		/SCC[0-9]+ info:/ {lte_ca++}
     		# LTE 
@@ -26,7 +28,7 @@ modem_data(){
 			if (/^RSRQ:/ && rsrq == "") {sub(/dB/, "", $2); rsrq = sprintf("%.0f", $2)}
 			if (/^RS-SINR:/ && sinr == "") {sub(/dB/, "", $2); sinr = sprintf("%.0f", $2)}
 			if (/^RS-SNR:/ && sinr == "") {sub(/dB/, "", $2);sinr = sprintf("%.0f", $2)}
-			if (/PCC info/ && bwc == "") { bwc = sprintf("%.0f", $8); map[3]=1; map[5]=2; map[10]=3; map[15]=4; map[20]=5; bw=map[bwc] }
+			if (/PCC info/ && bwc == "") { bwc = sprintf("%.0f", $8); bw=map[bwc] }
 		}
     
 		# Other mode (3G)
@@ -37,18 +39,22 @@ modem_data(){
 		
 		}
     
-		END {print lac, cid, earfcn, rssi, sinr, pci, bw, bwc, rsrp, rsrq, rscp, csq, lte_ca}')
-		
-	LAC=${1}; CID=${2}; EARFCN=${3}; CSQ_RSSI=${4}; SINR=${5}
+		END {print lac "|" cid "|" earfcn "|" rssi "|" sinr "|" pci "|" bw "|" bwc "|" rsrp "|" rsrq "|" rscp "|" csq "|" lte_ca}')
+	LAC=${1}; CID=${2}; EARFCN=${3}; CSQ_RSSI=${4}; SINR=${5}; PCI=${6}; BWDL=${7}; BWDx=${8}; RSRP=${9}; RSRQ=${10}; LTE_CA=${13}
+	IFS="$OIFS"; unset OIFS
 	if [ "$MODE" = "LTE" ]; then
-		PCI=${6}; BWDL=${7}; BWDx=${8}; RSRP=${9}; RSRQ=${10}; LTE_CA=${11}
 		ENBx=$(echo $CID | sed -e 's/..$//')
                 CELL=$(printf %d 0x${CID: -2})
                 ENBID=$(printf %d 0x$ENBx)
 		if [ $LTE_CA -ge 1 ]; then
-			SCC=$(echo "$O" | awk '/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}} END { print scc }')
-			BWCA=$(echo "$O" | awk -v bwc=$BWDx '/^SCC[0-9]+ info:/ { sum += sprintf("%.0f", $8)} END { print sum + bwc }')
-			unset BWDx
+			OIFS="$IFS"; IFS="|"
+			set -- $(echo "$O" | awk -v bwc=${BWDx:-0} '
+				/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}
+					bwca_raw += sprintf("%.0f", $8); bwca=bwca_raw+bwc
+				}
+				END { print scc "|" bwca }')
+			IFS="$OIFS"; unset BWDx OIFS
+			SCC=${1}; BWCA=${2}
                 fi
 		
 	fi

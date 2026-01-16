@@ -16,7 +16,7 @@ modem_data(){
 	OIFS="$IFS"; IFS="|"
 	set -- $(echo "$O" | awk -v mode="$MODE" '
 	BEGIN { map[3]=1; map[5]=2; map[10]=3; map[15]=4; map[20]=5 }
-	mode ~ /LTE/ {
+	mode ~ /LTE/ { # LTE mode
 		if (/\+CEREG/) { gsub("\"",""); split($0,a,","); lac=a[3]; cid=a[4]}
 		if (/pcell:/) { f=1
 			for (i=1; i<=NF; i++) {
@@ -31,7 +31,7 @@ modem_data(){
 		if (/^SCC[0-9]+ info:/) { lte_ca++ }
 		if (/\+$QCSQ/) { split($0,a,","); rssi=a[5] }
 	}
-	mode !~ /LTE/{
+	mode !~ /LTE/{ # 3G mode
 		if (/\+CREG/) { gsub("\"",""); split($0,a,","); lac=a[3]; cid=a[4]}
 		if (/channel:/) {split($0,a,":"); earfcn=a[2]}
 		if (/\+$QCSQ/) { split($0,a,","); rssi=a[5] }
@@ -45,10 +45,15 @@ modem_data(){
 		ENBx=$(echo $CID | sed -e 's/..$//')
 		CELL=$(printf %d 0x${CID: -2})
 		ENBID=$(printf %d 0x$ENBx)
+		# CA calc
 		if [ $LTE_CA -ge 1 ]; then
-			SCC=$(echo "$O" | awk '/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}} END { print scc }')
-			BWCA=$(echo "$O" | awk -v bwc=$BWDx '/^SCC[0-9]+ info:/ { sum += sprintf("%.0f", $8)} END { print sum + bwc }')
-			unset BWDx
+			OIFS="$IFS"; IFS="|"
+			set -- $(echo "$O" | awk -v bwc=${BWDx:-0} '
+				/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}
+					bwca_raw += sprintf("%.0f", $8); bwca=bwca_raw+bwc}
+			END { print scc "|" bwca }')
+			IFS="$OIFS"; unset BWDx OIFS
+			SCC=${1}; BWCA=${2}
                 fi
 	fi
 

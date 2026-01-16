@@ -1,63 +1,78 @@
 # Quectel modems
 function modem_data(){
 	generic_data
+	O=$(echo "$O" | grep -Ev '^$|OK')
 	# hwinfo
-        MANUF=$(echo "$O" | grep -i $FAMILY)
-	MDL=$(echo "$O" | grep -A1 -i $FAMILY | tail -1)
+	OIFS="$IFS"; IFS="|"
+	set -- $(echo "$O" | awk -v fam="$FAMILY" '
+		BEGIN { IGNORECASE=1; temp_found = 0 }
+		!temp_found && /\+QTEMP:/ {
+		    sub(/.*\+QTEMP:[^0-9]*/, "")
+		    temp = $0+0
+		    temp_found = 1
+		}
+		/ICCID:/ {
+			gsub(/"/, "", $0)
+			split($0, parts, /:[[:space:]]*/)
+			if (parts[2] != "") {
+				iccid = parts[2]
+			}
+		}
+		$0 ~ fam && manuf == "" {
+		    manuf = $1
+			if ((getline line) > 0) {
+			        model = line
+		
+			if ((getline line) > 0) fw = line
+			if ((getline line) > 0) imsi = line
+			if ((getline line) > 0) imei = line
+		}
+	}
+	END {
+	if (!temp_found) temp = "N/A"
+		print manuf "|" model "|" fw "|" iccid "|" imsi "|" imei "|" temp
+	}')
+	MANUF=${1}; MDL=${2}; FW=${3} ICCID=${4}; IMSI=${5}; IMEI=${6} CHIPTEMP=${7}
+	IFS="$OIFS"; unset OIFS
 	DEVICE="$MANUF $MDL"
-        FW=$(echo "$O" | grep -A2 -i $FAMILY | tail -1)
-        ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-	case $MDL in
-		*EC200*)
-		        IMSI=$(echo "$O" | grep -A3 -i $FAMILY | tail -1)
-		        IMEI=$(echo "$O" | grep -A4 -i $FAMILY | tail -1)
-		;;
-                *EC21*|*EC25*|*EP06*|*EM12*|*EM160*)
-                        IMSI=$(echo "$O" | grep -A1 -i $FW | tail -1)
-                        IMEI=$(echo "$O" | grep -A1 -i $ICCID | tail -1)
-		;;
-		*)
-			IMSI=$(echo "$O" | grep -A1 -i ICCID | tail -1)
-			IMEI=$(echo "$O" | grep -A2 -i ICCID | tail -1)
-		;;
-	esac
 	# signal info
-	set -- $(echo "$O" | awk -F [,\ ] '/^\+QENG/ {print $6, $7, $8, $9, $10, $13, $14, $15, $16, $17 ,$18}')
-	if [ "$MODE" = "LTE" ]; then
-		CID=${3}; PCI=${4}; EARFCN=${5}; BWDL=${6}; LAC=${7}; RSRP=${8}; RSRQ=${9}; SINR=${11};
-		ENBx=$(echo $CID | sed -e 's/..$//')
-		CELL=$(printf %d 0x${CID: -2})
-		ENBID=$(printf %d 0x$ENBx)
-		case $MDL in
-			# EC200 send incorrect RSSI value, use value from AT+CSQ
-			*EC200*) ;;
-			*) CSQ_RSSI=${10} ;;
-                esac
-		LTE_CA=$(echo "$O" | awk '/^\+QCAINFO/{print $0}' | wc -l)
-		if [ $LTE_CA -ge 2 ]; then
-			SCC=$(echo "$O" | awk -F [,] '/^\+QCAINFO.*"scc"/{for(i=1;i<=NF;i++) if($i~/BAND/){gsub(/[^0-9]/,"",$i); printf "+"$i}} END{print ""}')
-			BWCA=$(echo "$O" | awk -F [,] -v bwdl=$BWDL '/^\+QCAINFO.*"scc"/{sum+=$3/5} END{print sum + (bwdl==1 ? 3 : bwdl*5 - 5)}')
-		fi
-	elif [ "$MODE" = "EDGE" ]; then
-		LAC=${1}; CID=${2}; EARFCN=${5}
-	else
-		LAC=${2}; CID=${3}; EARFCN=${4}; SINR=${6}
+	OIFS="$IFS"; IFS="|"
+	set -- $(echo "$O" | awk -v mode="$MODE" -v model="$MDL" -F "," '
+		$0 ~ /^\+QENG/ {
+			if (mode == "") { mode = gsub("\"",""); mode=$3 }
+			if (mode ~ /LTE/) {
+				lac=$13; cid=$7; earfcn=$9; sinr=$(NF-1); rsrp=$(NF-4); rsrq=$(NF-3)
+				bw=$11; bwc=bw*5-5; pci=$8
+				if (model !~/EC200/){ # EC200 send incorrect RSSI value, use value from AT+CSQ
+					rssi=$(NF-2)
+				}
+				cell = sprintf("%d", "0x" substr(cid, length(cid) - 1, 2)) 
+				enbid = sprintf("%d", "0x" substr(cid, 1, length(cid) - 2))
+			}
+			else {
+				lac=$6; cid=$7; earfcn=$8; sinr=$13
+				if (model !~/EC200/){ # EC200 send incorrect RSSI value, use value from AT+CSQ
+					rssi=$11; sinr=$12
+				}
+			}
+		}
+		/^\+QCAINFO/{lte_ca++}
+		END { print lac "|" cid "|" earfcn "|" rssi "|" sinr "|" rsrp "|" rsrq "|" bw "|" bwc "|" pci "|" lte_ca "|" enbid "|" cell}
+	')
+	LAC=${1}; CID=${2}; EARFCN=${3}; [ "${4}" != "" ] && CSQ_RSSI=${4}; SINR=${5}; RSRP=${6} RSRQ=${7}
+	BWDL=${8}; BWDx=${9}; PCI=${10}; LTE_CA=${11}; ENBID=${12}; CELL=${13}
+	IFS="$OIFS"; unset OIFS
+	if [ $LTE_CA -ge 2 ]; then
+		OIFS="$IFS"; IFS="|"
+		set -- $(echo "$O" | awk -v bwdl=$BWDL -F [,] '/^\+QCAINFO.*"scc"/{for(i=1;i<=NF;i++) if($i~/BAND/){gsub(/[^0-9]/,"",$i); scc = scc"+"$i}
+			{bwcx+=$3/5; bwca=bwcx + (bwdl==1 ? 3 : bwdl*5 - 5)}
+		} END{print scc "|" bwca }')
+		SCC=${1}; BWCA=${2}
+		IFS="$OIFS"; unset OIFS
 	fi
-	case $MDL in
-		*EM12*) CHIPTEMP=$(echo "$O" | awk -F'[,\ ]' '/^\+QTEMP/ {gsub("\"",""); print $3}') ;;
-		*EM160*) CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP: \"cpu-usr\"/ {gsub("\"","");print $3}') ;;
-		*)
-			CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {print $3}')
-			# Quectel EM1X modem temp sensors
-			if [ ! $(echo "$CHIPTEMP" | grep "^?[0-9]+$") ] || [ $CHIPTEMP -eq 255 ]; then
-				CHIPTEMP=$(echo "$O" | awk -F[,\ ] '/^\+QTEMP/ {gsub("\"",""); print $2}')
-			fi
-		;;
-	esac
-	LAC_NUM=$(printf %d 0x$LAC)
-	CID_NUM=$(printf %d 0x$CID)
+
 	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
-		LAC=$LAC_NUM
-		CID=$CID_NUM
+		LAC=$(printf %d 0x$LAC)
+		CID=$(printf %d 0x$CID)
 	fi
 }

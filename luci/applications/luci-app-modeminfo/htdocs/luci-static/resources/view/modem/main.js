@@ -225,10 +225,7 @@ return view.extend({
 
 					var lactac = parts.join(' / ').replace(' ', ' ').replace('/ /', '/ ').replace('/ /', '/ ')
 
-					var UMTS_MODES = new Set([
-						"3G", "UMTS", "HSPA", "HSUPA", "HSDPA", "HSPA+", 
-						"WCDMA", "DC-HSPA+", "HSDPA+HSUPA", "HSDPA,HSUPA"
-					]);
+					var UMTS_MODES = /(HS|3G|UMTS|WCDMA)/i;
 
 					var bcc, scc, cid;
 					var bca = "";
@@ -255,7 +252,7 @@ return view.extend({
 						}
 						var namech = "EARFCN";
 						var namesnr = "SINR";
-					} else if (UMTS_MODES.has(netmode)) {
+					} else if (UMTS_MODES.test(netmode)) {
 						var namech = "UARFCN";
 						var namesnr = "ECIO";
 						var namecid = "LAC/CID";
