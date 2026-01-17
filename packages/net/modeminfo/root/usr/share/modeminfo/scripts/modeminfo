@@ -65,7 +65,7 @@ function modem_family() {
             
            # Read modem.list file
             while ((getline line < modem_list) > 0) {
-                if (line ~ /^#/ || line == "") continue  # пропускаем комментарии и пустые строки
+                if (line ~ /^#/ || line == "") continue
                 split(line, parts, ";")
                 if (parts[1] == vidpid) {
                     close(modem_list)

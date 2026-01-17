@@ -29,6 +29,8 @@ modem_data(){
 			if (/^RS-SINR:/ && sinr == "") {sub(/dB/, "", $2); sinr = sprintf("%.0f", $2)}
 			if (/^RS-SNR:/ && sinr == "") {sub(/dB/, "", $2);sinr = sprintf("%.0f", $2)}
 			if (/PCC info/ && bwc == "") { bwc = sprintf("%.0f", $8); bw=map[bwc] }
+			cell = sprintf("%d", "0x" substr(cid, length(cid) - 1, 2)) 
+			enbid = sprintf("%d", "0x" substr(cid, 1, length(cid) - 2))
 		}
     
 		# Other mode (3G)
@@ -39,25 +41,20 @@ modem_data(){
 		
 		}
     
-		END {print lac "|" cid "|" earfcn "|" rssi "|" sinr "|" pci "|" bw "|" bwc "|" rsrp "|" rsrq "|" rscp "|" csq "|" lte_ca}')
+		END {print lac "|" cid "|" earfcn "|" rssi "|" sinr "|" pci "|" bw "|" bwc "|" rsrp "|" rsrq "|" rscp "|" csq "|" lte_ca "|" cell "|" enbid}')
 	LAC=${1}; CID=${2}; EARFCN=${3}; CSQ_RSSI=${4}; SINR=${5}; PCI=${6}; BWDL=${7}; BWDx=${8}; RSRP=${9}; RSRQ=${10}; LTE_CA=${13}
+	CELL=${14}; ENBID=${15}
 	IFS="$OIFS"; unset OIFS
-	if [ "$MODE" = "LTE" ]; then
-		ENBx=$(echo $CID | sed -e 's/..$//')
-                CELL=$(printf %d 0x${CID: -2})
-                ENBID=$(printf %d 0x$ENBx)
-		if [ $LTE_CA -ge 1 ]; then
-			OIFS="$IFS"; IFS="|"
-			set -- $(echo "$O" | awk -v bwc=${BWDx:-0} '
-				/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}
-					bwca_raw += sprintf("%.0f", $8); bwca=bwca_raw+bwc
-				}
-				END { print scc "|" bwca }')
-			IFS="$OIFS"; unset BWDx OIFS
-			SCC=${1}; BWCA=${2}
-                fi
-		
+	if [ $LTE_CA -ge 1 ]; then
+		OIFS="$IFS"; IFS="|"
+		set -- $(echo "$O" | awk -v bwc=${BWDx:-0} '
+			/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}} bwca_raw += sprintf("%.0f", $8)
+			bwca=bwca_raw+bwc}
+			END { print scc "|" bwca }')
+		IFS="$OIFS"; unset BWDx OIFS
+		SCC=${1}; BWCA=${2}
 	fi
+
         if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
                 LAC=$(printf %d 0x$LAC)
                 CID=$(printf %d 0x$CID)
