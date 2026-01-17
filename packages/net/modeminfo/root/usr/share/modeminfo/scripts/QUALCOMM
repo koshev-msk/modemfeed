@@ -9,7 +9,7 @@ function modem_data(){
 		/tsens_tz_sensor0:/{split($0,i,":");temp=i[2]}	
 		END{print manuf "|" model "|" fw "|" iccid "|" imsi "|" imei "|" temp}
 	')
-	MANUF=${1}; MODEL=${2}; FW=${3}: ICCID=${4}; IMSI=${5} IMEI=${6}; CHIPTEMP=${7}
+	MANUF=${1}; MODEL=${2}; FW=${3}; ICCID=${4}; IMSI=${5} IMEI=${6}; CHIPTEMP=${7}
 	IFS="$OIFS"; unset OIFS
         DEVICE="$MANUF $MODEL"
 	OIFS="$IFS"; IFS="|"
