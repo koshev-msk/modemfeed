@@ -23,34 +23,26 @@ function modem_data(){
 			}
 			if (/SCC/){lte_ca++}
 			if (/PCC info/){bwc=sprintf("%.0f",$(NF-1)); bw=map[bwc]}
+			cell = sprintf("%d", "0x" substr(cid, length(cid) - 1, 2))
+			enbid = sprintf("%d", "0x" substr(cid, 1, length(cid) - 2))
 		}
 		mode !~ /LTE/ { # 3G mode
 			if (/\+CREG/){gsub("\"",""); split($0,i,","); reg=i[2]; lac=i[3]; cid=i[4]}
 			if (/RFSTS:/){ getline; split($0,i,","); earfcn=i[2]; rssi=sprintf("%.0f",i[6]); sinr=sprintf("%.0f",i[4])}
 		}
-		END { print reg "|" earfcn "|" lac "|" cid "|" rssi "|" sinr "|" rsrp "|" rsrq "|" pci "|" bw "|" bwc "|" lte_ca }
-
+		END { print reg "|" earfcn "|" lac "|" cid "|" rssi "|" sinr "|" rsrp "|" rsrq "|" pci "|" bw "|" bwc "|" lte_ca "|" enbid "|" cell}
 	')
-	EARFCN=${2}; LAC=${3}; CID=${4}; CSQ_RSSI=${5}; SINR=${6}; RSRP=${7}; RSRQ=${8}; PCI=${9}; BWDL=${10}; BWDx=${11}; LTE_CA=${12}
+	EARFCN=${2}; LAC=${3}; CID=${4}; CSQ_RSSI=${5}; SINR=${6}; RSRP=${7}; RSRQ=${8}; PCI=${9}; BWDL=${10}; BWDx=${11}; LTE_CA=${12}; ENBID=${13}; CELL=${14}
 	IFS="$OIFS"; unset OIFS
-	RADIODATA=$(echo "$O" |grep -A2 RFSTS: | awk 'NR ==2{print $0}')
-	LTE_CA=$(echo "$O" | awk '/SCC/{print $0}' | wc -l)
-        if [ "$MODE" = "LTE" ]; then
-		REGST=${1}
-		ENBx=$(echo $CID | sed -e 's/..$//')
-		CELL=$(printf %d 0x${CID: -2})
-		ENBID=$(printf %d 0x$ENBx)
-		# CA calc
-		if [ $LTE_CA -ge 1 ]; then
-			OIFS="$IFS"; IFS="|"
-			set -- $(echo "$O" | awk -v bwc=${BWDx:-0} '
-                                /^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}
-					bwca_raw += sprintf("%.0f", $8); bwca=bwca_raw+bwc
-				}
-                                END { print scc "|" bwca }')
+	# LTE CA calc
+	if [ $LTE_CA -ge 1 ]; then
+		OIFS="$IFS"; IFS="|"
+		set -- $(echo "$O" | awk -v bwc=${BWDx:-0} '
+			/^SCC\d info:/ {for(i=1; i<=NF; i++) { if($i ~ /LTE_B/) { gsub(/[^0-9]/, "", $i); scc = scc "+" $i}}
+				bwca_raw += sprintf("%.0f", $8); bwca=bwca_raw+bwc }
+			END { print scc "|" bwca }')
 			SCC=${1}; BWCA=${2}
 			IFS="$OIFS"; unset OIFS BWDx
-		fi
         fi
 
 	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
