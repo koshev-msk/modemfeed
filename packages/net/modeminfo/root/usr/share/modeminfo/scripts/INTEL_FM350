@@ -54,7 +54,7 @@ function modem_data(){
 				reg=$2; lac=$3; cid=$4
 			}
 			if (/^\+CESQ/){split ($1, r, ":")
-				rssi=r[2]-110; csq_raw = (rssi + 113)/2; csq=(csq_raw>30) ? 30 : csq_raw
+				rssi=r[2]-110; csq_raw = sprintf("%.0f", (rssi + 113)/2); csq=(csq_raw>30) ? 30 : csq_raw
 				csq_col=get_csq_color(csq); csq_per=sprintf("%.0f", csq*100/31)
 			}
 			if(/\+GTCCINFO:/){ getline; earfcn=$7; rsrq=sprintf("%.0f", -20+($14/2)); rsrp=sprintf("%.0f", $13-140)
@@ -69,7 +69,7 @@ function modem_data(){
 				reg=$2; lac=$3; cid=$4
 			}
 			if (/^\+CESQ/){
-				rssi=sprintf("%.0f",((95*$3)/96-120)); csq_raw = (rssi + 113)/2; csq=(csq_raw>30) ? 30 : csq_raw
+				rssi=sprintf("%.0f",((95*$3)/96-120)); csq_raw = sprintf("%.0f", (rssi + 113)/2); csq=(csq_raw>30) ? 30 : csq_raw
 				csq_col=get_csq_color(csq); csq_per=sprintf("%.0f", csq*100/31); sinr=sprintf("%.0f",(24*$4)/49-24)
 			}
 			if(/\+GTCCINFO:/){ getline; earfcn=$7 }
