@@ -3,8 +3,8 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=Information dashboard for 3G/LTE dongle
 LUCI_DEPENDS:=+modeminfo
 PKG_LICENSE:=GPLv3
-PKG_VERSION:=0.4.4
-PKG_RELEASE:=4
+PKG_VERSION:=0.4.5
+PKG_RELEASE:=0
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
