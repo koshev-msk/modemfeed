@@ -6,85 +6,101 @@ function ch_to_band(){
 }
 
 function modem_data(){
-    generic_data
-    # AT+CSQ not correct RSSI value data use AT+CESQ
-    RSSI_RAW=$(echo "$O" | awk -F[,\ ] '/^\+CESQ/ {print $2}')
-    # Need correct value!
-    CSQ_RSSI=$((-113+2*$RSSI_RAW))
-    CSQ=$(((113-$RSSI_RAW)/2))
-    [ "x$CSQ" = "x" ] && CSQ=-1
-    if [ $CSQ -ge 0 -a $CSQ -le 31 ]; then
-        CSQ_PER=$(($CSQ * 100/31))
-        CSQ_COL="red"
-        [ $CSQ -ge 10 ] && CSQ_COL="red"
-        [ $CSQ -ge 15 ] && CSQ_COL="orange"
-        [ $CSQ -ge 20 ] && CSQ_COL="green"
-    elif [ $CSQ -ge 32 -a $CSQ -le 90 ]; then
- 	CSQ_PER="100"
-	CSQ_COL="green"
-    else
-        CSQ_PER="0"
-        CSQ_COL="black"
-    fi
+	generic_data
 
-    MANUF=$(echo "$O" | awk -F [:,] '/\+CGMI/{gsub("\"","");print $2}')
-    MODEL=$(echo "$O" | awk -F [:,] '/\+CGMM/{gsub("\"","");print $2}')
-    DEVICE="$MANUF $MODEL"
-    FW=$(echo "$O" | awk '/\+GTPKGVER/{gsub("\"",""); print $2}')
-    ICCID=$(echo "$O" | awk -F [:] '/ICCID:/{gsub("\r","");print $2}')
-    IMSI=$(echo "$O" | awk -F [:,] '/\+CIMI/{gsub("\"","");print $2}')
-    IMEI=$(echo "$O" | awk -F [:,] '/\+CGSN/{gsub("\"","");print $2}')
-    NETWORK=$(echo "$O"| grep -A2 '+GTCCINFO:' | awk 'NR ==2{print}')
-    EARFCN=$(echo "$NETWORK" | awk -F [,] '{print $7}')
-    if [ "$MODE" = "LTE" ]; then
-        REGST=$(echo "$O" | awk -F[,] '/\+CEREG/ {print $2}')
-        LAC=$(echo "$O" | awk -F[,] '/^\+CEREG/{gsub("\"","");print $3}' | tail -1)
-        CID=$(echo "$O" | awk -F[,] '/^\+CEREG/{gsub("\"","");print $4}' | tail -1)
-        RSRQ=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", -20+($14/2)}')
-        RSRP=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", $13-140}')
-        SINR=$(echo "$NETWORK" | awk -F [,] '{printf "%.0f\n", ($11/4)+5}')
-        ENBx=$(echo $CID | sed -e 's/..$//')
-        CELL=$(printf %d 0x${CID: -2})
-        ENBID=$(printf %d 0x$ENBx)
-        PCI=$(echo "$NETWORK" | awk -F [,] '{print $8}')
-        BWDx=$(echo "$NETWORK" | awk -F [,] '{print $10}')
-        case $BWDx in
-            15)  BWDL=1 NP=3 ;;
-            25)  BWDL=2 NP=5 ;;
-            50)  BWDL=3 NP=10 ;;
-            75)  BWDL=4 NP=15 ;;
-            100) BWDL=5 NP=20 ;;
-            *)   NP=0  ;;
-        esac
-        BWCA=$NP
-        LTE_CA=$(echo "$O" | awk '/SCC/{print $0}' | wc -l)
-        if [ $LTE_CA -ge 1 ]; then
-            SCx=$(echo "$O" | awk -F [:,] '/SCC/{print $6}')
-            for sca in $SCx; do
-                SCC="$SCC+$(ch_to_band $MODE $sca)"
-            done
-            BWCx=$(echo "$O" | awk -F [:,] '/SCC/{printf "%.0f\n", $7}')
-            for ca in $BWCx; do
-                case $ca in
-                    15)  N=3 ;;
-                    25)  N=5 ;;
-                    50)  N=10 ;;
-                    75)  N=15 ;;
-                    100) N=20 ;;
-                    *)   N=0 ;;
-                esac
-                BWCA=$(($BWCA+$N))
-            done
-        fi        
-    else
-        LAC=$(echo "$O" |awk -F[,] '/^\+CGREG/{gsub("\"","");print $3}' | tail -1)
-        CID=$(echo "$O" |awk -F[,] '/^\+CGREG/{gsub("\"","");print $4}' | tail -1)
-    fi
-    LAC_NUM=$(printf %d 0x$LAC)
-    CID_NUM=$(printf %d 0x$CID)
-    CHIPTEMP=$(echo "$O" | awk -F [,] '/^\+GTSENRDTEMP:/{printf "%.0f", $2/1000}')
-    if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
-        LAC=$LAC_NUM
-        CID=$CID_NUM
-    fi
+	# get hw and sim data
+	IFS="$IFS";IFS="|"
+	set -- $(echo "$O" | awk -F [:] '
+		{ gsub(/"/, ""); sub(/^[[:space:]]+/, "", $2);sub(/[[:space:]]+$/, "", $2)
+			if (/GTPKGVER/) { fw = $2 }
+			if (/CGMI/) { manuf = $2 }
+			if (/CGMM/) { model = $2 }
+			if (/CGMR/) { version = $2 }
+			if (/CIMI/) { imsi = $2 }
+			if (/ICCID/) { iccid = $2 }
+			if (/CGSN/) { imei = $2 }
+			if (/GTSENRDTEMP/) {n=split($0,t,","); temp=sprintf("%.0f", t[n]/1000)}
+		}
+		END { print manuf "|" model "|" fw "|" iccid "|" imsi "|" imei "|" temp }
+	')
+
+	MANUF=${1}; MODEL=${2}; FW=${3}; ICCID=${4}; IMSI=${5}; IMEI=${6}; CHIPTEMP=${7}
+	IFS="$OIFS"; unset OIFS
+	DEVICE="$MANUF $MODEL"
+
+	# Get signal info
+	IFS="$IFS";IFS="|"
+	set -- $(echo "$O" | awk -v mode="$MODE" -F [,] '
+		BEGIN {
+			bmap[15]=1; bmap[25]=2; bmap[50]=3; bmap[75]=4; bmap[100]=5
+			nmap[15]=3; nmap[25]=5; nmap[50]=10; nmap[75]=15; nmap[100]=20
+			csq_range["black"] = "0:0"; csq_range["red"] = "1:10"
+			csq_range["orange"] = "11:20"; csq_range["green"] = "21:50"
+		}
+
+		# text color percentage
+		function get_csq_color(csq_raw_val) {
+			if (csq_raw_val == "") return "black"
+			csq_num = csq_raw_val + 0
+			for (color in csq_range) {
+				split(csq_range[color], limits, ":")
+				min = limits[1] + 0; max = limits[2] + 0
+				if (csq_num >= min && csq_num <= max) {return color}
+			} return "black"
+		}
+
+		mode ~ /LTE/ { gsub("\"",""); gsub(/[[:space:]]+/, "")
+			if (/\+CEREG/){ gsub("\"","")
+				reg=$2; lac=$3; cid=$4
+			}
+			if (/^\+CESQ/){split ($1, r, ":")
+				rssi=r[2]-110; csq_raw = (rssi + 113)/2; csq=(csq_raw>30) ? 30 : csq_raw
+				csq_col=get_csq_color(csq); csq_per=sprintf("%.0f", csq*100/31)
+			}
+			if(/\+GTCCINFO:/){ getline; earfcn=$7; rsrq=sprintf("%.0f", -20+($14/2)); rsrp=sprintf("%.0f", $13-140)
+				sinr=sprintf("%.0f",($11/4)+5); pci=$8; bw=bmap[$10]; bwc=nmap[$10]
+			}
+			if (/SCC/){lte_ca++}
+			cell = sprintf("%d", "0x" substr(cid, length(cid) - 1, 2))
+			enbid = sprintf("%d", "0x" substr(cid, 1, length(cid) - 2))
+		}
+		mode !~ /LTE/{
+			if (/\+CGREG/){ gsub("\"","")
+				reg=$2; lac=$3; cid=$4
+			}
+			if (/^\+CESQ/){
+				rssi=sprintf("%.0f",((95*$3)/96-120)); csq_raw = (rssi + 113)/2; csq=(csq_raw>30) ? 30 : csq_raw
+				csq_col=get_csq_color(csq); csq_per=sprintf("%.0f", csq*100/31); sinr=sprintf("%.0f",(24*$4)/49-24)
+			}
+			if(/\+GTCCINFO:/){ getline; earfcn=$7 }
+		}
+		END { print reg "|" lac "|" cid "|" earfcn "|" rssi "|" sinr "|" rsrp "|" rsrq "|" pci "|" bw "|" bwc "|" lte_ca "|" csq_col "|"  csq_per "|" enbid "|" cell }
+	')
+
+	REGST=${1}; LAC=${2}; CID=${3}; EARFCN=${4}; CSQ_RSSI=${5}; SINR=${6}; RSRP=${7}; RSRQ=${8}; PCI=${9}; BWDL=${10}; BWDx=${11}
+	LTE_CA=${12}; CSQ_COL=${13}; CSQ_PER=${14}; ENBID=${15}; CELL=${16}
+	IFS="$OIFS"; unset OIFS
+	# Calc LTE CA
+	if [ "$LTE_CA" -ge "1" ]; then
+		IFS="$IFS";IFS="|"
+		set -- $(echo "$O" | awk -v mode=$MODE -v bwcx=$BWDx -F [,] '
+			BEGIN { sum = 0 }
+			function earfcn_to_band(channel, cmd, band) {
+				if (channel == "" || channel == "0") return "N/A"
+				cmd = "/usr/share/modeminfo/scripts/ch_to_band " mode " " channel
+				cmd | getline band
+				close(cmd)
+				return (band != "" ? band : "")
+			}
+			/SCC/{ scc = scc "+" earfcn_to_band($5); scc_ca += $6/5; bwca=bwcx+scc_ca }
+			END { print scc "|" bwca }
+		')
+		SCC=${1}; BWCA=${2}
+		IFS="$OIFS"; unset OIFS
+	fi
+
+	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
+		LAC=$(printf %d 0x$LAC)
+		CID=$(printf %d 0x$CID)
+	fi
 }
