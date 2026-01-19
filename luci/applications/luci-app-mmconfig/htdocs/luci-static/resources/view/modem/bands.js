@@ -84,23 +84,22 @@ return view.extend({
                     html += '<span class="modem-operator">' + operatorText + '</span>';
                 }
 
-                var currentModeText = '';
-                //check null
-                if (modemObj.generic['current-modes'] !== null && modemObj.generic['current-modes'] !== undefined) {
-                    currentModeText = modemObj.generic['current-modes'];
-                } 
-                // if current-modes not aviable then whow access-technologies
-                else if (modemObj.generic['access-technologies'] !== null && 
-                         modemObj.generic['access-technologies'] !== undefined && 
-                         Array.isArray(modemObj.generic['access-technologies']) && 
-                         modemObj.generic['access-technologies'].length > 0) {
-                    currentModeText = modemObj.generic['access-technologies'].join(', ');
-                }
 
-                if (currentModeText) {
-                    html += '<span class="separator">•</span>';
-                    html += '<span class="current-mode">' + _('Access Tech:') + ' ' + currentModeText + '</span>';
-                }
+               var currentModeText = '';
+               if (modemObj.generic['current-modes']) {
+
+                    currentModeText = modemObj.generic['current-modes'];
+               } 
+               // if current-modes not aviaible, use access-technologies
+               else if (modemObj.generic['access-technologies'] && modemObj.generic['access-technologies'].length > 0) {
+              // Берем первую технологию из access-technologies
+                   currentModeText = modemObj.generic['access-technologies'];
+              }
+
+              if (currentModeText) {
+                 html += '<span class="separator">•</span>';
+	      html += '<span class="current-mode">' + _('Access Tech:') + ' ' + currentModeText + '</span>';
+            }
 
                 html += '</div>';
                 
@@ -113,62 +112,44 @@ return view.extend({
             o = s.option(form.ListValue, 'preffer', _('Network Mode'));
             o.rmempty = false;
             
-            // check null/undefined and array 
-            if (modemObj && modemObj.generic && 
-                modemObj.generic['supported-modes'] !== null && 
-                modemObj.generic['supported-modes'] !== undefined && 
-                Array.isArray(modemObj.generic['supported-modes'])) {
-                
+            if (modemObj && modemObj.generic && modemObj.generic['supported-modes']) {
                 // get from modem supported-modes 
                 modemObj.generic['supported-modes'].forEach(function(mode) {
-                    if (mode !== null && mode !== undefined) {
-                        o.value(mode, mode);
-                    }
+                    o.value(mode, mode);
                 });
 
                 // Set current
-                if (section.preffer) {
-                    o.default = section.preffer;
-                } else if (currentModeText && 
-                          modemObj.generic['supported-modes'].includes(currentModeText)) {
-                    o.default = currentModeText;
-                }
+              if (section.preffer) {
+                   o.default = section.preffer;
+              } else if (currentModeText && modemObj.generic['supported-modes'].includes(currentModeText)) {
+                   o.default = currentModeText;
+	      }
             } else {
-                // If not available
+                // If not aviable
                 o.value('', _('Not Available'));
-                o.default = '';
-                o.readonly = true;
+		o.default = '';
+		o.readonly = true;
             }
 
             // bands select
-            o = s.option(form.Value, 'bands', _('Bands'));
-            
-            // check null/undefined and array
-            if (modemObj && modemObj.generic && 
-                modemObj.generic['supported-bands'] !== null && 
-                modemObj.generic['supported-bands'] !== undefined && 
-                Array.isArray(modemObj.generic['supported-bands']) && 
-                modemObj.generic['supported-bands'].length > 0) {
-                
+            if (modemObj && modemObj.generic && modemObj.generic['supported-bands']) {
                 o = s.option(form.MultiValue, 'bands', _('Bands'));
-                
+
                 // get from modem supported-bands
                 modemObj.generic['supported-bands'].forEach(function(band) {
-                    if (band !== null && band !== undefined) {
-                        o.value(band, band);
-                    }
+                    o.value(band, band);
                 });
 
                 // Set current
                 if (section.bands) {
                     o.default = section.bands;
-                }
+		}
             } else {
-                // if bands not aviable
-                o.value('', _('Not Available'));
-                o.default = '';
-                o.readonly = true;
-            }
+		o = s.option(form.Value, 'bands', _('Bands'));
+		o.value('', _('Not Available'));
+		o.default = '';
+		o.readonly = true;
+	    }
             
             // small separator
             if (index < configSections.length - 1) {
@@ -183,7 +164,7 @@ return view.extend({
             s.anonymous = true;
             
             var o = s.option(form.DummyValue, '_message', _('Status'));
-            o.default = _('No modem configuration found. Run <code>/etc/init.d/mmconfig start</code>');
+            o.default = _('No modem configuration found. Run <code>/etc/init.d/mmconfig start<code>');
             o.rawhtml = false;
         }
         
