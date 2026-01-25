@@ -138,28 +138,25 @@ function generic_data(){
 
 # name device via mmcli utility
 mmcli_name(){
-    [ "$(uci -q get modeminfo.@modeminfo[${s}].mmcli_name)" = "1" ] || return
-    [ -x /usr/bin/mmcli ] || return
-
-    DEVICE=$(mmcli -L | awk '{print $1}' | awk -F/ '{print $NF}' | while read -r mm; do
-        DATA=$(mmcli -m "$mm" -J 2>/dev/null)
-
-        # Parse MANUF and MODEL mmcli json output
-        get_vars(){
-            jsonfilter -s "$DATA" \
-                -e "MANUF=$['modem'].*['manufacturer']" \
-                -e "MODEL=$['modem'].*['model']"
-        }
-
-        eval $(get_vars) 2>/dev/null
-
-        # check DEVICE name
-        case "$MODEL" in
-            *"$MANUF"*) echo "$MODEL" ;;
-            *) echo "$MANUF $MODEL" ;;
-        esac
-        break
-    done)
+        MMCLI=$(uci -q get modeminfo.@modeminfo[${s}].mmcli_name)
+        if [ "$MMCLI" = "1" ]; then
+                if [ -x /usr/bin/mmcli ]; then
+                        MODEM=$(mmcli -L | awk '{print $1}' | awk -F [/] '{print $NF}')
+                        for mm in $MODEM; do
+                                MMCLIMEI=$(mmcli -m $mm -J | jsonfilter -e '@["modem"].*["imei"]')
+                                IMEI=$(echo $IMEI | tr -d ' ')
+                                if [ "$IMEI" = "$MMCLIMEI" ]; then
+                                        MANUF=$(mmcli -m $mm -J | jsonfilter -e '@["modem"].*["manufacturer"]' | awk '{gsub("\r", ""); print $0}')
+                                        MODEL=$(mmcli -m $mm -J | jsonfilter -e '@["modem"].*["model"]' | awk '{gsub("\r", ""); print $0}')
+                                        if [ -n "$(echo "$MODEL" | grep "${MANUF}")" ]; then
+                                                DEVICE="$MODEL"
+                                        else
+                                                DEVICE="$MANUF $MODEL"
+                                        fi
+                                fi
+                        done
+                fi
+        fi
 }
 
 function get_data_in(){
