@@ -48,7 +48,7 @@ define SerialPlugin
   endef
   define Package/$(PKG_NAME)-serial-$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/share/$(PKG_NAME)/scripts
-	$(CP) ./root/usr/share/$(PKG_NAME)/scripts/$(4) $$(1)/usr/share/$(PKG_NAME)/scripts
+	$(CP) ./root/usr/share/$(PKG_NAME)/scripts/$(4)* $$(1)/usr/share/$(PKG_NAME)/scripts
   endef
   $$(eval $$(call BuildPackage,$(PKG_NAME)-serial-$(1)))
 endef
