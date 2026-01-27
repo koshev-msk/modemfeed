@@ -1,10 +1,10 @@
 modem_data(){
         # hwinfo
 	OIFS="$IFS"; IFS="|"
-	set -- $(echo "$O" | awk -v family="${FAMILY}|Telit" '
-		BEGIN{IGNORECASE=1} $0 ~ /family/ {manufacturer=$1; getline model; getline fw}
+	set -- $(echo "$O" | awk '
+		BEGIN{IGNORECASE=1} $0 ~ /DELL|Telit/ {manufacturer=$1; getline model; getline fw}
 		/^ICCID:/{iccid=$2; getline imei; getline imsi}
-		/^PA|xo_therm_buf:/ {sub(/C/, "", $2); split($0,arr,":"); if (arr[2] !="") temp = arr[2]; else temp=$2 }
+		/^PA:|^xo_therm_buf:/ {sub(/C/, "", $2); split($0,arr,":"); if (arr[2] !="") temp = arr[2]; else temp=$2 }
 		END {print manufacturer "|" model "|" fw "|" iccid "|" imei "|" imsi "|" temp }')
 	DEVICE="${1} ${2}"; MANUF=${1}; MODEL=${2}; FW=${3}; ICCID=${4}; IMEI=${5}; IMSI=${6}; CHIPTEMP=${7}
 	IFS="$OIFS"; unset OIFS
