@@ -18,7 +18,8 @@ function modem_data(){
 	set -- $(echo "$O" | awk -v model=$MODEL -v mode=$MODE '
 		BEGIN { map[15]=1; map[25]=2; map[50]=3; map[75]=4; map[100]=5 }
 		mode ~ /LTE/ { # LTE mode
-			if (/^\PCC:/ && model~/952|FM/) { lte_ca++; split($0, ca, ","); pch = ca[3]; pcica = ca[2] }
+			if (/^\PCC:/ && model~/952|FM/) {split($0, ca, ","); pch = ca[3]; pcica = ca[2] }
+                        if (/^\SCC\d/ && model~/952|FM/) {lte_ca++}
 			if (/^\+GTCAINFO: 1/) { lte_ca++; split($0, ca, ","); pch = ca[5]; pcica = ca[4] }
 			if (/\+GTCCINFO:/) { getline; getline; split($0, f, ",")
 				lac = (model~/952|FM/) ? sprintf("%d","0x"f[5]) : f[5]
