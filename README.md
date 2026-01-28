@@ -8,7 +8,7 @@ Included next packages:
 |:-------------|:----------------------|:-------------------------|
 | luci-app-modeminfo|modeminfo|Dashboard for LTE modemds.|
 |luci-app-smstools3|smstools3|web UI smstools3 package.|
-|luci-app-mmcomig|modemmanager|band manipulation modem via mmcli utility.|
+|luci-app-mmconfig|modemmanager|band manipulation modem via mmcli utility.|
 |luci-app-atinout|atinout|AT commands tool.|
 |luci-app-cellled|cellled|LED cellular signal signal strength.|
 |luci-app-ttl|luci-app-firewall|TTL modification utility with support for both iptables and nftables.|
