@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
   SECTION:=utils
-  CATEGORY:=Utilites
+  CATEGORY:=Utilities
   MAINTAINER := Andrey Safonov <andrey.safonov@gmail.com>
   TITLE:=Tool for flashing Qualcomm T99W175 modems
   URL:=https://github.com/andrewz1/flash_fox/

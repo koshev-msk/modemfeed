@@ -33,7 +33,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
   SECTION:=telephony
-  CATEGORY:=Utils
+  CATEGORY:=Utilities
   TITLE:=Tools modems based on the Qualcom chipset
   URL:=https://github.com/forth32/qtools
   DEPENDS:=+libreadline +libncurses
