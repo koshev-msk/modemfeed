@@ -66,15 +66,18 @@ function modem_data(){
 				{
 				if (model ~ /FM|952/ && /^SCC[0-9]+:/) {
 					chan_field = 5; bw_field = 6
-				} else if (/\+\+GTCAINFO: 2/) {
+				} else if (/\+GTCAINFO: 2/) {
 					chan_field = 4; bw_field = NF
-				} else next
+				} else {
+					next
+				}
 			        if ($chan_field > 1) {
 					band = earfcn_to_band($chan_field)
 					if (band != "") scc = scc "+" band
 					sum += $bw_field/5; bwca = sum + bwp_num
 				}
-			} END { print scc "|" bwca }')
+				} END { print scc "|" bwca }
+			')
 			SCC=${1}; BWCA=${2}
 			IFS="$OIFS"; unset OIFS
 		fi
