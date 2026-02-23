@@ -131,7 +131,7 @@ return view.extend({
 					[5, _('Roaming')], [7, _('Roaming')], [10, _('Roaming')]
 				]);
 
-				var rg = json.modem[i].reg;
+				var rg = Number(json.modem[i].reg);
 				var reg = regStatuses.get(rg) || _('No Data');
 				
 				// frequency band calculator
