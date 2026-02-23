@@ -3,6 +3,8 @@
 function modem_data(){
 	generic_data
 	OIFS="$IFS"; IFS="|" # Get hw and sim info
+	# FIX regstate
+	REGST=$(echo "$O" | awk -F',' '/(\+CREG|\+CGREG|\+CEREG)/ {if (NF >= 5 && $NF ~ /^[0-9]$|^1[0-3]$/) {print $2; exit}}')
 	set -- $(echo "$O" | awk -F'[:,]' '
 		/\+CGMI/ {gsub("\"",""); manuf=$2}
 		/\+CGMM/ {gsub("\"",""); model=$2}
