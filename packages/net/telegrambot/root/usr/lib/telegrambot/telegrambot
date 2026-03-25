@@ -159,6 +159,7 @@ do
 							} || {
 								RETURN_TEXT="Command not accepted! Uptime ${UPTIME} sec is smaller 180s"
 								reply_to_msg $msg_id $origin  "\${RETURN_TEXT}"
+								}
 							;;
 						("/wol")
 							(echo "Call $cmd [$parms]" | logger -t "telegram_bot" -p daemon.info)&
