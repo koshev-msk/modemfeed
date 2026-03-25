@@ -1,0 +1,20 @@
+--- a/Makefile
++++ b/Makefile
+@@ -16,14 +16,14 @@ OBJS = $(SOURCES:%.c=%.o)
+ all: $(PROG)
+ 
+ $(PROG): $(OBJS) $(MYLIBS)
+-	g++ $(LDFLAGS) $(OBJS) $(LIBS)  -o $(PROG)
++	$(CXX) $(LDFLAGS) $(OBJS) $(LIBS)  -o $(PROG)
+ 	rm -rf ./src/*.o 
+ 
+ %.o:%.c
+-	gcc $(CFLAGS) -c -o $@ $<
++	$(CC) $(CFLAGS) -c -o $@ $<
+ 
+ %.a: 
+-	make -C $(dir $@)
++	$(MAKE) -C $(dir $@)
+ 
+ clean:
+ 	# make clean -C $(SUBDIR)
