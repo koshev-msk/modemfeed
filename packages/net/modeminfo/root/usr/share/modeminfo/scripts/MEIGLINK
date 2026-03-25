@@ -51,13 +51,12 @@ function modem_data(){
 			ENBID=$(printf %d 0x$ENBx)
 			LTE_CA=$(echo "$O" | awk '/\^CELLINFO: / {print $0}' | wc -l)
 			if [ $LTE_CA -gt 0 ]; then
-				OIFS="$IFS"; IFS="|"
 				LTE_CA=1; OIFS="$IFS"; IFS="|"
-				set -- $(echo "$O" | awk -v bwdl=${BWC:-0} -F [,]'
-					/^\^CELLINFO: "SCC"/{bands = bands "+" $7; sum+=$6/5; bwca=sum+bedl}
+				set -- $(echo "$O" | awk -v bwdl=${BWC:-0} -F [,] '
+					/CELLINFO: "SCC"/{bands = bands "+" $7; sum+=$6/5; bwca=sum+bwdl}
 					END{print bands "|" bwca}
 				')
-				BWCA=${1}; SCC=${2}
+				BWCA=${2}; SCC=${1}
 				IFS="$OIFS"; unset OIFS BWC
 			fi
 		;;
