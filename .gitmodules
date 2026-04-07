@@ -1,5 +1,5 @@
 [submodule "luci/applications/luci-app-gpoint"]
 	path = luci/applications/luci-app-gpoint
-	url = git@github.com:Kodo-kakaku/luci-app-gpoint.git
+	url = https://github.com/Kodo-kakaku/luci-app-gpoint.git
 	branch = main
 
