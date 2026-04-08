@@ -14,7 +14,7 @@ PKG_NAME:=ndpi-netfilter
 PKG_REV:=4c1a23b0539ec15296029b149c53f5946d8b7280
 PKG_REV_SHORT=$(shell echo $(PKG_REV) | cut -c1-6)
 PKG_VERSION:=2026.03.30-flow_info-4~$(PKG_REV_SHORT)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -43,6 +43,9 @@ endef
 
 MAKE_PATH:=ndpi-netfilter
 
+INCLUDE_SRC += -I$(PKG_BUILD_DIR)/src/include/ -I$(PKG_BUILD_DIR)/src/lib/third_party/include/
+CFLAGS += -g -O2 -fPIC -DPIC -DNDPI_LIB_COMPILATION
+
 MAKE_FLAGS += \
 	KERNEL_DIR="$(LINUX_DIR)" \
 	MODULES_DIR="$(TARGET_MODULES_DIR)" \
@@ -50,13 +53,7 @@ MAKE_FLAGS += \
 	KERNEL_RELEASE="$(KERNEL_PATCHVER)" \
 	CROSS_COMPILE="$(TARGET_CROSS)" \
 	CC="$(TARGET_CC)" \
-	EXTRA_CFLAGS="-D__KERNEL__ -DMODULE -I$(PKG_BUILD_DIR)/src/include -I$(PKG_BUILD_DIR)/src/lib/third_party/include -Wno-error -Wno-unused-function -Wno-implicit-fallthrough"
-
-INCLUDE_SRC += -I../../src/include/ -I../../src/lib/third_party/include/
-CFLAGS += -g -O2 -fPIC -DPIC -DNDPI_LIB_COMPILATION
-
-#MAKE_FLAGS += \
-#    NDPI_PATH=$(PKG_BUILD_DIR)/ndpi-netfilter
+	EXTRA_CFLAGS="-D__KERNEL__ -DMODULE $(INCLUDE_SRC) -Wno-error -Wno-unused-function -Wno-implicit-fallthrough -Wno-implicit-function-declaration"
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); \
