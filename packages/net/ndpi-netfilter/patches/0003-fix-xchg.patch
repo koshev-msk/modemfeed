@@ -1,0 +1,19 @@
+--- a/ndpi-netfilter/src/main.c
++++ b/ndpi-netfilter/src/main.c
+@@ -80,6 +80,16 @@ extern ndpi_protocol_match host_match[];
+ /* Only for debug! */
+ //#define NDPI_IPPORT_DEBUG
+ 
++/* Workaround for old arch: redefine xchg to simple assignment */
++#if defined(CONFIG_MIPS) || defined(CONFIG_CACHE_FEROCEON_L2)
++#undef xchg
++#define xchg(ptr, x) ({\
++    typeof(*(ptr)) __old = *(ptr);\
++    *(ptr) = (x);\
++    __old;\
++})
++#endif
++
+ 
+ #define COUNTER(a) atomic_inc((atomic_t *)&a)
+ #define COUNTER_D(a) atomic_dec((atomic_t *)&a)
