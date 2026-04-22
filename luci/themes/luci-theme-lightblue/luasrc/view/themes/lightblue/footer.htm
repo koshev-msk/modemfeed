@@ -8,7 +8,7 @@
 <% local ver = require "luci.version" %>
 
    <footer>
-    <div style="height:40px;font-size:95%;color:#999;font-family: Arial,sans-serif;"><%= ver.distversion %>&nbsp;&#169;&nbsp132lan.ru&nbsp;2022&nbsp;</div>
+    <div style="height:40px;font-size:95%;color:#999;font-family: Arial,sans-serif;"><%= ver.distversion %>&nbsp;&#169;&nbsp132lan.ru&nbsp;;<%= os.date("%Y") %>&nbsp;</div>
     <ul class="breadcrumb pull-right" id="modemenu" style="display:none"></ul>
    </footer>
   </div>
