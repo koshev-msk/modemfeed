@@ -1,0 +1,22 @@
+Index: teleproxy/src/engine/engine.c
+===================================================================
+--- teleproxy.orig/src/engine/engine.c
++++ teleproxy/src/engine/engine.c
+@@ -612,8 +612,15 @@ void engine_startup (engine_t *E, server
+   precise_now_diff = get_utime_monotonic () - get_double_time ();
+ 
+ #ifdef __linux__
+-  assert (SIGRTMAX == OUR_SIGRTMAX);
+-  assert (SIGRTMAX - SIGRTMIN >= 20);
++  #ifdef __mips__
++    if (SIGRTMAX != OUR_SIGRTMAX) {
++      vkprintf(0, "MIPS: SIGRTMAX mismatch (libc=%d, expected=%d), continuing\n", 
++               SIGRTMAX, OUR_SIGRTMAX);
++    }
++  #else
++    assert(SIGRTMAX == OUR_SIGRTMAX);
++  #endif
++  assert(SIGRTMAX - SIGRTMIN >= 20);
+ #endif
+   
+   E->sfd = 0;
