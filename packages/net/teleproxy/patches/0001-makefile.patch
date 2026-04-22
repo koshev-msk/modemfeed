@@ -1,0 +1,20 @@
+Index: teleproxy/Makefile
+===================================================================
+--- teleproxy.orig/Makefile
++++ teleproxy/Makefile
+@@ -56,11 +56,11 @@ COMMON_CFLAGS += $(EXTRA_CFLAGS)
+ COMMON_LDFLAGS += $(EXTRA_LDFLAGS)
+ 
+ # Architecture-specific CFLAGS
+-ifeq ($(HOST_ARCH), x86_64)
++ifeq ($(ARCH), x86_64)
+ CFLAGS := $(COMMON_CFLAGS) -mpclmul -march=core2 -mfpmath=sse -mssse3 $(BITNESS_FLAGS)
+-else ifeq ($(HOST_ARCH), aarch64)
+-CFLAGS := $(COMMON_CFLAGS) $(BITNESS_FLAGS)
+-else ifeq ($(HOST_ARCH), arm64)
++else ifeq ($(ARCH), mipsel)
++CFLAGS := $(COMMON_CFLAGS) $(BITNESS_FLAGS) -march=mips32r2 -Wno-builtin-declaration-mismatch
++else
+ CFLAGS := $(COMMON_CFLAGS) $(BITNESS_FLAGS)
+ endif
+ 

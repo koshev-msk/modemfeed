@@ -1,0 +1,12 @@
+Index: teleproxy/Makefile
+===================================================================
+--- teleproxy.orig/Makefile
++++ teleproxy/Makefile
+@@ -92,6 +92,7 @@ DEPENDENCE_STRANGE	:=	$(subst ${OBJ}/,${
+ DEPENDENCE_NORM	:=	$(subst ${OBJ}/,${DEP}/,$(patsubst %.o,%.d,${OBJECTS}))
+ 
+ LIB_OBJS_NORMAL := \
++	${OBJ}/src/common/atomic_32bit.o \
+ 	${OBJ}/src/common/crc32c.o \
+ 	${OBJ}/src/common/pid.o \
+ 	${OBJ}/src/common/sha1.o \

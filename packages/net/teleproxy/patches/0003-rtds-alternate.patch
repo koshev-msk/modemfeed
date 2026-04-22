@@ -1,0 +1,86 @@
+Index: teleproxy/src/common/rdtsc_32bit.h
+===================================================================
+--- /dev/null
++++ teleproxy/src/common/rdtsc_32bit.h
+@@ -0,0 +1,14 @@
++#ifndef RDTSC_EMUL_H
++#define RDTSC_EMUL_H
++
++#if defined(__arm__) || defined(__mips__) || defined(__mipsel__)
++#include <time.h>
++
++static inline unsigned long long rdtsc(void) {
++    struct timespec ts;
++    clock_gettime(CLOCK_MONOTONIC, &ts);
++    return (unsigned long long)ts.tv_sec * 1000000000ULL + ts.tv_nsec;
++}
++#endif
++
++#endif
+Index: teleproxy/src/engine/engine-rpc-common.c
+===================================================================
+--- teleproxy.orig/src/engine/engine-rpc-common.c
++++ teleproxy/src/engine/engine-rpc-common.c
+@@ -51,6 +51,7 @@
+
++#include "common/rdtsc_32bit.h" 
+ #include "engine/engine.h"
+ #include "engine/engine-rpc-common.h"
+ 
+ #include "common/tl-parse.h"
+ 
+Index: teleproxy/src/jobs/jobs.c
+===================================================================
+--- teleproxy.orig/src/jobs/jobs.c
++++ teleproxy/src/jobs/jobs.c
+@@ -53,6 +53,7 @@
+ #include "net/net-connections.h"
+ #include "jobs/jobs.h"
+ #include "common/common-stats.h"
++#include "common/rdtsc_32bit.h"
+ 
+ //#include "auto/engine/engine.h"
+ 
+Index: teleproxy/src/net/net-crypto-aes.c
+===================================================================
+--- teleproxy.orig/src/net/net-crypto-aes.c
++++ teleproxy/src/net/net-crypto-aes.c
+@@ -48,6 +48,7 @@
+ 
+ #include "jobs/jobs.h"
+ #include "common/common-stats.h"
++#include "common/rdtsc_32bit.h"
+ 
+ #define MODULE crypto_aes
+
+Index: teleproxy/src/common/precise-time.c
+===================================================================
+--- teleproxy.orig/src/common/precise-time.c
++++ teleproxy/src/common/precise-time.c
+@@ -19,10 +19,11 @@
+ */
+ #include <assert.h>
+ #include <sys/time.h>
++
+ #include <time.h>
+ /* unistd.h defines _POSIX_TIMERS */
+ #include <unistd.h>
+-
++#include "rdtsc_32bit.h"
+ #include "precise-time.h"
+
+ __thread int now;
+
+Index: teleproxy/src/engine/engine-rpc.c
+===================================================================
+--- teleproxy.orig/src/engine/engine-rpc.c
++++ teleproxy/src/engine/engine-rpc.c
+@@ -25,6 +25,8 @@
+     Copyright 2015-2016 Telegram Messenger Inc
+               2015-2016 Vitaliy Valtman
+ */
++#include "common/rdtsc_32bit.h"
++
+ #include "engine/engine-rpc.h"
+ #include "common/tl-parse.h"
+

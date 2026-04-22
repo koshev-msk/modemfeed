@@ -1,0 +1,79 @@
+Index: teleproxy/src/common/atomic_32bit.c
+===================================================================
+--- /dev/null
++++ teleproxy/src/common/atomic_32bit.c
+@@ -0,0 +1,73 @@
++#if defined(__arm__) || defined(__mips__) || defined(__mipsel__)
++
++#include <pthread.h>
++#include <stdint.h>
++
++static pthread_mutex_t atomic_mutex = PTHREAD_MUTEX_INITIALIZER;
++
++/* 64-bit atomic operations emulation */
++uint64_t __sync_fetch_and_add_8(uint64_t *ptr, uint64_t val) {
++    pthread_mutex_lock(&atomic_mutex);
++    uint64_t old = *ptr;
++    *ptr += val;
++    pthread_mutex_unlock(&atomic_mutex);
++    return old;
++}
++
++uint64_t __sync_fetch_and_sub_8(uint64_t *ptr, uint64_t val) {
++    pthread_mutex_lock(&atomic_mutex);
++    uint64_t old = *ptr;
++    *ptr -= val;
++    pthread_mutex_unlock(&atomic_mutex);
++    return old;
++}
++
++uint64_t __sync_fetch_and_or_8(uint64_t *ptr, uint64_t val) {
++    pthread_mutex_lock(&atomic_mutex);
++    uint64_t old = *ptr;
++    *ptr |= val;
++    pthread_mutex_unlock(&atomic_mutex);
++    return old;
++}
++
++uint64_t __sync_fetch_and_and_8(uint64_t *ptr, uint64_t val) {
++    pthread_mutex_lock(&atomic_mutex);
++    uint64_t old = *ptr;
++    *ptr &= val;
++    pthread_mutex_unlock(&atomic_mutex);
++    return old;
++}
++
++uint64_t __sync_add_and_fetch_8(uint64_t *ptr, uint64_t val) {
++    pthread_mutex_lock(&atomic_mutex);
++    *ptr += val;
++    uint64_t newval = *ptr;
++    pthread_mutex_unlock(&atomic_mutex);
++    return newval;
++}
++
++uint64_t __sync_sub_and_fetch_8(uint64_t *ptr, uint64_t val) {
++    pthread_mutex_lock(&atomic_mutex);
++    *ptr -= val;
++    uint64_t newval = *ptr;
++    pthread_mutex_unlock(&atomic_mutex);
++    return newval;
++}
++
++int __sync_bool_compare_and_swap_8(uint64_t *ptr, uint64_t oldval, uint64_t newval) {
++    pthread_mutex_lock(&atomic_mutex);
++    int ret = (*ptr == oldval);
++    if (ret) *ptr = newval;
++    pthread_mutex_unlock(&atomic_mutex);
++    return ret;
++}
++
++uint64_t __sync_val_compare_and_swap_8(uint64_t *ptr, uint64_t oldval, uint64_t newval) {
++    pthread_mutex_lock(&atomic_mutex);
++    uint64_t old = *ptr;
++    if (old == oldval) *ptr = newval;
++    pthread_mutex_unlock(&atomic_mutex);
++    return old;
++}
++
++#endif /* 32bits arch */
+
