@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+NAME=teleproxy
+BIN=/usr/bin/${NAME}
+PID=/var/run/${NAME}.pid
+
+load_config(){
+	for v in ipv6 address port secret direct aes_pwd auth_socks socks extra; do
+		config_get $v $1 $v
+	done
+}
+
+
+start() {
+	config_load teleproxy
+	local ipv6 address port secret direct aes_pwd auth_socks socks extra
+	config_foreach load_config
+	[ $ipv6 ] && args="-6"
+	[ $address ] && args="$args --address $address"
+	[ $port ] && args="$args -H $port"
+	[ $secret ] && args="$args -S $secret"
+	[ $aes_pwd ] && args="$args --aes-pwd $aes-pwd"
+	[ $socks ] && {
+		[ $auth_socks ] && {
+			args="$args --socks5://${auth_socks}@${socks}"
+		} || {
+                        args="$args --socks5://$socks"
+		}
+	}
+	[ "$extra" ] && args="$args $extra"
+	[ "$direct" -ne "1" ] && {
+		[ $relay ] && args="$args $relay"
+	} || {
+		args="$args --direct"
+	}
+        ($BIN -u daemon $args) & > /dev/null 2>&1
+}
+
+stop() {
+	killall teleproxy
+}

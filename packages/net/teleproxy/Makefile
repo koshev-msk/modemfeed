@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=teleproxy
 PKG_VERSION:=4.11.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Kosntantine Shevlakov <shevlakov@132lan.ru>
 PKG_LICENSE:=GPLv2
@@ -27,9 +27,15 @@ define Package/$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin \
+			$(1)/etc/config \
+			$(1)/etc/init.d \
+			$(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/objs/bin/* \
 			$(1)/usr/bin/
+	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
+	$(INSTALL_BIN) ./files/$(PKG_NAME).defaults  $(1)/etc/uci-defaults/$(PKG_NAME)
+	$(INSTALL_CONF) ./files/$(PKG_NAME).config $(1)/etc/config/$(PKG_NAME)
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
