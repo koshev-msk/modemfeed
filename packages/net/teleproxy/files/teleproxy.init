@@ -23,9 +23,9 @@ start() {
 	[ $aes_pwd ] && args="$args --aes-pwd $aes-pwd"
 	[ $socks ] && {
 		[ $auth_socks ] && {
-			args="$args --socks5://${auth_socks}@${socks}"
+			args="$args --socks socks5://${auth_socks}@${socks}"
 		} || {
-                        args="$args --socks5://$socks"
+                        args="$args --socks socks5://$socks"
 		}
 	}
 	[ "$extra" ] && args="$args $extra"
