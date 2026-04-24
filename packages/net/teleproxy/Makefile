@@ -18,6 +18,8 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 include $(INCLUDE_DIR)/package.mk
 
+MAKE_VARS += EXTRA_VERSION=$(PKG_VERSION)
+
 define Package/$(PKG_NAME)
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
