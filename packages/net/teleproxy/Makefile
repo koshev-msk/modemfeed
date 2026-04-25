@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=teleproxy
 PKG_VERSION:=4.11.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Kosntantine Shevlakov <shevlakov@132lan.ru>
 PKG_LICENSE:=GPLv2
@@ -30,6 +30,7 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin \
+			$(1)/usr/share \
 			$(1)/etc/config \
 			$(1)/etc/init.d \
 			$(1)/etc/uci-defaults
@@ -37,6 +38,7 @@ define Package/$(PKG_NAME)/install
 			$(1)/usr/bin/
 	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_BIN) ./files/$(PKG_NAME).defaults  $(1)/etc/uci-defaults/$(PKG_NAME)
+	$(INSTALL_BIN) ./files/$(PKG_NAME)-config-refresh.sh $(1)/usr/share/
 	$(INSTALL_CONF) ./files/$(PKG_NAME).config $(1)/etc/config/$(PKG_NAME)
 endef
 
