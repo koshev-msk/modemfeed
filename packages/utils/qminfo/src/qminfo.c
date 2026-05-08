@@ -967,10 +967,10 @@ static void on_model(QmiClientDms *client, GAsyncResult *res, gpointer ud)
         }
         info.has_model = TRUE;
     } else if (usb_product[0]) {
-        strncpy(info.model, usb_product, sizeof(info.model) - 1);
+        g_strlcpy(info.model, usb_product, sizeof(info.model));
         info.has_model = TRUE;
     } else if (usb_manufacturer[0]) {
-        strncpy(info.model, usb_manufacturer, sizeof(info.model) - 1);
+        g_strlcpy(info.model, usb_manufacturer, sizeof(info.model));
         info.has_model = TRUE;
     }
 
