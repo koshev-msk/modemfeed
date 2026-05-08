@@ -9,6 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qminfo
 PKG_RELEASE:=0.0.1
+PKG_VERSION=2
 
 include $(INCLUDE_DIR)/package.mk
 
