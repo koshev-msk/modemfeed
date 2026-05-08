@@ -354,8 +354,8 @@ static void emit_results(void)
 		if (info.has_bw_dl && strcmp(info.mode, "LTE") == 0) 
 			printf("  BW DL      : %.1f MHz\n", bw_index_to_khz(info.bw_dl) / 1000.0f);
         printf("-------------------------------------------------\n");
+	if (info.has_csq)  printf("  Strength   : %d%% (CSQ %d)\n", csq_pct, info.csq);
         printf("  RSSI       : %d dBm\n", info.rssi);
-	if (info.has_csq)  printf("  Strength   : %d (%d%%)\n", info.csq, csq_pct);
         if (info.has_rsrp) printf("  RSRP       : %d dBm\n", (int)roundf(info.rsrp));
         if (info.has_rsrq) printf("  RSRQ       : %d dB\n",  (int)roundf(info.rsrq));
         if (info.has_sinr) printf("  %s       : %d dB\n", siname, (int)roundf(info.sinr / 10.0f));
