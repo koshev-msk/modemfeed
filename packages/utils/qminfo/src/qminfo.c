@@ -380,7 +380,7 @@ static void emit_results(void)
 
     const char *csq_col = "";
     if (info.has_csq && csq_pct >= 0)
-        csq_col = (info.csq > 20) ? "green" : (info.csq > 10) ? "yellow" : "red";
+        csq_col = (info.csq > 20) ? "green" : (info.csq > 10) ? "orange" : "red";
 
     char csq_per_str[16] = "";
     if (csq_pct >= 0) snprintf(csq_per_str, sizeof(csq_per_str), "%d", csq_pct);
