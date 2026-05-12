@@ -12,6 +12,7 @@ Included next packages:
 |luci-app-atinout|atinout|AT commands tool.|
 |luci-app-cellled|cellled|LED cellular signal signal strength.|
 |luci-app-ttl|luci-app-firewall|TTL modification utility with support for both iptables and nftables.|
+|qminfo|libqmi|simple info from Qualcomm modem chipsets|
 |qtools|libc|tools manipulation Qualcomm chipset cellualr modems.|
 |asterisk-chan-quectel|asterisk|asterisk plugin for SimCom and Quectel modems.|
 |xmm-modem|kmod-usb-net-ncm, kmod-usb-acm|Intel XMM modem connect scripts|
@@ -34,6 +35,6 @@ make -j$((`nproc` + 1)) package/feeds/modemfeed/<package_name>/compile
 
 or `make menuconfig` menu to include package(s) firmware in Buildroot
 
-# Precompiled packages 21 and 23 branch
+# Precompiled packages 21,23,24,25 branch
 
 http://openwrt.132lan.ru/packages/
