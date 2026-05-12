@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modeminfo
-PKG_VERSION:=0.4.5
-PKG_RELEASE:=5
+PKG_VERSION:=0.4.6
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
 include $(INCLUDE_DIR)/package.mk
@@ -18,12 +18,6 @@ define Package/$(PKG_NAME)
   $(call Package/$(PKG_NAME)/Default)
   DEPENDS:=+comgt
   TITLE:=Signal information for 3G/LTE dongle
-endef
-
-define Package/$(PKG_NAME)-qmi
-  $(call Package/$(PKG_NAME)/Default)
-  DEPENDS:=+modeminfo +qmi-utils
-  TITLE:=QMI addon for modeminfo
 endef
 
 define Package/$(PKG_NAME)-telegram
@@ -78,11 +72,6 @@ define Package/$(PKG_NAME)/install
 	$(CP) ./root/etc/config/* $(1)/etc/config
 endef
 
-define Package/$(PKG_NAME)-qmi/install
-	$(INSTALL_DIR) $(1)/usr/share/modeminfo/scripts
-	$(CP) ./root/usr/share/modeminfo-qmi/* $(1)/usr/share/modeminfo/scripts
-endef
-
 define Package/$(PKG_NAME)-telegram/install
 	$(INSTALL_DIR) $(1)/usr/lib/telegrambot/plugins
 	$(CP) ./root/usr/lib/telegrambot/plugins/* $(1)/usr/lib/telegrambot/plugins
@@ -105,5 +94,4 @@ $(eval $(call SerialPlugin,dell,+kmod-usb-serial-option,Dell DW5821e,DELL))
 #$(eval $(call SerialPlugin,yuge,+kmod-usb-serial-option,Yuge CLM920,YUGE))
 #$(eval $(call SerialPlugin,zte,+kmod-usb-serial-option,ZTE MF823/MF823D,ZTE))
 $(eval $(call SerialPlugin,thales,+kmod-usb-serial-option,Thales MV31-W T99W175,THALES))
-$(eval $(call BuildPackage,$(PKG_NAME)-qmi))
 $(eval $(call BuildPackage,$(PKG_NAME)-telegram))

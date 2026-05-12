@@ -4,7 +4,7 @@ trap 'cleanup >/dev/null 2>&1; exit 0' INT TERM
 SECTIONS=$(echo $(uci show modeminfo | awk -F [\]\[\@=] '/=modeminfo/{print $3}'))
 
 get_vars(){
-	for v in device device_qmi qmi_proxy decimail qmi_mode;  do
+	for v in device device_qmi qmi_trap decimail qmi_mode;  do
 		eval $v=$(uci -q get modeminfo.@modeminfo[${s}].${v} 2>/dev/null)
 	done
 }
@@ -62,17 +62,12 @@ function if_null() {
 
 
 qmi_device(){
-	if [ $qmi_mode ]; then
-		SCRIPT=/usr/share/modeminfo/scripts/modeminfo-qmi
-	else
-		SCRIPT=/usr/share/modeminfo/scripts/modeminfo
-	fi
-
-	if [ -r $SCRIPT ]; then
+	[ -n "$qmi_mode" ] || SCRIPT=/usr/share/modeminfo/scripts/modeminfo
+	[ -r $SCRIPT ] && {
 		. $SCRIPT
-	else
+	} || {
 		exit 0
-	fi
+	}
 }
 
 
@@ -86,24 +81,33 @@ echo "{ \"modem\" : ["
 
 for s in $SECTIONS; do
 	m=$((${s} + 1))
-	if [ "$s" ]; then
-		get_vars
-		qmi_device
-		get_device_info
-		get_data_in >/dev/null 2>&1
-		if_null
-		json_status
-	fi
-	if [ "$ARGSLEN" = "${m}" ]; then
-		echo "	}"
+	get_vars
+	if [ $qmi_mode ]; then
+		if [ "$s" ]; then
+			/usr/bin/qminfo $device_qmi --json --${qmi_trap} 
+		fi
+		if [ "$ARGSLEN" != "${m}" ]; then
+			echo ","
+		fi
 	else
-		echo "	},"
+		if [ "$s" ]; then
+			qmi_device
+			get_device_info
+			get_data_in >/dev/null 2>&1
+			if_null
+			json_status
+		fi
+		if [ "$ARGSLEN" = "${m}" ]; then
+			echo "	}"
+		else
+			echo "	},"
+		fi
+		# flush modem variables
+		unset BWCA SCC SC BWDx BWPx BWCx BWDL LTE_CA \
+        	        DEVICE COPS MODE CSQ_PER LAC CSQ_RSSI \
+                	SINR RSRP IMEI REGST EARFCN CHIPTEMP FW \
+	                ICCID IMSI RSRQ DISTANCE
 	fi
-	# flush modem variables
-	unset BWCA SCC SC BWDx BWPx BWCx BWDL LTE_CA \
-                DEVICE COPS MODE CSQ_PER LAC CSQ_RSSI \
-                SINR RSRP IMEI REGST EARFCN CHIPTEMP FW \
-                ICCID IMSI RSRQ DISTANCE
 done
 
 echo "]}"

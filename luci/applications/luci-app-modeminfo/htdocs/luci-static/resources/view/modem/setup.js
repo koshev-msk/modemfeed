@@ -9,7 +9,7 @@
 
 
 /*
-	Written by Konstantine Shevlakov at <shevlakov@132lan.ru> 2023
+	Written by Konstantine Shevlakov at <shevlakov@132lan.ru> 2023 - 2026
 
 	Licensed to the GNU General Public License v3.0.
 
@@ -45,20 +45,44 @@ var callQMIPort = rpc.declare({
         }
 });
 
+var callCheckQmiinfo = rpc.declare({
+        object: 'file',
+        method: 'stat',
+        params: [ 'path' ],
+        expect: { '': {} }
+});
+
 var maindesc = _('Modeminfo: Configuration');
 var mdesc = _('Configuration panel of Modeminfo.');
-var qfdesc = _('Get modem data via qmicli (experimental). Require install qmi-utils.');
+var qfdesc = _('Get modem data via qmi. Require install qminfo.');
 var sdesc = _('Select serial port.');
 var qdesc = _('Select qmi port.');
 var lacdec = _('Show LAC and CID in decimal.');
 var mmdesc = _('Get device hardware name via mmcli utility if aviable.');
-var qmidesc = _('Enable qmi-proxy mode.');
+var qmidesc = _('Set qmi mode.');
 var idesc = _('Short info on Overview page');
 var portplace = _('Please select a port');
 
 return view.extend({
-	render: function(){
+
+	load: function() {
+		return callCheckQmiinfo('/usr/bin/qminfo')
+			.then(function(stat) {
+				return (stat && stat.size != null);
+			})
+			.catch(function() {
+				return false;
+			});
+	},
+
+	render: function(qmiinfoInstalled){
+
+		var qfdesc = qmiinfoInstalled
+			? _('Get modem data via qmi.')
+			: _('Please install qminfo package.');
+
 		var m, s, o;
+
 		m = new form.Map('modeminfo', maindesc, mdesc);
 
 		s = m.section(form.TypedSection, 'general', _('General option'), null);
@@ -85,6 +109,11 @@ return view.extend({
 
 		o = s.option(form.Flag, 'qmi_mode', _('Use QMI'), qfdesc);
 		o.rmempty = true;
+		if (!qmiinfoInstalled) {
+			o.readonly = true;
+			o.write = function() {};
+			o.cfgvalue = function() { return '0'; };
+		}
 
 		o = s.option(form.ListValue, 'device', _('Data port'), sdesc);
 		o.load = function(section_id) {
@@ -117,7 +146,10 @@ return view.extend({
 		o.rmempty = true;
 		o.depends('qmi_mode', '0');
 
-		o = s.option(form.Flag, 'qmi_proxy', _('QMI proxy'), qmidesc);
+		o = s.option(form.ListValue, 'qmi_trap', _('QMI mode'), qmidesc);
+		o.value('',_('Auto'));
+		o.value('qmi',_('Direct QMI'));
+		o.value('mbim',_('QMI over MBIM'));
 		o.rmempty = true;
 		o.depends('qmi_mode', '1');
 

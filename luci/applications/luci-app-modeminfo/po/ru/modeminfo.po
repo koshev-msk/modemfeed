@@ -87,8 +87,14 @@ msgstr "Страница конфигурации Modeminfo."
 msgid "Use QMI"
 msgstr "Использовать QMI"
 
-msgid "Get modem data via qmicli (experimental). Require install qmi-utils."
-msgstr "Получать данные модема через qmicli (экспериментально). Требуется установленный qmi-utils."
+msgid "Get modem data via qmi. Require install qminfo."
+msgstr "Получать данные модема через qmi. Требуется установленный qminfo."
+
+msgid "Get modem data via qmi."
+msgstr "Получать данные модема через qmi."
+
+msgid "Please install qminfo package."
+msgstr "Установите пакет qminfo."
 
 msgid "Data port"
 msgstr "Порт данных"
@@ -111,11 +117,20 @@ msgstr "Если доступно, использовать утилиту mmcli
 msgid "Name via mmcli"
 msgstr "Имя модема через mmcli"
 
-msgid "QMI proxy"
-msgstr "QMI прокси"
+msgid "QMI mode"
+msgstr "Режим QMI"
 
-msgid "Enable qmi-proxy mode."
-msgstr "Задействовать режим прокси."
+msgid "Set qmi mode."
+msgstr "Задействовать режим QMI."
+
+msgid "Auto"
+msgstr "Автоматически"
+
+msgid "Direct QMI"
+msgstr "Только QMI"
+
+msgid "QMI over MBIM"
+msgstr "QMI через MBIM"
 
 msgid "Index page"
 msgstr "На главную"
