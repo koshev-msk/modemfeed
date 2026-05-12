@@ -9,8 +9,11 @@
  *   gcc $(pkg-config --cflags --libs qmi-glib) -lm -o qminfo qminfo.c
  *
  * run:
- *   sudo ./qminfo /dev/cdc-wdm0
- *   sudo ./qminfo /dev/cdc-wdm0 --json
+ *   sudo ./qminfo /dev/cdc-wdm0              # auto-detect (QMI first)
+ *   sudo ./qminfo /dev/cdc-wdm0 --json       # JSON output
+ *   sudo ./qminfo /dev/cdc-wdm0 --qmi        # force native QMI
+ *   sudo ./qminfo /dev/cdc-wdm0 --mbim       # force QMI over MBIM
+ *   sudo ./qminfo /dev/cdc-wdm0 --mbim --json
  */
 
 #include <stdio.h>
@@ -86,6 +89,14 @@ static ModemInfo     info;
 static gboolean      json_mode = FALSE;
 static const char   *dev_path  = NULL;
 static gint          pending   = 0;
+typedef enum {
+    MODE_AUTO,   /* try QMI first, fallback to MBIM */
+    MODE_QMI,    /* force native QMI */
+    MODE_MBIM,   /* force QMI over MBIM */
+} DeviceMode;
+
+static DeviceMode    device_mode = MODE_AUTO;
+static gint          open_retries = 0;  /* retry counter for auto mode */
 
 /* ═══════════════════════════════════════════════════════════════
  * helpers
@@ -604,7 +615,7 @@ static void on_lte_ca(QmiClientNas *client, GAsyncResult *res, gpointer ud)
                         snprintf(tmp, sizeof(tmp), "B%u", active_band_to_lte_band(el->lte_band));
                         g_strlcat(info.scc_bands, tmp, sizeof(info.scc_bands));
 						/* For json mode: +40 */
-                        snprintf(tmp, sizeof(tmp), "+%u ", active_band_to_lte_band(el->lte_band));
+                        snprintf(tmp, sizeof(tmp), "+%u", active_band_to_lte_band(el->lte_band));
                         g_strlcat(info.scc_bands_json, tmp, sizeof(info.scc_bands_json));						
                         
                         total += bw_index_to_khz((guint8)el->dl_bandwidth);
@@ -1052,19 +1063,67 @@ static void on_dms_client(QmiDevice *dev, GAsyncResult *res, gpointer ud)
     start_dms_chain();
 }
 
+static void try_open_device(void);  /* forward */
+
 static void on_device_open(QmiDevice *dev, GAsyncResult *res, gpointer ud)
 {
     (void)dev; (void)ud;
     GError *err = NULL;
     if (!qmi_device_open_finish(device, res, &err)) {
+        if (device_mode == MODE_AUTO && open_retries == 0) {
+            /* QMI failed in auto mode — retry with MBIM */
+            g_clear_error(&err);
+            open_retries++;
+            try_open_device();
+            return;
+        }
         fprintf(stderr, "Open error: %s\n", err ? err->message : "?");
         g_clear_error(&err);
         g_main_loop_quit(loop);
         return;
     }
+
+    /* Restore normal log handler after successful open in auto mode */
+    if (device_mode == MODE_AUTO)
+        g_log_set_handler("Qmi",
+            G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
+            g_log_default_handler, NULL);
+
     qmi_device_allocate_client(device, QMI_SERVICE_DMS,
         QMI_CID_NONE, 10, NULL,
         (GAsyncReadyCallback)on_dms_client, NULL);
+}
+
+/* Open device with flags depending on mode / retry state */
+static void try_open_device(void)
+{
+    QmiDeviceOpenFlags flags = QMI_DEVICE_OPEN_FLAGS_PROXY;
+    gboolean mbim;
+
+    switch (device_mode) {
+    case MODE_MBIM:
+        mbim = TRUE;
+        break;
+    case MODE_QMI:
+        mbim = FALSE;
+        break;
+    case MODE_AUTO:
+    default:
+        /* First attempt: QMI; after retry: MBIM */
+        mbim = (open_retries > 0);
+        break;
+    }
+
+    if (mbim) {
+        flags |= QMI_DEVICE_OPEN_FLAGS_MBIM;
+        //fprintf(stderr, "Opening as QMI over MBIM\n");
+    } else {
+        flags |= QMI_DEVICE_OPEN_FLAGS_NET_802_3 |
+                 QMI_DEVICE_OPEN_FLAGS_NET_NO_QOS_HEADER;
+    }
+
+    qmi_device_open(device, flags, 15, NULL,
+        (GAsyncReadyCallback)on_device_open, NULL);
 }
 
 static void on_device_new(GObject *src, GAsyncResult *res, gpointer ud)
@@ -1078,12 +1137,19 @@ static void on_device_new(GObject *src, GAsyncResult *res, gpointer ud)
         g_main_loop_quit(loop);
         return;
     }
-    qmi_device_open(device,
-        QMI_DEVICE_OPEN_FLAGS_PROXY         |
-        QMI_DEVICE_OPEN_FLAGS_NET_802_3      |
-        QMI_DEVICE_OPEN_FLAGS_NET_NO_QOS_HEADER,
-        15, NULL,
-        (GAsyncReadyCallback)on_device_open, NULL);
+    try_open_device();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * Silent log handler — suppresses GLib/QMI warnings
+ * ═══════════════════════════════════════════════════════════════ */
+static void log_silent(const gchar    *domain,
+                       GLogLevelFlags  level,
+                       const gchar    *message,
+                       gpointer        user_data)
+{
+    (void)domain; (void)level; (void)message; (void)user_data;
+    /* intentionally empty */
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1092,18 +1158,43 @@ static void on_device_new(GObject *src, GAsyncResult *res, gpointer ud)
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <device> [--json]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <device> [--json] [--qmi|--mbim]\n", argv[0]);
+        fprintf(stderr, "  --json   JSON output\n");
+        fprintf(stderr, "  --qmi    force native QMI mode\n");
+        fprintf(stderr, "  --mbim   force QMI over MBIM mode\n");
+        fprintf(stderr, "  (default: auto-detect, try QMI first)\n");
         fprintf(stderr, "Example: %s /dev/cdc-wdm0 --json\n", argv[0]);
+        fprintf(stderr, "         %s /dev/cdc-wdm0 --mbim --json\n", argv[0]);
         return EXIT_FAILURE;
     }
 
-    dev_path  = argv[1];
-    json_mode = (argc >= 3 && strcmp(argv[2], "--json") == 0);
+    dev_path    = argv[1];
+    json_mode   = FALSE;
+    device_mode = MODE_AUTO;
+
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--json") == 0)
+            json_mode = TRUE;
+        else if (strcmp(argv[i], "--mbim") == 0)
+            device_mode = MODE_MBIM;
+        else if (strcmp(argv[i], "--qmi") == 0)
+            device_mode = MODE_QMI;
+    }
 
     memset(&info, 0, sizeof(info));
     info.chip_temp = -999;
     info.csq       = -1;
     info.is_umts   = FALSE;
+
+    /* In auto-detect mode, suppress QMI warnings that are expected
+     * when probing QMI on an MBIM-only device:
+     *   "requested QMI mode but unexpected transport type found"
+     *   "Cannot read from istream: connection broken" */
+    if (device_mode == MODE_AUTO) {
+        g_log_set_handler("Qmi",
+            G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
+            log_silent, NULL);
+    }
 
     loop = g_main_loop_new(NULL, FALSE);
 
