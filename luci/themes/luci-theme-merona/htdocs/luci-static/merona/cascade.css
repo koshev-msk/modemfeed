@@ -2091,7 +2091,7 @@ table table td,
 }
 
 .cbi-value-description {
-	background-image: url(/luci-static/resources/cbi/help.gif);
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNicgaGVpZ2h0PScxNicgdmlld0JveD0nMCAwIDE2IDE2Jz48Y2lyY2xlIGN4PSc4JyBjeT0nOCcgcj0nNy41JyBmaWxsPScjZThmNWU5JyBzdHJva2U9JyMzODhlM2MnIHN0cm9rZS13aWR0aD0nMS4yJy8+PHRleHQgeD0nOCcgeT0nMTInIGZvbnQtc2l6ZT0nMTEnIGZvbnQtZmFtaWx5PSdzYW5zLXNlcmlmJyBmb250LXdlaWdodD0nYm9sZCcgdGV4dC1hbmNob3I9J21pZGRsZScgZmlsbD0nIzJlN2QzMic+PzwvdGV4dD48L3N2Zz4=");
 	background-position: .25em .2em;
 	background-repeat: no-repeat;
 	margin: .25em 0 0 0;
