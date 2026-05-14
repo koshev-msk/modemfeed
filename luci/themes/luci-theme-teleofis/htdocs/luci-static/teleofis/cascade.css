@@ -2561,3 +2561,7 @@ html body.apply-overlay-active {
 .assoclist .td:nth-of-type(6) button {
 	word-break: normal;
 }
+
+img[src*="signal-0"] {
+    filter: sepia(1) saturate(8) hue-rotate(315deg) brightness(0.65) contrast(1.1);
+}
