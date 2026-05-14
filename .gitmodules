@@ -3,3 +3,7 @@
 	url = https://github.com/Kodo-kakaku/luci-app-gpoint.git
 	branch = main
 
+[submodule "luci/applications/luci-app-cpu-perf"]
+	path = luci/applications/luci-app-cpu-perf
+	url = https://github.com/koshev-msk/luci-app-cpu-perf.git
+	branch = master
