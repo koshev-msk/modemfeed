@@ -1,0 +1,327 @@
+diff -ruN QMbimAT-main/src/main.c QMbimAT-main-fixed/src/main.c
+--- QMbimAT-main/src/main.c	2023-09-05 19:22:17.000000000 +0000
++++ QMbimAT-main-fixed/src/main.c	2026-05-15 07:14:30.636615920 +0000
+@@ -54,7 +54,7 @@
+         return 0;
+     }
+ 
+-    while (-1 != (opt = getopt_long(argc, argv, "a:d:vh", longopts, NULL)))
++    while (-1 != (opt = getopt_long(argc, argv, "a:d:vhD", longopts, NULL)))
+     {
+         switch (opt)
+         {
+@@ -143,13 +143,10 @@
+ 
+ int main(int argc, char *argv[])
+ {
+-    if (argc >= 5)
++    if (argc <= 1)
+     {
+-        return debug_tool(argc, argv );
+-    }
+-    else 
+-    {
+-        debug_tool_usage(argv[0]);
++        debug_tool_usage();
+         return -1;
+     }
++    return debug_tool(argc, argv);
+ }
+diff -ruN QMbimAT-main/src/mbim_ctx.c QMbimAT-main-fixed/src/mbim_ctx.c
+--- QMbimAT-main/src/mbim_ctx.c	2023-09-05 19:22:17.000000000 +0000
++++ QMbimAT-main-fixed/src/mbim_ctx.c	2026-05-15 06:58:01.288358305 +0000
+@@ -129,14 +129,37 @@
+     }
+     else if (mbim_pRequest && le32toh(mbim_pRequest->TransactionId) == le32toh(pResponse->TransactionId))
+     {
+-        mbim_pResponse = mbim_alloc(le32toh(pResponse->MessageLength) + 1);
+-        if (mbim_pResponse)
+-            memcpy(mbim_pResponse, pResponse, le32toh(pResponse->MessageLength));
+-        pthread_cond_signal(&mbim_command_cond);
++        uint32_t resp_type = le32toh(pResponse->MessageType);
++        uint32_t req_type  = le32toh(mbim_pRequest->MessageType);
++
++        /* Accept matching response types only:
++         *   MBIM_OPEN_MSG        -> MBIM_OPEN_DONE
++         *   MBIM_CLOSE_MSG       -> MBIM_CLOSE_DONE
++         *   MBIM_COMMAND_MSG     -> MBIM_COMMAND_DONE
++         * Also accept MBIM_FUNCTION_ERROR_MSG for any request.
++         */
++        int is_expected = (resp_type == MBIM_FUNCTION_ERROR_MSG) ||
++                          (req_type == MBIM_OPEN_MSG    && resp_type == MBIM_OPEN_DONE)  ||
++                          (req_type == MBIM_CLOSE_MSG   && resp_type == MBIM_CLOSE_DONE) ||
++                          (req_type == MBIM_COMMAND_MSG && resp_type == MBIM_COMMAND_DONE);
++
++        if (is_expected)
++        {
++            mbim_pResponse = mbim_alloc(le32toh(pResponse->MessageLength) + 1);
++            if (mbim_pResponse)
++                memcpy(mbim_pResponse, pResponse, le32toh(pResponse->MessageLength));
++            pthread_cond_signal(&mbim_command_cond);
++        }
++        else
++        {
++            mbim_debug("info: ignoring MessageType=0x%x for TransactionId=%u (waiting for response to req type=0x%x)",
++                       resp_type, le32toh(pResponse->TransactionId), req_type);
++        }
+     }
+     else if (le32toh(pResponse->MessageType) == MBIM_INDICATE_STATUS_MSG)
+     {
+         MBIM_INDICATE_STATUS_MSG_T *pIndMsg = (MBIM_INDICATE_STATUS_MSG_T *)pResponse;
++        (void)pIndMsg;
+     }
+ 
+     pthread_mutex_unlock(&mbim_command_mutex);
+@@ -207,7 +230,7 @@
+     mbim_debug("%s is created", __func__);
+     (void)param;
+ 
+-    while (mbim_fd > 0)
++    while (mbim_fd >= 0)
+     {
+         struct pollfd pollfds[] = {{mbim_fd, POLLIN, 0}, {control_pipe[0], POLLIN, 0}};
+         int ne, ret, nevents = 2;
+@@ -247,21 +270,22 @@
+                     mbim_debug("%s read=%d errno: %d (%s)", __func__, (int)nreads, errno, strerror(errno));
+                     break;
+                 }
+-                else if (nreads < pResponse->MessageLength)
++                else if (nreads < (ssize_t)le32toh(pResponse->MessageLength))
+                 {
+-                    mbim_debug("error: %s read=%d MessageLength=%u", __func__, (int)nreads, pResponse->MessageLength);
++                    mbim_debug("error: %s read=%d MessageLength=%u", __func__, (int)nreads, le32toh(pResponse->MessageLength));
+                     break;
+                 }
+-                else if (nreads >= pResponse->MessageLength)
++                else if (nreads >= (ssize_t)le32toh(pResponse->MessageLength))
+                 {
+                     while (nreads > 0)
+                     {
+-                        mbim_debug("%s read=%d MessageLength=%u", __func__, (int)nreads, pResponse->MessageLength);
++                        uint32_t msg_len = le32toh(pResponse->MessageLength);
++                        mbim_debug("%s read=%d MessageLength=%u", __func__, (int)nreads, msg_len);
+ 
+                         // coverity[tainted_data:FALSE]
+-                        mbim_recv_command(pResponse, pResponse->MessageLength);
+-                        nreads -= pResponse->MessageLength;
+-                        pResponse = (MBIM_MESSAGE_HEADER *)((char *)pResponse + pResponse->MessageLength);
++                        mbim_recv_command(pResponse, msg_len);
++                        nreads -= msg_len;
++                        pResponse = (MBIM_MESSAGE_HEADER *)((char *)pResponse + msg_len);
+                     }
+                 }
+             }
+@@ -350,7 +374,7 @@
+     if (control_pipe[0] == -1)
+         return;
+ 
+-    if (!use_mbim_proxy && mbim_fd)
++    if (!use_mbim_proxy && mbim_fd != -1)
+     {
+         mbim_CLOSE();
+     }
+@@ -387,7 +411,7 @@
+     if (mbim_fd != -1)
+         return 0;
+ 
+-    fp = popen("ps -e |  grep mbim-proxy", "r");
++    fp = popen("cat /proc/[0-9]*/comm 2>/dev/null | grep -m1 mbim-proxy", "r");
+     if (fp != NULL)
+     {
+         // coverity[check_return]
+diff -ruN QMbimAT-main/src/mbim_protocol.c QMbimAT-main-fixed/src/mbim_protocol.c
+--- QMbimAT-main/src/mbim_protocol.c	2023-09-05 19:22:17.000000000 +0000
++++ QMbimAT-main-fixed/src/mbim_protocol.c	2026-05-15 07:25:01.090234223 +0000
+@@ -161,6 +161,8 @@
+     return &uuid;
+ }
+ 
++static const UUID_T *str2uuid_pub(const char *str) { return str2uuid(str); }
++
+ static uint32_t TransactionId(void)
+ {
+     static uint32_t tid = 0;
+@@ -295,7 +297,7 @@
+         return NULL;
+ 
+     pOpen->MessageHeader.MessageType = htole32(MBIM_OPEN_MSG);
+-    pOpen->MessageHeader.MessageLength = htole32(sizeof(MBIM_COMMAND_MSG_T));
++    pOpen->MessageHeader.MessageLength = htole32(sizeof(MBIM_OPEN_MSG_T));
+     pOpen->MessageHeader.TransactionId = htole32(TransactionId());
+     pOpen->MaxControlTransfer = htole32(4096);
+     return (MBIM_MESSAGE_HEADER*)pOpen;
+@@ -309,7 +311,7 @@
+         return NULL;
+ 
+     pOpen->MessageHeader.MessageType = htole32(MBIM_CLOSE_MSG);
+-    pOpen->MessageHeader.MessageLength = htole32(sizeof(MBIM_COMMAND_MSG_T));
++    pOpen->MessageHeader.MessageLength = htole32(sizeof(MBIM_CLOSE_MSG_T));
+     pOpen->MessageHeader.TransactionId = htole32(TransactionId());
+ 
+     return (MBIM_MESSAGE_HEADER*)pOpen;
+@@ -361,9 +363,10 @@
+     {
+         cfg = (MBIM_LIBQMI_PROXY_CONFIG_T *)((MBIM_COMMAND_MSG_T *)pRequest)->InformationBuffer;
+ 
+-        cfg->DevicePathOffset = sizeof(*cfg);
+-        cfg->DevicePathSize = char2wchar((const uint8_t *)dev, strlen(dev), cfg->DataBuffer, strlen(dev) * 2);
+-        cfg->Timeout = 15;
++        uint32_t wchar_len = (uint32_t)char2wchar((const uint8_t *)dev, strlen(dev), cfg->DataBuffer, strlen(dev) * 2);
++        cfg->DevicePathOffset = htole32(sizeof(*cfg));
++        cfg->DevicePathSize   = htole32(wchar_len);
++        cfg->Timeout          = htole32(15);
+     }
+ 
+     err = mbim_send_command(pRequest, &pCmdDone);
+@@ -555,6 +558,101 @@
+     return err;
+ }
+ 
++
++/* AT-over-MBIM service candidates, tried in order */
++typedef struct {
++    const char *uuid;
++    uint32_t    cid;
++    const char *description;
++} AT_SERVICE_CANDIDATE;
++
++static const AT_SERVICE_CANDIDATE at_service_candidates[] = {
++    /* Most Quectel LTE/5G modules: EC2x, EP06, EM06, EG06, EG12, EG18,
++       EM12, EM160, RG500, RM500, RM502, RM520, etc. */
++    { uuid_ext_qmux, 1, "EXT_QMUX/CID=1 (EC2x/EP06/EM06/EG-series/RM5xx)" },
++    /* Older fallback: EM060 and similar SDX55-based modules */
++    { uuid_qdu,      8, "QDU/CID=8 (EM060)" },
++    /* Sentinel */
++    { NULL, 0, NULL }
++};
++
++static const char  *s_at_uuid = NULL;
++static uint32_t     s_at_cid  = 0;
++
++/* Query Device Services and pick the first UUID/CID pair the modem supports */
++static int mbim_detect_at_service(void)
++{
++    MBIM_MESSAGE_HEADER  *pRequest  = NULL;
++    MBIM_COMMAND_DONE_T  *pCmdDone  = NULL;
++    int err;
++    unsigned int i, s;
++
++    if (s_at_uuid)
++        return 0; /* already detected */
++
++    pRequest = mbim_compose_command(UUID_BASIC_CONNECT,
++                                    MBIM_CID_DEVICE_SERVICES,
++                                    MBIM_CID_CMD_TYPE_QUERY, NULL, 0);
++    err = mbim_send_command(pRequest, &pCmdDone);
++    if (err || !pCmdDone) {
++        mbim_free(pRequest);
++        mbim_free(pCmdDone);
++        /* Fall back to first candidate without detection */
++        s_at_uuid = at_service_candidates[0].uuid;
++        s_at_cid  = at_service_candidates[0].cid;
++        mbim_debug("detect_at_service: query failed, defaulting to %s",
++                   at_service_candidates[0].description);
++        return 0;
++    }
++
++    if (le32toh(pCmdDone->InformationBufferLength) >= sizeof(MBIM_DEVICE_SERVICES_INFO_T)) {
++        MBIM_DEVICE_SERVICES_INFO_T *info =
++            (MBIM_DEVICE_SERVICES_INFO_T *)pCmdDone->InformationBuffer;
++        uint32_t svc_count = le32toh(info->DeviceServicesCount);
++
++        /* Walk candidate list; pick first one found in device services */
++        for (i = 0; at_service_candidates[i].uuid && !s_at_uuid; i++) {
++            const UUID_T *want = (const UUID_T *)str2uuid_pub(at_service_candidates[i].uuid);
++            for (s = 0; s < svc_count && !s_at_uuid; s++) {
++                uint32_t offset = le32toh(info->DeviceServicesRefList[s].offset);
++                uint32_t size   = le32toh(info->DeviceServicesRefList[s].size);
++                if (offset + size > le32toh(pCmdDone->InformationBufferLength))
++                    continue;
++                MBIM_DEVICE_SERVICE_ELEMENT_T *elem =
++                    (MBIM_DEVICE_SERVICE_ELEMENT_T *)
++                    ((uint8_t *)info + offset);
++                if (memcmp(elem->DeviceServiceId.uuid, want->uuid, 16) == 0) {
++                    /* Check the required CID is in the CID list */
++                    uint32_t cid_count = le32toh(elem->CidCount);
++                    uint32_t c;
++                    for (c = 0; c < cid_count; c++) {
++                        if (le32toh(elem->CidList[c]) == at_service_candidates[i].cid) {
++                            s_at_uuid = at_service_candidates[i].uuid;
++                            s_at_cid  = at_service_candidates[i].cid;
++                            mbim_debug("detect_at_service: found %s",
++                                       at_service_candidates[i].description);
++                            break;
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    mbim_free(pRequest);
++    mbim_free(pCmdDone);
++
++    if (!s_at_uuid) {
++        /* Nothing matched — fall back to first candidate */
++        s_at_uuid = at_service_candidates[0].uuid;
++        s_at_cid  = at_service_candidates[0].cid;
++        mbim_debug("detect_at_service: no match, defaulting to %s",
++                   at_service_candidates[0].description);
++    }
++
++    return 0;
++}
++
+ static char s_atc_response[8192];
+ int mbim_send_at_command(const char *atc_req, char **pp_atc_rsp)
+ {
+@@ -566,7 +664,20 @@
+     if (pp_atc_rsp)
+         *pp_atc_rsp = NULL;
+     printf("Send > %s\n", atc_req);
+-    pRequest = mbim_compose_command(uuid_qdu, 8,
++    /* Add \r terminator if not already present (required by AT command standard) */
++    char at_buf[133];
++    if (atc_len > 0 && atc_req[atc_len - 1] != '\r') {
++        if (atc_len + 1 >= sizeof(at_buf)) {
++            return -EINVAL;
++        }
++        memcpy(at_buf, atc_req, atc_len);
++        at_buf[atc_len++] = '\r';
++        at_buf[atc_len] = '\0';
++        atc_req = at_buf;
++    }
++    mbim_detect_at_service();
++    printf("Using AT service: uuid=%s cid=%u\n", s_at_uuid, s_at_cid);
++    pRequest = mbim_compose_command(s_at_uuid, s_at_cid,
+                                     MBIM_CID_CMD_TYPE_SET, NULL, 4 + atc_len);
+     if (pRequest)
+     {
+@@ -580,14 +691,20 @@
+ 
+     if (le32toh(pCmdDone->InformationBufferLength))
+     {
+-        unsigned int i = 0;
++        uint32_t rsp_len = le32toh(pCmdDone->InformationBufferLength);
+ 
+-        strncpy(s_atc_response, (char *)&pCmdDone->InformationBuffer[4], pCmdDone->InformationBufferLength - 4);
+-        s_atc_response[pCmdDone->InformationBufferLength - 4] = 0;
+-
+-        printf("Recv < %s", s_atc_response);
+-        if (pp_atc_rsp)
+-            *pp_atc_rsp = s_atc_response;
++        if (rsp_len > 4)
++        {
++            uint32_t data_len = rsp_len - 4;
++            if (data_len >= sizeof(s_atc_response))
++                data_len = sizeof(s_atc_response) - 1;
++            memcpy(s_atc_response, (char *)&pCmdDone->InformationBuffer[4], data_len);
++            s_atc_response[data_len] = '\0';
++
++            printf("Recv < %s", s_atc_response);
++            if (pp_atc_rsp)
++                *pp_atc_rsp = s_atc_response;
++        }
+     }
+ 
+     // out:
