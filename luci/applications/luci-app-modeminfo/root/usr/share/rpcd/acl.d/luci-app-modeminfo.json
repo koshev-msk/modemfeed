@@ -8,7 +8,8 @@
 			},
 			"file": {
 				"/usr/bin/modeminfo": [ "exec" ],
-				"/usr/share/modeminfo/scripts/rmtmp": [ "exec" ]
+				"/usr/share/modeminfo/scripts/rmtmp": [ "exec" ],
+				"/sbin/uci": [ "exec" ]
 			},
 			"uci": [ "modeminfo" ]
 		},

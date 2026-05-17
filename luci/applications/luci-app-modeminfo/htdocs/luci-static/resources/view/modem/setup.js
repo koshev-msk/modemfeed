@@ -60,7 +60,7 @@ var qdesc = _('Select qmi port.');
 var lacdec = _('Show LAC and CID in decimal.');
 var mmdesc = _('Get device hardware name via mmcli utility if aviable.');
 var qmidesc = _('Set qmi mode.');
-var idesc = _('Short info on Overview page');
+var idesc = _('Show short info on<br />Overview: show info on main page \"Cellular Network\" section<br />MenuBar: show info on menubar all pages<br />NOTICE: Don\'t add too many modems, it may break the theme display.');
 var portplace = _('Please select a port');
 
 return view.extend({
@@ -88,8 +88,12 @@ return view.extend({
 		s = m.section(form.TypedSection, 'general', _('General option'), null);
 		s.anonymous = true;
 
-		o = s.option(form.Flag, 'index', _('Index page'), idesc);
-		s.anonymous = true;
+		o = s.option(form.ListValue, 'index', _('Short info'), idesc);
+		o.widget="radio";
+		o.value(0,_('none'));
+		o.value(1,_('overview'));
+		o.value(2,_('menubar'));
+		o.default = '0';
 		o.rmempty = true;
 
 		o = s.option(form.Flag, 'decimail', _('Show decimal'), lacdec);

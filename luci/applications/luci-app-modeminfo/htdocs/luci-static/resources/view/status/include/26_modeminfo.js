@@ -19,7 +19,11 @@ return baseclass.extend({
 	title: _('Cellular network'),
 
 	load: async function() {
-		uci.load('modeminfo');
+		await uci.load('modeminfo');
+		var index = uci.sections('modeminfo', 'general');
+		if (!index || !index[0] || index[0].index !== "1") {
+			return null;
+		};
 
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
@@ -43,10 +47,15 @@ return baseclass.extend({
 
 	render: function(data){
 		if (!data || data.trim() === '') {
-			return E('div', { 
-				'class': 'cbi-section',
-				'style': 'color: #999; text-align: center;'
-			}, _('Wait devices information'));
+			var index = uci.sections('modeminfo', 'general');
+			if (!index || !index[0] || index[0].index !== "1") {
+				return null;
+			} else {
+				return E('div', { 
+					'class': 'cbi-section',
+					'style': 'color: #999; text-align: center;'
+				}, _('Wait devices information'));
+			}
 		}
 
 		try {
