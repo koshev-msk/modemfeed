@@ -135,7 +135,7 @@ msgstr "QMI через MBIM"
 msgid "Short info"
 msgstr "Краткая информация"
 
-msgid "Show short info on<br />Overview: show info on main page \"Cellular Network\" section<br />MenuBar: show info on menubar all pages<br />NOTICE: Don\'t add too many modems in menubar, it may break the theme display."
+msgid "Show short info.<br />Overview: show info on main page \"Cellular Network\" section<br />MenuBar: show info on menubar all pages<br />NOTICE: Don\'t add too many modems in menubar, it may break the theme display."
 msgstr "Показвать краткую информацию<br />На главной: показывать главной странице раздел \"Сотовая сеть\"<br />Меню: показывать в строке меню на всех страницах<br />ВНИМАНИЕ: не добавляйте слишком много устройств в строку меню, это может сломать отображение."
 
 msgid "none"
