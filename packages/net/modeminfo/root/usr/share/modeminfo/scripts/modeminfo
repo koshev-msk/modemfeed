@@ -131,7 +131,7 @@ function generic_data(){
             modes["6"] = "HSPA"
             modes["7"] = modes["13"] = "LTE"
             
-            prefix = substr($4, 1, 1)
+            prefix = substr($4, 1, 2)
             print (prefix in modes ? modes[prefix] : "--")
         }')
 }
