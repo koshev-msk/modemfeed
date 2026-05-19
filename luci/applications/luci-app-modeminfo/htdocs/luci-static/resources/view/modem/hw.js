@@ -9,158 +9,162 @@
 'require dom';
 'require tools.widgets as widgets';
 
-
 /*
-	Copyright Konstantine Shevlakov <shevlakov@132lan.ru> 2023
-	
+	Copyright Konstantine Shevlakov <shevlakov@132lan.ru> 2023-2026
+
 	Licensed to the GNU General Public License v3.0.
-	
+
+	Refactored: bug fixes, XSS prevention, deduplication.
 */
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Safe getElementById.
+ * @param {string} id
+ * @returns {HTMLElement|null}
+ */
+function getEl(id) {
+	return document.getElementById(id);
+}
+
+/**
+ * Write a value into a cell by id.
+ * Falls back to '--' when value is missing/placeholder.
+ * Uses textContent to prevent XSS.
+ *
+ * @param {string} id    - Element id
+ * @param {string} value - Raw value from modem JSON
+ * @param {string} [suffix] - Optional suffix appended to a real value (e.g. ' °C')
+ */
+function setCell(id, value, suffix) {
+	const el = getEl(id);
+	if (!el) return;
+	const missing = !value || value === '--';
+	el.textContent = missing ? '--' : value + (suffix || '');
+}
+
+// ─── Field definitions ────────────────────────────────────────────────────────
+// Each entry: { key: modem JSON field, suffix: optional unit string }
+const MODEM_FIELDS = [
+	{ key: 'device',   suffix: ''    },
+	{ key: 'firmware', suffix: ''    },
+	{ key: 'imsi',     suffix: ''    },
+	{ key: 'iccid',    suffix: ''    },
+	{ key: 'imei',     suffix: ''    },
+	{ key: 'chiptemp', suffix: ' °C' },
+];
+
+// ─── Main view ────────────────────────────────────────────────────────────────
 
 return view.extend({
 
-	load: function(data) {
-		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'));
+	// FIX: removed unused `data` parameter
+	load: function() {
+		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'), '{"modem": []}');
 	},
 
 	polldata: poll.add(function() {
-		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo')).then(function(res) {
-			var json = JSON.parse(res);
-			if (!json || !json.modem || !Array.isArray(json.modem)) return;
-			for (var i = 0; i < json.modem.length; i++) {
-				if (document.getElementById('device'+i)) {
-					var view = document.getElementById('device'+i);
-					if (json.modem[i].device == '--') {
-						view = document.getElementById('--');
-					} else {
-						view.innerHTML = String.format(json.modem[i].device);
-					}
-				}
-				if (document.getElementById('firmware'+i)) {
-					var view = document.getElementById('firmware'+i);
-					if (json.modem[i].firmware == '--') {
-						view = document.getElementById('--');
-					} else {
-						view.innerHTML = String.format(json.modem[i].firmware);
-					}
-				}
-				if (document.getElementById('imsi'+i)) {
-					var view = document.getElementById('imsi'+i);
-					if (json.modem[i].imsi == '--') {
-						view = document.getElementById('--');
-					} else {
-						view.innerHTML = String.format(json.modem[i].imsi);
-					}
-				}
-				if (document.getElementById('iccid'+i)) {
-					var view = document.getElementById('iccid'+i);
-					if (json.modem[i].iccid == '--') {
-						view = document.getElementById('--');
-					} else {
-						view.innerHTML = String.format(json.modem[i].iccid);
-					}
+		return L.resolveDefault(fs.exec_direct('/usr/bin/modeminfo'), '{"modem": []}')
+			.then(function(res) {
+				// FIX: wrapped in try/catch — was crashing on invalid JSON
+				let json;
+				try {
+					json = JSON.parse(res);
+				} catch (e) {
+					console.error('modeminfo hw: JSON parse error', e);
+					return;
 				}
 
-				if (document.getElementById('imei'+i)) {
-					var view = document.getElementById('imei'+i);
-					if (json.modem[i].imei == '--') {
-						view = document.getElementById('--');
-					} else {
-						view.innerHTML = String.format(json.modem[i].imei);
+				if (!json || !Array.isArray(json.modem)) return;
+
+				for (let i = 0; i < json.modem.length; i++) {
+					const modem = json.modem[i];
+
+					// FIX: replaced 6 copy-pasted blocks with a single loop.
+					// FIX: `var view` renamed — was shadowing the LuCI `view` module.
+					// FIX: value '--' now explicitly written to cell (was silently ignored).
+					// FIX: innerHTML → textContent to prevent XSS.
+					// FIX: String.format(x) with no extra args replaced by direct assignment.
+					for (const { key, suffix } of MODEM_FIELDS) {
+						setCell(key + i, modem[key], suffix);
 					}
 				}
-
-				if (document.getElementById('chiptemp'+i)) {
-					var view = document.getElementById('chiptemp'+i);
-					if (json.modem[i].chiptemp == '--') {
-						view = document.getElementById('--');
-					} else {
-						view.innerHTML = String.format(json.modem[i].chiptemp+' °C');
-					}
-				}
-			};
-
-		});
+			});
 	}),
 
-	render: function(data){
-		
-		var m, s, o;
-		m = new form.Map('modeminfo', _('Modeminfo: Hardware'), _('Hardware and sim-card info.'));
-		s = m.section(form.TypedSection, 'general', null);
-		var json = JSON.parse(data);
-		// for future use
-		/*
-		var vendors = [];
-		var duplicate_modem_index = 1;
-		json.modem.forEach(obj => {
-  			const device = obj.device;
-  			if (!vendors.includes(device)) {
-    			vendors.push(device);
-  			} else {
-    			vendors.push(device+" ("+duplicate_modem_index+")");
-    			duplicate_modem_index++;
-  			}
-		});
-		*/
-		for (var i = 0; i < json.modem.length; i++) {
-			let device = 'device'+i;
-			let firmware = 'firmware'+i;
-			let imsi = 'imsi'+i;
-			let iccid = 'iccid'+i;
-			let imei = 'imei'+i;
-			let chiptemp = 'chiptemp'+i;
-			let m = i+1;
-			if ( json.modem.length > 1 ) {
-				s.tab('modem'+i, _('Modem')+' '+m);
-				o = s.taboption('modem'+i, form.HiddenValue, 'generic');
+	render: function(data) {
+		// FIX: wrapped in try/catch — was crashing on invalid JSON
+		let json;
+		try {
+			json = JSON.parse(data);
+		} catch (e) {
+			json = { modem: [] };
+		}
+
+		const m = new form.Map('modeminfo', _('Modeminfo: Hardware'), _('Hardware and sim-card info.'));
+		const s = m.section(form.TypedSection, 'general', null);
+		s.anonymous = true;
+
+		for (let i = 0; i < json.modem.length; i++) {
+			const idx = i + 1;
+
+			// Pre-build all element ids for this modem slot
+			const ids = {};
+			for (const { key } of MODEM_FIELDS) {
+				ids[key] = key + i;
+			}
+
+			let o;
+			if (json.modem.length > 1) {
+				s.tab('modem' + i, _('Modem') + ' ' + idx);
+				o = s.taboption('modem' + i, form.HiddenValue, 'generic');
 			} else {
 				o = s.option(form.HiddenValue, 'generic');
 			}
-			o.render = L.bind(function(data){
-				return (
-				E('div', {}, [
-					E('h3', { 'class': 'data-tab' }), 
-						E('div', { 'class': 'cbi-section', 'data-title': 'modem'+i }, [
-							E('table', { 'class': 'table' }, [
-								E('tr', { 'class': 'tr cbi-rowstyle-2' }, [
-									E('td', { 'class': 'td left', 'width': '50%' }, [ _('Device')]),
-									E('td', { 'class': 'td left', 'id': device }, [ '--' ]),
-								]),
-								E('tr', { 'class': 'tr cbi-rowstyle-1' }, [
-									E('td', { 'class': 'td left', 'width': '50%' }, [ _('Firmware')]),
-									E('td', { 'class': 'td left', 'id': firmware }, [ '--' ]),
-								]),
-								E('tr', { 'class': 'tr cbi-rowstyle-2' }, [
-									E('td', { 'class': 'td left', 'width': '50%' }, [ _('IMSI')]),
-									E('td', { 'class': 'td left', 'id': imsi }, [ '--' ]),
-								]),
-								E('tr', { 'class': 'tr cbi-rowstyle-1' }, [
-									E('td', { 'class': 'td left', 'width': '50%' }, [ _('ICCID')]),
-									E('td', { 'class': 'td left', 'id': iccid }, [ '--' ]),
-								]),
-								E('tr', { 'class': 'tr cbi-rowstyle-2' }, [
-									E('td', { 'class': 'td left', 'width': '50%' }, [ _('IMEI')]),
-									E('td', { 'class': 'td left', 'id': imei }, [ '--' ]),
-								]),
-								E('tr', { 'class': 'tr cbi-rowstyle-1' }, [
-									E('td', { 'class': 'td left', 'width': '50%' }, [ _('Chiptemp')]),
-									E('td', { 'class': 'td left', 'id': chiptemp }, [ '--' ]),
-								])
-							])
-						]),
-					]
-				)
-			)}, o, this.polldata);
-			o.anonymous = true;
-			o.rmempty = true;
-		};
-		s.anonymous = true;
-		return m.render();
 
+			o.render = L.bind(function() {
+				return E('div', {}, [
+					E('h3', { 'class': 'data-tab' }),
+					E('div', { 'class': 'cbi-section' }, [
+						E('table', { 'class': 'table' }, [
+							E('tr', { 'class': 'tr cbi-rowstyle-2' }, [
+								E('td', { 'class': 'td left', 'width': '50%' }, [_('Device')]),
+								E('td', { 'class': 'td left', 'id': ids.device }, ['--']),
+							]),
+							E('tr', { 'class': 'tr cbi-rowstyle-1' }, [
+								E('td', { 'class': 'td left', 'width': '50%' }, [_('Firmware')]),
+								E('td', { 'class': 'td left', 'id': ids.firmware }, ['--']),
+							]),
+							E('tr', { 'class': 'tr cbi-rowstyle-2' }, [
+								E('td', { 'class': 'td left', 'width': '50%' }, [_('IMSI')]),
+								E('td', { 'class': 'td left', 'id': ids.imsi }, ['--']),
+							]),
+							E('tr', { 'class': 'tr cbi-rowstyle-1' }, [
+								E('td', { 'class': 'td left', 'width': '50%' }, [_('ICCID')]),
+								E('td', { 'class': 'td left', 'id': ids.iccid }, ['--']),
+							]),
+							E('tr', { 'class': 'tr cbi-rowstyle-2' }, [
+								E('td', { 'class': 'td left', 'width': '50%' }, [_('IMEI')]),
+								E('td', { 'class': 'td left', 'id': ids.imei }, ['--']),
+							]),
+							E('tr', { 'class': 'tr cbi-rowstyle-1' }, [
+								E('td', { 'class': 'td left', 'width': '50%' }, [_('Chiptemp')]),
+								E('td', { 'class': 'td left', 'id': ids.chiptemp }, ['--']),
+							]),
+						])
+					])
+				]);
+			}, this.polldata);
+
+			o.anonymous = true;
+			o.rmempty   = true;
+		}
+
+		return m.render();
 	},
+
 	handleSaveApply: null,
-	handleSave: null,
-	handleReset: null
+	handleSave:      null,
+	handleReset:     null,
 });
