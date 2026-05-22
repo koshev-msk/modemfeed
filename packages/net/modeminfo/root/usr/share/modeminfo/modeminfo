@@ -62,7 +62,7 @@ function if_null() {
 
 
 qmi_device(){
-	[ -n "$qmi_mode" ] || SCRIPT=/usr/share/modeminfo/scripts/modeminfo
+	[ "$qmi_mode" = "1" ] || SCRIPT=/usr/share/modeminfo/scripts/modeminfo
 	[ -r $SCRIPT ] && {
 		. $SCRIPT
 	} || {
