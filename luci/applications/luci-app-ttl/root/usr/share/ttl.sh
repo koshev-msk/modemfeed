@@ -1,19 +1,37 @@
 #!/bin/sh
+. /lib/functions.sh
 
+# handle_section is called by config_foreach for each UCI section of type "ttl".
+# $1 = section name (e.g. "cfg1", or named section)
+handle_section(){
+	local s="$1"
+	config_get method   "$s" method
+	config_get advanced "$s" advanced
+	config_get inet     "$s" inet
+	config_get ports    "$s" ports
+	config_get ttl      "$s" ttl    64
+	config_get iface    "$s" iface
+	config_get proxy    "$s" proxy
 
-SECTIONS=$(echo $(uci show ttl | awk -F [\]\[\@=] '/=ttl/{print $3}'))
+	[ -n "$iface" ] && ifn="$iface" || ifn="lan"
+	DEV=$(ifstatus "$ifn" | jsonfilter -e '@["l3_device"]')
 
-get_vars(){
-	for v in method advanced inet ports ttl iface proxy; do
-		eval $v=$(uci -q get ttl.@ttl[${s}].${v} 2>/dev/nul)
-	done
+	case $method in
+		ttl)   method_ttl   ;;
+		proxy) method_proxy ;;
+	esac
 }
 
+config_load ttl
 
-# check iptables or nft 
-#
-if [ -x /usr/sbin/iptables -o /usr/sbin/ip6tables -a ! -x /usr/sbin/nft ]; then
+# Choose firewall backend: nft takes priority over iptables
+if [ -x /usr/sbin/nft ]; then
+	. /usr/share/ttlnft.sh
+elif [ -x /usr/sbin/iptables ] || [ -x /usr/sbin/ip6tables ]; then
 	. /usr/share/ttlipt.sh
 else
-	. /usr/share/ttlnft.sh
+	logger -t ttl "No firewall backend found (nft/iptables/ip6tables)"
+	exit 1
 fi
+
+config_foreach handle_section ttl
