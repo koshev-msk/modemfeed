@@ -37,9 +37,9 @@ return view.extend({
 			_('Revert to default sim slot. Each failed attempt doubles revert time.'));
 		o.depends({enable: '1'});
 
-		o = s.option(form.ListValue, 'rsrp', _('RSRP value'),
-			_('Switch sim lower by value.'));
-		for (var rsrp = -120; rsrp <= -80; rsrp++) {
+		o = s.option(form.ListValue, 'rsrp', _('RSRP/RSCP value'),
+			_('Switch sim lower by value. For 4G/5G is RSRP, for 3G RSCP.'));
+		for (var rsrp = -120; rsrp <= -50; rsrp++) {
 			o.value(rsrp, rsrp +' '+ _('dBm'));
 		};
 		o.depends({enable: '1'});

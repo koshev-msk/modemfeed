@@ -22,11 +22,11 @@ msgstr "Вернуть"
 msgid "Revert to default sim slot. Each failed attempt doubles revert time."
 msgstr "Вернуть на SIM слот по-умолчанию. Каждая неудачная попытка увеличивает время возврата."
 
-msgid "RSRP value"
-msgstr "Значение RSRP"
+msgid "RSRP/RSCP value"
+msgstr "Значение RSRP/RSCP"
 
-msgid "Switch sim lower by value."
-msgstr "Переключить sim ниже значения."
+msgid "Switch sim lower by value. For 4G/5G is RSRP, for 3G RSCP."
+msgstr "Переключить sim ниже значения. Для 4G/5G значение RSRP, для 3G - RSCP."
 
 msgid "Interval check. sec"
 msgstr "Интервал проверки. сек"

@@ -10,7 +10,7 @@ LUCI_TITLE:=Luci app for ssw
 LUCI_DEPENDS:= +luci-app-modeminfo
 
 PKG_LICENSE:=GPLv3
-PKG_VERSION:=0.0.1
+PKG_VERSION:=0.0.2
 PKG_RELEASE:=1
 
 include $(TOPDIR)/feeds/luci/luci.mk
