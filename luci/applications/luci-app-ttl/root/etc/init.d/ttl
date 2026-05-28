@@ -9,7 +9,10 @@ start_service(){
 }
 
 reload_service(){
-	sleep 10 && start &
+	(
+		flock -n 9 || exit 0
+		sleep 10 && start
+	) 9>/var/lock/ttl-reload.lock &
 }
 
 service_triggers() {
