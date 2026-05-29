@@ -76,6 +76,22 @@ typedef struct {
     gboolean ta_valid;
     
     gboolean is_umts;   /* UMTS flag */
+    gboolean is_nr;          /* 5G NR flag (NSA or SA) */
+    gboolean nr_nsa;         /* NSA mode: LTE+NR */
+    gboolean nr_sa;          /* SA mode: NR only */
+    gboolean dcnr_restricted;/* DCNR restriction */
+
+    /* 5G NR specific */
+    guint32  nr_arfcn;       /* NR-ARFCN */
+    guint16  nr_pci;         /* NR Physical Cell ID */
+    gint16   nr_rsrp;        /* NR RSRP *0.1 dBm */
+    gint16   nr_rsrq;        /* NR RSRQ *0.1 dB */
+    gint16   nr_snr;         /* NR SNR *0.1 dB */
+    gboolean has_nr_rsrp;
+    gboolean has_nr_rsrq;
+    gboolean has_nr_snr;
+    gboolean has_nr_pci;
+    gboolean has_nr_arfcn;
 } ModemInfo;
 
 /* ═══════════════════════════════════════════════════════════════
@@ -89,6 +105,7 @@ static ModemInfo     info;
 static gboolean      json_mode = FALSE;
 static const char   *dev_path  = NULL;
 static gint          pending   = 0;
+
 typedef enum {
     MODE_AUTO,   /* try QMI first, fallback to MBIM */
     MODE_QMI,    /* force native QMI */
@@ -341,7 +358,7 @@ static void emit_results(void)
     }
 
     if (!json_mode) {
-        siname = info.is_umts ? "EcIO" : "SINR";
+        siname = info.is_umts ? "EcIO " : (info.is_nr ? "SINR " : "SINR ");
         printf("\n=================================================\n");
         printf("  ModemInfo-QMI — %s\n", dev_path);
         printf("=================================================\n");
@@ -353,7 +370,12 @@ static void emit_results(void)
         if (info.has_temp)  printf("  Temp       : %d C\n", info.chip_temp);
         printf("-------------------------------------------------\n");
         printf("  Operator   : %s\n",  info.cops[0] ? info.cops : "N/A");
-        printf("  Mode       : %s\n",  info.mode[0] ? info.mode : "N/A");
+        if (info.nr_nsa && !info.dcnr_restricted)
+            printf("  Mode       : LTE+NR (NSA)\n");
+        else if (info.nr_sa)
+            printf("  Mode       : 5G NR (SA)\n");
+        else
+            printf("  Mode       : %s\n", info.mode[0] ? info.mode : "N/A");
         printf("  Reg.State  : %s\n",  reg_state_to_string((QmiNasRegistrationState)info.reg_state));
         printf("  LAC/TAC    : %u\n",  info.lac);
         printf("  CID        : %llu\n",(unsigned long long)info.cid);
@@ -365,11 +387,19 @@ static void emit_results(void)
 		if (info.has_bw_dl && strcmp(info.mode, "LTE") == 0) 
 			printf("  BW DL      : %.1f MHz\n", bw_index_to_khz(info.bw_dl) / 1000.0f);
         printf("-------------------------------------------------\n");
-	if (info.has_csq)  printf("  Strength   : %d%% (CSQ %d)\n", csq_pct, info.csq);
+		if (info.has_csq)  printf("  Strength   : %d%% (CSQ %d)\n", csq_pct, info.csq);
         printf("  RSSI       : %d dBm\n", info.rssi);
         if (info.has_rsrp) printf("  RSRP       : %d dBm\n", (int)roundf(info.rsrp));
         if (info.has_rsrq) printf("  RSRQ       : %d dB\n",  (int)roundf(info.rsrq));
         if (info.has_sinr) printf("  %s       : %d dB\n", siname, (int)roundf(info.sinr / 10.0f));
+        if (info.is_nr && (info.has_nr_rsrp || info.has_nr_rsrq || info.has_nr_snr)) {
+            if (info.has_nr_rsrp && info.nr_rsrp > -32700)
+                printf("  NR RSRP    : %d dBm\n", (int)roundf(info.nr_rsrp / 10.0f));
+            if (info.has_nr_rsrq && info.nr_rsrq > -32700)
+                printf("  NR RSRQ    : %d dB\n",  (int)roundf(info.nr_rsrq / 10.0f));
+            if (info.has_nr_snr && info.nr_snr > -32700)
+                printf("  NR SNR     : %d dB\n",  (int)roundf(info.nr_snr  / 10.0f));
+        }
         if (info.has_ca) {
             printf("  LTE-A SCC  : %d — %s\n", info.lte_ca, info.scc_bands);
             printf("  BW CA      : %.1f MHz\n",   info.bw_ca_total / 1000.0f);
@@ -396,26 +426,45 @@ static void emit_results(void)
     char csq_per_str[16] = "";
     if (csq_pct >= 0) snprintf(csq_per_str, sizeof(csq_per_str), "%d", csq_pct);
 
+    gint16 best_rsrp = 0, best_rsrq = 0, best_sinr = 0;
+
+    if (info.has_nr_rsrp && info.nr_rsrp > -32700) {
+        best_rsrp = (gint16)roundf(info.nr_rsrp / 10.0f);
+    } else if (info.has_rsrp) {
+        best_rsrp = (gint16)roundf(info.rsrp);
+    }
+
+    if (info.has_nr_rsrq && info.nr_rsrq > -32700) {
+        best_rsrq = (gint16)roundf(info.nr_rsrq / 10.0f);
+    } else if (info.has_rsrq) {
+        best_rsrq = (gint16)roundf(info.rsrq);
+    }
+
+    if (info.has_nr_snr && info.nr_snr > -32700) {
+        best_sinr = (gint16)roundf(info.nr_snr / 10.0f);
+    } else if (info.has_sinr) {
+        best_sinr = (gint16)roundf(info.sinr / 10.0f);
+    }
+
+    const char *json_mode_str;
+    if (info.nr_nsa && !info.dcnr_restricted)
+        json_mode_str = "LTE+NR";
+    else if (info.nr_sa)
+        json_mode_str = "5G NR";
+    else
+        json_mode_str = info.mode[0] ? info.mode : "";
+
     printf("{\n");
     printf("  \"device\"   : \"%s\",\n",  b_model);
     printf("  \"cops\"     : \"%s\",\n",  b_cops);
-    printf("  \"mode\"     : \"%s\",\n",  info.mode[0] ? info.mode : "");
+    printf("  \"mode\"     : \"%s\",\n",  json_mode_str);
     printf("  \"csq_per\"  : \"%s\",\n",  csq_per_str);
     printf("  \"lac\"      : \"%u\",\n",  info.lac);
     printf("  \"cid\"      : \"%llu\",\n",(unsigned long long)info.cid);
     printf("  \"rssi\"     : \"%d\",\n",  info.rssi);
-    if (info.has_sinr)
-        printf("  \"sinr\"     : \"%d\",\n", (int)roundf(info.sinr / 10.0f));
-    else
-        printf("  \"sinr\"     : \"\",\n");
-    if (info.has_rsrp)
-        printf("  \"rsrp\"     : \"%d\",\n", (int)roundf(info.rsrp));
-    else
-        printf("  \"rsrp\"     : \"\",\n");
-    if (info.has_rsrq)
-        printf("  \"rsrq\"     : \"%d\",\n", (int)roundf(info.rsrq));
-    else
-        printf("  \"rsrq\"     : \"\",\n");
+    printf("  \"rsrp\"     : \"%d\",\n",  best_rsrp);
+    printf("  \"rsrq\"     : \"%d\",\n",  best_rsrq);
+    printf("  \"sinr\"     : \"%d\",\n",  best_sinr);
     printf("  \"imei\"     : \"%s\",\n",  b_imei);
     printf("  \"reg\"      : \"%d\",\n",  info.reg_state);
     printf("  \"csq_col\"  : \"%s\",\n",  csq_col);
@@ -442,11 +491,7 @@ static void emit_results(void)
     printf("  \"scc\"      : \"%s\",\n",  b_scc);
     printf("  \"bwca\"     : \"%u\",\n",  info.has_ca ? info.bw_ca_total / 1000 : 0);
     printf("  \"iccid\"    : \"%s\",\n",  b_iccid);
-    printf("  \"imsi\"     : \"%s\",\n",  b_imsi);
-    if (info.has_pci)
-        printf("  \"pci\"      : \"%u\"\n", info.pci);
-    else
-        printf("  \"pci\"      : \"\"\n");
+    printf("  \"imsi\"     : \"%s\"\n",   b_imsi);
     printf("}\n");
 }
 
@@ -501,15 +546,66 @@ static void on_cell_location(QmiClientNas *client, GAsyncResult *res, gpointer u
 
     if (out && qmi_message_nas_get_cell_location_info_output_get_result(out, NULL)) {
 
-        /* 5G NR ARFCN */
         guint32 nr_arfcn = 0;
         if (qmi_message_nas_get_cell_location_info_output_get_nr5g_arfcn(
                 out, &nr_arfcn, NULL) && nr_arfcn) {
-            info.arfcn     = (guint16)nr_arfcn;
-            info.has_arfcn = TRUE;
+            info.arfcn        = (guint16)nr_arfcn;
+            info.nr_arfcn     = nr_arfcn;
+            info.has_arfcn    = TRUE;
+            info.has_nr_arfcn = TRUE;
         }
 
-        /* LTE intra-frequency v2: EARFCN=guint16, PCI=guint16 */
+        guint16  nr_pci     = 0;
+        guint64  nr_cell_id = 0;
+        GArray  *nr_tac_arr = NULL;
+        gint16   nr_cell_rsrq = 0, nr_cell_rsrp = 0, nr_cell_snr = 0;
+
+        if (qmi_message_nas_get_cell_location_info_output_get_nr5g_cell_information(
+                out,
+                NULL,
+                &nr_tac_arr,
+                &nr_cell_id,
+                &nr_pci,
+                &nr_cell_rsrq,
+                &nr_cell_rsrp,
+                &nr_cell_snr,
+                NULL)) {
+            if (nr_pci) {
+                info.nr_pci     = nr_pci;
+                info.pci        = nr_pci;
+                info.has_nr_pci = TRUE;
+                info.has_pci    = TRUE;
+            }
+            if (nr_tac_arr && nr_tac_arr->len >= 3) {
+                guint8 *tb = (guint8 *)nr_tac_arr->data;
+                guint32 tac = ((guint32)tb[0] << 16) |
+                              ((guint32)tb[1] <<  8) |
+                               (guint32)tb[2];
+                if (tac && tac != 0xFFFFFF)
+                    info.lac = tac;
+            } else if (nr_tac_arr && nr_tac_arr->len == 2) {
+                guint8 *tb = (guint8 *)nr_tac_arr->data;
+                guint16 tac = ((guint16)tb[0] << 8) | tb[1];
+                if (tac && tac != 0xFFFF)
+                    info.lac = tac;
+            }
+            if (nr_cell_id && nr_cell_id != 0xFFFFFFFFFFFFFFFFULL)
+                info.cid = nr_cell_id;
+            if (!info.has_nr_rsrp && nr_cell_rsrp != 0) {
+                info.nr_rsrp     = nr_cell_rsrp;
+                info.has_nr_rsrp = TRUE;
+                info.is_nr       = TRUE;
+            }
+            if (!info.has_nr_rsrq && nr_cell_rsrq != 0) {
+                info.nr_rsrq     = nr_cell_rsrq;
+                info.has_nr_rsrq = TRUE;
+            }
+            if (!info.has_nr_snr && nr_cell_snr != 0) {
+                info.nr_snr     = nr_cell_snr;
+                info.has_nr_snr = TRUE;
+            }
+        }
+
         guint16 earfcn = 0, pci16 = 0;
         GArray *cells  = NULL;
         if (qmi_message_nas_get_cell_location_info_output_get_intrafrequency_lte_info_v2(
@@ -528,7 +624,6 @@ static void on_cell_location(QmiClientNas *client, GAsyncResult *res, gpointer u
             info.has_pci = TRUE;
         }
 
-        /* TA */
         guint32 ta32 = 0xFFFFFFFF;
         if (qmi_message_nas_get_cell_location_info_output_get_lte_info_timing_advance(
                 out, &ta32, NULL)) {
@@ -566,7 +661,6 @@ static void on_lte_ca(QmiClientNas *client, GAsyncResult *res, gpointer ud)
             }
         }
 
-        /* SCC — probe scell_info (secondary cell) */
         {
             guint16           scc_pci   = 0;
             guint16           scc_rx    = 0;
@@ -584,17 +678,14 @@ static void on_lte_ca(QmiClientNas *client, GAsyncResult *res, gpointer ud)
                 guint32 total     = info.has_bw_dl ? bw_index_to_khz(info.bw_dl) : 0;
                 char tmp[16];
                 
-                /* For text mode: B40 */
                 snprintf(tmp, sizeof(tmp), "B%u", active_band_to_lte_band(scc_band));
                 g_strlcat(info.scc_bands, tmp, sizeof(info.scc_bands));
-				/* For json mode: +40 */
 				snprintf(tmp, sizeof(tmp), "+%u", active_band_to_lte_band(scc_band));
                 g_strlcat(info.scc_bands_json, tmp, sizeof(info.scc_bands_json));
                 
                 total += bw_index_to_khz((guint8)scc_bw);
                 info.bw_ca_total = total;
             } else {
-                /* Fallback: massive secondary cells */
                 GArray *scc_arr = NULL;
                 if (qmi_message_nas_get_lte_cphy_ca_info_output_get_phy_ca_agg_secondary_cells(
                         out, &scc_arr, NULL) && scc_arr && scc_arr->len > 0) {
@@ -611,11 +702,9 @@ static void on_lte_ca(QmiClientNas *client, GAsyncResult *res, gpointer ud)
                         char tmp[16];
                         
                         if (i > 0) g_strlcat(info.scc_bands, ",", sizeof(info.scc_bands));
-						/* For text mode: B40 */
                         snprintf(tmp, sizeof(tmp), "B%u", active_band_to_lte_band(el->lte_band));
                         g_strlcat(info.scc_bands, tmp, sizeof(info.scc_bands));
-						/* For json mode: +40 */
-                        snprintf(tmp, sizeof(tmp), "+%u", active_band_to_lte_band(el->lte_band));
+                        snprintf(tmp, sizeof(tmp), "+%u ", active_band_to_lte_band(el->lte_band));
                         g_strlcat(info.scc_bands_json, tmp, sizeof(info.scc_bands_json));						
                         
                         total += bw_index_to_khz((guint8)el->dl_bandwidth);
@@ -641,7 +730,6 @@ static void on_signal_info(QmiClientNas *client, GAsyncResult *res, gpointer ud)
         qmi_client_nas_get_signal_info_finish(nas, res, &err);
 
     if (out && qmi_message_nas_get_signal_info_output_get_result(out, NULL)) {
-        /* LTE: rssi=gint8, rsrq=gint8, rsrp=gint16, snr=gint16 (все *0.1) */
         gint8  lrssi = 0, lrsrq = 0;
         gint16 lrsrp = 0, lsnr  = 0;
         if (qmi_message_nas_get_signal_info_output_get_lte_signal_strength(
@@ -656,7 +744,6 @@ static void on_signal_info(QmiClientNas *client, GAsyncResult *res, gpointer ud)
             info.is_umts  = FALSE;
         }
 
-        /* WCDMA: rssi=gint8, ecio=gint16 */
         gint8  wrssi = 0;
         gint16 wecio = 0;
         if (qmi_message_nas_get_signal_info_output_get_wcdma_signal_strength(
@@ -667,13 +754,41 @@ static void on_signal_info(QmiClientNas *client, GAsyncResult *res, gpointer ud)
             info.is_umts  = TRUE;
         }
 
-        /* GSM */
         gint8 grssi = 0;
         if (!info.has_rsrp && !info.has_sinr &&
             qmi_message_nas_get_signal_info_output_get_gsm_signal_strength(
                 out, &grssi, NULL)) {
             info.rssi = grssi;
             info.is_umts = FALSE;
+        }
+
+        gint16 nr_rsrp = 0, nr_rsrq = 0, nr_snr = 0;
+        gboolean got_nr = FALSE;
+
+        if (qmi_message_nas_get_signal_info_output_get_5g_signal_strength(
+                out, &nr_rsrp, &nr_snr, NULL)) {
+            got_nr = TRUE;
+            info.has_nr_snr = (nr_snr != 0);
+        }
+        if (qmi_message_nas_get_signal_info_output_get_5g_signal_strength_extended(
+                out, &nr_rsrq, NULL)) {
+            info.has_nr_rsrq = TRUE;
+        }
+
+        if (got_nr) {
+            info.nr_rsrp     = nr_rsrp;
+            info.nr_rsrq     = nr_rsrq;
+            info.nr_snr      = nr_snr;
+            info.has_nr_rsrp = TRUE;
+            info.is_nr       = TRUE;
+            if (!info.has_rsrp) {
+                info.rsrp     = nr_rsrp;
+                info.rsrq     = (gint8)(nr_rsrq / 10);
+                info.sinr     = nr_snr;
+                info.has_rsrp = TRUE;
+                info.has_rsrq = info.has_nr_rsrq;
+                info.has_sinr = info.has_nr_snr;
+            }
         }
     }
     g_clear_error(&err);
@@ -682,7 +797,7 @@ static void on_signal_info(QmiClientNas *client, GAsyncResult *res, gpointer ud)
 }
 
 /* ═══════════════════════════════════════════════════════════════
- * NAS — Get RF Band Information (для ARFCN в 3G/UMTS)
+ * NAS — Get RF Band Information
  * ═══════════════════════════════════════════════════════════════ */
 static void on_rf_band_info(QmiClientNas *client, GAsyncResult *res, gpointer ud)
 {
@@ -693,23 +808,31 @@ static void on_rf_band_info(QmiClientNas *client, GAsyncResult *res, gpointer ud
 
     if (out && qmi_message_nas_get_rf_band_information_output_get_result(out, NULL)) {
         GArray *list = NULL;
-        
-        /* get main list band information */
+        GArray *ext_list = NULL;
+        qmi_message_nas_get_rf_band_information_output_get_extended_list(
+            out, &ext_list, NULL);
+
         if (qmi_message_nas_get_rf_band_information_output_get_list(
                 out, &list, NULL) && list && list->len > 0) {
-            
-            QmiMessageNasGetRfBandInformationOutputListElement *el =
-                &g_array_index(list, QmiMessageNasGetRfBandInformationOutputListElement, 0);
-            
-            /* if non LTE/5GNR (UMTS/GSM) */
-            if (el->radio_interface != QMI_NAS_RADIO_INTERFACE_LTE && 
-                el->radio_interface != QMI_NAS_RADIO_INTERFACE_5GNR &&
-                el->active_channel != 0) {
-                
-                /* ARFCN non LTE */
-                if (!info.has_arfcn) {
-                    info.arfcn = el->active_channel;
-                    info.has_arfcn = TRUE;
+
+            for (guint i = 0; i < list->len; i++) {
+                QmiMessageNasGetRfBandInformationOutputListElement *el =
+                    &g_array_index(list,
+                        QmiMessageNasGetRfBandInformationOutputListElement, i);
+
+                if (el->radio_interface == QMI_NAS_RADIO_INTERFACE_5GNR) {
+                    if (!info.has_arfcn && el->active_channel != 0) {
+                        info.arfcn        = (guint16)(el->active_channel & 0xFFFF);
+                        info.nr_arfcn     = el->active_channel;
+                        info.has_arfcn    = TRUE;
+                        info.has_nr_arfcn = TRUE;
+                    }
+                    info.is_nr = TRUE;
+                } else if (el->radio_interface != QMI_NAS_RADIO_INTERFACE_LTE) {
+                    if (!info.has_arfcn && el->active_channel != 0) {
+                        info.arfcn     = (guint16)(el->active_channel & 0xFFFF);
+                        info.has_arfcn = TRUE;
+                    }
                 }
             }
         }
@@ -751,13 +874,11 @@ static void on_serving_system(QmiClientNas *client, GAsyncResult *res, gpointer 
                 out, &mcc, &mnc, &opname, NULL) && opname)
             strncpy(info.cops, opname, sizeof(info.cops) - 1);
 
-        /* LTE TAC */
         guint16 tac_tmp = 0;
         if (qmi_message_nas_get_serving_system_output_get_lte_tac(
                 out, &tac_tmp, NULL) && tac_tmp != 0xFFFF && tac_tmp != 0xFFFE) {
             info.lac = tac_tmp;
         } else {
-            /* Fallback: LAC 3GPP */
             guint16 lac_tmp = 0;
             if (qmi_message_nas_get_serving_system_output_get_lac_3gpp(
                     out, &lac_tmp, NULL) && lac_tmp != 0xFFFE && lac_tmp != 0xFFFF) {
@@ -772,6 +893,77 @@ static void on_serving_system(QmiClientNas *client, GAsyncResult *res, gpointer 
     }
     g_clear_error(&err);
     if (out) qmi_message_nas_get_serving_system_output_unref(out);
+    check_done();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * NAS — Get System Info (5G NSA/SA detection)
+ * ═══════════════════════════════════════════════════════════════ */
+static void on_system_info(QmiClientNas *client, GAsyncResult *res, gpointer ud)
+{
+    (void)client; (void)ud;
+    GError *err = NULL;
+    QmiMessageNasGetSystemInfoOutput *out =
+        qmi_client_nas_get_system_info_finish(nas, res, &err);
+
+    if (out && qmi_message_nas_get_system_info_output_get_result(out, NULL)) {
+
+        gboolean nr_available = FALSE;
+        if (qmi_message_nas_get_system_info_output_get_eutra_with_nr5g_availability(
+                out, &nr_available, NULL) && nr_available) {
+            info.nr_nsa = TRUE;
+            info.is_nr  = TRUE;
+        }
+
+        gboolean dcnr = FALSE;
+        if (qmi_message_nas_get_system_info_output_get_dcnr_restriction_info(
+                out, &dcnr, NULL))
+            info.dcnr_restricted = dcnr;
+
+        QmiNasServiceStatus nr_svc = QMI_NAS_SERVICE_STATUS_NONE;
+        if (qmi_message_nas_get_system_info_output_get_nr5g_service_status_info(
+                out, &nr_svc, NULL, NULL, NULL)) {
+            if (nr_svc == QMI_NAS_SERVICE_STATUS_AVAILABLE ||
+                nr_svc == QMI_NAS_SERVICE_STATUS_LIMITED) {
+                info.nr_sa = TRUE;
+                info.is_nr = TRUE;
+            }
+        }
+
+        gboolean tac_valid = FALSE, cid_valid = FALSE;
+        guint16  nr_tac = 0;
+        guint32  nr_cid = 0;
+        if (qmi_message_nas_get_system_info_output_get_nr5g_system_info(
+                out,
+                NULL, NULL,
+                NULL, NULL,
+                NULL, NULL,
+                NULL, NULL,
+                NULL, NULL,
+                &cid_valid, &nr_cid,
+                NULL, NULL, NULL,
+                NULL, NULL, NULL,
+                &tac_valid, &nr_tac,
+                NULL)) {
+            if (tac_valid && nr_tac && nr_tac != 0xFFFF)
+                info.lac = nr_tac;
+            if (cid_valid && nr_cid && nr_cid != 0xFFFFFFFF)
+                info.cid = nr_cid;
+        }
+
+        GArray *nr_tac_arr = NULL;
+        if (qmi_message_nas_get_system_info_output_get_nr5g_tracking_area_code(
+                out, &nr_tac_arr, NULL) && nr_tac_arr && nr_tac_arr->len >= 3) {
+            guint8 *tb = (guint8 *)nr_tac_arr->data;
+            guint32 tac = ((guint32)tb[0] << 16) |
+                          ((guint32)tb[1] <<  8) |
+                           (guint32)tb[2];
+            if (tac && tac != 0xFFFFFF && info.nr_sa)
+                info.lac = tac;
+        }
+    }
+    g_clear_error(&err);
+    if (out) qmi_message_nas_get_system_info_output_unref(out);
     check_done();
 }
 
@@ -877,13 +1069,14 @@ static void on_firmware(QmiClientDms *client, GAsyncResult *res, gpointer ud)
 /* ═══════════════════════════════════════════════════════════════
  * run processes if DMS and NAS ready. Model recieved
  * ═══════════════════════════════════════════════════════════════ */
-/* forward declaration */
 static void on_manufacturer(QmiClientDms *client, GAsyncResult *res, gpointer ud);
 
 static void fire_all_requests(void)
 {
-    pending = 11;
+    pending = 12;
 
+    qmi_client_nas_get_system_info(nas, NULL, 10, NULL,
+        (GAsyncReadyCallback)on_system_info, NULL);
     qmi_client_dms_get_manufacturer(dms, NULL, 10, NULL,
         (GAsyncReadyCallback)on_manufacturer, NULL);
     qmi_client_dms_get_software_version(dms, NULL, 10, NULL,
@@ -909,9 +1102,6 @@ static void fire_all_requests(void)
         (GAsyncReadyCallback)on_rf_band_info, NULL);
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * DMS — Get Manufacturer (merge of USB ID)
- * ═══════════════════════════════════════════════════════════════ */
 static void on_manufacturer(QmiClientDms *client, GAsyncResult *res, gpointer ud)
 {
     (void)client; (void)ud;
@@ -919,11 +1109,9 @@ static void on_manufacturer(QmiClientDms *client, GAsyncResult *res, gpointer ud
     QmiMessageDmsGetManufacturerOutput *out =
         qmi_client_dms_get_manufacturer_finish(dms, res, &err);
 
-    /* if no USB data use libQMI  */
     if (!info.has_model && out && qmi_message_dms_get_manufacturer_output_get_result(out, NULL)) {
         const gchar *v = NULL;
         if (qmi_message_dms_get_manufacturer_output_get_manufacturer(out, &v, NULL) && v) {
-            /* Skip Qualcomm name */
             if (g_ascii_strncasecmp(v, "QUALCOMM", 8) != 0) {
                 snprintf(info.model, sizeof(info.model), "%s", v);
                 info.has_model = TRUE;
@@ -935,9 +1123,6 @@ static void on_manufacturer(QmiClientDms *client, GAsyncResult *res, gpointer ud
     check_done();
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * DMS — Get Model: save model in USB ID and libQMI
- * ═══════════════════════════════════════════════════════════════ */
 static void on_model(QmiClientDms *client, GAsyncResult *res, gpointer ud)
 {
     (void)client; (void)ud;
@@ -953,7 +1138,6 @@ static void on_model(QmiClientDms *client, GAsyncResult *res, gpointer ud)
     g_clear_error(&err);
     if (out) qmi_message_dms_get_model_output_unref(out);
 
-    /* Read USB ID manufacturer and product */
     char usb_manufacturer[128] = {0};
     char usb_product[128] = {0};
     
@@ -966,11 +1150,8 @@ static void on_model(QmiClientDms *client, GAsyncResult *res, gpointer ud)
     read_usb_id(dev_name, usb_manufacturer, sizeof(usb_manufacturer), 
                 usb_product, sizeof(usb_product));
     
-    /* Former model at USB ID */
     if (usb_manufacturer[0] && usb_product[0]) {
-        /* Check duplicate words manufacturer and product */
         if (g_ascii_strncasecmp(usb_product, usb_manufacturer, strlen(usb_manufacturer)) == 0) {
-            /*  Only product, if manufacturer exist */
             snprintf(info.model, sizeof(info.model), "%s", usb_product);
         } else {
             snprintf(info.model, sizeof(info.model), "%s %s", 
@@ -988,9 +1169,6 @@ static void on_model(QmiClientDms *client, GAsyncResult *res, gpointer ud)
     fire_all_requests();
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * DMS — Get IDs (IMEI)
- * ═══════════════════════════════════════════════════════════════ */
 static void on_ids(QmiClientDms *client, GAsyncResult *res, gpointer ud)
 {
     (void)client; (void)ud;
@@ -1015,12 +1193,10 @@ static void on_ids(QmiClientDms *client, GAsyncResult *res, gpointer ud)
 /* ═══════════════════════════════════════════════════════════════
  * Open clients
  * ═══════════════════════════════════════════════════════════════ */
-/* clients_ready: timer — if all (DMS+NAS) open */
 static gint clients_ready = 0;
 
 static void start_dms_chain(void)
 {
-    /* run DMS if all clients ready */
     clients_ready++;
     if (clients_ready == 2)
         qmi_client_dms_get_ids(dms, NULL, 10, NULL,
@@ -1055,7 +1231,6 @@ static void on_dms_client(QmiDevice *dev, GAsyncResult *res, gpointer ud)
     }
     dms = QMI_CLIENT_DMS(c);
 
-    /* open NAS */
     qmi_device_allocate_client(device, QMI_SERVICE_NAS,
         QMI_CID_NONE, 10, NULL,
         (GAsyncReadyCallback)on_nas_client, NULL);
@@ -1116,7 +1291,6 @@ static void try_open_device(void)
 
     if (mbim) {
         flags |= QMI_DEVICE_OPEN_FLAGS_MBIM;
-        //fprintf(stderr, "Opening as QMI over MBIM\n");
     } else {
         flags |= QMI_DEVICE_OPEN_FLAGS_NET_802_3 |
                  QMI_DEVICE_OPEN_FLAGS_NET_NO_QOS_HEADER;
@@ -1185,11 +1359,10 @@ int main(int argc, char *argv[])
     info.chip_temp = -999;
     info.csq       = -1;
     info.is_umts   = FALSE;
+    info.is_nr     = FALSE;
 
     /* In auto-detect mode, suppress QMI warnings that are expected
-     * when probing QMI on an MBIM-only device:
-     *   "requested QMI mode but unexpected transport type found"
-     *   "Cannot read from istream: connection broken" */
+     * when probing QMI on an MBIM-only device */
     if (device_mode == MODE_AUTO) {
         g_log_set_handler("Qmi",
             G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
@@ -1204,7 +1377,6 @@ int main(int argc, char *argv[])
 
     g_main_loop_run(loop);
 
-    /* destroy sesion do_release_clients() */
     if (device) {
         g_object_unref(device);
         device = NULL;
