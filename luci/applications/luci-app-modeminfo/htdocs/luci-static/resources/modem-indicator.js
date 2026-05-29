@@ -77,7 +77,9 @@ function updateIndicator() {
         var parts = data.modem.map(function(modem) {
             var percent = parseInt(modem.csq_per);
             var cops = modem.cops || '';
-            var mode = modem.mode + (parseInt(modem.lteca) > 0 ? '+' : '');
+            //var mode = modem.mode + (parseInt(modem.lteca) > 0 ? '+' : '');
+	    var mode = modem.mode;
+	    if (modem.mode !== 'LTE+NR' && parseInt(modem.lteca) > 0) mode += '+';
             return { mode: mode, cops: cops, percent: percent };
         });
 

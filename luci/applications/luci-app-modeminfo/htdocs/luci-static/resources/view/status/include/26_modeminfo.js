@@ -83,11 +83,9 @@ return baseclass.extend({
 
 					var per = p+'%';
 
-					var ca;
-					if (json.modem[i].lteca > 0) {
+					var ca = "";
+					if (json.modem[i].lteca > 0 && json.modem[i].mode !== 'LTE+NR') {
 						ca = "+";
-					} else {
-						ca = "";
 					}
 
 					signal.innerHTML = String.format(

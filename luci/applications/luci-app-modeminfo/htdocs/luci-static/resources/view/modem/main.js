@@ -275,13 +275,14 @@ function buildModeInfo(modem, netmode, band, bw) {
 	let carrier  = '';
 	let bcc, bca, bwDisplay, namech, namesnr, namecid, lactac;
 
-	if (netmode === 'LTE') {
+	if (netmode === 'LTE' || netmode === 'LTE+NR') {
 		const calte = modem.lteca;
 		namech  = 'EARFCN';
 		namesnr = 'SINR';
-
+	
 		if (calte > 0) {
-			carrier   = '+';
+			//carrier   = '+';
+			const carrier = (netmode === 'LTE' && modem.lteca > 0) ? '+' : '';
 			bwDisplay = modem.bwca;
 			bcc       = ` B${band}${modem.scc}`;
 			bca       = bwDisplay ? ` / ${bwDisplay} MHz` : '';
@@ -385,7 +386,7 @@ return view.extend({
 					// ── Band / Frequency ────────────────────────────────────
 					let dlfreq, ulfreq, band, bw;
 
-					if (netmode === 'LTE') {
+					if (netmode === 'LTE' || netmode === 'LTE+NR') {
 						({ dlfreq, ulfreq, band } = calcLteBand(rfcn));
 						const bandwidths = [1.4, 3, 5, 10, 15, 20];
 						bw = bandwidths[modem.bwdl] || '';
