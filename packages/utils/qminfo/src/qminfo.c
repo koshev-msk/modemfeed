@@ -450,7 +450,7 @@ static void emit_results(void)
     if (info.nr_nsa && !info.dcnr_restricted)
         json_mode_str = "LTE+NR";
     else if (info.nr_sa)
-        json_mode_str = "5G NR";
+        json_mode_str = "5GNR";
     else
         json_mode_str = info.mode[0] ? info.mode : "";
 
@@ -491,7 +491,11 @@ static void emit_results(void)
     printf("  \"scc\"      : \"%s\",\n",  b_scc);
     printf("  \"bwca\"     : \"%u\",\n",  info.has_ca ? info.bw_ca_total / 1000 : 0);
     printf("  \"iccid\"    : \"%s\",\n",  b_iccid);
-    printf("  \"imsi\"     : \"%s\"\n",   b_imsi);
+    printf("  \"imsi\"     : \"%s\",\n",   b_imsi);
+    if (info.has_pci)
+        printf("  \"pci\"      : \"%u\"\n", info.pci);
+    else
+        printf("  \"pci\"      : \"\"\n");
     printf("}\n");
 }
 
@@ -704,7 +708,7 @@ static void on_lte_ca(QmiClientNas *client, GAsyncResult *res, gpointer ud)
                         if (i > 0) g_strlcat(info.scc_bands, ",", sizeof(info.scc_bands));
                         snprintf(tmp, sizeof(tmp), "B%u", active_band_to_lte_band(el->lte_band));
                         g_strlcat(info.scc_bands, tmp, sizeof(info.scc_bands));
-                        snprintf(tmp, sizeof(tmp), "+%u ", active_band_to_lte_band(el->lte_band));
+                        snprintf(tmp, sizeof(tmp), "+%u", active_band_to_lte_band(el->lte_band));
                         g_strlcat(info.scc_bands_json, tmp, sizeof(info.scc_bands_json));						
                         
                         total += bw_index_to_khz((guint8)el->dl_bandwidth);
