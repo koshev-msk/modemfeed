@@ -1,0 +1,195 @@
+From 92322894187a5203277e80b8e462946d8dc3b4a0 Mon Sep 17 00:00:00 2001
+From: Nikolay Kulikov <nikolayof23@gmail.com>
+Date: Sun, 31 May 2026 18:09:53 +0300
+Subject: [PATCH 1/2] common: remove unused code from kprintf.c
+
+The following functions:
+	reopen_logs()
+	kdb_write()
+	nck_pwrite()
+are never called, so remove them to eliminate dead code.
+
+The global variable 'reindex_speed' is no longer needed after deleting
+the kdb_write() function, so remove it too.
+
+Signed-off-by: Nikolay Kulikov <nikolayof23@gmail.com>
+---
+ src/common/kprintf.c | 68 --------------------------------------------
+ src/common/kprintf.h |  7 -----
+ src/engine/engine.h  |  1 -
+ 3 files changed, 76 deletions(-)
+
+diff --git a/src/common/kprintf.c b/src/common/kprintf.c
+index 64f8213..950b153 100644
+--- a/src/common/kprintf.c
++++ b/src/common/kprintf.c
+@@ -69,10 +69,6 @@ void reopen_logs_ext (int slave_mode) {
+   }
+ }
+ 
+-void reopen_logs (void) {
+-  reopen_logs_ext (0);
+-}
+-
+ int hexdump (const void *start, const void *end) {
+   char s[256];
+   const char *ptr = start;
+@@ -101,66 +97,6 @@ int hexdump (const void *start, const void *end) {
+   return end - start;
+ }
+ 
+-
+-double reindex_speed = (32 << 20);
+-
+-void kdb_write (int fd, const void *buf, long long count, const char *filename) {
+-  assert (count >= 0);
+-
+-  static double total_count;
+-  static double last_time;
+-  int write_fail_count = 0;
+-  while (count) {
+-    long long l = !reindex_speed ? count : count >= (1 << 20) ? (1 << 20) : count;
+-
+-    if (reindex_speed) {
+-      double t = get_utime_monotonic ();
+-      total_count = total_count * exp ((last_time - t) * 0.1);
+-      last_time = t;
+-
+-      if (total_count > reindex_speed) {
+-        double k = log (total_count / reindex_speed) * 10;
+-        assert (k >= 0);
+-        struct timespec ts;
+-        ts.tv_nsec = ((int)((k - floor (k)) * 1e9)) % 1000000000;
+-        ts.tv_sec = (int)k;
+-        nanosleep (&ts, 0);
+-      }
+-    }
+-    long long w = write (fd, buf, l);
+-    if (w <= 0) {
+-      assert (-1 <= w);
+-      if (write_fail_count < 10000 && (w == 0 || errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)) {
+-        write_fail_count++;
+-        continue;
+-      }
+-
+-      fprintf (stderr, "kdb_write: write %lld bytes to the file '%s' returns %lld. %m\n", l, filename, w);
+-      exit (1);
+-    }
+-    assert (w <= l);
+-    write_fail_count = 0;
+-
+-    if (reindex_speed) {
+-      static long long data_after_fsync;
+-      data_after_fsync += w;
+-      if (data_after_fsync >= (1 << 20)) {
+-        if (fsync (fd) < 0) {
+-          fprintf (stderr, "kdb_write: fsyncing file '%s' failed. %m\n", filename);
+-          exit (1);
+-        }
+-        data_after_fsync = 0;
+-      }
+-      double t = get_utime_monotonic ();
+-      total_count = total_count * exp ((last_time - t) * 0.1);
+-      last_time = t;
+-      total_count += w * 0.1;
+-    }
+-    count -= w;
+-    buf += w;
+-  }
+-}
+-
+ static inline void kwrite_print_int (char **s, const char *name, int name_len, int i) {
+   if (i < 0) {
+     i = INT_MAX;
+@@ -276,7 +212,3 @@ void kprintf (const char *format, ...) {
+ void nck_write (int fd, const void *data, size_t len) {
+   if (write (fd, data, len)) {}
+ }
+-
+-void nck_pwrite (int fd, const void *data, size_t len, off_t offset) {
+-  if (pwrite (fd, data, len, offset)) {}
+-}
+diff --git a/src/common/kprintf.h b/src/common/kprintf.h
+index a80b853..00d80bd 100644
+--- a/src/common/kprintf.h
++++ b/src/common/kprintf.h
+@@ -31,15 +31,9 @@
+ extern int verbosity;
+ extern const char *logname;
+ 
+-void reopen_logs (void);
+ void reopen_logs_ext (int slave_mode);
+ int hexdump (const void *start, const void *end);
+ 
+-extern double reindex_speed;
+-
+-// safely writes buf to fd, considering write speed limit
+-void kdb_write (int fd, const void *buf, long long count, const char *filename);
+-
+ // write message with timestamp and pid, safe to call inside handler
+ int kwrite (int fd, const void *buf, int count);
+ 
+@@ -53,4 +47,3 @@ void kprintf (const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+   } while (0)
+ 
+ void nck_write (int fd, const void *data, size_t len);
+-void nck_pwrite (int fd, const void *data, size_t len, off_t offset);
+diff --git a/src/engine/engine.h b/src/engine/engine.h
+index 337998e..24ee255 100644
+--- a/src/engine/engine.h
++++ b/src/engine/engine.h
+@@ -202,7 +202,6 @@ ENGINE_INT_PARAM(required_cpu_threads,required_cpu_threads);
+ ENGINE_INT_PARAM(required_tcp_cpu_threads,required_tcp_cpu_threads);
+ ENGINE_INT_PARAM(required_tcp_io_threads,required_tcp_io_threads);
+ 
+-void reopen_logs (void);
+ int default_main (server_functions_t *F, int argc, char *argv[]);
+ void default_parse_extra_args (int argc, char *argv[]);
+ void engine_tl_init (struct tl_act_extra *(*parse)(struct tl_in_state *,long long), void (*stat)(), int (get_op)(struct tl_in_state *), double timeout, const char *name);
+
+From 2373fbd911f4078514111e9ae6f358f443f85608 Mon Sep 17 00:00:00 2001
+From: Nikolay Kulikov <nikolayof23@gmail.com>
+Date: Sun, 31 May 2026 18:18:52 +0300
+Subject: [PATCH 2/2] common: replace nck_write() with a direct call to write()
+
+This function wraps the write() system call, but doesn't perform any
+success checks. Replace it with a direct write() call, which will make
+the code a bit clearer.
+
+Signed-off-by: Nikolay Kulikov <nikolayof23@gmail.com>
+---
+ src/common/kprintf.c | 6 +-----
+ src/common/kprintf.h | 2 --
+ 2 files changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/src/common/kprintf.c b/src/common/kprintf.c
+index 950b153..1049e61 100644
+--- a/src/common/kprintf.c
++++ b/src/common/kprintf.c
+@@ -91,7 +91,7 @@ int hexdump (const void *start, const void *end) {
+       }
+     }
+     s[p ++] = '\n';
+-    nck_write (2, s, p);
++    write (2, s, p);
+     ptr += 16;
+   }
+   return end - start;
+@@ -208,7 +208,3 @@ void kprintf (const char *format, ...) {
+   //while (flock (2, LOCK_UN) < 0 && errno == EINTR);
+   errno = old_errno;
+ }
+-
+-void nck_write (int fd, const void *data, size_t len) {
+-  if (write (fd, data, len)) {}
+-}
+diff --git a/src/common/kprintf.h b/src/common/kprintf.h
+index 00d80bd..51578df 100644
+--- a/src/common/kprintf.h
++++ b/src/common/kprintf.h
+@@ -45,5 +45,3 @@ void kprintf (const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+     } \
+     kprintf ((format), ##__VA_ARGS__); \
+   } while (0)
+-
+-void nck_write (int fd, const void *data, size_t len);
