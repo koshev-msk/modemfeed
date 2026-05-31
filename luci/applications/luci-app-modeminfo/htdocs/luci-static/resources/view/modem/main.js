@@ -20,7 +20,7 @@
 const REGISTERED_STATUSES = [1, 6, 9];
 const ROAMING_STATUSES    = [3, 5, 7, 10];
 
-// ─── Signal Icons ────────────────────────────────────────────────────────────
+// Signal Icons
 const SIGNAL_ICONS = [
 	{ max: 10,       icn: 'signal-000-000.svg' },
 	{ max: 25,       icn: 'signal-000-025.svg' },
@@ -29,7 +29,7 @@ const SIGNAL_ICONS = [
 	{ max: Infinity, icn: 'signal-075-100.svg' },
 ];
 
-// ─── Registration Status Labels ───────────────────────────────────────────────
+// Registration Status Labels
 const REG_STATUSES = new Map([
 	[0, _('No Registration')],
 	[2, _('Searching')],  [8, _('Searching')],
@@ -38,7 +38,7 @@ const REG_STATUSES = new Map([
 	[5, _('Roaming')],    [7, _('Roaming')], [10, _('Roaming')],
 ]);
 
-// ─── Progress bar configuration ───────────────────────────────────────────────
+// Progress bar configuration
 // calc(vn, mn): vn = clamped signal value, mn = min boundary
 // All formulas normalise the value to 0–100% range for the progress bar.
 const PROGRESS_CONFIG = {
@@ -74,7 +74,7 @@ const PROGRESS_CONFIG = {
 	},
 };
 
-// ─── LTE EARFCN → band/frequency table ───────────────────────────────────────
+// LTE EARFCN band/frequency table
 const LTE_BANDS = [
 	{ min: 0,     max: 599,   frdl: 2110,  frul: 1920,  offset: 0,     band: '1'  },
 	{ min: 600,   max: 1199,  frdl: 1930,  frul: 1850,  offset: 600,   band: '2'  },
@@ -91,7 +91,7 @@ const LTE_BANDS = [
 	{ min: 39650, max: 41589, frdl: 2496,  frul: 2496,  offset: 39650, band: '41' },
 ];
 
-// ─── Non-LTE (UMTS/GSM) ARFCN → band/frequency table ─────────────────────────
+// Non-LTE (UMTS/GSM) ARFCN band/frequency table
 const NON_LTE_BANDS = [
 	{
 		condition: rfcn => rfcn >= 10562 && rfcn <= 10838,
@@ -117,7 +117,7 @@ const NON_LTE_BANDS = [
 
 const UMTS_MODES = /(HS|3G|UMTS|WCDMA)/i;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 /**
  * Safe getElementById wrapper.
@@ -277,12 +277,11 @@ function buildModeInfo(modem, netmode, band, bw) {
 
 	if (netmode === 'LTE' || netmode === 'LTE+NR') {
 		const calte = modem.lteca;
+		carrier = (netmode === 'LTE' && calte > 0) ? '+' : '';
 		namech  = 'EARFCN';
 		namesnr = 'SINR';
 	
 		if (calte > 0) {
-			//carrier   = '+';
-			const carrier = (netmode === 'LTE' && modem.lteca > 0) ? '+' : '';
 			bwDisplay = modem.bwca;
 			bcc       = ` B${band}${modem.scc}`;
 			bca       = bwDisplay ? ` / ${bwDisplay} MHz` : '';
@@ -357,7 +356,7 @@ function updateSignalBar(elId, idx, rawVal, unit, type, boundary) {
 	}
 }
 
-// ─── Main view ────────────────────────────────────────────────────────────────
+// Main view
 
 return view.extend({
 
@@ -383,7 +382,7 @@ return view.extend({
 					const netmode = modem.mode  || '';
 					const rfcn    = modem.arfcn || 0;
 
-					// ── Band / Frequency ────────────────────────────────────
+					// Band / Frequency
 					let dlfreq, ulfreq, band, bw;
 
 					if (netmode === 'LTE' || netmode === 'LTE+NR') {
@@ -397,18 +396,18 @@ return view.extend({
 
 					const arfcnStr = `${rfcn} (${dlfreq} / ${ulfreq} MHz)`;
 
-					// ── Registration ────────────────────────────────────────
+					// Registration
 					const rg  = Number(modem.reg);
 					const reg = REG_STATUSES.get(rg) || _('No Data');
 
-					// ── Signal icon ─────────────────────────────────────────
+					// Signal icon
 					const icon = resolveSignalIcon(modem.csq_per || 0);
 
-					// ── Mode-specific labels ────────────────────────────────
+					// Mode-specific labels
 					const { carrier, bcc, bca, namech, namesnr, namecid, lactac, namebnd } =
 						buildModeInfo(modem, netmode, band, bw);
 
-					// ── DOM updates ─────────────────────────────────────────
+					// DOM updates
 					setHtml('status' + i,  formatModemStatus(modem, icon, reg));
 
 					const modeEl = getEl('mode' + i);
@@ -428,7 +427,7 @@ return view.extend({
 					setHtml('arfcn'   + i, arfcnStr);
 					setHtml('lac'     + i, lactac);
 
-					// ── Progress bars ───────────────────────────────────────
+					// Progress bars
 					// RSSI always visible if element exists
 					if (getEl('rssi' + i)) {
 						if (!modem.rssi || modem.rssi === '') {
