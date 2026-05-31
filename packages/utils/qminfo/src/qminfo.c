@@ -22,6 +22,8 @@
 #include <math.h>
 #include <unistd.h>
 #include <libqmi-glib.h>
+#include "qminfo-bands.h"
+#include "qminfo-helpers.h"
 
 /* ═══════════════════════════════════════════════════════════════
  * main data
@@ -55,7 +57,7 @@ typedef struct {
 
     gint    lte_ca;
     char    scc_bands[128];
-	char    scc_bands_json[128];
+    char    scc_bands_json[128];
     guint32 bw_ca_total; /* kHz */
 
     gboolean has_rsrp;
@@ -114,123 +116,6 @@ typedef enum {
 
 static DeviceMode    device_mode = MODE_AUTO;
 static gint          open_retries = 0;  /* retry counter for auto mode */
-
-/* ═══════════════════════════════════════════════════════════════
- * helpers
- * ═══════════════════════════════════════════════════════════════ */
-
-static guint32 bw_index_to_khz(guint8 bw)
-{
-    static const guint32 t[] = { 1400, 3000, 5000, 10000, 15000, 20000 };
-    return (bw < 6) ? t[bw] : 0;
-}
-
-static int csq_to_percent(int csq)
-{
-    if (csq < 0 || csq > 31) return -1;
-    return (csq * 100) / 31;
-}
-
-static float ta_to_km(guint32 ta)
-{
-    /* QMI TA μsec.
-     * d = c * t / 2 = 299792458 * (ta * 10^-6) / 2 / 1000 (in km) */
-    float d = (299792458.0f * (float)ta * 1e-6f) / 2.0f / 1000.0f;
-    return roundf(d * 100.0f) / 100.0f;
-}
-
-static const char *radio_to_mode(QmiNasRadioInterface iface)
-{
-    switch (iface) {
-    case QMI_NAS_RADIO_INTERFACE_GSM:         return "GSM";
-    case QMI_NAS_RADIO_INTERFACE_UMTS:        return "UMTS";
-    case QMI_NAS_RADIO_INTERFACE_CDMA_1X:     return "CDMA";
-    case QMI_NAS_RADIO_INTERFACE_CDMA_1XEVDO: return "EVDO";
-    case QMI_NAS_RADIO_INTERFACE_LTE:         return "LTE";
-    case QMI_NAS_RADIO_INTERFACE_5GNR:        return "5G NR";
-    default:                                   return "Unknown";
-    }
-}
-
-static const char *reg_state_to_string(QmiNasRegistrationState state)
-{
-    switch (state) {
-    case QMI_NAS_REGISTRATION_STATE_NOT_REGISTERED:          return "Not Registered";
-    case QMI_NAS_REGISTRATION_STATE_REGISTERED:              return "Registered";
-    case QMI_NAS_REGISTRATION_STATE_NOT_REGISTERED_SEARCHING: return "Searching";
-    case QMI_NAS_REGISTRATION_STATE_REGISTRATION_DENIED:     return "Denied";
-    case QMI_NAS_REGISTRATION_STATE_UNKNOWN:                 return "Unknown";
-    default:                                                  return "Unknown";
-    }
-}
-
-static guint active_band_to_lte_band(QmiNasActiveBand band)
-{
-    /* QmiNasActiveBand enum to LTE band */
-    switch (band) {
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_1:   return 1;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_2:   return 2;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_3:   return 3;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_4:   return 4;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_5:   return 5;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_6:   return 6;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_7:   return 7;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_8:   return 8;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_9:   return 9;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_10:  return 10;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_11:  return 11;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_12:  return 12;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_13:  return 13;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_14:  return 14;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_17:  return 17;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_18:  return 18;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_19:  return 19;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_20:  return 20;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_21:  return 21;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_23:  return 23;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_24:  return 24;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_25:  return 25;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_26:  return 26;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_27:  return 27;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_28:  return 28;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_29:  return 29;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_30:  return 30;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_31:  return 31;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_32:  return 32;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_33:  return 33;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_34:  return 34;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_35:  return 35;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_36:  return 36;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_37:  return 37;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_38:  return 38;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_39:  return 39;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_40:  return 40;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_41:  return 41;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_42:  return 42;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_43:  return 43;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_46:  return 46;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_47:  return 47;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_48:  return 48;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_66:  return 66;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_71:  return 71;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_125: return 125;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_126: return 126;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_127: return 127;
-    case QMI_NAS_ACTIVE_BAND_EUTRAN_250: return 250;
-    default:                             return 0;
-    }
-}
-
-static void jstr(char *dst, size_t sz, const char *src)
-{
-    if (!src) { dst[0] = '\0'; return; }
-    size_t j = 0;
-    for (size_t i = 0; src[i] && j + 2 < sz; i++) {
-        if (src[i] == '"' || src[i] == '\\') dst[j++] = '\\';
-        dst[j++] = src[i];
-    }
-    dst[j] = '\0';
-}
 
 /* ═══════════════════════════════════════════════════════════════
  * Read USB ID from sysfs
@@ -295,10 +180,10 @@ static void on_nas_released(QmiDevice *dev, GAsyncResult *res, gpointer ud)
     GError *err = NULL;
     qmi_device_release_client_finish(device, res, &err);
     g_clear_error(&err);
-	if (nas){
-		g_object_unref(nas);
-		nas = NULL;
-	}
+    if (nas){
+        g_object_unref(nas);
+        nas = NULL;
+    }
     do_close_device();
 }
 
@@ -308,10 +193,10 @@ static void on_dms_released(QmiDevice *dev, GAsyncResult *res, gpointer ud)
     GError *err = NULL;
     qmi_device_release_client_finish(device, res, &err);
     g_clear_error(&err);
-	if (dms){
-		g_object_unref(dms);
-		dms = NULL;
-	}
+    if (dms){
+        g_object_unref(dms);
+        dms = NULL;
+    }
 
     if (nas) {
         qmi_device_release_client(device, QMI_CLIENT(nas),
@@ -381,17 +266,30 @@ static void emit_results(void)
         printf("  CID        : %llu\n",(unsigned long long)info.cid);
         printf("  eNB ID     : %u\n",  info.enb_id);
         printf("  Sector     : %u\n",  info.cell_sector);
-        if (info.has_arfcn) printf("  RF Chan.   : %u\n",  info.arfcn);
+        //if (info.has_arfcn) printf("  RF Chan.   : %u\n",  info.arfcn);
+        if (info.has_nr_arfcn && info.nr_arfcn != 0) {
+            guint nr_band = nrarfcn_to_nr_band(info.nr_arfcn);
+            if (nr_band)
+                printf("  RF Chan.   : %u (n%d)\n", info.nr_arfcn, nr_band);
+            else
+                printf("  RF Chan.   : %u\n", info.nr_arfcn);
+        } else if (info.has_arfcn) {
+            guint lte_band = earfcn_to_lte_band(info.arfcn);
+            if (lte_band)
+                printf("  RF Chan.   : %u (B%d)\n", info.arfcn, lte_band);
+            else
+                printf("  RF Chan.   : %u\n", info.arfcn);
+        }
         if (info.has_pci)   printf("  PCI        : %u\n",  info.pci);
         if (dist_km >= 0)   printf("  Distance   : ~%.2f km (TA=%u)\n", dist_km, info.ta);
-		if (info.has_bw_dl && strcmp(info.mode, "LTE") == 0) 
-			printf("  BW DL      : %.1f MHz\n", bw_index_to_khz(info.bw_dl) / 1000.0f);
+        if (info.has_bw_dl && strcmp(info.mode, "LTE") == 0) 
+            printf("  BW DL      : %.1f MHz\n", bw_index_to_khz(info.bw_dl) / 1000.0f);
         printf("-------------------------------------------------\n");
-		if (info.has_csq)  printf("  Strength   : %d%% (CSQ %d)\n", csq_pct, info.csq);
+        if (info.has_csq)  printf("  Strength   : %d%% (CSQ %d)\n", csq_pct, info.csq);
         printf("  RSSI       : %d dBm\n", info.rssi);
         if (info.has_rsrp) printf("  RSRP       : %d dBm\n", (int)roundf(info.rsrp));
         if (info.has_rsrq) printf("  RSRQ       : %d dB\n",  (int)roundf(info.rsrq));
-        if (info.has_sinr) printf("  %s       : %d dB\n", siname, (int)roundf(info.sinr / 10.0f));
+        if (info.has_sinr) printf("  %s      : %d dB\n", siname, (int)roundf(info.sinr / 10.0f));
         if (info.is_nr && (info.has_nr_rsrp || info.has_nr_rsrq || info.has_nr_snr)) {
             if (info.has_nr_rsrp && info.nr_rsrp > -32700)
                 printf("  NR RSRP    : %d dBm\n", (int)roundf(info.nr_rsrp / 10.0f));
@@ -450,7 +348,7 @@ static void emit_results(void)
     if (info.nr_nsa && !info.dcnr_restricted)
         json_mode_str = "LTE+NR";
     else if (info.nr_sa)
-        json_mode_str = "5GNR";
+        json_mode_str = "5G NR";
     else
         json_mode_str = info.mode[0] ? info.mode : "";
 
@@ -477,10 +375,10 @@ static void emit_results(void)
     else
         printf("  \"chiptemp\" : \"\",\n");
     printf("  \"firmware\" : \"%s\",\n",  b_fw);
-	if (info.has_bw_dl && strcmp(info.mode, "LTE") == 0)
-		printf("  \"bwdl\"     : \"%u\",\n",  info.has_bw_dl ? (guint32)info.bw_dl : 0);
-	else
-		printf("  \"bwdl\"     : \"\",\n");
+    if (info.has_bw_dl && strcmp(info.mode, "LTE") == 0)
+        printf("  \"bwdl\"     : \"%u\",\n",  info.has_bw_dl ? (guint32)info.bw_dl : 0);
+    else
+        printf("  \"bwdl\"     : \"\",\n");
     printf("  \"lteca\"    : \"%d\",\n",  info.has_ca ? info.lte_ca : 0);
     printf("  \"enbid\"    : \"%u\",\n",  info.enb_id);
     if (dist_km >= 0.0f)
@@ -491,7 +389,7 @@ static void emit_results(void)
     printf("  \"scc\"      : \"%s\",\n",  b_scc);
     printf("  \"bwca\"     : \"%u\",\n",  info.has_ca ? info.bw_ca_total / 1000 : 0);
     printf("  \"iccid\"    : \"%s\",\n",  b_iccid);
-    printf("  \"imsi\"     : \"%s\",\n",   b_imsi);
+    printf("  \"imsi\"     : \"%s\",\n",  b_imsi);
     if (info.has_pci)
         printf("  \"pci\"      : \"%u\"\n", info.pci);
     else
@@ -678,13 +576,13 @@ static void on_lte_ca(QmiClientNas *client, GAsyncResult *res, gpointer ud)
                 info.has_ca       = TRUE;
                 info.lte_ca       = 1;
                 info.scc_bands[0] = '\0';
-				info.scc_bands_json[0] = '\0';
+                info.scc_bands_json[0] = '\0';
                 guint32 total     = info.has_bw_dl ? bw_index_to_khz(info.bw_dl) : 0;
                 char tmp[16];
                 
                 snprintf(tmp, sizeof(tmp), "B%u", active_band_to_lte_band(scc_band));
                 g_strlcat(info.scc_bands, tmp, sizeof(info.scc_bands));
-				snprintf(tmp, sizeof(tmp), "+%u", active_band_to_lte_band(scc_band));
+                snprintf(tmp, sizeof(tmp), "+%u", active_band_to_lte_band(scc_band));
                 g_strlcat(info.scc_bands_json, tmp, sizeof(info.scc_bands_json));
                 
                 total += bw_index_to_khz((guint8)scc_bw);
@@ -696,7 +594,7 @@ static void on_lte_ca(QmiClientNas *client, GAsyncResult *res, gpointer ud)
                     info.has_ca       = TRUE;
                     info.lte_ca       = (gint)scc_arr->len;
                     info.scc_bands[0] = '\0';
-					info.scc_bands_json[0] = '\0';
+                    info.scc_bands_json[0] = '\0';
                     guint32 total     = info.has_bw_dl ? bw_index_to_khz(info.bw_dl) : 0;
                     
                     for (guint i = 0; i < scc_arr->len; i++) {
@@ -1250,7 +1148,6 @@ static void on_device_open(QmiDevice *dev, GAsyncResult *res, gpointer ud)
     GError *err = NULL;
     if (!qmi_device_open_finish(device, res, &err)) {
         if (device_mode == MODE_AUTO && open_retries == 0) {
-            /* QMI failed in auto mode — retry with MBIM */
             g_clear_error(&err);
             open_retries++;
             try_open_device();
@@ -1262,7 +1159,6 @@ static void on_device_open(QmiDevice *dev, GAsyncResult *res, gpointer ud)
         return;
     }
 
-    /* Restore normal log handler after successful open in auto mode */
     if (device_mode == MODE_AUTO)
         g_log_set_handler("Qmi",
             G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
@@ -1273,7 +1169,6 @@ static void on_device_open(QmiDevice *dev, GAsyncResult *res, gpointer ud)
         (GAsyncReadyCallback)on_dms_client, NULL);
 }
 
-/* Open device with flags depending on mode / retry state */
 static void try_open_device(void)
 {
     QmiDeviceOpenFlags flags = QMI_DEVICE_OPEN_FLAGS_PROXY;
@@ -1288,7 +1183,6 @@ static void try_open_device(void)
         break;
     case MODE_AUTO:
     default:
-        /* First attempt: QMI; after retry: MBIM */
         mbim = (open_retries > 0);
         break;
     }
@@ -1318,16 +1212,12 @@ static void on_device_new(GObject *src, GAsyncResult *res, gpointer ud)
     try_open_device();
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * Silent log handler — suppresses GLib/QMI warnings
- * ═══════════════════════════════════════════════════════════════ */
 static void log_silent(const gchar    *domain,
                        GLogLevelFlags  level,
                        const gchar    *message,
                        gpointer        user_data)
 {
     (void)domain; (void)level; (void)message; (void)user_data;
-    /* intentionally empty */
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1365,8 +1255,6 @@ int main(int argc, char *argv[])
     info.is_umts   = FALSE;
     info.is_nr     = FALSE;
 
-    /* In auto-detect mode, suppress QMI warnings that are expected
-     * when probing QMI on an MBIM-only device */
     if (device_mode == MODE_AUTO) {
         g_log_set_handler("Qmi",
             G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,

@@ -44,6 +44,7 @@ endif
 
 TARGET := qminfo
 SRC    := qminfo.c
+HDRS   := qminfo-bands.h qminfo-helpers.h
 OBJ    := $(SRC:.c=.o)
 
 # pkg-config
