@@ -299,8 +299,8 @@ static void emit_results(void)
                 printf("  NR SNR     : %d dB\n",  (int)roundf(info.nr_snr  / 10.0f));
         }
         if (info.has_ca) {
-            printf("  LTE-A SCC  : %d — %s\n", info.lte_ca, info.scc_bands);
-            printf("  BW CA      : %.1f MHz\n",   info.bw_ca_total / 1000.0f);
+            printf("  SCC        : %dxCA — %s\n", info.lte_ca, info.scc_bands);
+            printf("  BW CA      : %.1f MHz\n",   (info.bw_ca_total - bw_index_to_khz(info.bw_dl)) / 1000.0f);
         }
         printf("=================================================\n");
         return;
@@ -348,7 +348,7 @@ static void emit_results(void)
     if (info.nr_nsa && !info.dcnr_restricted)
         json_mode_str = "LTE+NR";
     else if (info.nr_sa)
-        json_mode_str = "5G NR";
+        json_mode_str = "5GNR";
     else
         json_mode_str = info.mode[0] ? info.mode : "";
 

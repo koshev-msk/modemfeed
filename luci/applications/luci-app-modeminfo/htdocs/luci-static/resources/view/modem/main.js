@@ -15,6 +15,7 @@
 	Licensed to the GNU General Public License v3.0.
 
 	Refactored: bug fixes, performance improvements, code deduplication.
+	Modified: 5G NR support with combined band display
 */
 
 const REGISTERED_STATUSES = [1, 6, 9];
@@ -39,37 +40,30 @@ const REG_STATUSES = new Map([
 ]);
 
 // Progress bar configuration
-// calc(vn, mn): vn = clamped signal value, mn = min boundary
-// All formulas normalise the value to 0–100% range for the progress bar.
 const PROGRESS_CONFIG = {
 	rssi: {
 		selector: '#rssi',
 		min: -110, max: -50,
-		// Linear map from [-110..-50] → [0..100]
 		calc: (vn, mn) => Math.floor(100 * (1 - (-50 - vn) / (-50 - mn))),
 	},
 	rsrp: {
 		selector: '#rsrp',
 		min: -140, max: -50,
-		// Slightly expanded scale (×1.2) to better use bar width
 		calc: (vn, mn) => Math.floor(120 * (1 - (-50 - vn) / (-70 - mn))),
 	},
 	sinr: {
 		selector: '#sinr',
 		min: -20, max: 30,
-		// Linear map from [-20..30] → [0..100]
 		calc: (vn, mn) => Math.floor(100 - (100 * (1 - ((mn - vn) / (mn - 30))))),
 	},
 	rsrq: {
 		selector: '#rsrq',
 		min: -20, max: 0,
-		// Proportional map from [-20..0] → [0..100]
 		calc: (vn, mn) => Math.floor(115 - (100 / mn) * vn),
 	},
 	ecio: {
 		selector: '#sinr',
 		min: -24, max: 0,
-		// Same shape as rsrq but for EC/IO range [-24..0]
 		calc: (vn, mn) => Math.floor(100 - (100 / mn) * vn),
 	},
 };
@@ -89,6 +83,20 @@ const LTE_BANDS = [
 	{ min: 37750, max: 38249, frdl: 2570,  frul: 2570,  offset: 37750, band: '38' },
 	{ min: 38650, max: 39649, frdl: 2300,  frul: 2300,  offset: 38650, band: '40' },
 	{ min: 39650, max: 41589, frdl: 2496,  frul: 2496,  offset: 39650, band: '41' },
+];
+
+// 5G NR bands for FR1 (3GPP TS 38.104)
+const NR_BANDS = [
+	{ min: 422000, max: 434000, name: '1',  dlLow: 2110, offset: 422000 },
+	{ min: 361000, max: 376000, name: '3',  dlLow: 1805, offset: 361000 },
+	{ min: 173800, max: 178800, name: '5',  dlLow: 869,  offset: 173800 },
+	{ min: 524000, max: 538000, name: '7',  dlLow: 2620, offset: 524000 },
+	{ min: 185000, max: 192000, name: '8',  dlLow: 925,  offset: 185000 },
+	{ min: 158200, max: 164200, name: '20', dlLow: 791,  offset: 158200 },
+	{ min: 499200, max: 538000, name: '41', dlLow: 2496, offset: 499200, tdd: true },
+	{ min: 653333, max: 680000, name: '77', dlLow: 3300, offset: 620000, tdd: true },
+	{ min: 620000, max: 653332, name: '78', dlLow: 3300, offset: 620000, tdd: true },
+	{ min: 693334, max: 733333, name: '79', dlLow: 4400, offset: 693334, tdd: true },
 ];
 
 // Non-LTE (UMTS/GSM) ARFCN band/frequency table
@@ -117,34 +125,16 @@ const NON_LTE_BANDS = [
 
 const UMTS_MODES = /(HS|3G|UMTS|WCDMA)/i;
 
-// Helpers
-
-/**
- * Safe getElementById wrapper.
- * @param {string} id
- * @returns {HTMLElement|null}
- */
+// Helper functions
 function getEl(id) {
 	return document.getElementById(id);
 }
 
-/**
- * Show or hide the grandparent row of a signal element.
- * @param {HTMLElement} el
- * @param {boolean} show
- */
 function setRowVisible(el, show) {
 	const row = el && el.parentElement && el.parentElement.parentElement;
 	if (row) row.style.display = show ? '' : 'none';
 }
 
-/**
- * Update a cbi-progressbar element.
- * @param {string}  type   - Key in PROGRESS_CONFIG
- * @param {string}  value  - Raw signal value string (e.g. "-85 dBm")
- * @param {number}  max    - Boundary value (passed as second calc argument)
- * @param {number}  idx    - Modem index suffix for the element id
- */
 function updateProgressBar(type, value, max, idx) {
 	const config = PROGRESS_CONFIG[type];
 	if (!config) return;
@@ -156,28 +146,16 @@ function updateProgressBar(type, value, max, idx) {
 	const mn = parseInt(max) || 100;
 	const pc = Math.min(100, Math.max(0, config.calc(vn, mn)));
 
-	pg.firstElementChild.style.width              = `${pc}%`;
+	pg.firstElementChild.style.width = `${pc}%`;
 	pg.firstElementChild.style.animationDirection = 'reverse';
 	pg.setAttribute('title', String(value));
 }
 
-/**
- * Format distance string, returns empty string when unavailable.
- * @param {string|number} dist
- * @returns {string}
- */
 function formatDistance(dist) {
 	if (!dist || dist === '--' || dist === '' || dist === '0.00') return '';
 	return ' ~' + dist + ' km';
 }
 
-/**
- * Build the operator status badge HTML safely using LuCI E() helper.
- * @param {Object} modem  - Single modem entry from JSON
- * @param {string} icon   - URL to signal icon
- * @param {string} reg    - Human-readable registration status
- * @returns {string}      - Safe innerHTML string via dom.content
- */
 function formatModemStatus(modem, icon, reg) {
 	const rg           = parseInt(modem.reg) || 0;
 	const p            = modem.csq_per || 0;
@@ -201,44 +179,31 @@ function formatModemStatus(modem, icon, reg) {
 	}
 }
 
-/**
- * Derive signal icon URL from signal percentage.
- * @param {number} pct
- * @returns {string}
- */
 function resolveSignalIcon(pct) {
 	const { icn } = SIGNAL_ICONS.find(({ max }) => pct <= max) || SIGNAL_ICONS[SIGNAL_ICONS.length - 1];
 	return L.resource(`view/modem/icons/${icn}`);
 }
 
-/**
- * Calculate DL/UL frequencies and band name for LTE mode.
- * @param {number} rfcn
- * @returns {{ dlfreq: number, ulfreq: number, band: string, frdl: number, frul: number, offset: number }}
- */
 function calcLteBand(rfcn) {
 	const b = LTE_BANDS.find(b => rfcn >= b.min && rfcn <= b.max);
-	if (!b) return { frdl: 0, frul: 0, offset: 0, band: String(rfcn), dlfreq: 0, ulfreq: 0 };
+	if (!b) return { band: String(rfcn), dlfreq: 0, ulfreq: 0 };
 	const dlfreq = b.frdl + (rfcn - b.offset) / 10;
 	const ulfreq = b.frul + (rfcn - b.offset) / 10;
-	return { ...b, dlfreq, ulfreq };
+	return { band: b.band, dlfreq, ulfreq };
 }
 
-/**
- * Calculate DL/UL frequencies and band name for non-LTE modes.
- * @param {number} rfcn
- * @returns {{ dlfreq: number, ulfreq: number, band: string }}
- */
+function calcNrBand(nrarfcn) {
+	const b = NR_BANDS.find(b => nrarfcn >= b.min && nrarfcn <= b.max);
+	if (!b) return { band: String(nrarfcn), dlfreq: 0 };
+	const dlfreq = b.dlLow + (nrarfcn - b.offset) / 1000;
+	return { band: b.name, dlfreq };
+}
+
 function calcNonLteBand(rfcn) {
 	const match = NON_LTE_BANDS.find(b => b.condition(rfcn));
-	return match ? match.calc(rfcn) : { ulfreq: 0, dlfreq: 0, band: String(rfcn) };
+	return match ? match.calc(rfcn) : { band: String(rfcn), dlfreq: 0, ulfreq: 0 };
 }
 
-/**
- * Build a LAC/CID/eNB/Cell/PCI label and value string.
- * @param {Object} modem - Single modem entry
- * @returns {{ namecid: string, lactac: string }}
- */
 function buildCellId(modem) {
 	const { enbid, cell, pci, lac, cid } = modem;
 	const parts   = [lac, cid];
@@ -263,16 +228,8 @@ function buildCellId(modem) {
 	return { namecid, lactac };
 }
 
-/**
- * Derive mode-specific labels and carrier aggregation info.
- * @param {Object} modem   - Single modem entry
- * @param {string} netmode
- * @param {string} band
- * @param {number} bw
- * @returns {{ carrier, bcc, bca, bwDisplay, namech, namesnr, namecid, lactac, namebnd }}
- */
 function buildModeInfo(modem, netmode, band, bw) {
-	let carrier  = '';
+	let carrier = '';
 	let bcc, bca, bwDisplay, namech, namesnr, namecid, lactac;
 
 	if (netmode === 'LTE' || netmode === 'LTE+NR') {
@@ -280,15 +237,29 @@ function buildModeInfo(modem, netmode, band, bw) {
 		carrier = (netmode === 'LTE' && calte > 0) ? '+' : '';
 		namech  = 'EARFCN';
 		namesnr = 'SINR';
-	
+
 		if (calte > 0) {
 			bwDisplay = modem.bwca;
-			bcc       = ` B${band}${modem.scc}`;
-			bca       = bwDisplay ? ` / ${bwDisplay} MHz` : '';
+			let sccFormatted = modem.scc || '';
+			if (netmode === '5GNR' && sccFormatted) {
+				sccFormatted = sccFormatted.replace(/\+(\d+)/g, '+n$1');
+				if (sccFormatted.startsWith('+n')) {
+					sccFormatted = sccFormatted.substring(1);
+				}
+				if (sccFormatted) sccFormatted = '+' + sccFormatted;
+			}
+			bcc = ` ${band}${sccFormatted}`;
+			bca = bwDisplay ? ` / ${bwDisplay} MHz` : '';
 		} else {
 			bwDisplay = bw;
-			bcc       = ` B${band}`;
-			bca       = bw ? ` / ${bw} MHz` : '';
+			bcc = ` ${band}`;
+			if (netmode === 'LTE+NR' && bw) {
+				bca = ` / ${bw} MHz`;
+			} else if (bw) {
+				bca = ` / ${bw} MHz`;
+			} else {
+				bca = '';
+			}
 		}
 
 		const cellInfo = buildCellId(modem);
@@ -317,35 +288,16 @@ function buildModeInfo(modem, netmode, band, bw) {
 	return { carrier, bcc, bca: bca || '', bwDisplay, namech, namesnr, namecid, lactac, namebnd };
 }
 
-/**
- * Set textContent of element by id (if it exists).
- * @param {string} id
- * @param {string} text
- */
 function setText(id, text) {
 	const el = getEl(id);
 	if (el) el.textContent = text;
 }
 
-/**
- * Set innerHTML of element by id (if it exists).
- * @param {string} id
- * @param {string} html
- */
 function setHtml(id, html) {
 	const el = getEl(id);
 	if (el) el.innerHTML = html;
 }
 
-/**
- * Update a signal progress bar, hiding its parent row if value is missing.
- * @param {string} elId    - Element id (without modem index)
- * @param {number} idx     - Modem index
- * @param {*}      rawVal  - Raw value from modem JSON
- * @param {string} unit    - Unit suffix, e.g. ' dBm'
- * @param {string} type    - Key in PROGRESS_CONFIG
- * @param {number} boundary
- */
 function updateSignalBar(elId, idx, rawVal, unit, type, boundary) {
 	const el = getEl(elId + idx);
 	if (!el) return;
@@ -357,7 +309,6 @@ function updateSignalBar(elId, idx, rawVal, unit, type, boundary) {
 }
 
 // Main view
-
 return view.extend({
 
 	load: function() {
@@ -381,20 +332,66 @@ return view.extend({
 					const modem   = json.modem[i];
 					const netmode = modem.mode  || '';
 					const rfcn    = modem.arfcn || 0;
+					const nrArfcn = modem.nr_arfcn || 0;
 
 					// Band / Frequency
-					let dlfreq, ulfreq, band, bw;
+					let lteBand = '', nrBand = '';
+					let lteDlfreq = 0, nrDlfreq = 0;
+					let band = '', bw = '';
 
+					// LTE band and frequency (for LTE and LTE+NR)
 					if (netmode === 'LTE' || netmode === 'LTE+NR') {
-						({ dlfreq, ulfreq, band } = calcLteBand(rfcn));
-						const bandwidths = [1.4, 3, 5, 10, 15, 20];
-						bw = bandwidths[modem.bwdl] || '';
-					} else {
-						({ dlfreq, ulfreq, band } = calcNonLteBand(rfcn));
-						bw = '';
+						const lte = calcLteBand(rfcn);
+						lteBand = `B${lte.band}`;
+						lteDlfreq = lte.dlfreq;
 					}
 
-					const arfcnStr = `${rfcn} (${dlfreq} / ${ulfreq} MHz)`;
+					// NR band (for LTE+NR and 5G NR)
+					if (netmode === '5GNR' && nrArfcn) {
+						const nr = calcNrBand(nrArfcn);
+						nrBand = `n${nr.band}`;
+						nrDlfreq = nr.dlfreq;
+					}
+
+					// Combined band display
+					let bandDisplay = '';
+					if (lteBand && nrBand) {
+						bandDisplay = `${lteBand} + ${nrBand}`;
+					} else if (lteBand) {
+						bandDisplay = lteBand;
+					} else if (nrBand) {
+						bandDisplay = nrBand;
+					} else {
+						// Fallback for UMTS/GSM
+						const nonLte = calcNonLteBand(rfcn);
+						bandDisplay = nonLte.band;
+						lteDlfreq = nonLte.dlfreq;
+					}
+
+					// Bandwidth handling
+					const lteBandwidths = [1.4, 3, 5, 10, 15, 20];
+					const nrBandwidths = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100];
+					if (netmode === 'LTE' || netmode === 'LTE+NR') {
+						if (modem.bwca && modem.bwca > 0) {
+							bw = modem.bwca;
+						} else {
+							bw = lteBandwidths[modem.bwdl] || '';
+						}
+					} else if (netmode === '5GNR') {
+						if (modem.bwca && modem.bwca > 0) {
+							bw = modem.bwca;
+						} else if (modem.bwdl) {
+							bw = nrBandwidths[modem.bwdl] || '';
+						}
+					}
+
+					// Frequency display - only primary (LTE or NR)
+					let arfcnDisplay = '';
+					if (lteDlfreq) {
+						arfcnDisplay = `${rfcn} (${lteDlfreq.toFixed(1)} MHz)`;
+					} else if (nrDlfreq && nrArfcn) {
+						arfcnDisplay = `${nrArfcn} (${nrDlfreq.toFixed(1)} MHz)`;
+					}
 
 					// Registration
 					const rg  = Number(modem.reg);
@@ -403,16 +400,15 @@ return view.extend({
 					// Signal icon
 					const icon = resolveSignalIcon(modem.csq_per || 0);
 
-					// Mode-specific labels
+					// Build mode info for CA and other labels
 					const { carrier, bcc, bca, namech, namesnr, namecid, lactac, namebnd } =
-						buildModeInfo(modem, netmode, band, bw);
+						buildModeInfo(modem, netmode, bandDisplay, bw);
 
 					// DOM updates
-					setHtml('status' + i,  formatModemStatus(modem, icon, reg));
+					setHtml('status' + i, formatModemStatus(modem, icon, reg));
 
 					const modeEl = getEl('mode' + i);
 					if (modeEl) {
-						// FIX: was `signal = 0` (assignment), must be `=== 0`
 						if (modem.signal === 0 || modem.signal === '' || !netmode) {
 							modeEl.textContent = '--';
 						} else {
@@ -424,11 +420,10 @@ return view.extend({
 					setText('chname'  + i, namech);
 					setText('namecid' + i, namecid);
 					setText('snrname' + i, namesnr);
-					setHtml('arfcn'   + i, arfcnStr);
+					setHtml('arfcn'   + i, arfcnDisplay);
 					setHtml('lac'     + i, lactac);
 
 					// Progress bars
-					// RSSI always visible if element exists
 					if (getEl('rssi' + i)) {
 						if (!modem.rssi || modem.rssi === '') {
 							setText('rssi' + i, '--');
@@ -437,17 +432,13 @@ return view.extend({
 						}
 					}
 
-					// SINR / ECIO (shared element, hidden when unavailable)
 					updateSignalBar(
 						'sinr', i, modem.sinr, ' dB',
 						netmode === 'LTE' ? 'sinr' : 'ecio',
 						netmode === 'LTE' ? -20 : -24
 					);
 
-					// RSRP (hidden when unavailable)
 					updateSignalBar('rsrp', i, modem.rsrp, ' dBm', 'rsrp', -140);
-
-					// RSRQ (hidden when unavailable)
 					updateSignalBar('rsrq', i, modem.rsrq, ' dB',  'rsrq', -20);
 				}
 			});
