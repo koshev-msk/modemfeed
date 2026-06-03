@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
 PKG_VERSION:=0.9.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -51,7 +51,15 @@ endef
 define Build/Compile
     $(MAKE) -C $(PKG_BUILD_DIR) -f Makefile.Linux \
         CC="$(TARGET_CC)" \
-        CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -fPIC -fno-strict-aliasing -c -pthread -DNOODBC -DGETHOSTBYNAME_R -D_THREAD_SAFE -D_REENTRANT -DFD_SETSIZE=4096 -DWITH_POLL -DWITH_NETFILTER" \
+        CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -fPIC -fno-strict-aliasing -c -pthread \
+		-DNOODBC \
+		-DGETHOSTBYNAME_R \
+		-D_THREAD_SAFE \
+		-D_REENTRANT \
+		-DFD_SETSIZE=4096 \
+		-DWITH_POLL \
+		-DWITH_NETFILTER \
+		-DWITHSPLICE" \
         LDFLAGS="$(TARGET_LDFLAGS)" \
         LIBS="-ldl -lcrypto -lssl -lpcre2-8" \
         PLUGINS="SSLPlugin PCREPlugin StringsPlugin TrafficPlugin TransparentPlugin" \
