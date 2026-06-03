@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
-PKG_VERSION:=0.9.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.9.6
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -10,7 +10,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/z3APA3A/3proxy.git
-PKG_SOURCE_VERSION:=f23fc4fc4458606a257a9f26bc37251fc60e1cc7
+PKG_SOURCE_VERSION:=a2641cb103438b8caa5fcc551f085bcb5f244d47
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -48,8 +48,16 @@ define Package/$(PKG_NAME)/description
 	3APA3A 3proxy tiny proxy servers
 endef
 
-define Build/Configure
-	$(CP) $(PKG_BUILD_DIR)/Makefile.Linux $(PKG_BUILD_DIR)/Makefile
+define Build/Compile
+    $(MAKE) -C $(PKG_BUILD_DIR) -f Makefile.Linux \
+        CC="$(TARGET_CC)" \
+        CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -fPIC -fno-strict-aliasing -c -pthread -DNOODBC -DGETHOSTBYNAME_R -D_THREAD_SAFE -D_REENTRANT -DFD_SETSIZE=4096 -DWITH_POLL -DWITH_NETFILTER" \
+        LDFLAGS="$(TARGET_LDFLAGS)" \
+        LIBS="-ldl -lcrypto -lssl -lpcre2-8" \
+        PLUGINS="SSLPlugin PCREPlugin StringsPlugin TrafficPlugin TransparentPlugin" \
+        OPENSSL_CHECK=true \
+        PCRE_CHECK=true \
+        PAM_CHECK=false
 endef
 
 define Package/$(PKG_NAME)/conffiles
