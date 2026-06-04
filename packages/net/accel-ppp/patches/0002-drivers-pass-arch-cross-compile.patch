@@ -1,0 +1,72 @@
+diff --git a/drivers/ipoe/CMakeLists.txt b/drivers/ipoe/CMakeLists.txt
+index d0d6902..a349a87 100644
+--- a/drivers/ipoe/CMakeLists.txt
++++ b/drivers/ipoe/CMakeLists.txt
+@@ -3,9 +3,17 @@ if (NOT DEFINED KDIR)
+ 	set(KDIR "/usr/src/linux")
+ endif (NOT DEFINED KDIR)
+ 
++if (NOT DEFINED KARCH)
++	set(KARCH "")
++endif()
++
++if (NOT DEFINED CROSS_COMPILE)
++	set(CROSS_COMPILE "")
++endif()
++
+ # Try to figure out the kernel release once so we can show it before building.
+ execute_process(
+-	COMMAND make -s -C ${KDIR} kernelrelease
++	COMMAND make -s -C ${KDIR} ARCH=${KARCH} CROSS_COMPILE=${CROSS_COMPILE} kernelrelease
+ 	RESULT_VARIABLE IPOE_KERNEL_RELEASE_RESULT
+ 	OUTPUT_VARIABLE IPOE_KERNEL_RELEASE
+ 	OUTPUT_STRIP_TRAILING_WHITESPACE
+@@ -32,7 +40,7 @@ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/driver/ipoe.ko
+ 	COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/* ${CMAKE_CURRENT_BINARY_DIR}/driver
+ 	COMMAND ln -sf ${CMAKE_BINARY_DIR}/version.h ${CMAKE_CURRENT_BINARY_DIR}/driver
+ 	COMMAND ${CMAKE_COMMAND} -E echo "[ 99%] Generating driver/ipoe.ko for kernel ${IPOE_KERNEL_RELEASE}"
+-	COMMAND make -C ${KDIR} M=${CMAKE_CURRENT_BINARY_DIR}/driver modules
++	COMMAND make -C ${KDIR} ARCH=${KARCH} CROSS_COMPILE=${CROSS_COMPILE} M=${CMAKE_CURRENT_BINARY_DIR}/driver modules
+ 	DEPENDS ipoe.c ipoe.h
+ )
+ 
+@@ -41,5 +49,5 @@ ADD_CUSTOM_TARGET(ipoe_drv ALL
+ )
+ 
+ IF (NOT DEFINED CPACK_TYPE)
+-	INSTALL(CODE "EXECUTE_PROCESS(COMMAND make -C ${KDIR} M=${CMAKE_CURRENT_BINARY_DIR}/drivers/ipoe modules_install)")
++	INSTALL(CODE "EXECUTE_PROCESS(COMMAND make -C ${KDIR} ARCH=${KARCH} CROSS_COMPILE=${CROSS_COMPILE} M=${CMAKE_CURRENT_BINARY_DIR}/drivers/ipoe modules_install)")
+ ENDIF()
+diff --git a/drivers/vlan_mon/CMakeLists.txt b/drivers/vlan_mon/CMakeLists.txt
+index b4c8e34..c660e65 100644
+--- a/drivers/vlan_mon/CMakeLists.txt
++++ b/drivers/vlan_mon/CMakeLists.txt
+@@ -2,12 +2,20 @@ if (NOT DEFINED KDIR)
+ 	set(KDIR "/usr/src/linux")
+ endif (NOT DEFINED KDIR)
+ 
++if (NOT DEFINED KARCH)
++	set(KARCH "")
++endif()
++
++if (NOT DEFINED CROSS_COMPILE)
++	set(CROSS_COMPILE "")
++endif()
++
+ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/driver/vlan_mon.ko
+ 	COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/driver
+ 	COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/driver
+ 	COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/* ${CMAKE_CURRENT_BINARY_DIR}/driver
+ 	COMMAND ln -sf ${CMAKE_BINARY_DIR}/version.h ${CMAKE_CURRENT_BINARY_DIR}/driver
+-	COMMAND make -C ${KDIR} M=${CMAKE_CURRENT_BINARY_DIR}/driver modules
++	COMMAND make -C ${KDIR} ARCH=${KARCH} CROSS_COMPILE=${CROSS_COMPILE} M=${CMAKE_CURRENT_BINARY_DIR}/driver modules
+ 	DEPENDS vlan_mon.c vlan_mon.h
+ )
+ 
+@@ -16,5 +24,5 @@ ADD_CUSTOM_TARGET(vlan_mon_drv ALL
+ )
+ 
+ if (NOT DEFINED CPACK_TYPE)
+-	INSTALL(CODE "EXECUTE_PROCESS(COMMAND make -C ${KDIR} M=${CMAKE_CURRENT_BINARY_DIR}/drivers/vlan_mon modules_install)")
++	INSTALL(CODE "EXECUTE_PROCESS(COMMAND make -C ${KDIR} ARCH=${KARCH} CROSS_COMPILE=${CROSS_COMPILE} M=${CMAKE_CURRENT_BINARY_DIR}/drivers/vlan_mon modules_install)")
+ endif ()

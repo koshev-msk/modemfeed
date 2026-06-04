@@ -1,0 +1,39 @@
+config ACCEL_PPP_RADIUS
+	bool "Build with Radius"
+	depends on PACKAGE_accel-ppp
+	default n
+	help
+	  Enable RADIUS authentication and accounting support.
+	  Uses OpenSSL for cryptographic operations.
+
+config ACCEL_PPP_SHAPER
+	bool "Build with shaper"
+	depends on PACKAGE_accel-ppp
+	default n
+	help
+	  Enable traffic shaping support.
+
+config ACCEL_PPP_SNMP
+	bool "Build with SNMP"
+	depends on PACKAGE_accel-ppp
+	default n
+	help
+	  Enable SNMP support for monitoring.
+	  Adds dependency on netsnmp package.
+
+config ACCEL_PPP_PGSQL_LOG
+	bool "Build with PostgreSQL logging"
+	depends on PACKAGE_accel-ppp
+	default n
+	help
+	  Enable PostgreSQL logging support.
+	  If enabled, file logging will be disabled.
+	  Adds dependency on libpq package.
+
+config ACCEL_PPP_FILE_LOG
+	bool "Build with file logging"
+	depends on PACKAGE_accel-ppp
+	default y
+	help
+	  Enable file logging support.
+	  Automatically disabled when PostgreSQL logging is enabled.
