@@ -95,8 +95,9 @@ BEGIN {
     nr_bands[47] = "2229166-2279166:n260"
     nr_bands[48] = "2070833-2084999:n261"
 
-    if (mode ~ /^(5GNR|^LTE\+NR)$/) {
+    if (mode ~ /^(5GNR|LTE\+NR)$/) {
         result = find_band(value, nr_bands)
+	if (result == "") result = find_band(value, lte_bands)
         print (result != "" ? result : 0)
     } else if (mode ~ /^LTE/) {
         result = find_band(value, lte_bands)
