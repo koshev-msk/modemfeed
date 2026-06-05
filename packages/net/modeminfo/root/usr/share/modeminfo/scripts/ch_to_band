@@ -20,7 +20,7 @@ BEGIN {
     value = ARGV[2]
     ARGC = 1
 
-    # LTE Bands
+    # LTE Bands (EARFCN)
     lte_bands[0] = "0-599:1"
     lte_bands[1] = "600-1199:2"
     lte_bands[2] = "1200-1949:3"
@@ -35,14 +35,70 @@ BEGIN {
     lte_bands[11] = "38650-39649:40"
     lte_bands[12] = "39650-41589:41"
 
-    # Other Bands
+    # Other Bands (GSM/UMTS ARFCN/UARFCN)
     other_bands[0] = "1-124:GSM900"
     other_bands[1] = "512-885:DCS1800"
     other_bands[2] = "955-1023:DCS900"
     other_bands[3] = "2937-3088:UMTS900"
     other_bands[4] = "10562-10838:IMT2100"
 
-    if (mode ~ /^LTE/) {
+    # 5G NR Bands (NR-ARFCN, 3GPP TS 38.101)
+    # FR1 (Sub-6 GHz)
+    nr_bands[0]  = "422000-434000:n1"
+    nr_bands[1]  = "386000-398000:n2"
+    nr_bands[2]  = "361000-376000:n3"
+    nr_bands[3]  = "173800-178800:n5"
+    nr_bands[4]  = "524000-538000:n7"
+    nr_bands[5]  = "185000-192000:n8"
+    nr_bands[6]  = "145800-149200:n12"
+    nr_bands[7]  = "149200-151200:n13"
+    nr_bands[8]  = "151600-153600:n14"
+    nr_bands[9]  = "158200-164200:n18"
+    nr_bands[10] = "166400-172400:n20"
+    nr_bands[11] = "386000-399000:n25"
+    nr_bands[12] = "171800-178800:n26"
+    nr_bands[13] = "151600-160600:n28"
+    nr_bands[14] = "143400-145600:n29"
+    nr_bands[15] = "470000-472000:n30"
+    nr_bands[16] = "402000-405000:n34"
+    nr_bands[17] = "514000-524000:n38"
+    nr_bands[18] = "376000-384000:n39"
+    nr_bands[19] = "460000-480000:n40"
+    nr_bands[20] = "499200-537999:n41"
+    nr_bands[21] = "743334-795000:n48"
+    nr_bands[22] = "286400-303400:n50"
+    nr_bands[23] = "285400-286400:n51"
+    nr_bands[24] = "496700-499000:n53"
+    nr_bands[25] = "422000-440000:n65"
+    nr_bands[26] = "342000-356000:n66"
+    nr_bands[27] = "285400-294000:n70"
+    nr_bands[28] = "132972-135884:n71"
+    nr_bands[29] = "285400-286400:n74"
+    nr_bands[30] = "285400-294000:n75"
+    nr_bands[31] = "285400-286400:n76"
+    nr_bands[32] = "620000-680000:n77"
+    nr_bands[33] = "620000-653333:n78"
+    nr_bands[34] = "693334-733333:n79"
+    nr_bands[35] = "499200-537999:n80"
+    nr_bands[36] = "422000-440000:n83"
+    nr_bands[37] = "323624-333584:n84"
+    nr_bands[38] = "496700-499000:n86"
+    nr_bands[39] = "285400-294000:n89"
+    nr_bands[40] = "380000-382000:n90"
+    nr_bands[41] = "285400-286400:n91"
+    nr_bands[42] = "285400-286400:n92"
+    nr_bands[43] = "285400-286400:n93"
+    nr_bands[44] = "285400-286400:n94"
+    # FR2 (mmWave, 24–100 GHz)
+    nr_bands[45] = "2016667-2070833:n257"
+    nr_bands[46] = "2070833-2084999:n258"
+    nr_bands[47] = "2229166-2279166:n260"
+    nr_bands[48] = "2070833-2084999:n261"
+
+    if (mode ~ /^(5GNR|^LTE\+NR)$/) {
+        result = find_band(value, nr_bands)
+        print (result != "" ? result : 0)
+    } else if (mode ~ /^LTE/) {
         result = find_band(value, lte_bands)
         print (result != "" ? result : 0)
     } else {
