@@ -1,0 +1,14 @@
+--- a/accel-pppd/triton/triton.h
++++ b/accel-pppd/triton/triton.h
+@@ -55,8 +55,8 @@ struct conf_sect_t
+ 
+ struct triton_stat_t
+ {
+-	uint64_t mempool_allocated;
+-	uint64_t mempool_available;
++	unsigned long mempool_allocated;
++	unsigned long mempool_available;
+ 	unsigned int thread_count;
+ 	unsigned int thread_active;
+ 	unsigned int context_count;
+
