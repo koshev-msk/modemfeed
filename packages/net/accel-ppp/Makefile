@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=accel-ppp
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=1.14.0
 
 PKG_SOURCE_PROTO:=git
@@ -69,7 +69,7 @@ CMAKE_OPTIONS += \
 	-DBUILD_VLAN_MON_DRIVER=$(if $(CONFIG_PACKAGE_kmod-$(PKG_NAME)-vlan-mon),TRUE,FALSE)
 
 CMAKE_BINARY_DIR := $(PKG_BUILD_DIR)/build
-TARGET_CFLAGS += -I$(STAGING_DIR)/opt/include -D_GNU_SOURCE -g -O2 -Wno-incompatible-pointer-types
+TARGET_CFLAGS += -I$(STAGING_DIR)/opt/include -D_GNU_SOURCE -g -O2 -Wno-incompatible-pointer-types -Wno-deprecated-declarations
 TARGET_LDFLAGS += -lpthread -latomic -lucontext -Wl,-rpath,/usr/lib/accel-ppp
 
 define KernelPackage/$(PKG_NAME)-ipoe
