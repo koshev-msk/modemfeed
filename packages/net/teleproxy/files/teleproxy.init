@@ -34,7 +34,7 @@ start() {
 	} || {
 		args="$args --direct"
 	}
-        ($BIN -u daemon $args) & > /dev/null 2>&1
+        setsid $BIN -u daemon $args </dev/null 2>&1 | logger -t teleproxy &
 }
 
 stop() {

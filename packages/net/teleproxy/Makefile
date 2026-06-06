@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=teleproxy
 PKG_VERSION:=4.15.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Kosntantine Shevlakov <shevlakov@132lan.ru>
 PKG_LICENSE:=GPLv2
