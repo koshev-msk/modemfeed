@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=accel-ppp
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_VERSION:=1.14.0
 
 PKG_SOURCE_PROTO:=git
@@ -28,23 +28,20 @@ include $(INCLUDE_DIR)/kernel.mk
 TARGET_CFLAGS:=$(filter-out -mips16 -minterlink-mips16,$(TARGET_CFLAGS))
 TARGET_LDFLAGS:=$(filter-out -mips16 -minterlink-mips16,$(TARGET_LDFLAGS))
 
-# Base depends
-DEPENDS_COMMON:=+libpcre2 +libopenssl +libpthread +librt +libatomic +libucontext
-
-ifeq ($(CONFIG_ACCEL_PPP_PGSQL_LOG),y)
-  DEPENDS_COMMON+= +libpq
-endif
-
-ifeq ($(CONFIG_ACCEL_PPP_SNMP),y)
-  DEPENDS_COMMON+= +netsnmp
-endif
-
 define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
   TITLE:=accel-ppp VPN server
-  DEPENDS:=$(DEPENDS_COMMON)
+  DEPENDS:= +libpcre2 \
+	+libopenssl \
+	+libpthread \
+	+librt \
+	+libatomic \
+	+libucontext \
+	$(if $(CONFIG_ACCEL_PPP_PGSQL_LOG),+libpq) \
+	$(if $(CONFIG_ACCEL_PPP_SNMP),+libnetsnmp) \
+	$(if $(CONFIG_ACCEL_PPP_LUA),+liblua)
   MENU:=1
 endef
 
@@ -64,6 +61,7 @@ CMAKE_OPTIONS += \
 	-DSHAPER=$(if $(CONFIG_ACCEL_PPP_SHAPER),TRUE,FALSE) \
 	-DRADIUS=$(if $(CONFIG_ACCEL_PPP_RADIUS),TRUE,FALSE) \
 	-DNETSNMP=$(if $(CONFIG_ACCEL_PPP_SNMP),TRUE,FALSE) \
+	-DLUA=$(if $(CONFIG_ACCEL_PPP_LUA),TRUE,FALSE) \
 	-DLIB_SUFFIX= \
 	-DBUILD_IPOE_DRIVER=$(if $(CONFIG_PACKAGE_kmod-$(PKG_NAME)-ipoe),TRUE,FALSE) \
 	-DBUILD_VLAN_MON_DRIVER=$(if $(CONFIG_PACKAGE_kmod-$(PKG_NAME)-vlan-mon),TRUE,FALSE)
@@ -116,6 +114,13 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/accel-ppp/l2tp/dictionary.* \
 		$(1)/usr/share/accel-ppp/l2tp/dictionary/ || true
+
+	$(if $(CONFIG_ACCEL_PPP_RADIUS), \
+		$(INSTALL_DIR) $(1)/usr/share/accel-ppp/radius/dictionary; \
+		$(INSTALL_DATA) \
+			$(PKG_INSTALL_DIR)/usr/share/accel-ppp/radius/dictionary.* \
+			$(1)/usr/share/accel-ppp/radius/dictionary/ \
+	)
 
 	$(INSTALL_BIN) \
 		files/accel-ppp.init \

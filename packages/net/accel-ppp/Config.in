@@ -4,7 +4,6 @@ config ACCEL_PPP_RADIUS
 	default n
 	help
 	  Enable RADIUS authentication and accounting support.
-	  Uses OpenSSL for cryptographic operations.
 
 config ACCEL_PPP_SHAPER
 	bool "Build with shaper"
@@ -18,22 +17,30 @@ config ACCEL_PPP_SNMP
 	depends on PACKAGE_accel-ppp
 	default n
 	help
-	  Enable SNMP support for monitoring.
-	  Adds dependency on netsnmp package.
+	  Enable SNMP monitoring support.
+	  Requires libnetsnmp on target.
 
-config ACCEL_PPP_PGSQL_LOG
-	bool "Build with PostgreSQL logging"
+config ACCEL_PPP_LUA
+	bool "Build with Lua scripting"
 	depends on PACKAGE_accel-ppp
 	default n
 	help
-	  Enable PostgreSQL logging support.
-	  If enabled, file logging will be disabled.
-	  Adds dependency on libpq package.
+	  Enable Lua scripting support.
 
-config ACCEL_PPP_FILE_LOG
-	bool "Build with file logging"
+choice
+	prompt "Logging backend"
 	depends on PACKAGE_accel-ppp
-	default y
+	default ACCEL_PPP_LOG_FILE
+
+config ACCEL_PPP_LOG_FILE
+	bool "File logging (stdout/logread)"
 	help
-	  Enable file logging support.
-	  Automatically disabled when PostgreSQL logging is enabled.
+	  Log to file or stdout (recommended for OpenWrt).
+
+config ACCEL_PPP_LOG_PGSQL
+	bool "PostgreSQL logging"
+	help
+	  Log sessions to PostgreSQL database.
+	  Requires libpq on target.
+
+endchoice
