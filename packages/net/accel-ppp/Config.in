@@ -12,14 +12,6 @@ config ACCEL_PPP_SHAPER
 	help
 	  Enable traffic shaping support.
 
-config ACCEL_PPP_SNMP
-	bool "Build with SNMP"
-	depends on PACKAGE_accel-ppp
-	default n
-	help
-	  Enable SNMP monitoring support.
-	  Requires libnetsnmp on target.
-
 config ACCEL_PPP_LUA
 	bool "Build with Lua scripting"
 	depends on PACKAGE_accel-ppp
@@ -27,9 +19,45 @@ config ACCEL_PPP_LUA
 	help
 	  Enable Lua scripting support.
 
+config ACCEL_PPP_SNMP
+	bool "Build with SNMP"
+	depends on PACKAGE_accel-ppp
+	default n
+	help
+	  Enable SNMP monitoring support.
+	  Choose SSL or noSSL variant below.
+
+choice
+	prompt "SNMP support"
+	depends on ACCEL_PPP_SNMP
+	default ACCEL_PPP_SNMP_NOSSL
+	
+config ACCEL_PPP_SNMP_NOSSL
+	bool "Build with SNMP (no SSL)"
+	depends on ACCEL_PPP_SNMP
+	help
+	  Enable SNMP monitoring support without SSL support.
+	  Requires libnetsnmp-nossl on target.
+	  
+config ACCEL_PPP_SNMP_SSL
+	bool "Build with SNMP (SSL)"
+	depends on ACCEL_PPP_SNMP
+	help
+	  Enable SNMP monitoring support with SSL support.
+	  Requires libnetsnmp-ssl on target.
+	  
+endchoice
+
+config ACCEL_PPP_LOG
+	bool "Build with log support"
+	depends on PACKAGE_accel-ppp
+	default y
+	help
+	  Enable logging support
+
 choice
 	prompt "Logging backend"
-	depends on PACKAGE_accel-ppp
+	depends on ACCEL_PPP_LOG
 	default ACCEL_PPP_LOG_FILE
 
 config ACCEL_PPP_LOG_FILE

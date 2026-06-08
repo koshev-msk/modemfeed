@@ -1,0 +1,14 @@
+diff --git a/accel-pppd/logs/CMakeLists.txt b/accel-pppd/logs/CMakeLists.txt
+index 4d8a631..2d869fd 100644
+--- a/accel-pppd/logs/CMakeLists.txt
++++ b/accel-pppd/logs/CMakeLists.txt
+@@ -36,7 +36,9 @@ ENDIF(LOG_SYSLOG)
+ IF(LOG_PGSQL)
+ 	find_library(PGSQL_LIBRARY pq
+ 					HINTS ${CMAKE_SOURCE_DIR}/lib/linux/gcc/${BIT}/lib
++					      ${PGSQL_SEARCH_PATH}
+ 					PATHS ${CMAKE_SOURCE_DIR}/lib/linux/gcc/${BIT}/lib
++					      ${PGSQL_SEARCH_PATH}
+ 	)
+ 	IF(NOT PGSQL_LIBRARY)
+ 					message(FATAL_ERROR "${Esc}[31mRequired libpq not found.\n Install libpq-dev and run cmake again${Esc}[m")

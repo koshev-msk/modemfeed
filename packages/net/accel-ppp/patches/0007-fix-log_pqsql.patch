@@ -1,0 +1,11 @@
+--- a/accel-pppd/logs/log_pgsql.c
++++ b/accel-pppd/logs/log_pgsql.c
+@@ -2,7 +2,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include <postgresql/libpq-fe.h>
++#include <libpq-fe.h>
+ 
+ #include "triton.h"
+ #include "spinlock.h"
