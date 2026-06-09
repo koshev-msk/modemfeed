@@ -1,0 +1,19 @@
+#!/bin/sh
+
+[ -d /usr/share/accel-ppp/l2tp ] && {
+	cd /usr/share/accel-ppp/l2tp
+	[ -f dictionary ] || {
+		for d in $(ls -1 dictionary.*); do
+			echo "\$INCLUDE $d" >> dictionary
+		done
+	}
+}
+
+[ -d /usr/share/accel-ppp/radius ] && {
+	cd /usr/share/accel-ppp/radius
+	[ -f dictionary ] || {
+		for d in $(ls -1 dictionary.*); do
+			echo "\$INCLUDE $d" >> dictionary
+		done
+	}
+}

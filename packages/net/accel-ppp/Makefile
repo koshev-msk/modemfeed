@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=accel-ppp
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_VERSION:=1.14.0
 
 PKG_SOURCE_PROTO:=git
@@ -98,11 +98,10 @@ define Package/$(PKG_NAME)/install
 		$(1)/usr/lib \
 		$(1)/usr/lib/accel-ppp \
 		$(1)/usr/share/accel-ppp \
-		$(1)/usr/share/accel-ppp/radius \
 		$(1)/usr/share/accel-ppp/l2tp \
-		$(1)/usr/share/accel-ppp/l2tp/dictionary \
 		$(1)/etc/init.d \
-		$(1)/etc/accel-ppp
+		$(1)/etc/accel-ppp \
+		$(1)/etc/uci-defaults
 
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/sbin/accel-pppd \
@@ -118,14 +117,18 @@ define Package/$(PKG_NAME)/install
 
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/accel-ppp/l2tp/dictionary.* \
-		$(1)/usr/share/accel-ppp/l2tp/dictionary/ || true
+		$(1)/usr/share/accel-ppp/l2tp/ || true
 
 	$(if $(CONFIG_ACCEL_PPP_RADIUS), \
-		$(INSTALL_DIR) $(1)/usr/share/accel-ppp/radius/dictionary; \
+		$(INSTALL_DIR) $(1)/usr/share/accel-ppp/radius; \
 		$(INSTALL_DATA) \
 			$(PKG_INSTALL_DIR)/usr/share/accel-ppp/radius/dictionary.* \
-			$(1)/usr/share/accel-ppp/radius/dictionary/ \
+			$(1)/usr/share/accel-ppp/radius/ \
 	)
+
+	$(INSTALL_BIN) \
+		files/accel-ppp.defaults \
+		$(1)/etc/uci-defaults/99-accel-ppp
 
 	$(INSTALL_BIN) \
 		files/accel-ppp.init \
