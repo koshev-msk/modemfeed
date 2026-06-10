@@ -1,0 +1,10 @@
+config deepbot 'main'
+	option token 'YOUR_BOT_TOKEN' 		# Telegrab BOT token (from @BotFather)
+	option deepseek_key 'YOUR_DEEPSEEK_KEY' # DeepSeek API key 
+	option deepseek_url 'https://api.deepseek.com/v1/chat/completions' # DeepSeek API URL
+	option proxy ''	 # Proxy server (proxy_type://host:port[@username:passwd] see man curl)
+	option database '/usr/share/deepbot/chat_history.db' # SQLite3 database path
+	option token_limit '10000' 		# Token linit per day
+	option rate_limit '5' 			# Max replies per user in one min
+	option group_mention_only '1' 		# Reply queris in public chats
+	option debug '0' 			# Verbose log (stdout)
