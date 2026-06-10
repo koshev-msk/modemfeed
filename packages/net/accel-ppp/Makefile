@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=accel-ppp
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_VERSION:=1.14.0
 
 PKG_SOURCE_PROTO:=git
@@ -97,6 +97,7 @@ define Package/$(PKG_NAME)/install
 		$(1)/usr/share/accel-ppp \
 		$(1)/usr/share/accel-ppp/radius \
 		$(1)/usr/share/accel-ppp/l2tp \
+		$(1)/usr/share/accel-ppp/l2tp/dictionary \
 		$(1)/etc/init.d \
 		$(1)/etc/accel-ppp
 
@@ -114,7 +115,7 @@ define Package/$(PKG_NAME)/install
 
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/accel-ppp/l2tp/dictionary.* \
-		$(1)/usr/share/accel-ppp/l2tp/ || true
+		$(1)/usr/share/accel-ppp/l2tp/dictionary/ || true
 
 	$(INSTALL_BIN) \
 		files/accel-ppp.init \
