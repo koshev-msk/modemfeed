@@ -7,30 +7,43 @@ USE_PROCD=1
 PROG="/usr/bin/deepbot.lua"
 
 start_service() {
-	local token deepseek_key deepseek_url proxy database \
-	      token_limit rate_limit group_mention_only debug
+        local token deepseek_key deepseek_url proxy database \
+              token_limit rate_limit group_mention_only debug \
+              model admin_id whitelist_mode
 
-	config_load deepbot
-	config_get token              main token              ''
-	config_get deepseek_key       main deepseek_key       ''
-	config_get deepseek_url       main deepseek_url       'https://api.deepseek.com/v1/chat/completions'
-	config_get proxy              main proxy              ''
-	config_get database           main database           '/usr/share/deepbot/chat_history.db'
-	config_get token_limit        main token_limit        '10000'
-	config_get rate_limit         main rate_limit         '5'
-	config_get group_mention_only main group_mention_only '1'
-	config_get debug              main debug              '0'
+        config_load deepbot
+        config_get token              main token              ''
+        config_get deepseek_key       main deepseek_key       ''
+        config_get deepseek_url       main deepseek_url       'https://api.deepseek.com/v1/chat/completions'
+        config_get model              main model              'deepseek-chat'
+        config_get proxy              main proxy              ''
+        config_get database           main database           '/usr/share/deepbot/chat_history.db'
+        config_get token_limit        main token_limit        '10000'
+        config_get rate_limit         main rate_limit         '5'
+        config_get group_mention_only main group_mention_only '1'
+        config_get debug              main debug              '0'
+        config_get admin_id           main admin_id           ''
+        config_get whitelist_mode     main whitelist_mode     'none'
 
-	procd_open_instance
-	procd_set_param command lua "$PROG"
-	procd_set_param env \
-		TELEGRAM_BOT_TOKEN="$token" \
-		DEEPSEEK_API_KEY="$deepseek_key" \
-		DEEPSEEK_API_URL="$deepseek_url" \
-		PROXY_URL="$proxy" \
-		DEBUG="$debug"
-	procd_set_param stdout 1
-	procd_set_param stderr 1
-	procd_set_param respawn 30 5 0
-	procd_close_instance
+        procd_open_instance
+        procd_set_param command lua "$PROG"
+        procd_set_param env \
+                TELEGRAM_BOT_TOKEN="$token" \
+                DEEPSEEK_API_KEY="$deepseek_key" \
+                DEEPSEEK_API_URL="$deepseek_url" \
+                AI_MODEL="$model" \
+                PROXY_URL="$proxy" \
+                DATABASE_NAME="$database" \
+                TOKEN_LIMIT_PER_DAY="$token_limit" \
+                RATE_LIMIT="$rate_limit" \
+                GROUP_MENTION_ONLY="$group_mention_only" \
+                DEBUG="$debug" \
+                ADMIN_ID="$admin_id" \
+                WHITELIST_MODE="$whitelist_mode"
+        procd_set_param stdout 1
+        procd_set_param stderr 1
+        procd_set_param respawn 30 5 0
+        procd_close_instance
+        
+        logger -t deepbot "Started with mode: $whitelist_mode, model: $model"
 }

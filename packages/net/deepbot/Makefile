@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:= deepbot
-PKG_VERSION:= 1.0.0
+PKG_VERSION:= 0.0.2
 PKG_RELEASE:= 1
 
 include $(INCLUDE_DIR)/package.mk
@@ -15,9 +15,9 @@ define Package/deepbot
 endef
 
 define Package/deepbot/description
-  Telegram bot powered by DeepSeek AI.
+  Telegram bot powered by Open AI models. DeepSeek default.
   Supports private and group chats, conversation history,
-  daily token limits, SOCKS5/HTTP proxy.
+  daily token limits, SOCKS5/HTTP proxy, white lists.
   Lua implementation from
   https://github.com/Bimaoitsuki/deepseek-telegram-bot-
 endef

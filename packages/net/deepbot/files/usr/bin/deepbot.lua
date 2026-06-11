@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
--- DeepSeek Telegram Bot (Lua 5.1.5)
+-- AI Telegram Bot for OpenWrt (Lua 5.1.5)
 -- Config: /etc/config/deepbot
 -- Depends: curl lua luasocket lua-cjson lsqlite3 uci
 
@@ -7,7 +7,7 @@ local socket  = require("socket")
 local json    = require("cjson")
 local sqlite3 = require("lsqlite3")
 
--- ===== UCI КОНФИГ =====
+-- ===== UCI =====
 local function uci_get(key)
     local f = io.popen("uci -q get deepbot." .. key .. " 2>/dev/null")
     if not f then return nil end
@@ -28,7 +28,6 @@ local function uci_get_int(key, default)
 end
 
 -- ===== Config =====
--- Prio: envilopment variables > UCI > default value
 local TELEGRAM_BOT_TOKEN  = os.getenv("TELEGRAM_BOT_TOKEN")
                             or uci_get("main.token")
                             or "YOUR_BOT_TOKEN"
@@ -38,21 +37,31 @@ local DEEPSEEK_API_KEY    = os.getenv("DEEPSEEK_API_KEY")
 local DEEPSEEK_API_URL    = os.getenv("DEEPSEEK_API_URL")
                             or uci_get("main.deepseek_url")
                             or "https://api.deepseek.com/v1/chat/completions"
+local AI_MODEL            = os.getenv("AI_MODEL")
+                            or uci_get("main.model")
+                            or "deepseek-chat"
 local PROXY_URL           = os.getenv("PROXY_URL")
                             or uci_get("main.proxy")
                             or ""
-local DATABASE_NAME       = uci_get("main.database")
+local DATABASE_NAME       = os.getenv("DATABASE_NAME")
+                            or uci_get("main.database")
                             or "/usr/share/deepbot/chat_history.db"
-local TOKEN_LIMIT_PER_DAY = uci_get_int("main.token_limit", 10000)
-local RATE_LIMIT          = uci_get_int("main.rate_limit", 5)
+local TOKEN_LIMIT_PER_DAY = tonumber(os.getenv("TOKEN_LIMIT_PER_DAY"))
+                            or uci_get_int("main.token_limit", 10000)
+local RATE_LIMIT          = tonumber(os.getenv("RATE_LIMIT"))
+                            or uci_get_int("main.rate_limit", 5)
 local DEBUG               = os.getenv("DEBUG") == "1"
                             or uci_get_bool("main.debug", false)
--- reply in chant only ask or @bot call
-local GROUP_MENTION_ONLY  = uci_get_bool("main.group_mention_only", true)
+local GROUP_MENTION_ONLY  = os.getenv("GROUP_MENTION_ONLY") == "1"
+                            or uci_get_bool("main.group_mention_only", true)
+local ADMIN_ID            = os.getenv("ADMIN_ID")
+                            or uci_get("main.admin_id")
+                            or ""
+local WHITELIST_MODE      = os.getenv("WHITELIST_MODE")
+                            or uci_get("main.whitelist_mode")
+                            or "none"  -- none, all, private, group
 
 local TG_API_BASE = "https://api.telegram.org/bot" .. TELEGRAM_BOT_TOKEN
-
--- bot_username defined after getMe
 local BOT_USERNAME = ""
 
 -- ===== LOG =====
@@ -108,27 +117,33 @@ local function curl_post(url, headers, body)
 end
 
 -- ===== TELEGRAM API =====
-local function tg_call(method, params)
+local function tg_call(method, params, silent)
+    silent = silent or false
     local body = params and json.encode(params) or "{}"
-    dbg("tg_call " .. method .. " body: " .. body:sub(1, 200))
+    if DEBUG then dbg("tg_call " .. method .. " body: " .. body:sub(1, 200)) end
+    
     local resp = curl_post(
         TG_API_BASE .. "/" .. method,
         { ["Content-Type"] = "application/json" },
         body
     )
     if not resp or resp == "" then
-        err("tg_call " .. method .. ": empty response")
+        if not silent then err("tg_call " .. method .. ": empty response") end
         return nil
     end
     local ok, data = pcall(json.decode, resp)
     if not ok then
-        err("tg_call " .. method .. " JSON error: " .. tostring(data))
-        err("raw: " .. resp:sub(1, 300))
+        if not silent then 
+            err("tg_call " .. method .. " JSON error: " .. tostring(data))
+            if DEBUG then err("raw: " .. resp:sub(1, 300)) end
+        end
         return nil
     end
     if not data.ok then
-        err("tg_call " .. method .. " API error: " ..
-            tostring(data.description or json.encode(data)))
+        if not silent then
+            err("tg_call " .. method .. " API error: " ..
+                tostring(data.description or json.encode(data)))
+        end
     end
     return data
 end
@@ -150,6 +165,7 @@ local function init_database()
         );
         CREATE INDEX IF NOT EXISTS idx_user_id   ON conversations (user_id);
         CREATE INDEX IF NOT EXISTS idx_timestamp ON conversations (timestamp);
+        
         CREATE TABLE IF NOT EXISTS token_usage (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     INTEGER NOT NULL,
@@ -158,6 +174,14 @@ local function init_database()
             UNIQUE(user_id, date)
         );
         CREATE INDEX IF NOT EXISTS idx_token_usage ON token_usage (user_id, date);
+        
+        CREATE TABLE IF NOT EXISTS allowed_users (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id   INTEGER NOT NULL UNIQUE,
+            added_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+            added_by  INTEGER
+        );
+        CREATE INDEX IF NOT EXISTS idx_allowed_user_id ON allowed_users (user_id);
     ]])
     if rc ~= sqlite3.OK then
         err("DB init error: " .. tostring(db:errmsg()))
@@ -166,15 +190,40 @@ local function init_database()
     end
 end
 
+local function validate_utf8(text)
+    if not text then return "" end
+    local clean = text:gsub("[^\128-\191]", function(c)
+        if c:byte() < 128 then return c
+        elseif c:byte() >= 194 and c:byte() <= 244 then return c
+        else return "" end
+    end)
+    clean = clean:gsub("'", "''")
+    return clean
+end
+
 local function get_user_messages(user_id, limit)
     limit = limit or 10
+    local messages = {}
+    local stmt = db:prepare(
+        "SELECT role, content FROM conversations WHERE user_id=? ORDER BY timestamp ASC LIMIT ?"
+    )
+    stmt:bind_values(user_id, limit)
+    for row in stmt:nrows() do
+        table.insert(messages, { role = row.role, content = row.content })
+    end
+    stmt:finalize()
+    return messages
+end
+
+local function get_history_messages(user_id, limit)
+    limit = limit or 20
     local messages = {}
     local stmt = db:prepare(
         "SELECT role, content FROM conversations WHERE user_id=? ORDER BY timestamp DESC LIMIT ?"
     )
     stmt:bind_values(user_id, limit)
     for row in stmt:nrows() do
-        table.insert(messages, 1, { role = row.role, content = row.content })
+        table.insert(messages, { role = row.role, content = row.content })
     end
     stmt:finalize()
     return messages
@@ -182,12 +231,15 @@ end
 
 local function save_message(user_id, role, content, tokens)
     tokens = tokens or 0
+    content = validate_utf8(content)
+    
     local stmt = db:prepare(
         "INSERT INTO conversations (user_id, role, content, tokens) VALUES (?,?,?,?)"
     )
     stmt:bind_values(user_id, role, content, tokens)
     stmt:step()
     stmt:finalize()
+    
     local today = os.date("%Y-%m-%d")
     db:exec(string.format(
         "INSERT OR IGNORE INTO token_usage (user_id, date, tokens_used) VALUES (%d,'%s',0)",
@@ -213,6 +265,108 @@ local function get_daily_token_usage(user_id)
     for row in stmt:nrows() do result = row.tokens_used end
     stmt:finalize()
     return result
+end
+
+-- ===== WHITELIST DATABASE FUNCTIONS =====
+local function add_allowed_user(user_id, added_by)
+    local stmt = db:prepare(
+        "INSERT OR IGNORE INTO allowed_users (user_id, added_by) VALUES (?, ?)"
+    )
+    stmt:bind_values(user_id, added_by)
+    stmt:step()
+    stmt:finalize()
+end
+
+local function remove_allowed_user(user_id)
+    db:exec(string.format("DELETE FROM allowed_users WHERE user_id=%d", user_id))
+end
+
+local function get_allowed_users_full()
+    local users = {}
+    for row in db:nrows("SELECT user_id, added_at, added_by FROM allowed_users ORDER BY added_at DESC") do
+        table.insert(users, {
+            user_id = row.user_id,
+            added_at = row.added_at,
+            added_by = row.added_by
+        })
+    end
+    return users
+end
+
+local function get_allowed_users_list()
+    local users = {}
+    for row in db:nrows("SELECT user_id FROM allowed_users ORDER BY user_id") do
+        table.insert(users, tostring(row.user_id))
+    end
+    return users
+end
+
+-- ===== ACCESS CONTROL =====
+local function is_admin(user_id)
+    if ADMIN_ID == "" then
+        return false
+    end
+    return tostring(user_id) == ADMIN_ID
+end
+
+local function is_user_allowed(user_id, chat_type)
+    -- Режим none: все могут писать
+    if WHITELIST_MODE == "none" then
+        return true
+    end
+    
+    -- Режим all: везде проверяем whitelist
+    if WHITELIST_MODE == "all" then
+        if is_admin(user_id) then
+            return true
+        end
+        local stmt = db:prepare("SELECT 1 FROM allowed_users WHERE user_id=?")
+        stmt:bind_values(user_id)
+        local allowed = false
+        for row in stmt:nrows() do allowed = true; break end
+        stmt:finalize()
+        return allowed
+    end
+    
+    -- Режим private: личка - whitelist, группы - всем
+    if WHITELIST_MODE == "private" then
+        if chat_type == "private" then
+            if is_admin(user_id) then
+                return true
+            end
+            local stmt = db:prepare("SELECT 1 FROM allowed_users WHERE user_id=?")
+            stmt:bind_values(user_id)
+            local allowed = false
+            for row in stmt:nrows() do allowed = true; break end
+            stmt:finalize()
+            return allowed
+        else
+            -- В группах всем можно
+            return true
+        end
+    end
+    
+    -- Режим group: группы - whitelist, личка - только админ
+    if WHITELIST_MODE == "group" then
+        if chat_type == "private" then
+            -- В личке только админ
+            return is_admin(user_id)
+        else
+            -- В группах проверяем whitelist
+            if is_admin(user_id) then
+                return true
+            end
+            local stmt = db:prepare("SELECT 1 FROM allowed_users WHERE user_id=?")
+            stmt:bind_values(user_id)
+            local allowed = false
+            for row in stmt:nrows() do allowed = true; break end
+            stmt:finalize()
+            return allowed
+        end
+    end
+    
+    -- По умолчанию - запрещено
+    return false
 end
 
 -- ===== utils =====
@@ -261,23 +415,19 @@ local function cache_set(key, val)
 end
 
 -- ===== CHAT: reply filter =====
--- reply cleared text
 local function group_filter(msg)
-    local chat_type = msg.chat.type  -- "private","group","supergroup","channel"
+    local chat_type = msg.chat.type
 
-    -- private msg reply always
     if chat_type == "private" then
         return true, msg.text
     end
 
-    -- in chat — if GROUP_MENTION_ONLY disabled
     if not GROUP_MENTION_ONLY then
         return true, msg.text
     end
 
     local text = msg.text or ""
 
-    -- 1. Reply
     if msg.reply_to_message and msg.reply_to_message.from then
         if msg.reply_to_message.from.username == BOT_USERNAME then
             dbg("group_filter: reply to bot")
@@ -285,18 +435,15 @@ local function group_filter(msg)
         end
     end
 
-    -- 2. ask bot @BotUsername (any case)
     if BOT_USERNAME ~= "" then
         local mention = "@" .. BOT_USERNAME
         local lower_text    = text:lower()
         local lower_mention = mention:lower()
         if lower_text:find(lower_mention, 1, true) then
-            --  clean quote
             local clean = text:gsub("(?i)" .. mention, "")
-            -- lua (?i) not support, make case-insensitive
             clean = lower_text:gsub(lower_mention, "")
-            clean = clean:match("^%s*(.-)%s*$")  -- trim
-            if clean == "" then clean = text end  -- if empty — keep
+            clean = clean:match("^%s*(.-)%s*$")
+            if clean == "" then clean = text end
             dbg("group_filter: mention found, clean text: " .. clean)
             return true, clean
         end
@@ -306,7 +453,7 @@ local function group_filter(msg)
     return false, nil
 end
 
--- ===== DEEPSEEK API =====
+-- ===== API =====
 local function call_deepseek(user_id, prompt)
     local cache_key = tostring(user_id) .. "\0" .. prompt
     if cache_get(cache_key) then
@@ -339,29 +486,33 @@ local function call_deepseek(user_id, prompt)
     messages[#messages+1] = { role = "user", content = prompt }
 
     local payload = json.encode({
-        model       = "deepseek-chat",
+        model       = AI_MODEL,
         messages    = messages,
         temperature = 0.5,
     })
 
-    local resp_body = curl_post(
-        DEEPSEEK_API_URL,
-        {
-            ["Authorization"] = "Bearer " .. DEEPSEEK_API_KEY,
-            ["Content-Type"]  = "application/json",
-        },
-        payload
-    )
+    local headers = {
+        ["Authorization"] = "Bearer " .. DEEPSEEK_API_KEY,
+        ["Content-Type"]  = "application/json"
+    }
+    
+    local resp_body = curl_post(DEEPSEEK_API_URL, headers, payload)
 
     if not resp_body or resp_body == "" then
-        return nil, "Empty response from DeepSeek API"
+        return nil, "Empty response from API"
     end
 
     local ok, data = pcall(json.decode, resp_body)
     if not ok then
-        err("DeepSeek JSON error: " .. tostring(data))
+        err("JSON error: " .. tostring(data))
         err("Raw: " .. resp_body:sub(1, 300))
         return nil, "JSON parse error"
+    end
+
+    if data.error then
+        local emsg = data.error.message or json.encode(data.error)
+        err("API error: " .. tostring(emsg))
+        return nil, tostring(emsg)
     end
 
     if data.choices then
@@ -370,14 +521,11 @@ local function call_deepseek(user_id, prompt)
         local reply_tokens = usage.completion_tokens or estimate_tokens(ai_reply)
         save_message(user_id, "assistant", ai_reply, reply_tokens)
         if #prompt < 100 then cache_set(cache_key, data) end
-        info(string.format("DeepSeek OK user=%d tokens=%d", user_id, reply_tokens))
+        info(string.format("AI OK user=%d tokens=%d model=%s", 
+            user_id, reply_tokens, data.model or AI_MODEL))
         return data
-    elseif data.error then
-        local emsg = data.error.message or json.encode(data.error)
-        err("DeepSeek API error: " .. tostring(emsg))
-        return nil, tostring(emsg)
     else
-        err("DeepSeek unknown response: " .. resp_body:sub(1, 300))
+        err("Unknown response: " .. resp_body:sub(1, 300))
         return nil, "Unknown API response"
     end
 end
@@ -393,7 +541,6 @@ local function send_message(chat_id, text, reply_to)
     if reply_to then payload.reply_to_message_id = reply_to end
     local res = tg_call("sendMessage", payload)
     if not res or not res.ok then
-        -- retry without Markdown
         payload.parse_mode = nil
         res = tg_call("sendMessage", payload)
     end
@@ -406,12 +553,26 @@ local function handle_start(msg)
     info("handle_start user=" .. user_id)
     clear_user_conversation(user_id)
     save_message(user_id, "system", "You are a helpful AI assistant for Telegram users.")
+    
+    local mode_desc = {
+        none = "⚪ Disabled (all users)",
+        all = "🔴 Strict (whitelist only)",
+        private = "🟡 Private only (whitelist for PM)",
+        group = "🟠 Group only (whitelist for groups)"
+    }
+    
     send_message(msg.chat.id,
-        "🤖 *DeepSeek AI Bot*\n\n"
-        .. "Conversation history is saved locally.\n"
+        "🤖 *AI Bot*\n\n"
+        .. "Conversation history is saved locally.\n\n"
+        .. "*Commands:*\n"
         .. "/clear — start a new conversation\n"
         .. "/history — show recent messages\n"
-        .. "/tokens — daily token usage",
+        .. "/tokens — daily token usage\n"
+        .. "/admin — show admin info\n"
+        .. "/allowed — show whitelist (admin only)\n"
+        .. "/whitelist — manage whitelist (admin only)\n"
+        .. "/whoami — show your Telegram ID\n\n"
+        .. "*Whitelist mode:* " .. (mode_desc[WHITELIST_MODE] or WHITELIST_MODE),
         msg.message_id
     )
 end
@@ -423,19 +584,21 @@ local function handle_clear(msg)
 end
 
 local function handle_history(msg)
-    local messages = get_user_messages(msg.from.id, 20)
+    local messages = get_history_messages(msg.from.id, 20)
     if #messages == 0 then
         send_message(msg.chat.id, "📜 *Conversation history is empty*", msg.message_id)
         return
     end
     local lines = { "📜 *Recent Conversation:*\n" }
-    local start = math.max(1, #messages - 4)
-    for i = start, #messages do
-        local m    = messages[i]
-        local role = (m.role == "user") and "You" or "AI"
+    for i, m in ipairs(messages) do
+        local role = (m.role == "user") and "👤 You" or "🤖 AI"
         local text = m.content:sub(1, 200)
         if #m.content > 200 then text = text .. "…" end
-        lines[#lines+1] = string.format("*%s:* %s\n", role, text)
+        lines[#lines+1] = string.format("%s: %s\n", role, text)
+        if i >= 10 then
+            lines[#lines+1] = "\n*... and more*"
+            break
+        end
     end
     send_message(msg.chat.id, table.concat(lines, "\n"), msg.message_id)
 end
@@ -457,10 +620,244 @@ local function handle_tokens(msg)
     )
 end
 
+local function handle_admin_info(msg)
+    local user_id = msg.from.id
+    local is_user_admin = is_admin(user_id)
+    
+    local message = "👑 *Admin System*\n\n"
+    
+    if ADMIN_ID ~= "" then
+        message = message .. "• Admin ID: `" .. ADMIN_ID .. "`\n"
+        message = message .. "• Your ID: `" .. user_id .. "`\n\n"
+        
+        if is_user_admin then
+            message = message .. "✅ *You are the admin*\n"
+            message = message .. "You can use whitelist commands."
+        else
+            message = message .. "❌ *You are not the admin*\n"
+            message = message .. "Contact the bot administrator."
+        end
+    else
+        message = message .. "⚠️ *No admin configured*\n"
+        message = message .. "Set `admin_id` in UCI config."
+    end
+    
+    send_message(msg.chat.id, message, msg.message_id)
+end
+
+local function handle_whoami(msg)
+    local user_id = msg.from.id
+    local username = msg.from.username or "no username"
+    local first_name = msg.from.first_name or ""
+    
+    local message = string.format(
+        "🆔 *Your Telegram ID*\n\n"
+        .. "• ID: `%d`\n"
+        .. "• Username: @%s\n"
+        .. "• Name: %s\n\n"
+        .. "Share this ID with admin to be added to whitelist.",
+        user_id, username, first_name
+    )
+    
+    send_message(msg.chat.id, message, msg.message_id)
+end
+
+local function handle_allowed(msg)
+    local user_id = msg.from.id
+    local is_user_admin = is_admin(user_id)
+    
+    if not is_user_admin then
+        send_message(msg.chat.id, "⛔ *Access denied!* Only admin can view whitelist.", msg.message_id)
+        return
+    end
+    
+    if WHITELIST_MODE == "none" then
+        send_message(msg.chat.id, 
+            "⚪ *Whitelist is disabled*\n\n"
+            .. "Enable with: `/whitelist mode all/private/group`",
+            msg.message_id
+        )
+        return
+    end
+    
+    local users = get_allowed_users_full()
+    
+    if #users == 0 then
+        send_message(msg.chat.id,
+            "📭 *Whitelist is empty*\n\n"
+            .. "Add users with: `/whitelist add USER_ID`",
+            msg.message_id
+        )
+        return
+    end
+    
+    local mode_desc = {
+        all = "🔴 Strict mode (all chats)",
+        private = "🟡 Private mode (whitelist for PM only)",
+        group = "🟠 Group mode (whitelist for groups only)"
+    }
+    
+    local message = "👥 *Allowed Users*\n"
+    message = message .. string.format("└ *Mode:* %s\n", mode_desc[WHITELIST_MODE] or WHITELIST_MODE)
+    message = message .. string.format("└ *Total:* %d user(s)\n\n", #users)
+    
+    for i, u in ipairs(users) do
+        local date_str = u.added_at or "unknown"
+        date_str = date_str:match("(%d+-%d+-%d+)") or date_str
+        
+        local added_by_str = u.added_by and string.format(" (by `%d`)", u.added_by) or ""
+        
+        message = message .. string.format("%d. `%d`%s\n", i, u.user_id, added_by_str)
+        message = message .. string.format("   └ added: %s\n", date_str)
+        
+        if #message > 3500 then
+            message = message .. "\n*... and more*"
+            break
+        end
+    end
+    
+    send_message(msg.chat.id, message, msg.message_id)
+end
+
+local function handle_whitelist_status(msg)
+    local user_id = msg.from.id
+    
+    if not is_admin(user_id) then
+        send_message(msg.chat.id, "⛔ *Admin only command*", msg.message_id)
+        return
+    end
+    
+    local mode_desc = {
+        none = "⚪ *Disabled* - all users can use the bot",
+        all = "🔴 *Strict* - only whitelisted users (all chats)",
+        private = "🟡 *Private only* - whitelist for PM, open in groups",
+        group = "🟠 *Group only* - whitelist for groups, PM restricted to admin"
+    }
+    
+    local users = get_allowed_users_list()
+    local message = string.format(
+        "🛡️ *Whitelist System*\n\n"
+        .. "*Mode:* %s\n"
+        .. "*Users:* %d\n\n",
+        mode_desc[WHITELIST_MODE] or "Unknown",
+        #users
+    )
+    
+    if #users > 0 and WHITELIST_MODE ~= "none" then
+        message = message .. "*Allowed users:*\n"
+        for i, uid in ipairs(users) do
+            message = message .. string.format("%d. `%s`\n", i, uid)
+            if #message > 3500 then break end
+        end
+        message = message .. "\n"
+    end
+    
+    message = message .. "*Commands:*\n"
+    message = message .. "• `/whitelist mode none` - disable\n"
+    message = message .. "• `/whitelist mode all` - strict mode\n"
+    message = message .. "• `/whitelist mode private` - PM only\n"
+    message = message .. "• `/whitelist mode group` - group only\n"
+    message = message .. "• `/whitelist add USER_ID` - add user\n"
+    message = message .. "• `/whitelist remove USER_ID` - remove user"
+    
+    send_message(msg.chat.id, message, msg.message_id)
+end
+
+local function handle_whitelist_mode(msg, text)
+    local user_id = msg.from.id
+    
+    if not is_admin(user_id) then
+        send_message(msg.chat.id, "⛔ *Admin only command*", msg.message_id)
+        return
+    end
+    
+    local mode = text:match("/whitelist mode (%w+)")
+    if not mode or not (mode == "none" or mode == "all" or mode == "private" or mode == "group") then
+        send_message(msg.chat.id, "❌ *Usage:* `/whitelist mode {none|all|private|group}`", msg.message_id)
+        return
+    end
+    
+    os.execute("uci set deepbot.main.whitelist_mode='" .. mode .. "'")
+    os.execute("uci commit deepbot")
+    
+    -- Обновляем переменную в текущем процессе
+    WHITELIST_MODE = mode
+    
+    local messages = {
+        none = "⚪ *Whitelist disabled* - all users can use the bot",
+        all = "🔴 *Whitelist mode: ALL* - only whitelisted users in all chats",
+        private = "🟡 *Whitelist mode: PRIVATE* - whitelist for PM, open in groups",
+        group = "🟠 *Whitelist mode: GROUP* - whitelist for groups, PM restricted to admin"
+    }
+    
+    send_message(msg.chat.id, messages[mode], msg.message_id)
+    info("Whitelist mode changed to: " .. mode)
+end
+
+local function handle_whitelist_add(msg, text)
+    local user_id = msg.from.id
+    
+    if not is_admin(user_id) then
+        send_message(msg.chat.id, "⛔ *Admin only command*", msg.message_id)
+        return
+    end
+    
+    local new_user = text:match("/whitelist add (%d+)")
+    if not new_user then
+        send_message(msg.chat.id, "❌ *Usage:* `/whitelist add USER_ID`", msg.message_id)
+        return
+    end
+    
+    add_allowed_user(tonumber(new_user), user_id)
+    send_message(msg.chat.id, "✅ User `" .. new_user .. "` added to whitelist", msg.message_id)
+    info("Added user " .. new_user .. " to whitelist")
+end
+
+local function handle_whitelist_remove(msg, text)
+    local user_id = msg.from.id
+    
+    if not is_admin(user_id) then
+        send_message(msg.chat.id, "⛔ *Admin only command*", msg.message_id)
+        return
+    end
+    
+    local remove_user = text:match("/whitelist remove (%d+)")
+    if not remove_user then
+        send_message(msg.chat.id, "❌ *Usage:* `/whitelist remove USER_ID`", msg.message_id)
+        return
+    end
+    
+    remove_allowed_user(tonumber(remove_user))
+    send_message(msg.chat.id, "🗑️ User `" .. remove_user .. "` removed from whitelist", msg.message_id)
+    info("Removed user " .. remove_user .. " from whitelist")
+end
+
 local function handle_text(msg, clean_text)
     local user_id = msg.from.id
     local chat_id = msg.chat.id
-    local text    = clean_text or msg.text
+    local chat_type = msg.chat.type
+    
+    if not is_user_allowed(user_id, chat_type) then
+        info("Access denied for user=" .. user_id .. " in " .. chat_type)
+        
+        local message = ""
+        if WHITELIST_MODE == "all" then
+            message = "⛔ *Access denied!* You are not authorized to use this bot."
+        elseif WHITELIST_MODE == "private" and chat_type == "private" then
+            message = "⛔ *Access denied!* You are not in the whitelist.\nUse `/whoami` to get your ID and contact admin."
+        elseif WHITELIST_MODE == "group" and chat_type == "private" then
+            message = "⛔ *Access denied!* Private messages are restricted to admin only."
+        elseif WHITELIST_MODE == "group" and chat_type ~= "private" then
+            message = "⛔ *Access denied!* You are not authorized to use this bot in groups."
+        else
+            message = "⛔ *Access denied!*"
+        end
+        
+        send_message(chat_id, message, msg.message_id)
+        return
+    end
+    
+    local text = clean_text or msg.text
     info(string.format("handle_text user=%d chat=%d text=%q",
         user_id, chat_id, text:sub(1, 80)))
 
@@ -469,11 +866,11 @@ local function handle_text(msg, clean_text)
         return
     end
 
-    tg_call("sendChatAction", { chat_id = chat_id, action = "typing" })
+    tg_call("sendChatAction", { chat_id = chat_id, action = "typing" }, true)
 
     local data, api_err = call_deepseek(user_id, text)
     if api_err then
-        err("DeepSeek error user=" .. user_id .. ": " .. api_err)
+        err("Error user=" .. user_id .. ": " .. api_err)
         send_message(chat_id, "❌ *Error:* " .. api_err, msg.message_id)
         return
     end
@@ -482,7 +879,7 @@ local function handle_text(msg, clean_text)
     send_message(chat_id, answer, msg.message_id)
 end
 
--- ===== manager =====
+-- ===== DISPATCH =====
 local function dispatch(msg)
     if not msg then dbg("dispatch: nil message") return end
     if not msg.text then dbg("dispatch: no text") return end
@@ -491,13 +888,18 @@ local function dispatch(msg)
 
     local text = msg.text
 
-    -- commands run any 
     if     text == "/start"   or text:find("^/start@")   then handle_start(msg)
     elseif text == "/clear"   or text:find("^/clear@")   then handle_clear(msg)
     elseif text == "/history" or text:find("^/history@") then handle_history(msg)
     elseif text == "/tokens"  or text:find("^/tokens@")  then handle_tokens(msg)
+    elseif text == "/admin"   or text:find("^/admin@")   then handle_admin_info(msg)
+    elseif text == "/whoami"  or text:find("^/whoami@")  then handle_whoami(msg)
+    elseif text == "/allowed" or text:find("^/allowed@") then handle_allowed(msg)
+    elseif text == "/whitelist" or text:find("^/whitelist@") then handle_whitelist_status(msg)
+    elseif text:find("^/whitelist mode ") then handle_whitelist_mode(msg, text)
+    elseif text:find("^/whitelist add ") then handle_whitelist_add(msg, text)
+    elseif text:find("^/whitelist remove ") then handle_whitelist_remove(msg, text)
     elseif text:sub(1,1) ~= "/" then
-        -- for standart msg — check public filter
         local should_reply, clean_text = group_filter(msg)
         if should_reply then
             handle_text(msg, clean_text)
@@ -509,21 +911,29 @@ end
 local function run()
     info("Lua version: " .. _VERSION)
     info("Token configured: "      .. (TELEGRAM_BOT_TOKEN ~= "YOUR_BOT_TOKEN"   and "YES" or "NO"))
-    info("DeepSeek key configured: " .. (DEEPSEEK_API_KEY  ~= "YOUR_DEEPSEEK_KEY" and "YES" or "NO"))
+    info("AI key configured: " .. (DEEPSEEK_API_KEY  ~= "YOUR_DEEPSEEK_KEY" and "YES" or "NO"))
+    info("AI Model: " .. AI_MODEL)
     info("Debug mode: "            .. (DEBUG and "ON" or "OFF"))
     info("Proxy: "                 .. (PROXY_URL ~= "" and PROXY_URL or "none"))
     info("Group mention only: "    .. (GROUP_MENTION_ONLY and "ON" or "OFF"))
+    info("Admin ID: "              .. (ADMIN_ID ~= "" and ADMIN_ID or "NOT SET"))
+    info("Whitelist mode: "        .. WHITELIST_MODE)
+
+    if WHITELIST_MODE ~= "none" and ADMIN_ID == "" then
+        err("WARNING: Whitelist mode is '" .. WHITELIST_MODE .. "' but no admin_id configured!")
+        err("Set admin_id via: uci set deepbot.main.admin_id='YOUR_ID'")
+    end
 
     local test = io.popen("curl --version 2>&1 | head -1")
     if test then info("curl: " .. (test:read("*l") or "?")); test:close() end
 
     info("Checking token via getMe...")
-    local me = tg_call("getMe", {})
+    local me = tg_call("getMe", {}, true)
     if me and me.ok then
         BOT_USERNAME = me.result.username or ""
         info("Bot: @" .. BOT_USERNAME)
     else
-        err("getMe failed — проверь TELEGRAM_BOT_TOKEN!")
+        err("getMe failed — check TELEGRAM_BOT_TOKEN!")
         os.exit(1)
     end
 
@@ -537,7 +947,7 @@ local function run()
             offset          = offset,
             timeout         = 30,
             allowed_updates = { "message" },
-        })
+        }, true)
 
         if res and res.ok and res.result then
             local count = #res.result
@@ -549,9 +959,9 @@ local function run()
                 if not ok then err("dispatch error: " .. tostring(e)) end
             end
         else
-            err("getUpdates failed, sleeping 5s...")
-            if res then err("Response: " .. json.encode(res)) end
-            socket.sleep(5)
+            if not res then
+                socket.sleep(5)
+            end
         end
     end
 end
