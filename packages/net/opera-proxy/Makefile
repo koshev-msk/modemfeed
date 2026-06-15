@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opera-proxy
 PKG_VERSION:=1.22.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 PKG_LICENSE:=MIT
@@ -44,8 +44,23 @@ endif
 PKG_SOURCE_URL:=https://github.com/Alexey71/opera-proxy/releases/download/v$(PKG_VERSION)
 PKG_SOURCE:=opera-proxy.linux-$(GOARCH_SUFFIX)
 PKG_HASH:=skip
+PKG_BUILD_DEPENDS:=upx/host
 
 include $(INCLUDE_DIR)/package.mk
+
+UPX:=$(STAGING_DIR_HOST)/bin/upx
+UPX_AVAILABLE:=$(shell [ -x "$(UPX)" ] && echo yes || echo no)
+
+ifeq ($(UPX_AVAILABLE),yes)
+define upxcompress
+	@echo "Compressing $(1) with UPX..."
+	$(UPX) --lzma --best $(1)
+endef
+else
+define upxcompress
+	@echo "UPX not found at $(UPX), skipping compression"
+endef
+endif
 
 define Package/opera-proxy
   SECTION:=net
@@ -69,6 +84,7 @@ define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) $(DL_DIR)/$(PKG_SOURCE) $(PKG_BUILD_DIR)/opera-proxy
 	chmod +x $(PKG_BUILD_DIR)/opera-proxy
+	$(call upxcompress,$(PKG_BUILD_DIR)/opera-proxy)
 endef
 
 define Build/Compile
