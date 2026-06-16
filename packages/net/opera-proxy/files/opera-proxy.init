@@ -8,23 +8,26 @@ NAME=opera-proxy
 PROG=/usr/bin/${NAME}
 
 start_service() {
-	local country bind_address verbosity socks_mode timeout
+	local country bind_address verbosity socks_mode timeout fake_sni args
 
 	config_load opera-proxy
 	config_get country      main country      "EU"
 	config_get bind_address main bind_address "127.0.0.1:18080"
 	config_get verbosity    main verbosity    "20"
 	config_get timeout      main timeout      "10s"
+	config_get fake_sni	main fake_sni
+	config_get args		main args
 	config_get_bool socks_mode main socks_mode 0
 
 	procd_open_instance
 	procd_set_param command "$PROG"
-	procd_append_param command -country "$country"
-	procd_append_param command -bind-address "$bind_address"
-	procd_append_param command -verbosity "$verbosity"
-	procd_append_param command -timeout "$timeout"
-
+	[ -n "$country" ] && procd_append_param command -country "$country"
+	[ -n "$bind_address" ] && procd_append_param command -bind-address "$bind_address"
+	[ -n "$verbosity" ] && procd_append_param command -verbosity "$verbosity"
+	[ -n "$timeout" ] && procd_append_param command -timeout "$timeout"
 	[ "$socks_mode" = "1" ] && procd_append_param command -socks-mode
+	[ -n "$fake_sni" ] && procd_append_param command -fake-SNI "$fake_sni"
+	[ -n "$args" ] && procd_append_param command "$args"
 
 	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
 	procd_set_param stdout 1
