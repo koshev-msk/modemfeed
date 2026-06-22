@@ -97,7 +97,7 @@ msgid ""
 "The revert timeout starts at <code>2 × (Interval × Probes)</code> seconds<br />"
 "and doubles with each consecutive failed attempt."
 msgstr ""
-"Автоматически вернуться на основную SIM через некоторое время.<br />
+"Автоматически вернуться на основную SIM через некоторое время.<br />"
 "Начальный таймаут возврата равен <code>2 × (Интервал × Попытки)</code> секунд<br />"
 "и удваивается при каждой последующей неудачной попытке переключения."
 

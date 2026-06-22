@@ -36,7 +36,7 @@ return view.extend({
 		s = m.section(form.TypedSection, 'failover',
 			_('Signal-based failover'),
 			_('Monitors signal quality (RSRP/RSCP) and link state via mwan3.<br />' +
-			  'Switches to the reserve SIM when the average signal drops below the threshold ' +
+			  'Switches to the reserve SIM when the average signal drops below the threshold<br />' +
 			  'or the interface loses connectivity. Operates independently of the scheduled switch.'));
 		s.anonymous = true;
 		s.addremove = false;
