@@ -15,12 +15,18 @@ return view.extend({
 		m = new form.Map('ssw', _('SSW - SIM Card switch'));
 
 		s = m.section(form.TypedSection, 'modem', _('Modem'));
+		s.anonymous = true;
+		s.addremove = false;
+
 		o = s.option(form.ListValue, 'value', _('State'),
 			_('Enable the modem upon router startup.'));
 		o.value(1, _('Enable'));
 		o.value(0, _('Disable'));
 
 		s = m.section(form.TypedSection, 'sim', _('SIM Slot'));
+		s.anonymous = true;
+		s.addremove = false;
+
 		o = s.option(form.ListValue, 'value', _('Default SIM Slot'),
 			_('Select the primary slot. The other becomes the backup.'));
 		o.value(1, _('SLOT 1'));
