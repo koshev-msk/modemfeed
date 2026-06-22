@@ -99,12 +99,12 @@ msgid "Phonebook"
 msgstr "Тел.книга"
 
 msgid "Each line must have the following format: 'Description;Phone Number'. For user convenience, the file is saved to the location <code>/etc/smstools3.pb</code>."
-msgstr "Каждая строчка должна иметь формат: 'Описание;Телефонный номер'. Файл телефонной книги находиться в <code>/etc/smstools3.pb</code>."
+msgstr "Каждая строчка должна иметь формат: 'Описание;Телефонный номер'. Телефонная книга сохраняется в файл <code>/etc/smstools3.pb</code>."
 
 msgid "Smtools3: User Script"
 msgstr "Smtools3: сценарий пользователя"
 
-msgid "Edit smstools3 user script. Add user\'s actions for incoming and outcoming messages.<br />Is shell script for smstools3 scenario. See \<a href\=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\"\>smstools3 manual page\</a\> for more details."
+msgid "Edit smstools3 user script. Add user actions for incoming and outcoming messages.<br />Is shell script for smstools3 scenario. See \<a href\=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\"\>smstools3 manual page\</a\> for more details."
 msgstr "Отредактируйте пользовательский сценарий smstools3. Добавляйте действия для входящих и исходящих сообщений.<br />Это сценарий оболочки для smstools3. Более подробную информацию смотрите \<a href\=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\"\>на странице руководства smstools3\</a\>."
 
 msgid "Edit User script smstools3.<br />File stored in <code>/etc/smstools3.user</code>"

@@ -13,7 +13,7 @@ return view.extend({
 	},
 
 	render: function(data) {
-		var desc_head = _('Edit smstools3 user script. Add user\'s actions for incoming and outcoming messages.<br />Is shell script for smstools3 scenario. See \<a href\=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\"\>smstools3 manual page\</a\> for more details.');
+		var desc_head = _('Edit smstools3 user script. Add user actions for incoming and outcoming messages.<br />Is shell script for smstools3 scenario. See \<a href\=\"http://smstools3.kekekasvi.com/index.php?p=eventhandler\"\>smstools3 manual page\</a\> for more details.');
 		var config = uci.sections('smstools3');
 		var m, s, o;
 
