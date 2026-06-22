@@ -226,7 +226,7 @@ msgid ""
 "Set to <code>0</code> to stay on the reserve SIM indefinitely."
 msgstr ""
 "Через сколько минут автоматически вернуться на основную SIM. "
-"Установите <code>0</code>, чтобы оставаться на резервной SIM бессрочно."
+"Установите <code>0</code>, чтобы оставаться на резервной SIM до следующего переключения."
 
 msgid "APN for scheduled switch"
 msgstr "APN для переключения по расписанию"
