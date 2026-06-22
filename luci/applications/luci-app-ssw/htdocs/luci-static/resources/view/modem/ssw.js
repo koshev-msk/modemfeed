@@ -35,7 +35,7 @@ return view.extend({
 		// ── Failover section ──────────────────────────────────────────────
 		s = m.section(form.TypedSection, 'failover',
 			_('Signal-based failover'),
-			_('Monitors signal quality (RSRP/RSCP) and link state via mwan3. ' +
+			_('Monitors signal quality (RSRP/RSCP) and link state via mwan3.<br />' +
 			  'Switches to the reserve SIM when the average signal drops below the threshold ' +
 			  'or the interface loses connectivity. Operates independently of the scheduled switch.'));
 		s.anonymous = true;
@@ -45,7 +45,7 @@ return view.extend({
 			_('Enable automatic SIM switching based on signal quality and link state.'));
 
 		o = s.option(form.Value, 'apn1', _('APN — default SIM'),
-			_('Access Point Name used when operating on the default SIM slot. ' +
+			_('Access Point Name used when operating on the default SIM slot.<br />' +
 			  'Applied automatically when reverting from the reserve SIM.'));
 		o.placeholder = 'internet';
 		o.depends({enable: '1'});
@@ -56,14 +56,14 @@ return view.extend({
 		o.depends({enable: '1'});
 
 		o = s.option(form.Flag, 'revert', _('Auto-revert to default SIM'),
-			_('Automatically switch back to the default SIM after a period of time. ' +
-			  'The revert timeout starts at <code>2 × (Interval × Probes)</code> seconds ' +
+			_('Automatically switch back to the default SIM after a period of time.<br />' +
+			  'The revert timeout starts at <code>2 × (Interval × Probes)</code> seconds<br />' +
 			  'and doubles with each consecutive failed attempt.'));
 		o.depends({enable: '1'});
 
 		o = s.option(form.ListValue, 'rsrp', _('Signal threshold (RSRP/RSCP)'),
-			_('Switch to the reserve SIM when the averaged signal falls below this value. ' +
-			  'For LTE and 5G use <strong>RSRP</strong>; for 3G (WCDMA) use <strong>RSCP</strong>. ' +
+			_('Switch to the reserve SIM when the averaged signal falls below this value.<br />' +
+			  'For LTE and 5G use <strong>RSRP</strong>; for 3G (WCDMA) use <strong>RSCP</strong>.<br />' +
 			  'Typical thresholds: &minus;95 dBm (good), &minus;105 dBm (acceptable), &minus;115 dBm (poor).'));
 		for (var rsrp = -120; rsrp <= -50; rsrp++) {
 			o.value(rsrp, rsrp + ' ' + _('dBm'));
@@ -71,8 +71,8 @@ return view.extend({
 		o.depends({enable: '1'});
 
 		o = s.option(form.Value, 'interval', _('Check interval'),
-			_('How often the daemon polls signal quality and link state. ' +
-			  'Shorter intervals react faster but increase CPU and modem load. ' +
+			_('How often the daemon polls signal quality and link state.<br />' +
+			  'Shorter intervals react faster but increase CPU and modem load.<br />' +
 			  'The total evaluation window is <code>Interval × Probes</code>.'));
 		o.value('5', 5 + ' ' + _('sec'));
 		for (var sec = 10; sec <= 60; sec += 10) {
@@ -88,9 +88,9 @@ return view.extend({
 		o.depends({enable: '1'});
 
 		o = s.option(form.Value, 'times_rsrp', _('Probes'),
-			_('Number of signal samples to average before making a switch decision. ' +
+			_('Number of signal samples to average before making a switch decision.<br />' +
 			  'More probes smooth out momentary fluctuations but slow reaction time.<br />' +
-			  'Total evaluation window: <code>Interval × Probes</code>. ' +
+			  'Total evaluation window: <code>Interval × Probes</code>.<br />' +
 			  'Example: <code>Interval = 60 sec</code>, <code>Probes = 5</code> → decision after <code>300 sec</code>.'));
 		for (var p = 5; p <= 10; p++) {
 			o.value(p, p);
@@ -100,8 +100,8 @@ return view.extend({
 		// ── Schedule section ──────────────────────────────────────────────
 		s = m.section(form.TypedSection, 'schedule',
 			_('Scheduled SIM switch'),
-			_('Unconditional switch to the reserve SIM at a fixed time. ' +
-			  'Choose how often the switch repeats: every day, every N days, or on a specific weekday. ' +
+			_('Unconditional switch to the reserve SIM at a fixed time.<br />' +
+			  'Choose how often the switch repeats: every day, every N days, or on a specific weekday.<br />' +
 			  'Optionally reverts to the default SIM after a set number of minutes.'));
 		s.anonymous = true;
 		s.addremove = false;
@@ -162,7 +162,7 @@ return view.extend({
 
 		// Revert duration
 		o = s.option(form.Value, 'duration', _('Revert after (minutes)'),
-			_('Minutes until automatic revert to the default SIM. ' +
+			_('Minutes until automatic revert to the default SIM.<br />' +
 			  'Set to <code>0</code> to stay on the reserve SIM indefinitely.'));
 		o.placeholder = '60';
 		o.datatype = 'uinteger';
@@ -171,7 +171,7 @@ return view.extend({
 
 		// APN override
 		o = s.option(form.Value, 'apn', _('APN for scheduled switch'),
-			_('APN to use during the scheduled window. ' +
+			_('APN to use during the scheduled window.<br />' +
 			  'Leave empty to use <em>APN Reserved SIM</em> from Failover settings.'));
 		o.placeholder = 'internet';
 		o.depends({enable: '1'});
