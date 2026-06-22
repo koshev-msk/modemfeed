@@ -21,6 +21,9 @@ msgstr "SSW — переключение SIM-карт"
 
 # ── Modem / SIM sections ──────────────────────────────────────────────────────
 
+msgid "Modem"
+msgstr "Модем"
+
 msgid "State"
 msgstr "Состояние"
 
@@ -28,10 +31,13 @@ msgid "Enable the modem upon router startup."
 msgstr "Включить модем при загрузке роутера."
 
 msgid "Enable"
-msgstr "Включено"
+msgstr "Включён"
 
 msgid "Disable"
-msgstr "Выключено"
+msgstr "Выключен"
+
+msgid "SIM Slot"
+msgstr "Слот SIM"
 
 msgid "Default SIM Slot"
 msgstr "Основной слот SIM"
