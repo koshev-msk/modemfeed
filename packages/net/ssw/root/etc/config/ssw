@@ -9,3 +9,11 @@ config sim 'sim'
 
 config failover 'failover'
 
+config schedule 'schedule'
+	option enable '0'
+	option period 'daily'
+	option period_days '3'
+	option weekday '1'
+	option time_on '02:00'
+	option duration '120'
+	option apn ''
