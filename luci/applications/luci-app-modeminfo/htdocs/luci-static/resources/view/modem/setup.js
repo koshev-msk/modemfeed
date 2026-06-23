@@ -60,7 +60,7 @@ var qdesc = _('Select qmi port.');
 var lacdec = _('Show LAC and CID in decimal.');
 var mmdesc = _('Get device hardware name via mmcli utility if aviable.');
 var qmidesc = _('Set qmi mode.');
-var idesc = _('Show short info.<br />Overview: show info on main page \"Cellular Network\" section<br />MenuBar: show info on menubar all pages<br />NOTICE: Don\'t add too many modems in menubar, it may break the theme display.');
+var idesc = _('Show short info.<br />Overview: show info on main page \"Cellular Network\" section<br />MenuBar: show info on menubar all pages<br />NOTICE: Do not add too many modems in menubar, it may break the theme display.');
 var portplace = _('Please select a port');
 
 return view.extend({
