@@ -33,6 +33,11 @@
 
 . /lib/functions.sh
 
+PROGRESS_FILE=/tmp/ota_progress
+
+set_progress() {
+	echo "$1" > ${PROGRESS_FILE}
+}
 
 load_config(){
         config_get url $1 url
@@ -46,7 +51,6 @@ URL_BASE=$url
 if [ "x${URL_BASE}" = "x" ]; then
 	exit 0
 fi
-
 
 # Get OpenWrt Release info
 [ -f /etc/openwrt_release ] && {
@@ -65,20 +69,16 @@ BOARD=$(jsonfilter -s "$(cat /etc/board.json)" -e '@["model"]["id"]')
 # Remove update files
 remove_files(){
 	for f in firmware.bin changelog.txt; do
-		[ -f /tmp/${f} ] && {
-			rm -rf /tmp/${f}
-		}
+		[ -f /tmp/${f} ] && rm -rf /tmp/${f}
 	done
 }
 
 case $1 in
 	check)
-
 		if [ ! -f /tmp/update.lock ]; then
 			echo -e "Check updates from ${URL_BASE}\n"
 		fi
 
-		# Get aviable profiles
 		! [ -f /tmp/profiles.json ] && {
 			wget ${URL_BASE}/targets/${DISTRIB_TARGET}/profiles.json -O /tmp/profiles.json > /dev/null 2>&1
 		}
@@ -88,7 +88,6 @@ case $1 in
 			exit 0
 		}
 
-		# Get changelog
 		[ -f /tmp/profiles.json ] && {
 			[ ! -f /tmp/changelog.txt ] && {
 				wget ${URL_BASE}/changelog.txt -O /tmp/changelog.txt > /dev/null 2>&1
@@ -105,12 +104,12 @@ esac
 BASE_BOARD=$(jsonfilter -s "$(cat /tmp/profiles.json)" -e '@["profiles"][*]["supported_devices"].*')
 
 # Get available board info
-
 board_stuff(){
         IMAGES=$(jsonfilter -s "$(cat /tmp/profiles.json)" -e "@['profiles']['$FW_BOARD']['images'][*]" | grep sysupgrade)
         echo $IMAGES | jsonfilter \
                 -e FILE="$['name']" \
-                -e SHA256="$['sha256']"
+                -e SHA256="$['sha256']" \
+                -e FILESIZE="$['size']"
 }
 
 #sha256check(){
@@ -119,7 +118,6 @@ board_stuff(){
 # stuff
 for b in $BASE_BOARD; do
 	if [ "${b}" = "${BOARD}" ]; then
-		# modify board name for profiles.json
 		FW_BOARD=$(echo $BOARD | sed -e 's/\,/_/')
 		[ -f /tmp/profiles.json ] && {
 			eval $(board_stuff)
@@ -127,9 +125,7 @@ for b in $BASE_BOARD; do
 			echo "Failed! Abort update"
 			remove_files
 		}
-		# Get remote revision firmware
 		FW_REV_EXT=$(echo $FILE | awk -F [-] '{gsub("rev",""); gsub(/\./,"",$2);  print $2$5$6}')
-		# Get local revision firmware
 		if [ -f /rom/etc/uci-defaults/fw_rev ]; then
 			. /rom/etc/uci-defaults/fw_rev
 			VER_LOCAL=$(echo $FW_REV | awk -F [-] '{gsub("rev",""); print $1$2}')
@@ -139,43 +135,66 @@ for b in $BASE_BOARD; do
 			echo "Failed! Abort update"
 			exit 0
 		fi
-		# Firmware upgrade
 		case $1 in
 			upgrade)
 			if [ -f /tmp/update.lock ]; then
 				echo "Download firmware $FILE"
 				echo "from $URL_BASE"
-				wget $URL_BASE/targets/${DISTRIB_TARGET}/$FILE -O /tmp/firmware.bin > /dev/null 2>&1
-				case $? in
-					0) echo "Download complete." ;;
-					*) echo "No updates for this board: $BOARD" && remove_files && exit 0 ;;
+				set_progress "downloading 0"
+
+				# Start wget in background
+				wget ${URL_BASE}/targets/${DISTRIB_TARGET}/$FILE -O /tmp/firmware.bin 2>/dev/null &
+				WGET_PID=$!
+
+				# Poll file size while wget runs
+				while kill -0 $WGET_PID 2>/dev/null; do
+					CURRENT=$(stat -c%s /tmp/firmware.bin 2>/dev/null || echo 0)
+					if [ -n "$FILESIZE" ] && [ "$FILESIZE" -gt 0 ]; then
+						PCT=$(( CURRENT * 100 / FILESIZE ))
+						[ $PCT -gt 99 ] && PCT=99
+						set_progress "downloading $PCT"
+					fi
+					sleep 1
+				done
+
+				wait $WGET_PID
+				DL_RC=$?
+
+				case $DL_RC in
+					0) echo "Download complete."
+					   set_progress "downloading 100" ;;
+					*) echo "No updates for this board: $BOARD"
+					   set_progress "error download"
+					   remove_files && exit 0 ;;
 				esac
-				# Get local SHA256
+
+				set_progress "verifying"
 				SHA256_DL=$(sha256sum /tmp/firmware.bin | awk '{print $1}')
 				echo -n "Check sha256 sum: "
-				# Compare remote and download file SHA256
 				if [ "$SHA256" = "$SHA256_DL" ]; then
 					echo "OK"
 					echo "Update process start!"
 					echo "Device will be rebooted."
 					echo "DO NOT TURN OFF DEVICE!"
-					# Test firmware image before flashing
+					set_progress "testing"
 					sysupgrade -T /tmp/firmware.bin
 					case $? in
-						0) echo "Flashing firmware" ;;
-						*) echo "Failed! Abort update" && remove_files && exit 0 ;;
+						0) echo "Flashing firmware"
+						   set_progress "flashing" ;;
+						*) echo "Failed! Abort update"
+						   set_progress "error verify"
+						   remove_files && exit 0 ;;
 					esac
 					rm -rf /tmp/update.lock /tmp/profiles.json /tmp/changelog.txt
-					# Updrade firmware
 					sleep 25 && sysupgrade /tmp/firmware.bin &
 				else
 					echo "Failed! Abort update."
+					set_progress "error sha256"
 					remove_files && rm -rf /tmp/update.lock /tmp/profiles.json
 				fi
 			fi
 			;;
 			check)
-			# Compare firmware versions
 			if [ $FW_REV_EXT -gt $FW_VER_LOCAL ]; then
 				echo "New firmware upgrade release!"
 				echo -e "*** $FILE ***\n"
