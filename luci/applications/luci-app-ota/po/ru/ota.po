@@ -3,35 +3,57 @@
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Konstantine Shevlakov <shevlakov@132lan.ru>\n"
 
-msgid "OTA Update"
-msgstr "Обновление OTA"
-
-msgid "Update Available"
-msgstr "Доступно обновление"
-
-msgid "OTA System Update"
-msgstr "Обновление через OTA"
+msgid "Changelog"
+msgstr "Изменения"
 
 msgid "Check for Updates"
 msgstr "Проверить"
 
+
 msgid "Upgrade"
 msgstr "Обновить"
 
-msgid "Checking for updates..."
-msgstr "Проверка обновлений..."
+msgid "Show Changelog"
+msgstr "Посмотреть изменения"
 
-msgid "No updates available or check failed"
-msgstr "Нет доступных обновлений"
+msgid "Current version:"
+msgstr "Текущая версия:"
+
+msgid "Available version:"
+msgid "Доступно обновление:"
+
+msgid "OTA System Update"
+msgstr "Обновление через OTA"
+
+msgid "OTA Update"
+msgstr "Обновление OTA"
 
 msgid "Check failed: "
 msgstr "Неудачно: "
 
-msgid "Download completed successfully! Start upgrade.<br />DO NOT POWER OFF THIS DEVICE!<br />System will be upgrade completed after reboot!"
-msgstr "Загрузка обновления завершена. Запущен процесс обновления.<br />НЕ ВЫКЛЮЧАЙТЕ УСТРОЙСТВО!<br />Система будет обновлена после перезагрузки!"
+msgid "No updates available"
+msgstr "Нет доступных обновлений"
 
-msgid "Upgrade failed: "
-msgstr "Обновление прервано: "
+msgid "Downloading: "
+msgstr "Загружается: "
 
-msgid "Download completed! Prepare upgrade..."
-msgstr "Загрузка выполнена. Подготовка..."
+msgid "Verifying SHA256 checksum..."
+msgstr Проверка суммы SHA256..."
+
+msgid "Verifying SHA256..."
+msgstr "Проверка SHA256..."
+
+msgid "Testing firmware image (sysupgrade -T)..."
+msgstr "Проверка образа прошивки (sysupgrade -T)..."
+
+msgid "Testing firmware image..."
+msgstr "Проверка образа прошивки..."
+
+msgid "Flashing! DO NOT POWER OFF!"
+msgstr "Прошивка! НЕ ОТКЛЮЧАЙТЕ ПИТАНИЕ УСТРОЙСТВА!"
+
+msgid "Device will be rebooted, please wait... "
+msgstr "Устройство будет перезагружено, ожидание..."
+
+msgid "Upgrade started — device will reboot"
+msgstr "Обновление, устройство будет перезагружено"
