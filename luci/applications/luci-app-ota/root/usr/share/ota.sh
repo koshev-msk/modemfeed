@@ -34,6 +34,7 @@
 . /lib/functions.sh
 
 PROGRESS_FILE=/tmp/ota_progress
+VERSION_FILE=/tmp/ota_version
 
 set_progress() {
 	echo "$1" > ${PROGRESS_FILE}
@@ -142,32 +143,25 @@ for b in $BASE_BOARD; do
 				echo "from $URL_BASE"
 				set_progress "downloading 0"
 
-				# Start wget in background
-				wget ${URL_BASE}/targets/${DISTRIB_TARGET}/$FILE -O /tmp/firmware.bin 2>/dev/null &
-				WGET_PID=$!
-
-				# Poll file size while wget runs
-				while kill -0 $WGET_PID 2>/dev/null; do
-					CURRENT=$(stat -c%s /tmp/firmware.bin 2>/dev/null || echo 0)
-					if [ -n "$FILESIZE" ] && [ "$FILESIZE" -gt 0 ]; then
-						PCT=$(( CURRENT * 100 / FILESIZE ))
-						[ $PCT -gt 99 ] && PCT=99
-						set_progress "downloading $PCT"
-					fi
-					sleep 1
+				# Download with uclient-fetch, parse % from stderr progress bar
+				uclient-fetch -O /tmp/firmware.bin ${URL_BASE}/targets/${DISTRIB_TARGET}/$FILE 2>&1 | while IFS= read -r line; do
+					pct=$(echo "$line" | grep -o '[0-9]*%' | tr -d '%' | tail -1)
+					[ -n "$pct" ] && set_progress "downloading $pct"
 				done
+				DL_RC=${PIPESTATUS[0]:-$?}
+				# ash-safe fallback: check file exists and non-empty
+				[ -s /tmp/firmware.bin ] && DL_RC=0
 
-				wait $WGET_PID
-				DL_RC=$?
-
+				sleep 2
 				case $DL_RC in
 					0) echo "Download complete."
 					   set_progress "downloading 100" ;;
-					*) echo "No updates for this board: $BOARD"
+					*) echo "Download failed for board: $BOARD"
 					   set_progress "error download"
-					   remove_files && exit 0 ;;
+					   remove_files && exit 1 ;;
 				esac
 
+				sleep 2
 				set_progress "verifying"
 				SHA256_DL=$(sha256sum /tmp/firmware.bin | awk '{print $1}')
 				echo -n "Check sha256 sum: "
@@ -176,25 +170,31 @@ for b in $BASE_BOARD; do
 					echo "Update process start!"
 					echo "Device will be rebooted."
 					echo "DO NOT TURN OFF DEVICE!"
+					sleep 2
 					set_progress "testing"
 					sysupgrade -T /tmp/firmware.bin
 					case $? in
-						0) echo "Flashing firmware"
-						   set_progress "flashing" ;;
+						0) echo "Flashing firmware" ;;
 						*) echo "Failed! Abort update"
 						   set_progress "error verify"
-						   remove_files && exit 0 ;;
+						   remove_files && exit 1 ;;
 					esac
+					sleep 2
+					set_progress "flashing"
 					rm -rf /tmp/update.lock /tmp/profiles.json /tmp/changelog.txt
-					sleep 25 && sysupgrade /tmp/firmware.bin &
+					# Exit cleanly before sysupgrade takes over
+					sleep 30 && sysupgrade /tmp/firmware.bin &
+					exit 0
 				else
 					echo "Failed! Abort update."
 					set_progress "error sha256"
 					remove_files && rm -rf /tmp/update.lock /tmp/profiles.json
+					exit 1
 				fi
 			fi
 			;;
 			check)
+			. /usr/lib/os-release
 			if [ $FW_REV_EXT -gt $FW_VER_LOCAL ]; then
 				echo "New firmware upgrade release!"
 				echo -e "*** $FILE ***\n"
@@ -205,8 +205,16 @@ for b in $BASE_BOARD; do
 				echo ""
 				echo "Please run script again for download and install update!"
 				touch /tmp/update.lock
+				# Write version info for LuCI
+				# Extract prefix (everything before YYYYMM date) from remote filename
+				VER_PREFIX=$(echo $FILE | sed 's/-[0-9]\{6\}-rev[0-9]*-.*//')
+				VER_UPGRADE="${VER_PREFIX}-$(echo $FILE | sed 's/.*-\([0-9]\{6\}-rev[0-9]*\)-.*/\1/')"
+				VER_CURRENT="${VER_PREFIX}-${FW_REV}"
+				printf "current=%s\nupgrade=%s\n" "$VER_CURRENT" "$VER_UPGRADE" > ${VERSION_FILE}
 			else
 				echo "Update not found!"
+				# Write only current version using OPENWRT_RELEASE prefix + local FW_REV
+				printf "current=%s\nupgrade=\n" "${OPENWRT_RELEASE%~*} $FW_REV" > ${VERSION_FILE}
 			fi
 			;;
 		esac

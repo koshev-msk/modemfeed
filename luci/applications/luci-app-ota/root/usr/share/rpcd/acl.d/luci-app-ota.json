@@ -4,14 +4,20 @@
 	"read": {
 	"file": {
 			"/usr/share/ota.sh": ["exec"],
+			"/usr/share/ota-launch.sh": ["exec"],
+			"/usr/lib/os-release": ["read"],
+			"/rom/etc/uci-defaults/fw_rev": ["read"],
 			"/tmp/changelog.txt": ["read"],
 			"/tmp/profiles.json": ["read"],
-			"/tmp/update.lock": ["read"]
+			"/tmp/update.lock": ["read"],
+			"/tmp/ota_version": ["read"],
+			"/tmp/ota_progress": ["read"]
 		}
 	},
 	"write": {
 		"file": {
-			"/usr/share/ota.sh": ["exec"]
+			"/usr/share/ota.sh": ["exec"],
+			"/usr/share/ota-launch.sh": ["exec"]
 			}
 		}
 	}
