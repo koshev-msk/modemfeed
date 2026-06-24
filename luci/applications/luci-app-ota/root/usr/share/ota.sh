@@ -148,7 +148,9 @@ for b in $BASE_BOARD; do
 					pct=$(echo "$line" | grep -o '[0-9]*%' | tr -d '%' | tail -1)
 					[ -n "$pct" ] && set_progress "downloading $pct"
 				done
-				DL_RC=${PIPESTATUS[0]:-$?}
+				# Bash, not ash
+				#DL_RC=${PIPESTATUS[0]:-$?}
+				DL_RC=$?
 				# ash-safe fallback: check file exists and non-empty
 				[ -s /tmp/firmware.bin ] && DL_RC=0
 
