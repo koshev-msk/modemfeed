@@ -434,8 +434,8 @@ return view.extend({
 
 					updateSignalBar(
 						'sinr', i, modem.sinr, ' dB',
-						netmode === 'LTE' ? 'sinr' : 'ecio',
-						netmode === 'LTE' ? -20 : -24
+						/LTE|NR/.test(netmode) ? 'sinr' : 'ecio',
+						/LTE|NR/.test(netmode) ? -20 : -24
 					);
 
 					updateSignalBar('rsrp', i, modem.rsrp, ' dBm', 'rsrp', -140);
