@@ -52,6 +52,9 @@ msgstr "Проверка образа прошивки..."
 msgid "Flashing! DO NOT POWER OFF!"
 msgstr "Прошивка! НЕ ОТКЛЮЧАЙТЕ ПИТАНИЕ УСТРОЙСТВА!"
 
+msgid "Flashing firmware..."
+msgstr "Запись прошивки..."
+
 msgid "Device will be rebooted, please wait... "
 msgstr "Устройство будет перезагружено, ожидание..."
 
