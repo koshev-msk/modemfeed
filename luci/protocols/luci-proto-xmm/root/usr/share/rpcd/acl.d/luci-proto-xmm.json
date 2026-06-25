@@ -1,0 +1,15 @@
+{
+	"luci-proto-xmm": {
+		"description": "Grant access to XMM modem protocol resources",
+		"read": {
+			"file": {
+				"/dev/ttyACM*": [ "list" ],
+				"/dev/ttyUSB*": [ "list" ]
+			},
+			"ubus": {
+				"file": [ "list" ],
+				"luci.proto.xmm": [ "ports" ]
+			}
+		}
+	}
+}

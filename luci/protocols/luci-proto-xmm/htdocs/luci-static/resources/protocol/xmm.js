@@ -17,6 +17,12 @@ var callFileList = rpc.declare({
 	}
 });
 
+var callXmmPorts = rpc.declare({
+	object: 'luci.proto.xmm',
+	method: 'ports',
+	expect: { ports: [] }
+});
+
 network.registerPatternVirtual(/^xmm-.+$/);
 network.registerErrorCode('NO_DEVICE_SUPPORT', _('Unsupported modem'));
 network.registerErrorCode('NO_PORT_FOUND', _('No control device specified'));
@@ -63,7 +69,15 @@ return network.registerProtocol('xmm', {
 		o.ucioption = 'device';
 		o.rmempty = false;
 		o.load = function(section_id) {
-			return callFileList('/dev/').then(L.bind(function(devices) {
+			return callXmmPorts().then(L.bind(function(devices) {
+				if (!devices || !devices.length) {
+					/* Fallback. Show all ports */
+					return callFileList('/dev/').then(L.bind(function(devs) {
+						for (var i = 0; i < devs.length; i++)
+							this.value(devs[i]);
+						return form.Value.prototype.load.apply(this, [section_id]);
+					}, this));
+				}
 				for (var i = 0; i < devices.length; i++)
 					this.value(devices[i]);
 				return form.Value.prototype.load.apply(this, [section_id]);
@@ -123,7 +137,5 @@ return network.registerProtocol('xmm', {
 			_('Use DNS servers advertised by peer'),
 			_('If unchecked, the advertised DNS server addresses are ignored'));
 		o.default = o.enabled;
-
 	}
 });
-

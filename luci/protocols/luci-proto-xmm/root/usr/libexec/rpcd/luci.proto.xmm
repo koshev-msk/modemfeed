@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# "vidpid" "interface_hex"
+is_xmm_port() {
+	local vidpid="$1"
+	local iface="$2"
+	case "${vidpid}:${iface}" in
+		8087095a:00|8087095a:02) return 0 ;;
+		0e8d7126:04) return 0 ;;
+		0e8d7127:06) return 0 ;;
+	esac
+	return 1
+}
+
+list_ports() {
+	local first=1
+	printf '{"ports":['
+	for dev in $(ls /sys/class/tty/ 2>/dev/null | grep -E '^ttyACM|^ttyUSB'); do
+		local real
+		real=$(readlink -f "/sys/class/tty/$dev/device" 2>/dev/null) || continue
+		local iface_path="$real"
+		while [ -n "$iface_path" ] && [ "$iface_path" != "/" ]; do
+			[ -f "$iface_path/bInterfaceNumber" ] && break
+			iface_path=$(dirname "$iface_path")
+		done
+		[ -f "$iface_path/bInterfaceNumber" ] || continue
+		local usb_path
+		usb_path=$(dirname "$iface_path")
+		[ -f "$usb_path/idVendor" ] || continue
+		local vid pid iface
+		vid=$(cat "$usb_path/idVendor" 2>/dev/null)
+		pid=$(cat "$usb_path/idProduct" 2>/dev/null)
+		iface=$(cat "$iface_path/bInterfaceNumber" 2>/dev/null)
+		is_xmm_port "${vid}${pid}" "$iface" || continue
+		[ $first -eq 1 ] || printf ','
+		printf '"/dev/%s"' "$dev"
+		first=0
+	done
+	printf ']}'
+}
+
+case "$1" in
+	list)
+		printf '{"ports":{}}'
+	;;
+	call)
+		case "$2" in
+			ports) list_ports ;;
+		esac
+	;;
+esac
