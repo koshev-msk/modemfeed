@@ -56,7 +56,7 @@ function modem_data(){
 			if (/\+CREG/){gsub("\"","");split($0,a,",");reg=a[2];lac=a[3];cid=a[4]}
 			if (/\+RSCP:/){split($0,a,",");earfcn=a[2]}
 			if (/\+XMCI: 2/) {n=split($0,a,",");sinr_raw=a[n-1]; rssi_raw=a[n-2]; sinr = sprintf("%.0f", (sinr_raw*24)/24-50); rssi = (rssi_raw*64/64-110)
-				csq=rssi_raw/2; csq_col = get_csq_color(csq); csq_per = (csq > 30) ? 100 : sprintf("%.0f", csq*100/31)}
+			csq=rssi_raw/2; csq_col = get_csq_color(csq); csq_per = (csq > 30) ? 100 : sprintf("%.0f", csq*100/31)}
 			rsrp=""
 		}
 		END {print reg "|" earfcn "|" lac "|" cid "|" rssi "|" sinr "|" rsrp "|" rsrq "|" bw "|" bwc "|" pci "|" lte_ca "|" csq_col "|" csq_per "|" distance}
@@ -64,10 +64,10 @@ function modem_data(){
 	REGST=${1}; EARFCN=${2}; LAC=${3}; CID=${4}; CSQ_RSSI=${5}; SINR=${6}; RSRP=${7}; RSRQ=${8}; BWDL=${9}; BWCx=${10}
 	PCI=${11}; LTE_CA=${12}; CSQ_COL=${13}; CSQ_PER=${14}; DISTANCE=${15}
 	IFS="$OIFS"; unset OIFS
-	if [ $MODE = LTE ]; then
+	if [ "$MODE" = "LTE" ]; then
 		ENBx=$(echo $CID | sed -e 's/..$//')
-                CELL=$(printf %d 0x${CID: -2})
-                ENBID=$(printf %d 0x$ENBx)
+ 		CELL=$(printf %d 0x${CID: -2})
+		ENBID=$(printf %d 0x$ENBx)
 		OIFS="$IFS";IFS="|"
 		set -- $(echo "$O"| awk -F [:,] -v lte_ca=$LTE_CA -v mode="$MODE" '
 			# define maps and variables
