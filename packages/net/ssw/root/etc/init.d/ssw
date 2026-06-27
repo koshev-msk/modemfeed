@@ -52,7 +52,6 @@ start_service(){
 
 	if [ "$modem_value" = "$modem_cur" ] && [ "$sim_value" = "$sim_cur" ]; then
 		logger -t "SIM SW" "Modem and SIM already in correct state. Nothing to do."
-		return 0
 	elif [ "$modem_value" = "$modem_cur" ] && [ "$modem_value" = "1" ]; then
 		logger -t "SIM SW" "Modem already enabled on gpio $modem_gpio. Restart it."
 		echo "0" > /sys/class/gpio/"$modem_gpio"/value
