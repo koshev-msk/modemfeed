@@ -161,8 +161,6 @@ while true; do
 
 				uci commit network
 				reload_config network
-
-				fi
 				sw_sim && sleep 20 && reload_iface &
 			fi
 			cnt=0

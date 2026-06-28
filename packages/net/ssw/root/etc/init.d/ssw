@@ -149,6 +149,7 @@ stop_service(){
 reload_service(){
 	config_load ssw
 	update_cron
+	start_service
 }
 
 service_triggers(){
