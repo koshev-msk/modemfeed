@@ -135,7 +135,7 @@ return view.extend({
 
 		// Every-N-days field (shown only when period=interval)
 		o = s.option(form.Value, 'period_days', _('Repeat every (days)'),
-			_('Switch to the reserve SIM every this many days. Minimum 2.'));
+			_('Switch to your backup SIM card after a specified number of days per month. Minimum 2.'));
 		o.placeholder = '3';
 		o.datatype = 'uinteger';
 		o.default = '3';

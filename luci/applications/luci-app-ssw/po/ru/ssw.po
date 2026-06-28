@@ -195,8 +195,8 @@ msgstr "Еженедельно (определённый день)"
 msgid "Repeat every (days)"
 msgstr "Повторять каждые (дней)"
 
-msgid "Switch to the reserve SIM every this many days. Minimum 2."
-msgstr "Переключаться на резервную SIM раз в указанное количество дней. Минимум 2."
+msgid "Switch to your backup SIM card after a specified number of days per month. Minimum 2."
+msgstr "Переключаться на резервную SIM через указанное количество дней в месяце. Минимум 2."
 
 msgid "Must be 2 or more"
 msgstr "Должно быть 2 или более"

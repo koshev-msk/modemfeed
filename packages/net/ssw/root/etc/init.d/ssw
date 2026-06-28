@@ -69,22 +69,29 @@ time_add_min(){
 	printf "%s %s" "$m" "$h"
 }
 
-cron_period_to_dow(){
+# Build cron day/month/weekday fields from period settings
+# Outputs: "dom month dow"
+cron_period_fields(){
 	local period="$1"
+	local period_days="$2"
+	local weekday="$3"
 	case "$period" in
-		daily)   echo "* * *" ;;
-		weekly)  echo "* * 0" ;;
-		monthly) echo "1 * *" ;;
-		*)       echo "* * *" ;;
+		daily)    echo "* * *" ;;
+		weekly)   echo "* * ${weekday:-1}" ;;
+		monthly)  echo "1 * *" ;;
+		interval) echo "*/${period_days:-1} * *" ;;
+		*)        echo "* * *" ;;
 	esac
 }
 
 update_cron(){
-	local s_enable s_period s_time_on s_duration
-	config_get s_enable   schedule enable   "0"
-	config_get s_period   schedule period   "daily"
-	config_get s_time_on  schedule time_on  "00:00"
-	config_get s_duration schedule duration "0"
+	local s_enable s_period s_time_on s_duration s_period_days s_weekday
+	config_get s_enable      schedule enable      "0"
+	config_get s_period      schedule period      "daily"
+	config_get s_time_on     schedule time_on     "00:00"
+	config_get s_duration    schedule duration    "0"
+	config_get s_period_days schedule period_days "1"
+	config_get s_weekday     schedule weekday     "1"
 
 	# Remove old ssw entries
 	sed -i "/$CRON_TAG/d" "$CRON_FILE" 2>/dev/null
@@ -94,17 +101,17 @@ update_cron(){
 		return
 	}
 
-	local dow cron_on cron_off
-	dow=$(cron_period_to_dow "$s_period")
+	local fields cron_on cron_off
+	fields=$(cron_period_fields "$s_period" "$s_period_days" "$s_weekday")
 	cron_on=$(time_to_cron "$s_time_on")
 	cron_off=$(time_add_min "$s_time_on" "$s_duration")
 
 	printf "%s %s /usr/share/ssw_schedule.sh %s\n" \
-		"$cron_on" "$dow" "$CRON_TAG" >> "$CRON_FILE"
+		"$cron_on" "$fields" "$CRON_TAG" >> "$CRON_FILE"
 
 	if [ "$s_duration" -gt 0 ] 2>/dev/null; then
 		printf "%s %s /usr/share/ssw_schedule.sh revert %s\n" \
-			"$cron_off" "$dow" "$CRON_TAG" >> "$CRON_FILE"
+			"$cron_off" "$fields" "$CRON_TAG" >> "$CRON_FILE"
 	fi
 
 	/etc/init.d/cron reload 2>/dev/null
