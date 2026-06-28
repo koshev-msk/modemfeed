@@ -58,18 +58,6 @@ get_vars(){
 	[ -n "$interval" ] || interval=60
 	[ -n "$times_rsrp" ] || times_rsrp=5
 
-	# Schedule variables
-	sched_enable=$(uci -q get ssw.schedule.enable 2>/dev/null)
-	sched_time_on=$(uci -q get ssw.schedule.time_on 2>/dev/null)
-	sched_duration=$(uci -q get ssw.schedule.duration 2>/dev/null)
-	sched_apn=$(uci -q get ssw.schedule.apn 2>/dev/null)
-	sched_period=$(uci -q get ssw.schedule.period 2>/dev/null)
-	sched_period_days=$(uci -q get ssw.schedule.period_days 2>/dev/null)
-	sched_weekday=$(uci -q get ssw.schedule.weekday 2>/dev/null)
-	[ -n "$sched_duration" ]    || sched_duration=0
-	[ -n "$sched_period" ]      || sched_period=daily
-	[ -n "$sched_period_days" ] || sched_period_days=1
-	[ -n "$sched_weekday" ]     || sched_weekday=1
 }
 
 # SIM Switch
@@ -90,163 +78,6 @@ sw_sim(){
 		fi
 	fi
 	set > /tmp/apn.ssw
-}
-
-# Revert rule switch (failover)
-sw_rule(){
-	if [ -f /tmp/ssw.vars ]; then
-		. /tmp/ssw.vars
-	fi
-	if [ "$cur_sim" -ne "$sim_value" ]; then
-		if [ "$(date +%s)" -gt "$SWDATE" ]; then
-			logger -t "$NODE" "Revert to default SIM slot with $apn"
-			sw_sim
-		fi
-	fi
-}
-
-# Schedule: revert to default SIM after duration
-sched_revert(){
-	[ -f /tmp/ssw_sched.vars ] && . /tmp/ssw_sched.vars
-
-	if [ -n "$SCHED_REVERT_AT" ] && [ "$(date +%s)" -ge "$SCHED_REVERT_AT" ]; then
-		cur_sim=$(cat /sys/class/gpio/$sim_gpio/value)
-		if [ "$cur_sim" -ne "$sim_value" ]; then
-			logger -t "$NODE" "Schedule: reverting to default SIM slot"
-			iface=$(uci show network | awk -F [.] '/devices/{gsub("'\''","");print $2}' | tail -1)
-			uci set network.$iface.apn="${apn1:-internet}"
-			uci commit network
-			reload_config network
-			sw_sim && sleep 20 && reload_iface &
-		fi
-		rm -f /tmp/ssw_sched.vars
-		logger -t "$NODE" "Schedule: revert done, schedule state cleared"
-	fi
-}
-
-# Check if today matches the configured schedule period.
-# Returns 0 (true) if the switch should fire today, 1 otherwise.
-sched_day_match(){
-	today=$(date +%Y%m%d)
-	now_dow=$(date +%w)   # 0=Sun .. 6=Sat
-
-	case "$sched_period" in
-		daily)
-			return 0
-			;;
-
-		weekly)
-			[ "$now_dow" = "$sched_weekday" ] && return 0
-			return 1
-			;;
-
-		interval)
-			# Read the date of the last successful switch from persistent state.
-			# We keep it in /tmp/ssw_sched_last.date so it survives across
-			# the daemon's iterations but resets on reboot (intentional —
-			# after reboot the interval counter restarts from today).
-			last_date=""
-			[ -f /tmp/ssw_sched_last.date ] && last_date=$(cat /tmp/ssw_sched_last.date)
-
-			if [ -z "$last_date" ]; then
-				# First run ever (or after reboot): trigger today.
-				return 0
-			fi
-
-			# Calculate elapsed days between last_date and today (YYYYMMDD arithmetic).
-			# Use date to convert both to unix timestamps then divide.
-			ts_last=$(date -d "$last_date" +%s 2>/dev/null)
-			[ -z "$ts_last" ] && ts_last=$(date -jf "%Y%m%d" "$last_date" +%s 2>/dev/null)
-			ts_now=$(date +%s)
-			elapsed_days=$(( (ts_now - ts_last) / 86400 ))
-
-			[ "$elapsed_days" -ge "$sched_period_days" ] && return 0
-			return 1
-			;;
-
-		*)
-			# Unknown period — treat as daily
-			return 0
-			;;
-	esac
-}
-
-# Schedule: switch to reserve SIM at configured time
-check_schedule(){
-	[ "$sched_enable" = "1" ] || return
-	[ -n "$sched_time_on" ]   || return
-
-	# Handle pending revert first — takes priority over new switch logic.
-	if [ -f /tmp/ssw_sched.vars ]; then
-		sched_revert
-		return
-	fi
-
-	# Parse HH:MM (strip leading zeros to avoid octal)
-	sched_h=$(echo "$sched_time_on" | cut -d: -f1 | sed 's/^0*//')
-	sched_m=$(echo "$sched_time_on" | cut -d: -f2 | sed 's/^0*//')
-	[ -z "$sched_h" ] && sched_h=0
-	[ -z "$sched_m" ] && sched_m=0
-
-	now_h=$(date +%H | sed 's/^0*//')
-	now_m=$(date +%M | sed 's/^0*//')
-	[ -z "$now_h" ] && now_h=0
-	[ -z "$now_m" ] && now_m=0
-
-	# Check time window: [sched_time .. sched_time + ceil(interval/60)) minutes
-	now_total=$(( now_h * 60 + now_m ))
-	sched_total=$(( sched_h * 60 + sched_m ))
-	interval_min=$(( interval / 60 + 1 ))
-	diff=$(( now_total - sched_total ))
-
-	# Not in the time window yet
-	if [ "$diff" -lt 0 ] || [ "$diff" -ge "$interval_min" ]; then
-		return
-	fi
-
-	# Check if the period condition is met (daily / weekly / every N days)
-	sched_day_match || return
-
-	# Check if we already fired today (prevents re-triggering within the same window)
-	today=$(date +%Y%m%d)
-	if [ -f /tmp/ssw_sched_fired.date ]; then
-		fired=$(cat /tmp/ssw_sched_fired.date)
-		[ "$fired" = "$today" ] && return
-	fi
-
-	# All conditions met — switch to reserve SIM
-	cur_sim=$(cat /sys/class/gpio/$sim_gpio/value)
-	if [ "$cur_sim" -ne "$sim_value" ]; then
-		# Already on reserve SIM (e.g. failover active), skip but record the day.
-		logger -t "$NODE" "Schedule: already on reserve SIM, skipping switch"
-		echo "$today" > /tmp/ssw_sched_fired.date
-		return
-	fi
-
-	logger -t "$NODE" "Schedule: switching to reserve SIM (period=$sched_period, time=$sched_time_on)"
-	iface=$(uci show network | awk -F [.] '/devices/{gsub("'\''","");print $2}' | tail -1)
-	apn_use="${sched_apn:-${apn2:-internet}}"
-	uci set network.$iface.apn="$apn_use"
-	uci commit network
-	reload_config network
-	sw_sim && sleep 20 && reload_iface &
-
-	# Record fire date (suppress re-trigger within same day/window)
-	echo "$today" > /tmp/ssw_sched_fired.date
-
-	# For interval mode: record as the last successful switch date
-	if [ "$sched_period" = "interval" ]; then
-		echo "$today" > /tmp/ssw_sched_last.date
-	fi
-
-	# Arm the revert timer if duration > 0
-	if [ "$sched_duration" -gt 0 ]; then
-		revert_at=$(( $(date +%s) + sched_duration * 60 ))
-		echo "SCHED_REVERT_AT=$revert_at" > /tmp/ssw_sched.vars
-		logger -t "$NODE" "Schedule: will revert to default SIM in ${sched_duration} min"
-	else
-		logger -t "$NODE" "Schedule: no auto-revert configured"
-	fi
 }
 
 # Check interface state via mwan3
@@ -297,9 +128,6 @@ while true; do
 	get_vars
 	sleep $interval
 
-	# Schedule check runs every iteration, independently of failover
-	check_schedule
-
 	if [ "$enable" = "1" ]; then
 		cur_sim=$(cat /sys/class/gpio/$sim_gpio/value)
 		monitor_rsrp
@@ -334,20 +162,8 @@ while true; do
 				uci commit network
 				reload_config network
 
-				if [ "$revert" = "1" ]; then
-					if [ "$cur_sim" -eq "$sim_value" ]; then
-						FBT=${FBT:=$((($interval+$times_rsrp)*2))}
-						FBT=$(($FBT*2))
-						SWDATE=$((`date +%s`+$FBT))
-						echo "FBT=$FBT" > /tmp/ssw.vars
-						echo SWDATE=$SWDATE >> /tmp/ssw.vars
-						logger -t "$NODE" "Back to default SIM-slot after $(date -d @${SWDATE})"
-					fi
 				fi
 				sw_sim && sleep 20 && reload_iface &
-			fi
-			if [ "$revert" = "1" ]; then
-				sw_rule && sleep 20 && reload_iface &
 			fi
 			cnt=0
 		else

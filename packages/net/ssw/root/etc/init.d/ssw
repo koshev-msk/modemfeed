@@ -8,6 +8,9 @@ START=99
 STOP=10
 USE_PROCD=1
 
+CRON_FILE="/etc/crontabs/root"
+CRON_TAG="# ssw-schedule"
+
 load_config_gpio(){
 	local gpio value
 	for c in gpio value; do
@@ -39,6 +42,75 @@ _apply_modem_state(){
 	sleep 30 && reload_iface &
 }
 
+# Parse "HH:MM" -> cron fields "MM HH"
+time_to_cron(){
+	local t="$1" h m
+	h="${t%%:*}"
+	m="${t##*:}"
+	h=$(echo "$h" | sed 's/^0*//')
+	m=$(echo "$m" | sed 's/^0*//')
+	[ -z "$h" ] && h=0
+	[ -z "$m" ] && m=0
+	printf "%s %s" "$m" "$h"
+}
+
+# Add duration minutes to "HH:MM", output as cron "MM HH"
+time_add_min(){
+	local t="$1" dur="$2" h m total_min
+	h="${t%%:*}"
+	m="${t##*:}"
+	h=$(echo "$h" | sed 's/^0*//')
+	m=$(echo "$m" | sed 's/^0*//')
+	[ -z "$h" ] && h=0
+	[ -z "$m" ] && m=0
+	total_min=$(( h * 60 + m + dur ))
+	h=$(( total_min / 60 % 24 ))
+	m=$(( total_min % 60 ))
+	printf "%s %s" "$m" "$h"
+}
+
+cron_period_to_dow(){
+	local period="$1"
+	case "$period" in
+		daily)   echo "* * *" ;;
+		weekly)  echo "* * 0" ;;
+		monthly) echo "1 * *" ;;
+		*)       echo "* * *" ;;
+	esac
+}
+
+update_cron(){
+	local s_enable s_period s_time_on s_duration
+	config_get s_enable   schedule enable   "0"
+	config_get s_period   schedule period   "daily"
+	config_get s_time_on  schedule time_on  "00:00"
+	config_get s_duration schedule duration "0"
+
+	# Remove old ssw entries
+	sed -i "/$CRON_TAG/d" "$CRON_FILE" 2>/dev/null
+
+	[ "$s_enable" != "1" ] && {
+		/etc/init.d/cron reload 2>/dev/null
+		return
+	}
+
+	local dow cron_on cron_off
+	dow=$(cron_period_to_dow "$s_period")
+	cron_on=$(time_to_cron "$s_time_on")
+	cron_off=$(time_add_min "$s_time_on" "$s_duration")
+
+	printf "%s %s /usr/share/ssw_schedule.sh %s\n" \
+		"$cron_on" "$dow" "$CRON_TAG" >> "$CRON_FILE"
+
+	if [ "$s_duration" -gt 0 ] 2>/dev/null; then
+		printf "%s %s /usr/share/ssw_schedule.sh revert %s\n" \
+			"$cron_off" "$dow" "$CRON_TAG" >> "$CRON_FILE"
+	fi
+
+	/etc/init.d/cron reload 2>/dev/null
+	logger -t "SW SIM" "Schedule updated: on=${s_time_on} duration=${s_duration}min period=${s_period}"
+}
+
 start_service(){
 	config_load ssw
 	config_foreach load_config_gpio modem
@@ -62,14 +134,21 @@ start_service(){
 		_apply_modem_state
 	fi
 
+	update_cron
+
 	procd_open_instance
 	procd_set_param command /usr/share/ssw_track.sh
 	procd_close_instance
 }
 
+stop_service(){
+	sed -i "/$CRON_TAG/d" "$CRON_FILE" 2>/dev/null
+	/etc/init.d/cron reload 2>/dev/null
+}
 
 reload_service(){
-	start_service
+	config_load ssw
+	update_cron
 }
 
 service_triggers(){
