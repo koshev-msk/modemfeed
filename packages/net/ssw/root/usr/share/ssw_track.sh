@@ -99,10 +99,10 @@ monitor_rsrp(){
 		CRSRP=$(echo "$SIGNAL" | jsonfilter -e '@["modem"][*]["5g"]["rsrp"]' | awk '{printf "%.0f\n", $1}')
 	fi
 
-	if [ $CRSRP -ne 0 ]; then
+	if [ -n "$CRSRP" ] && [ "$CRSRP" -ne "0" ]; then
 		echo $CRSRP >> /tmp/ssw_rsrp.var
 	fi
-	if [ $cnt -eq $times_rsrp ]; then
+	if [ "$cnt" -eq "$times_rsrp" ]; then
 		RSRP=$(awk '{sum+=$1} END { printf "%.0f\n", sum/NR }' /tmp/ssw_rsrp.var)
 		cat /dev/null > /tmp/ssw_rsrp.var
 		if [ $RSRP -lt $rsrp ]; then
