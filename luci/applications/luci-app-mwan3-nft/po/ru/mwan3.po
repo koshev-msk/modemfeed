@@ -881,3 +881,6 @@ msgstr "Показать на главной"
 
 msgid "Show MultiWAN status section on the overview page"
 msgstr "Показывать секцию состояния MultiWan на главной странице"
+
+msgid "No available interfaces"
+msgstr "Нет доступных интерфейсов"
