@@ -15,7 +15,7 @@ endef
 
 define Package/$(PKG_NAME)-nft
   PKGARCH:=all
-  TITLE:=MWAN3 Led Helper
+  TITLE:=MWAN3 Led Helper (nft variant)
   DEPENDS:=+mwan3-nft
 endef
 
@@ -42,5 +42,5 @@ define Package/$(PKG_NAME)-nft/install
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME))-nft)
+$(eval $(call BuildPackage,$(PKG_NAME)-nft))
 
