@@ -875,3 +875,9 @@ msgstr "подключено (ifup, netifd)"
 #: applications/luci-app-mwan3/htdocs/luci-static/resources/view/mwan3/network/rule.js:126
 msgid "unreachable (reject)"
 msgstr "unreachable (отклонить)"
+
+msgid "Show on overview"
+msgstr "Показать на главной"
+
+msgid "Show MultiWAN status section on the overview page"
+msgstr "Показывать секцию состояния MultiWan на главной странице"
