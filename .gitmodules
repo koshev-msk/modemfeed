@@ -7,10 +7,6 @@
 	path = luci/applications/luci-app-cpu-perf
 	url = https://github.com/koshev-msk/luci-app-cpu-perf.git
 	branch = master
-[submodule "packages/net/mwan3"]
-	path = packages/net/mwan3
-	url = https://github.com/koshev-msk/mwan3-nft.git
-	branch = openwrt-25.12
 [submodule "packages/net/mwan3-nft"]
 	path = packages/net/mwan3-nft
 	url = https://github.com/koshev-msk/mwan3-nft.git
