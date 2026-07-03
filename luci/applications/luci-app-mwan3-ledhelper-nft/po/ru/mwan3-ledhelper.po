@@ -1,0 +1,22 @@
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Konstantine Shevlakov <shevlakov@132lan.ru>\n"
+
+msgid "Flash led on link state."
+msgstr "Индикация светодиодов"
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "Set interface"
+msgstr "Интерфейс"
+
+msgid "Exclude"
+msgstr "Не использовать"
+
+msgid "Select LED online"
+msgstr "LED \"в сети\""
+
+msgid "Select LED offline"
+msgstr "LED \"вне сети\""

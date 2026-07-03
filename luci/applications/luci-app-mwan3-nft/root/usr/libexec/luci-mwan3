@@ -23,8 +23,8 @@ usage() {
 	fi
 	echo "Usage: $(basename "$0") <command>"
 	echo "command:"
-	echo "  diag:   diagnostic commands"
-	echo "  ipset:  ipset commands"
+	echo "  diag:    diagnostic commands"
+	echo "  nftset:  nft set commands"
 	echo ""
 	echo "diag <command> <iface>"
 	echo "command:"
@@ -33,9 +33,9 @@ usage() {
 	echo "  rules <iface>:     check interface routing rules"
 	echo "  routes <iface>:    check interface routing tables"
 	echo ""
-	echo "ipset <command>"
+	echo "nftset <command>"
 	echo "command:"
-	echo "  dump:     show all configured ipset names"
+	echo "  dump:     show all configured nft set names"
 
 	exit "$status"
 }
@@ -167,14 +167,14 @@ diag_cmd() {
 	esac
 }
 
-ipset_dump() {
-	ipset -n -L 2>/dev/null | grep -v mwan3_ | sort -u
+nftset_dump() {
+	nft -a list table inet mwan3 2>/dev/null | awk '/^\tset / && !/^\tset mwan3_/ {print $2}' | sort -u
 }
 
-ipset_cmd() {
+nftset_cmd() {
 	case "$1" in
 		dump)
-			ipset_dump
+			nftset_dump
 			;;
 		*)
 			usage "1" "Command not supported"
@@ -187,8 +187,8 @@ main () {
 		diag)
 			diag_cmd "$2" "$3"
 			;;
-		ipset)
-			ipset_cmd "$2"
+		nftset)
+			nftset_cmd "$2"
 			;;
 		*)
 			usage "1" "Command not supported"

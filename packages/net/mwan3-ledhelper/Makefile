@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3-ledhelper
-PKG_VERSION:=0.0.1
+PKG_VERSION:=0.0.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 
@@ -11,6 +11,12 @@ define Package/$(PKG_NAME)
   PKGARCH:=all
   TITLE:=MWAN3 Led Helper
   DEPENDS:=+mwan3
+endef
+
+define Package/$(PKG_NAME)-nft
+  PKGARCH:=all
+  TITLE:=MWAN3 Led Helper
+  DEPENDS:=+mwan3-nft
 endef
 
 define Package/$(PKG_NAME)/description
@@ -31,5 +37,10 @@ define Package/$(PKG_NAME)/install
 	$(CP) ./root/* $(1)/
 endef
 
+define Package/$(PKG_NAME)-nft/install
+        $(CP) ./root/* $(1)/
+endef
+
 $(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,$(PKG_NAME))-nft)
 
