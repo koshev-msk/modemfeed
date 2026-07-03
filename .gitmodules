@@ -10,4 +10,4 @@
 [submodule "packages/net/mwan3-nft"]
 	path = packages/net/mwan3-nft
 	url = https://github.com/koshev-msk/mwan3-nft.git
-	branch = openwrt-25.12
+	branch = my-25.12
