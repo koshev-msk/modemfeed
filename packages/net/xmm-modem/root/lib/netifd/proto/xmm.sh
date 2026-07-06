@@ -61,11 +61,15 @@ proto_xmm_setup() {
 						PREFIX="xmm"
 						hwaddr="$(ls -1 $devpath/../*/net/*/*address*)"
 						XMMDNS="XDNS"
+						AUTHCMD="XGAUTH"
+						DNSQUERY="XDNS?"
 					;;
 					0e8d7126|0e8d7127)
 						PREFIX="fm350"
 						hwaddr="$(ls -1 $devpath/../../*/net/*/*address*)"
 						XMMDNS="GTDNS"
+						AUTHCMD="CGAUTH"
+						DNSQUERY="GTDNS=$profile"
 					;;
 					*)
 						echo "Modem not supported!"
@@ -148,14 +152,14 @@ proto_xmm_setup() {
 			chap) AUTH=2 ;;
 			*) AUTH=0 ;;
 		esac
-		CID=$profile AUTH=$AUTH USER="$username" PASS="$password" gcom -d "$device" -s /etc/gcom/${PREFIX}-auth.gcom >/dev/null 2>&1
+		CID=$profile AUTH=$AUTH AUTHCMD=$AUTHCMD USER="$username" PASS="$password" gcom -d "$device" -s /etc/gcom/xmm-auth.gcom >/dev/null 2>&1
 	}
 
-	CID=$profile APN=$apn PDP=$pdp  gcom -d $device -s /etc/gcom/${PREFIX}-connect.gcom >/dev/null 2>&1
+	CID=$profile APN=$apn PDP=$pdp PREFIX=$PREFIX gcom -d $device -s /etc/gcom/xmm-connect.gcom >/dev/null 2>&1
 	proto_init_update "$ifname" 1
 	proto_add_data
 	proto_close_data
-	DATA=$(CID=$profile gcom -d $device -s /etc/gcom/${PREFIX}-config.gcom)
+	DATA=$(CID=$profile DNSQUERY=$DNSQUERY gcom -d $device -s /etc/gcom/xmm-config.gcom)
 	ip4addr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $2}') >/dev/null 2>&1
 	lladdr=$(echo "$DATA" | awk -F [,] '/^\+CGPADDR/{gsub("\r|\"", ""); print $3}') >/dev/null 2>&1
 	ns=$(echo "$DATA" | awk -F [,] '/^\+'$XMMDNS': /{gsub("\r|\"",""); gsub("0.0.0.0",""); print $2" "$3}' | sed 's/^[[:space:]]//g' | uniq)

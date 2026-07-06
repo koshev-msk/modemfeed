@@ -7,9 +7,16 @@ opengt
  send "AT+CMEE=2^m"
  send "AT+COPS=0^m"
  send "AT+CGPIAF=1,0,0,0^m"
+
+ if $env("PREFIX") = "xmm" goto sendxdns
+ goto skipxdns
+
+:sendxdns
  send "AT+XDNS="
  send $env("CID")
  send ",1^m"
+
+:skipxdns
  send "AT+CGDCONT="
  send $env("CID")
  send "^m"
@@ -27,11 +34,17 @@ opengt
  send $env("CID")
  send "^m"
 
+ if $env("PREFIX") = "xmm" goto senddatachannel
+ goto skipdatachannel
+
+:senddatachannel
  send "AT+XDATACHANNEL=1,1,\"/USBCDC/0\",\"/USBHS/NCM/0\",2,"
  send $env("CID")
  send "^m"
  send "AT+CGDATA=\"M-RAW_IP\","
  send $env("CID")
  send "^m"
+
+:skipdatachannel
  get 1 "" $s
  print $s

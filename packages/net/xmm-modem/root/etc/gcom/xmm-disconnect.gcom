@@ -7,4 +7,5 @@ opengt
  send "AT+CGACT=0,"
  send $env("CID")
  send "^m"
+
  send "AT+XDATACHANNEL=0^m"
