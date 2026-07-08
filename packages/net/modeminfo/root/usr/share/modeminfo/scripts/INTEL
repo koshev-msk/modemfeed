@@ -8,8 +8,10 @@ function modem_data(){
 	set -- $(echo "$O" | awk '
 		/\+GTPKGVER:/{gsub("\"","");fw=$2}
 		/CGMI:/ {gsub("\"|\r","",$0); split($0,a,":"); manuf=a[2]}
-		/GMM:/ {gsub("\"|\r","",$0); split($0,a,/[:,]/);  model=a[2]}
+		/GMM:|FMM:/ {gsub("\"|\r","",$0); split($0,a,/[:,]/);  model=a[2]}
 		/CCID:/ {iccid=$2; getline imsi; getline imei}
+		/\+CIMI:/ {imsi=$2}
+		/\+CGSN:/ {imei=$2}
 		/\+MTSM:/ {split($0,a,":"); temp=a[2]}
 		END { print manuf "|" model "|" fw "|" iccid "|" imsi "|" imei "|" temp }
 	')
@@ -17,13 +19,13 @@ function modem_data(){
 	IFS="$OIFS"; unset OIFS
 	# signal data
 	OIFS="$IFS";IFS="|"
-	set -- $(echo "$O" | awk -v mode=$MODE '
+	set -- $(echo "$O" | awk -v mode="$MODE" '
 		# define maps and variables
 		BEGIN {
 			map[1]=15; map[2]=25; map[3]=50; map[4]=75; map[5]=100
 			csq_range["black"] = "0:0"; csq_range["red"] = "1:10"
 			csq_range["orange"] = "11:20"; csq_range["green"] = "21:50"
-			rsrp = bwc = csq = rssi = csq_per = 0; csq_col = "black";
+			rsrp = rsrq = bwc = csq = rssi = csq_per = ""; csq_col = "black";
 		}
 		# text color percentage
 		function get_csq_color(csq_raw_val) {
@@ -38,25 +40,33 @@ function modem_data(){
 		# lte mode
 		mode ~ /LTE/ {
 			if (/\+CEREG/){gsub("\"","");split($0,a,",");reg=a[2];lac=a[3]; cid=a[4]}
-			if (/\+XLEC:/){gsub("\r","");split($0,a,/[:,]/);lte_ca=a[3]-1;bw=a[4];bwc=map[bw]}
+			if (/\+XLEC:/){gsub("\r","");split($0,a,/[:,]/);lte_ca=a[3]-1;bw=a[4];bwc=(bw in map)?map[bw]:""}
 			if (/\+RSRP:/){split($0,a,/[:,]/);pci=a[2];earfcn=a[3];rsrp=sprintf("%.0f",a[4])}
 			if (/\+RSRQ:/){split($0,a,/[:,]/);rsrq=sprintf("%.0f",a[4])}
-			if (/\+XMCI: 4/){gsub(/"/,"");split($0,a,/[:,]/)
-				pci=sprintf("%d", a[7]);sinr=sprintf("%.0f", a[13]/4+5)
-				distance=sprintf("%.2f", (a[14]*78/1000))
+			if (/\+XMCI: 4/){gsub(/"/,"");gsub("\r","");split($0,a,/[:,]/)
+				pci=sprintf("%d", a[7])
+				if (a[8] != "") earfcn=sprintf("%d", a[8])
+				if (a[11] != "" && (rsrp == "" || rsrp !~ /^-?[0-9]+$/ || rsrp < -141 || rsrp > -41))
+					rsrp=sprintf("%.0f", a[11] - 141)
+				if (a[12] != "" && (rsrq == "" || rsrq !~ /^-?[0-9]+$/ || rsrq < -40 || rsrq > -3))
+					rsrq=sprintf("%.0f", a[12] / 2 - 20)
+				if (a[13] != "") sinr=sprintf("%.0f", a[13] / 4 + 5)
+				if (a[14] != "") distance=sprintf("%.2f", (a[14] * 78.125 / 1000))
 			}
 			# RSSI not correct sending via modem. Calc manually.
-			csq_raw=sprintf("%.0f", ((rsrp+10*log(12*bwc)/log(10))+113)/2)
-			csq = (csq_raw > 50) ? 50 : csq = csq_raw
-			csq_col = get_csq_color(csq)
-			csq_per = (csq > 30) ? 100 : sprintf("%.0f", csq*100/31); rssi=(2*csq-113)
+			if (rsrp != "" && bwc != "" && bwc > 0) {
+				csq_raw=sprintf("%.0f", ((rsrp+10*log(12*bwc)/log(10))+113)/2)
+				csq = (csq_raw > 50) ? 50 : csq_raw
+				csq_col = get_csq_color(csq)
+				csq_per = (csq > 30) ? 100 : sprintf("%.0f", csq*100/31); rssi=(2*csq-113)
+			}
 		}
 		# 3g mode
 		mode !~ /LTE/{
 			if (/\+CREG/){gsub("\"","");split($0,a,",");reg=a[2];lac=a[3];cid=a[4]}
 			if (/\+RSCP:/){split($0,a,",");earfcn=a[2]}
 			if (/\+XMCI: 2/) {n=split($0,a,",");sinr_raw=a[n-1]; rssi_raw=a[n-2]; sinr = sprintf("%.0f", (sinr_raw*24)/24-50); rssi = (rssi_raw*64/64-110)
-			csq=rssi_raw/2; csq_col = get_csq_color(csq); csq_per = (csq > 30) ? 100 : sprintf("%.0f", csq*100/31)}
+				csq=rssi_raw/2; csq_col = get_csq_color(csq); csq_per = (csq > 30) ? 100 : sprintf("%.0f", csq*100/31)}
 			rsrp=""
 		}
 		END {print reg "|" earfcn "|" lac "|" cid "|" rssi "|" sinr "|" rsrp "|" rsrq "|" bw "|" bwc "|" pci "|" lte_ca "|" csq_col "|" csq_per "|" distance}
@@ -64,12 +74,13 @@ function modem_data(){
 	REGST=${1}; EARFCN=${2}; LAC=${3}; CID=${4}; CSQ_RSSI=${5}; SINR=${6}; RSRP=${7}; RSRQ=${8}; BWDL=${9}; BWCx=${10}
 	PCI=${11}; LTE_CA=${12}; CSQ_COL=${13}; CSQ_PER=${14}; DISTANCE=${15}
 	IFS="$OIFS"; unset OIFS
-	if [ "$MODE" = "LTE" ]; then
-		ENBx=$(echo $CID | sed -e 's/..$//')
- 		CELL=$(printf %d 0x${CID: -2})
+	if [ "$MODE" = LTE ]; then
+		ENBx=$(echo "$CID" | sed -e 's/..$//')
+		CELLx=$(echo "$CID" | sed -e 's/^.*\(..\)$/\1/')
+		CELL=$(printf %d 0x$CELLx)
 		ENBID=$(printf %d 0x$ENBx)
 		OIFS="$IFS";IFS="|"
-		set -- $(echo "$O"| awk -F [:,] -v lte_ca=$LTE_CA -v mode="$MODE" '
+		set -- $(echo "$O"| awk -F '[:,]' -v lte_ca="${LTE_CA:-0}" -v mode="$MODE" '
 			# define maps and variables
 			BEGIN { map[1]=3; map[2]=5; map[3]=10; map[4]=15; map[5]=20; scc = "" }
 			function earfcn_to_band(channel, cmd, band) {
@@ -115,7 +126,7 @@ function modem_data(){
 		IFS="$OIFS"; unset OIFS
 	fi
 
-	if [ $(uci -q get modeminfo.@general[0].decimail) = "1" ]; then
+	if [ "$(uci -q get modeminfo.@general[0].decimail)" = "1" ]; then
 		LAC=$(printf %d 0x$LAC)
 		CID=$(printf %d 0x$CID)
 	fi
