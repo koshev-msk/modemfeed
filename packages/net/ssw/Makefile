@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
   PKGARCH:=all
-  DEPENDS:=+modemmanager $(if $(filter 1,$(BUILD_WITH_NFT)),+mwan3-nft,+mwan3)
+  DEPENDS:=+modemmanager $(if $(filter 1,$(SSW_BUILD_WITH_NFT)),+mwan3-nft,+mwan3)
   TITLE:=SIM-card switcher and tracker
 endef
 
