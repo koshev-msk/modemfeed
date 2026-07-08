@@ -1,0 +1,11 @@
+--- a/src/auth.c	2026-04-11 13:06:43.000000000 +0300
++++ b/src/auth.c	2026-07-08 07:58:05.514841806 +0300
+@@ -413,7 +413,7 @@
+ 				switch(hstentry->matchtype){
+ 					case 0:
+ #ifndef _WIN32
+-					if(strcasestr((char *)param->hostname, (char *)hstentry->name)) match = 1;
++					if(strcasecmp((char *)param->hostname, (char *)hstentry->name)) match = 1;
+ #else
+ 					if(strstr((char *)param->hostname, (char *)hstentry->name)) match = 1;
+ #endif
