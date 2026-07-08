@@ -53,10 +53,10 @@ define Package/$(PKG_NAME)-nft/install
         $(CP) ./root/* $(1)/
 endef
 
-ifneq ($(BUILD_NFT_ONLY),1)
+ifneq ($(MWAN3_LEDHELPER_BUILD_NFT_ONLY),1)
   $(eval $(call BuildPackage,$(PKG_NAME)))
 endif
-ifneq ($(BUILD_IPT_ONLY),1)
+ifneq ($(MWAN3_LEDHELPER_BUILD_IPT_ONLY),1)
   $(eval $(call BuildPackage,$(PKG_NAME)-nft))
 endif
 
