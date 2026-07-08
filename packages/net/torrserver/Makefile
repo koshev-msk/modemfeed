@@ -73,7 +73,7 @@ define Package/$(PKG_NAME)/description
   TorrServer is a tool for streaming torrent files.
 endef
 
-GO_HOST:=$(STAGING_DIR_HOSTPKG)/bin/go
+GO_HOST=$(firstword $(wildcard $(STAGING_DIR_HOSTPKG)/bin/go) $(wildcard $(STAGING_DIR_HOSTPKG)/bin/go[0-9].[0-9][0-9]) $(STAGING_DIR_HOSTPKG)/bin/go)
 UPX:=$(STAGING_DIR_HOST)/bin/upx
 UPX_AVAILABLE:=$(shell [ -x "$(UPX)" ] && echo yes || echo no)
 TARGET_CC:=$(TARGET_CROSS)gcc
