@@ -1986,6 +1986,25 @@ header [data-indicator][data-style="active"] {
 	background-color: #81c784;
 }
 
+/* Кнопки Hide/Show на Status > Overview (status/index.js, data-indicator="poll-status") */
+.cbi-title [data-indicator="poll-status"] {
+	box-sizing: border-box !important;
+	height: 10px !important;
+	line-height: 8px !important;
+	padding: 0 5px !important;
+	font-size: 8px;
+	font-weight: bold;
+	background-color: transparent !important;
+	color: #757575 !important;
+	border: 1px solid currentColor;
+	border-radius: 3px;
+	text-shadow: none !important;
+}
+
+.cbi-title [data-indicator="poll-status"].notice {
+	color: #1b5e20 !important;
+}
+
 /* LuCI specific items */
 .hidden { display: none }
 
