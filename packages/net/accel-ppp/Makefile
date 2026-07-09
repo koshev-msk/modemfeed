@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=accel-ppp
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 PKG_VERSION:=1.14.0
 
 PKG_SOURCE_PROTO:=git
@@ -70,7 +70,11 @@ CMAKE_OPTIONS += \
 	$(if $(CONFIG_ACCEL_PPP_LOG_PGSQL),-DPGSQL_SEARCH_PATH=$(STAGING_DIR)/usr/lib)
 
 CMAKE_BINARY_DIR := $(PKG_BUILD_DIR)/build
-TARGET_CFLAGS += -I$(STAGING_DIR)/opt/include -D_GNU_SOURCE -g -O2 -Wno-incompatible-pointer-types -Wno-deprecated-declarations
+TARGET_CFLAGS += -I$(STAGING_DIR)/opt/include \
+	-D_GNU_SOURCE -g -O2 \
+	-Wno-incompatible-pointer-types \
+	-Wno-deprecated-declarations \
+	-Wno-implicit-function-declaration
 TARGET_LDFLAGS += -lpthread -latomic -lucontext -Wl,-rpath,/usr/lib/accel-ppp
 
 define KernelPackage/$(PKG_NAME)-ipoe
