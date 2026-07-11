@@ -1,0 +1,38 @@
+{
+	"admin/services/vms": {
+		"title": "Virtual Machines",
+		"order": 79,
+		"action": {
+			"type": "alias",
+			"path": "admin/services/vms/status"
+		},
+		"depends": {
+			"acl": ["luci-app-qemu-vms"],
+			"uci": { "qemu-vms": true }
+		}
+	},
+	"admin/services/vms/status": {
+		"title": "Status",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "qemu-vms/status"
+		}
+	},
+	"admin/services/vms/networks": {
+		"title": "Networks",
+		"order": 20,
+		"action": {
+		"type": "view",
+			"path": "qemu-vms/networks"
+		}
+	},
+	"admin/services/vms/passthrough": {
+		"title": "Hardware passthrough",
+		"order": 30,
+		"action": {
+		"type": "view",
+			"path": "qemu-vms/passthrough"
+		}
+	}
+}

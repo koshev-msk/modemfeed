@@ -1,0 +1,28 @@
+{
+	"luci-app-qemu-vms": {
+		"description": "Grant access to QEMU VM status, control, and configuration",
+		"read": {
+			"ubus": {
+				"luci.qemu-vms": [
+					"status",
+					"readlog",
+					"list_hardware"
+				]
+			},
+			"uci": [ "qemu-vms" ]
+		},
+		"write": {
+			"ubus": {
+				"luci.qemu-vms": [
+					"start",
+					"stop",
+					"restart",
+					"console_open",
+					"console_close",
+					"delete_vm"
+				]
+			},
+			"uci": [ "qemu-vms" ]
+		}
+	}
+}

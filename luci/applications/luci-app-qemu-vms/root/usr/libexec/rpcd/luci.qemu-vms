@@ -1,0 +1,380 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+. /lib/functions.sh
+
+STATUS_DIR="/var/run/qemu-vms"
+
+is_anonymous_section() {
+	# UCI auto-generated names look like: cfgXXXXXX (cfg + hex)
+	case "$1" in
+		cfg[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+warn_if_anonymous() {
+	local cfg="$1"
+	if is_anonymous_section "$cfg"; then
+		logger -t qemu-vms "WARNING: VM section '$cfg' is anonymous (no name set). " \
+			"Paths (console/qmp socket, pidfile) are derived from this auto-generated " \
+			"UCI id and may change if the config is reordered or the section is recreated. " \
+			"Please set an explicit section name, e.g. config vm 'myvm'."
+	fi
+}
+
+get_pid() {
+	local vm="$1"
+	local pidfile="$STATUS_DIR/$vm.pid"
+	[ -f "$pidfile" ] || return 1
+	local pid
+	pid="$(cat "$pidfile")"
+
+	[ -n "$pid" ] || return 1
+	kill -0 "$pid" 2>/dev/null || return 1
+
+	grep -aq "qemu-system-x86_64" "/proc/$pid/cmdline" 2>/dev/null || return 1
+	echo "$pid"
+	return 0
+}
+
+stop_vm_instance() {
+	local vm="$1"
+	# IMPORTANT: do NOT just `kill` the qemu pid here. The instance is
+	# registered with procd_set_param respawn, so a raw kill looks like
+	# a crash to procd and it immediately restarts the process. Asking
+	# procd itself to delete the instance is the correct way to stop a
+	# single VM without triggering respawn.
+	ubus call service delete "{\"name\":\"qemu-vms\",\"instance\":\"qemu-$vm\"}" >/dev/null 2>&1
+}
+
+host_ram_kb() {
+	local pid="$1"
+	awk '/^VmRSS:/{print $2}' "/proc/$pid/status" 2>/dev/null
+}
+
+image_size_bytes() {
+	local vm="$1"
+	local image
+	config_get image "$vm" image
+	[ -n "$image" ] && ls -l "$image" 2>/dev/null | awk '{print $5}'
+}
+
+# --- console via ttyd, ephemeral port + vm-console as the ttyd command ---
+#
+# ttyd allocates a proper PTY for whatever command it runs. Pointing it at
+# our own vm-console script (rather than a raw `socat ... stdio` pipe)
+# means minicom gets a real PTY with correct terminal semantics (line
+# discipline, resize, etc.) - the same idea as the standalone ttyd
+# package's `option command '/bin/sh'`, just with our own console-bridge
+# script as the command instead of a plain shell.
+
+find_free_port() {
+	local port
+	local tries=0
+	while [ "$tries" -lt 50 ]; do
+		port=$(awk -v min=8000 -v max=9999 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
+		if ! netstat -ltn 2>/dev/null | grep -q ":$port "; then
+			echo "$port"
+			return 0
+		fi
+		tries=$((tries + 1))
+	done
+	return 1
+}
+
+console_open() {
+	local vm="$1"
+	local sock="/var/run/qemu-$vm.sock"
+	local pidfile="$STATUS_DIR/$vm.ttyd.pid"
+	local portfile="$STATUS_DIR/$vm.ttyd.port"
+
+	json_init
+	if [ ! -S "$sock" ]; then
+		json_add_boolean "success" 0
+		json_add_string "error" "VM '$vm' is not running"
+		json_dump
+		return
+	fi
+
+	mkdir -p "$STATUS_DIR"
+
+	# reuse an already-running ttyd session for this VM, if present
+	if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
+		json_add_boolean "success" 1
+		json_add_int "port" "$(cat "$portfile")"
+		json_dump
+		return
+	fi
+
+	local port
+	port="$(find_free_port)" || {
+		json_add_boolean "success" 0
+		json_add_string "error" "No free port found"
+		json_dump
+		return
+	}
+
+	ttyd -p "$port" -o /usr/bin/vm-console "$vm" >/dev/null 2>&1 &
+	echo $! > "$pidfile"
+	echo "$port" > "$portfile"
+
+	json_add_boolean "success" 1
+	json_add_int "port" "$port"
+	json_dump
+}
+
+console_close() {
+	local vm="$1"
+	local pidfile="$STATUS_DIR/$vm.ttyd.pid"
+
+	json_init
+	if [ -f "$pidfile" ]; then
+		local pid
+		pid="$(cat "$pidfile")"
+		[ -n "$pid" ] && kill "$pid" 2>/dev/null
+		rm -f "$pidfile"
+	fi
+	rm -f "$STATUS_DIR/$vm.ttyd.port"
+
+	json_add_boolean "success" 1
+	json_dump
+}
+
+
+readlog() {
+	local vm="$1"
+	local lines="${2:-200}"
+	local log="/var/log/qemu-$vm-console.log"
+
+	json_init
+	if [ -f "$log" ]; then
+		json_add_string "log" "$(tail -n "$lines" "$log")"
+	else
+		json_add_string "log" ""
+	fi
+	json_dump
+}
+
+# --- hardware scanning for the passthrough tab ---
+
+vm_using_pci() {
+	local vm="$1" want="$2"
+	local pt
+	config_get pt "$vm" pci_passthrough
+	[ "$pt" = "$want" ] && echo "$vm"
+}
+
+has_cmd() {
+	command -v "$1" >/dev/null 2>&1
+}
+
+list_hardware() {
+	json_init
+
+	json_add_array "pci"
+	if has_cmd lspci; then
+		# -mmnn: machine-readable, names WITH hex ids in brackets, e.g.
+		# 0000:05:00.0 "Network controller [0280]" "Qualcomm Atheros [168c]" "QCA9880 [003c]"
+		#
+		# NOTE: deliberately NOT piped into `while read` here - a pipe forks
+		# a subshell in ash/dash, and jshn.sh keeps the whole JSON tree in
+		# shell variables via eval, so anything added inside a subshell is
+		# silently lost the moment it exits (the array would stay empty).
+		# Route through a temp file + `< file` redirection instead, which
+		# does NOT fork.
+		local pcitmp="/tmp/.qemu-vms-lspci.$$"
+		lspci -mmnn -D > "$pcitmp" 2>/dev/null
+		while IFS= read -r line; do
+			eval "set -- $line"
+			local addr_full="$1" class_full="$2" vendor_full="$3" device_full="$4"
+			local addr="${addr_full#0000:}"
+
+			local vendor_id="${vendor_full##*\[}"; vendor_id="${vendor_id%\]}"
+			local vendor_name="${vendor_full% \[*}"
+			local device_id="${device_full##*\[}"; device_id="${device_id%\]}"
+			local device_name="${device_full% \[*}"
+
+			local driver=""
+			[ -d "/sys/bus/pci/devices/$addr_full" ] && \
+				driver="$(basename "$(readlink -f "/sys/bus/pci/devices/$addr_full/driver" 2>/dev/null)" 2>/dev/null)"
+
+			json_add_object ""
+			json_add_string "addr" "$addr"
+			json_add_string "vendor_id" "$vendor_id"
+			json_add_string "device_id" "$device_id"
+			json_add_string "vendor_name" "$vendor_name"
+			json_add_string "device_name" "$device_name"
+			json_add_string "driver" "$driver"
+			json_close_object
+		done < "$pcitmp"
+		rm -f "$pcitmp"
+	else
+		for dev in /sys/bus/pci/devices/*; do
+			[ -d "$dev" ] || continue
+			local addr_full addr vendor_id device_id driver
+			addr_full="$(basename "$dev")"
+			addr="${addr_full#0000:}"
+			vendor_id="$(cat "$dev/vendor" 2>/dev/null | sed 's/^0x//')"
+			device_id="$(cat "$dev/device" 2>/dev/null | sed 's/^0x//')"
+			driver="$(basename "$(readlink -f "$dev/driver" 2>/dev/null)" 2>/dev/null)"
+
+			json_add_object ""
+			json_add_string "addr" "$addr"
+			json_add_string "vendor_id" "$vendor_id"
+			json_add_string "device_id" "$device_id"
+			json_add_string "vendor_name" "$vendor_id"
+			json_add_string "device_name" "$device_id"
+			json_add_string "driver" "$driver"
+			json_close_object
+		done
+	fi
+	json_close_array
+
+	json_add_array "usb"
+	if has_cmd lsusb; then
+		# "Bus 001 Device 004: ID 0bda:c811 Realtek Semiconductor Corp. RTL8811CU"
+		local usbtmp="/tmp/.qemu-vms-lsusb.$$"
+		lsusb > "$usbtmp" 2>/dev/null
+		while IFS= read -r line; do
+			local bus dev id rest
+			bus="$(echo "$line" | awk '{print $2}')"
+			dev="$(echo "$line" | awk '{print $4}' | tr -d ':')"
+			id="$(echo "$line" | awk '{print $6}')"
+			rest="$(echo "$line" | cut -d' ' -f7-)"
+
+			json_add_object ""
+			json_add_string "bus" "$bus"
+			json_add_string "dev" "$dev"
+			json_add_string "id" "$id"
+			json_add_string "description" "$rest"
+			json_close_object
+		done < "$usbtmp"
+		rm -f "$usbtmp"
+	else
+		for dev in /sys/bus/usb/devices/*; do
+			[ -f "$dev/idVendor" ] || continue
+			local busnum devnum vid pid product manufacturer
+			busnum="$(cat "$dev/busnum" 2>/dev/null)"
+			devnum="$(cat "$dev/devnum" 2>/dev/null)"
+			vid="$(cat "$dev/idVendor" 2>/dev/null)"
+			pid="$(cat "$dev/idProduct" 2>/dev/null)"
+			product="$(cat "$dev/product" 2>/dev/null)"
+			manufacturer="$(cat "$dev/manufacturer" 2>/dev/null)"
+
+			json_add_object ""
+			json_add_string "bus" "$busnum"
+			json_add_string "dev" "$devnum"
+			json_add_string "id" "$vid:$pid"
+			json_add_string "description" "$manufacturer $product"
+			json_close_object
+		done
+	fi
+	json_close_array
+
+	json_dump
+}
+
+vm_status_one() {
+	local vm="$1"
+	local pid running=0 ram_kb="" image_bytes=""
+
+	warn_if_anonymous "$vm"
+
+	if pid="$(get_pid "$vm")"; then
+		running=1
+		ram_kb="$(host_ram_kb "$pid")"
+	fi
+	image_bytes="$(image_size_bytes "$vm")"
+
+	json_add_object "$vm"
+	json_add_boolean "running" "$running"
+	json_add_boolean "anonymous" "$(is_anonymous_section "$vm" && echo 1 || echo 0)"
+	[ -n "$pid" ] && json_add_int "pid" "$pid"
+	[ -n "$ram_kb" ] && json_add_int "ram_kb" "$ram_kb"
+	[ -n "$image_bytes" ] && json_add_int "disk_bytes" "$image_bytes"
+	json_add_string "console_sock" "/var/run/qemu-$vm.sock"
+	json_add_string "console_log" "/var/log/qemu-$vm-console.log"
+	json_add_string "qmp_sock" "/var/run/qemu-$vm.qmp"
+	json_close_object
+}
+
+case "$1" in
+	list)
+		echo '{
+			"status": { "vm_name": "" },
+			"start": { "vm_name": "" },
+			"stop": { "vm_name": "" },
+			"restart": { "vm_name": "" },
+			"readlog": { "vm_name": "", "lines": 0 },
+			"console_open": { "vm_name": "" },
+			"console_close": { "vm_name": "" },
+			"list_hardware": { },
+			"delete_vm": { "vm_name": "" }
+		}'
+		;;
+	call)
+		read -r input
+		json_load "$input"
+		json_get_var vm_name vm_name
+		json_get_var lines lines
+		json_get_var offset offset
+		json_get_var data data
+
+		case "$2" in
+			status)
+				json_init
+				config_load qemu-vms
+				if [ -n "$vm_name" ]; then
+					vm_status_one "$vm_name"
+				else
+					config_foreach vm_status_one vm
+				fi
+				json_dump
+				;;
+			start)
+				/etc/init.d/qemu-vms start "$vm_name" >/dev/null 2>&1
+				json_init
+				json_add_boolean "success" 1
+				json_dump
+				;;
+			stop)
+				console_close "$vm_name" >/dev/null
+				stop_vm_instance "$vm_name"
+				json_init
+				json_add_boolean "success" 1
+				json_dump
+				;;
+			restart)
+				console_close "$vm_name" >/dev/null
+				stop_vm_instance "$vm_name"
+				sleep 1
+				/etc/init.d/qemu-vms start "$vm_name" >/dev/null 2>&1
+				json_init
+				json_add_boolean "success" 1
+				json_dump
+				;;
+			readlog)
+				readlog "$vm_name" "$lines"
+				;;
+			console_open)
+				console_open "$vm_name"
+				;;
+			console_close)
+				console_close "$vm_name"
+				;;
+			list_hardware)
+				list_hardware
+				;;
+			delete_vm)
+				stop_vm_instance "$vm_name"
+				console_close "$vm_name" >/dev/null
+				uci -q delete qemu-vms."$vm_name"
+				uci commit qemu-vms
+				json_init
+				json_add_boolean "success" 1
+				json_dump
+				;;
+		esac
+		;;
+esac
