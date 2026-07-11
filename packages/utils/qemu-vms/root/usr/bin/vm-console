@@ -1,0 +1,61 @@
+#!/bin/sh
+# vm-console <vm-name> [log|attach]
+#
+# attach (default): connects to the VM's QEMU console socket on demand,
+#   bridges it to a temporary PTY via socat, launches minicom, and tears
+#   the bridge down again on exit. QEMU only sees a client connected for
+#   the duration of this session, so boot never stalls waiting for a
+#   reader, and disconnecting minicom never backs up into QEMU.
+#
+# log: just tails the always-on boot/console logfile (safe to run at
+#   any time, does not touch the live console socket at all).
+
+VM="$1"
+MODE="${2:-attach}"
+
+if [ -z "$VM" ]; then
+	echo "Usage: vm-console <vm-name> [log|attach]" >&2
+	exit 1
+fi
+
+CONSOLE_SOCK="/var/run/qemu-$VM.sock"
+CONSOLE_LOG="/var/log/qemu-$VM-console.log"
+TMP_PTY="/var/run/qemu-$VM.console-pty.$$"
+
+case "$MODE" in
+	log)
+		[ -f "$CONSOLE_LOG" ] || { echo "No logfile yet: $CONSOLE_LOG" >&2; exit 1; }
+		exec tail -n 200 -f "$CONSOLE_LOG"
+		;;
+	attach)
+		[ -S "$CONSOLE_SOCK" ] || { echo "VM '$VM' is not running (no socket at $CONSOLE_SOCK)" >&2; exit 1; }
+
+		rm -f "$TMP_PTY"
+		socat UNIX-CONNECT:"$CONSOLE_SOCK" PTY,link="$TMP_PTY",raw,echo=0 &
+		SOCAT_PID=$!
+
+		# give socat a moment to create the pty symlink
+		for i in $(seq 1 20); do
+			[ -e "$TMP_PTY" ] && break
+			sleep 0.1
+		done
+
+		if [ ! -e "$TMP_PTY" ]; then
+			echo "Failed to create console bridge for '$VM'" >&2
+			kill "$SOCAT_PID" 2>/dev/null
+			exit 1
+		fi
+
+		cleanup() {
+			kill "$SOCAT_PID" 2>/dev/null
+			rm -f "$TMP_PTY"
+		}
+		trap cleanup EXIT INT TERM
+
+		minicom -D "$TMP_PTY"
+		;;
+	*)
+		echo "Unknown mode: $MODE (expected 'log' or 'attach')" >&2
+		exit 1
+		;;
+esac

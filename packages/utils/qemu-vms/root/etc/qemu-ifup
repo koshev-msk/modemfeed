@@ -1,0 +1,22 @@
+#!/bin/sh
+# /etc/qemu-ifup
+#
+# Invoked by QEMU itself (via -netdev tap,...,script=/etc/qemu-ifup) right
+# after it creates the tap interface. $1 is the tap ifname QEMU created;
+# $2 (bridge) is passed through via the netdev's "downscript"-adjacent
+# vhost/helper convention used by build_netargs in /etc/init.d/qemu-vms,
+# which appends the bridge name as a second positional argument.
+#
+# We only enslave the interface into a bridge if one was actually
+# configured on the network section - a tap interface with no "bridge"
+# option stays standalone (e.g. for point-to-point or manually managed
+# setups).
+
+ifname="$1"
+bridge="$2"
+
+ip link set "$ifname" up
+
+if [ -n "$bridge" ]; then
+	ip link set "$ifname" master "$bridge"
+fi

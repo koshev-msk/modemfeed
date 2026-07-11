@@ -1,0 +1,249 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+USE_PROCD=1
+
+STATUS_DIR="/var/run/qemu-vms"
+
+is_anonymous_section() {
+	# UCI auto-generated names look like: cfgXXXXXX (cfg + hex)
+	case "$1" in
+		cfg[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+warn_if_anonymous() {
+	local cfg="$1"
+	if is_anonymous_section "$cfg"; then
+		logger -t qemu-vms "WARNING: VM section '$cfg' is anonymous (no name set). " \
+			"Paths (console/qmp socket, pidfile) are derived from this auto-generated " \
+			"UCI id and may change if the config is reordered or the section is recreated. " \
+			"Please set an explicit section name, e.g. config vm 'myvm'."
+	fi
+}
+
+build_netargs() {
+	local cfg="$1"
+	idx=0
+	netdev_opts=""
+	device_opts=""
+	config_list_foreach "$cfg" network _add_net
+}
+
+_add_net() {
+	local netcfg="$1"
+	local mac ifname bridge
+
+	config_get mac "$netcfg" mac
+	config_get ifname "$netcfg" ifname
+	config_get bridge "$netcfg" bridge
+
+	local id="net${idx}"
+
+	# QEMU's tap "script=" hook only ever calls the script with the tap
+	# ifname as $1 - there is no way to pass a second argument (like the
+	# target bridge) through QEMU itself. So instead of pointing directly
+	# at /etc/qemu-ifup, generate a tiny per-interface wrapper that bakes
+	# in this network section's bridge and calls /etc/qemu-ifup with both
+	# arguments. If "bridge" is empty, the wrapper still runs but passes
+	# an empty $2, and /etc/qemu-ifup simply skips the enslave step.
+	local ifup_wrapper="$STATUS_DIR/qemu-ifup-$netcfg.sh"
+	mkdir -p "$STATUS_DIR"
+	cat > "$ifup_wrapper" <<-EOF
+		#!/bin/sh
+		exec /etc/qemu-ifup "\$1" "$bridge"
+	EOF
+	chmod +x "$ifup_wrapper"
+
+	netdev_opts="$netdev_opts -netdev tap,id=$id,ifname=$ifname,script=$ifup_wrapper,downscript=no"
+
+	local mac_opt=""
+	[ -n "$mac" ] && mac_opt=",mac=$mac"
+	device_opts="$device_opts -device virtio-net-pci${mac_opt},netdev=$id"
+	idx=$((idx + 1))
+}
+
+build_usbargs() {
+	local cfg="$1"
+	usb_opts=""
+	usb_needed=0
+	config_list_foreach "$cfg" usb_passthrough _add_usb
+}
+
+_add_usb() {
+	local usbcfg="$1"
+	local vendor_id product_id
+
+	config_get vendor_id "$usbcfg" vendor_id
+	config_get product_id "$usbcfg" product_id
+	[ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
+
+	usb_opts="$usb_opts -device usb-host,vendorid=0x$vendor_id,productid=0x$product_id"
+	usb_needed=1
+}
+
+build_customargs() {
+	local cfg="$1"
+	custom_opts=""
+	config_list_foreach "$cfg" custom_arg _add_customarg
+}
+
+_add_customarg() {
+	local arg="$1"
+	# Deliberately unquoted below (word-splitting is intentional): a
+	# single list entry like "-device foo,bar=baz" should become two
+	# separate argv elements ("-device" and "foo,bar=baz"), same as if
+	# the admin had typed it directly on a qemu command line. This is an
+	# escape hatch for arbitrary flags we don't have a dedicated UCI
+	# option for - the admin is trusted with their own local config.
+	custom_opts="$custom_opts $arg"
+}
+
+build_diskargs() {
+	local cfg="$1"
+	local image="$2"
+	local bus
+
+	config_get bus "$cfg" disk_bus "virtio"
+
+	disk_controller_opts=""
+	disk_opts=""
+
+	case "$bus" in
+		virtio)
+			disk_opts="-drive file=$image,format=raw,if=virtio"
+			;;
+		ide)
+			# Widest guest compatibility (old Windows/DOS/legacy kernels
+			# without virtio drivers), at some cost to I/O throughput.
+			disk_opts="-drive file=$image,format=raw,if=ide"
+			;;
+		scsi)
+			disk_controller_opts="-device virtio-scsi-pci,id=scsi0"
+			disk_opts="-drive file=$image,format=raw,if=none,id=drive0 -device scsi-hd,drive=drive0,bus=scsi0.0"
+			;;
+		sata|ahci)
+			disk_controller_opts="-device ahci,id=ahci0"
+			disk_opts="-drive file=$image,format=raw,if=none,id=drive0 -device ide-hd,drive=drive0,bus=ahci0.0"
+			;;
+		*)
+			logger -t qemu-vms "WARNING: VM '$cfg' has unknown disk_bus '$bus', falling back to virtio"
+			disk_opts="-drive file=$image,format=raw,if=virtio"
+			;;
+	esac
+}
+
+
+
+start_vm() {
+	local cfg="$1"
+	local enabled image memory smp cpu pci_passthrough
+
+	config_get_bool enabled "$cfg" enabled 0
+	[ "$enabled" = "1" ] || return 0
+
+	local existing_pid
+	if [ -n "$existing_pid" ] && kill -0 "$existing_pid" 2>/dev/null && \
+	   grep -aq "qemu-system-x86_64" "/proc/$existing_pid/cmdline" 2>/dev/null; then
+		logger -t qemu-vms "start_vm: '$cfg' already running (pid $existing_pid), skipping"
+		return 0
+	fi
+
+	warn_if_anonymous "$cfg"
+
+	config_get image "$cfg" image
+	config_get cdrom "$cfg" cdrom
+	config_get memory "$cfg" memory 128
+	config_get smp "$cfg" smp 1
+	config_get cpu "$cfg" cpu "host"
+	config_get pci_passthrough "$cfg" pci_passthrough
+	config_get display_type "$cfg" display_type "serial"
+	config_get vnc_port "$cfg" vnc_port
+
+	local console_sock="/var/run/qemu-$cfg.sock"
+	local console_log="/var/log/qemu-$cfg-console.log"
+	local qmp_sock="/var/run/qemu-$cfg.qmp"
+
+	build_netargs "$cfg"
+	build_usbargs "$cfg"
+	build_customargs "$cfg"
+	build_diskargs "$cfg" "$image"
+
+	local pci_id="" vendor_id="" pci_opts=""
+	if [ -n "$pci_passthrough" ]; then
+		config_get pci_id "$pci_passthrough" pci_id
+		config_get vendor_id "$pci_passthrough" vendor_id
+		if [ -n "$vendor_id" ] && [ -n "$pci_id" ]; then
+			[ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ] || \
+				echo "$vendor_id" > /sys/bus/pci/drivers/vfio-pci/new_id 2>/dev/null
+			pci_opts="-device vfio-pci,host=$pci_id"
+		fi
+	fi
+
+	local cdrom_opts=""
+	[ -n "$cdrom" ] && cdrom_opts="-cdrom $cdrom"
+
+	local usb_controller_opts=""
+	[ "$usb_needed" = "1" ] && usb_controller_opts="-device qemu-xhci,id=usb-bus0"
+
+	local vnc_opts=""
+	if [ "$display_type" = "vnc" ] && [ -n "$vnc_port" ]; then
+		local vnc_display=$((vnc_port - 5900))
+		local vnc_ws_port=$((vnc_port + 1000))
+		if [ "$vnc_display" -ge 0 ] 2>/dev/null; then
+			vnc_opts="-vnc :${vnc_display},websocket=${vnc_ws_port}"
+		else
+			logger -t qemu-vms "WARNING: VM '$cfg' has vnc_port=$vnc_port, which is below 5900. Skipping VNC."
+		fi
+	elif [ "$display_type" = "vnc" ]; then
+		logger -t qemu-vms "WARNING: VM '$cfg' has display_type=vnc but no vnc_port set. Skipping VNC."
+	fi
+
+	local display_opts="-display none -nographic"
+	[ -n "$vnc_opts" ] && display_opts=""
+
+	#rm -f "$console_sock" "$qmp_sock"
+	mkdir -p "$STATUS_DIR"
+	mkdir -p "$(dirname "$console_log")"
+
+	procd_open_instance "qemu-$cfg"
+	procd_set_param command /usr/bin/qemu-system-x86_64 \
+		-enable-kvm -cpu "$cpu" -smp "$smp" -m "${memory}M" \
+		$disk_controller_opts $disk_opts \
+		$device_opts $netdev_opts $pci_opts $cdrom_opts $usb_controller_opts $usb_opts $vnc_opts $custom_opts \
+		-device virtio-rng-pci \
+		-machine q35 \
+		-chardev socket,id=con0,path="$console_sock",server=on,wait=off,logfile="$console_log",logappend=on \
+		-serial chardev:con0 \
+		-chardev socket,id=qmp0,path="$qmp_sock",server=on,wait=off \
+		-qmp chardev:qmp0 \
+		-monitor none $display_opts
+
+	procd_set_param respawn 3600 5 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param pidfile "$STATUS_DIR/$cfg.pid"
+	procd_close_instance
+
+	# NOTE: no persistent socat/console bridge here on purpose.
+	# QEMU discards console output cleanly when nobody is connected to
+	# console_sock (server=on,wait=off), while logfile= still captures
+	# everything continuously (boot log never stalls). Interactive
+	# access is attached on-demand via /usr/bin/vm-console, which only
+	# connects for the duration of the minicom session.
+}
+
+start_service() {
+	config_load qemu-vms
+	if [ -n "$1" ]; then
+		start_vm "$1"
+	else
+		config_foreach start_vm vm
+	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger "qemu-vms"
+}
