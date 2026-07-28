@@ -5,6 +5,23 @@ STOP=10
 USE_PROCD=1
 
 STATUS_DIR="/var/run/qemu-vms"
+LOG_DIR="/var/log/qemu-vms"
+
+host_log() {
+	# Per-VM HOST-side lifecycle log: start/stop attempts, config
+	# warnings (missing MAC, unknown disk_bus, VNC without a port,
+	# passthrough bind issues), and QEMU's own stderr (KVM unavailable,
+	# image not found, device init failures). Deliberately separate from
+	# the guest's own serial console capture
+	# (/var/log/qemu-$vm-console.log): that one shows what the GUEST OS
+	# printed; this one shows whether the HOST managed to start/
+	# configure the VM at all - meaningful for VNC-mode VMs too, which
+	# have no serial console capture at all.
+	local cfg="$1"
+	shift
+	mkdir -p "$LOG_DIR"
+	echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG_DIR/$cfg.log"
+}
 
 is_anonymous_section() {
 	# UCI auto-generated names look like: cfgXXXXXX (cfg + hex)
@@ -84,6 +101,27 @@ _add_usb() {
 	usb_needed=1
 }
 
+_unbind_usb_host() {
+	local usbcfg="$1"
+	local vendor_id product_id
+	config_get vendor_id "$usbcfg" vendor_id
+	config_get product_id "$usbcfg" product_id
+	[ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
+	for dev in /sys/bus/usb/devices/*; do
+		if [ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ]; then
+			local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
+			if [ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ]; then
+				if [ -L "$dev/driver" ]; then
+					local driver_path=$(readlink -f "$dev/driver")
+					local driver_name=$(basename "$driver_path")
+					echo -n "$(basename "$dev")" > "$driver_path/unbind" 2>/dev/null
+					host_log "$cfg" "USB: unbound $(basename "$dev") from $driver_name"
+				fi
+			fi
+		fi
+	done
+}
+
 build_customargs() {
 	local cfg="$1"
 	custom_opts=""
@@ -113,24 +151,30 @@ build_diskargs() {
 
 	case "$bus" in
 		virtio)
-			disk_opts="-drive file=$image,format=raw,if=virtio"
+			#disk_opts="-drive file=$image,format=raw,if=virtio"
+			disk_opts="-drive file=$image,if=virtio"
 			;;
 		ide)
 			# Widest guest compatibility (old Windows/DOS/legacy kernels
 			# without virtio drivers), at some cost to I/O throughput.
-			disk_opts="-drive file=$image,format=raw,if=ide"
+			#disk_opts="-drive file=$image,format=$format,if=ide"
+			disk_opts="-drive file=$image,if=ide"
 			;;
 		scsi)
 			disk_controller_opts="-device virtio-scsi-pci,id=scsi0"
-			disk_opts="-drive file=$image,format=raw,if=none,id=drive0 -device scsi-hd,drive=drive0,bus=scsi0.0"
+			#disk_opts="-drive file=$image,format=$format,if=none,id=drive0 -device scsi-hd,drive=drive0,bus=scsi0.0"
+			disk_opts="-drive file=$image,if=none,id=drive0 -device scsi-hd,drive=drive0,bus=scsi0.0"
 			;;
 		sata|ahci)
 			disk_controller_opts="-device ahci,id=ahci0"
-			disk_opts="-drive file=$image,format=raw,if=none,id=drive0 -device ide-hd,drive=drive0,bus=ahci0.0"
+			#disk_opts="-drive file=$image,format=$format,if=none,id=drive0 -device ide-hd,drive=drive0,bus=ahci0.0"
+			disk_opts="-drive file=$image,if=none,id=drive0 -device ide-hd,drive=drive0,bus=ahci0.0"
 			;;
 		*)
 			logger -t qemu-vms "WARNING: VM '$cfg' has unknown disk_bus '$bus', falling back to virtio"
-			disk_opts="-drive file=$image,format=raw,if=virtio"
+			#disk_opts="-drive file=$image,format=$format,if=virtio"
+			disk_opts="-drive file=$image,if=virtio"
+			host_log "$cfg" "WARNING: unknown disk_bus '$bus', falling back to virtio"
 			;;
 	esac
 }
@@ -145,11 +189,14 @@ start_vm() {
 	[ "$enabled" = "1" ] || return 0
 
 	local existing_pid
+	existing_pid="$(cat "$STATUS_DIR/$cfg.pid" 2>/dev/null)"
 	if [ -n "$existing_pid" ] && kill -0 "$existing_pid" 2>/dev/null && \
 	   grep -aq "qemu-system-x86_64" "/proc/$existing_pid/cmdline" 2>/dev/null; then
 		logger -t qemu-vms "start_vm: '$cfg' already running (pid $existing_pid), skipping"
 		return 0
 	fi
+
+	host_log "$cfg" "=== start_vm: attempting to start ==="
 
 	warn_if_anonymous "$cfg"
 
@@ -158,6 +205,7 @@ start_vm() {
 	config_get memory "$cfg" memory 128
 	config_get smp "$cfg" smp 1
 	config_get cpu "$cfg" cpu "host"
+	config_list_foreach "$cfg" usb_passthrough _unbind_usb_host
 	config_get pci_passthrough "$cfg" pci_passthrough
 	config_get display_type "$cfg" display_type "serial"
 	config_get vnc_port "$cfg" vnc_port
@@ -176,11 +224,46 @@ start_vm() {
 		config_get pci_id "$pci_passthrough" pci_id
 		config_get vendor_id "$pci_passthrough" vendor_id
 		if [ -n "$vendor_id" ] && [ -n "$pci_id" ]; then
-			[ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ] || \
+			if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
+				local current_driver
+				current_driver="$(basename "$(readlink -f "/sys/bus/pci/devices/0000:$pci_id/driver" 2>/dev/null)" 2>/dev/null)"
+				host_log "$cfg" "PCI passthrough: $pci_id already bound to driver '$current_driver'"
+			else
 				echo "$vendor_id" > /sys/bus/pci/drivers/vfio-pci/new_id 2>/dev/null
+				if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
+					host_log "$cfg" "PCI passthrough: bound $pci_id (vendor/device $vendor_id) to vfio-pci"
+				else
+					host_log "$cfg" "WARNING: PCI passthrough: failed to bind $pci_id to vfio-pci - check IOMMU/BIOS settings"
+				fi
+			fi
 			pci_opts="-device vfio-pci,host=$pci_id"
+		else
+			host_log "$cfg" "WARNING: pci_passthrough='$pci_passthrough' is set but its pci_id/vendor_id are incomplete - skipping passthrough"
 		fi
 	fi
+
+	# Test version PCI Pass
+	#local pci_id="" pci_opts=""
+	#if [ -n "$pci_passthrough" ]; then
+	#	config_get pci_id "$pci_passthrough" pci_id
+	#	if [ -n "$pci_id" ]; then
+	#		local pci_path="/sys/bus/pci/devices/0000:$pci_id"
+	#		if [ -e "$pci_path/driver" ]; then
+	#			echo -n "0000:$pci_id" > "$pci_path/driver/unbind" 2>/dev/null
+	#			host_log "$cfg" "PCI: unbound $pci_id from $(basename "$(readlink -f "$pci_path/driver")")"
+	#		fi
+	#		echo "vfio-pci" > "$pci_path/driver_override" 2>/dev/null
+	#		echo "0000:$pci_id" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null
+	#		if [ -e "$pci_path/driver" ] && [ "$(basename "$(readlink -f "$pci_path/driver")")" = "vfio-pci" ]; then
+	#			host_log "$cfg" "PCI passthrough: $pci_id successfully bound to vfio-pci"
+	#		else
+	#			host_log "$cfg" "ERROR: PCI passthrough: failed to bind $pci_id to vfio-pci. Check IOMMU groups and BIOS settings."
+	#		fi
+	#		pci_opts="-device vfio-pci,host=$pci_id"
+	#	else
+	#		host_log "$cfg" "WARNING: pci_passthrough section exists but pci_id is empty - skipping"
+	#	fi
+	#fi
 
 	local cdrom_opts=""
 	[ -n "$cdrom" ] && cdrom_opts="-cdrom $cdrom"
@@ -206,10 +289,12 @@ start_vm() {
 
 	#rm -f "$console_sock" "$qmp_sock"
 	mkdir -p "$STATUS_DIR"
+	mkdir -p "$LOG_DIR"
 	mkdir -p "$(dirname "$console_log")"
 
 	procd_open_instance "qemu-$cfg"
-	procd_set_param command /usr/bin/qemu-system-x86_64 \
+	procd_set_param command /usr/libexec/qemu-vms/run-with-log.sh "$LOG_DIR/$cfg.log" \
+		/usr/bin/qemu-system-x86_64 \
 		-enable-kvm -cpu "$cpu" -smp "$smp" -m "${memory}M" \
 		$disk_controller_opts $disk_opts \
 		$device_opts $netdev_opts $pci_opts $cdrom_opts $usb_controller_opts $usb_opts $vnc_opts $custom_opts \
@@ -244,6 +329,6 @@ start_service() {
 	fi
 }
 
-service_triggers() {
-	procd_add_reload_trigger "qemu-vms"
-}
+#service_triggers() {
+#	procd_add_reload_trigger "qemu-vms"
+#}

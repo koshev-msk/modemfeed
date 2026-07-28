@@ -190,7 +190,7 @@ return view.extend({
 
 	handleLog: function(name, ev) {
 		return callReadlog(name, 400).then(function(res) {
-			ui.showModal(_('Console log: %s').format(name), [
+			ui.showModal(_('Instanse log: %s').format(name), [
 				E('pre', {
 					'style': 'max-height: 60vh; overflow: auto; white-space: pre-wrap; font-size: 12px;'
 				}, res.log || _('(empty)')),
@@ -493,6 +493,9 @@ return view.extend({
 				E('label', { 'class': 'cbi-value-title' }, _('Attached networks')),
 				E('div', { 'class': 'cbi-value-field' }, networkChecks)
 			]),
+			E('div', { 'class': 'cbi-value' }, [
+				E('p', { 'class': 'cbi-value-description' }, _('Changes will take effect after restarting the VM.'))
+			]),
 			E('div', { 'class': 'right', 'style': 'margin-top: 1em' }, [
 				E('button', { 'class': 'btn', 'click': ui.hideModal }, _('Cancel')),
 				' ',
@@ -589,6 +592,13 @@ return view.extend({
 			uci.set('qemu-vms', name, 'pci_passthrough', pci);
 		else
 			uci.unset('qemu-vms', name, 'pci_passthrough');
+
+		var newUsb = Array.prototype.slice.call(document.querySelectorAll('.edit-usb-check:checked'))
+			.map(function(el) { return el.value; });
+		if (newUsb.length)
+			uci.set('qemu-vms', name, 'usb_passthrough', newUsb);
+		else
+			uci.unset('qemu-vms', name, 'usb_passthrough');
 
 
 		//var nets = Array.prototype.slice.call(document.querySelectorAll('.edit-network-check:checked'))

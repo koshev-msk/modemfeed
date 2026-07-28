@@ -145,7 +145,7 @@ console_close() {
 readlog() {
 	local vm="$1"
 	local lines="${2:-200}"
-	local log="/var/log/qemu-$vm-console.log"
+	local log="/var/log/qemu-vms/$vm.log"
 
 	json_init
 	if [ -f "$log" ]; then

@@ -297,8 +297,8 @@ return view.extend({
 		var rows = devices.map(function(dev) {
 			var section = self.findPciSection(dev.addr);
 			var owner = self.pciOwner(dev.addr);
-			var passthroughStatus = section ? _('Passthrough active (section: %s)').format(section) : _('Not passthrough');
-			if (owner) passthroughStatus += ' ' + _('(attached to VM: %s)').format(owner);
+			var passthroughStatus = section ? _('Active<br />Section: %s').format(section) : _('Not passthrough');
+			if (owner) passthroughStatus += ' ' + _('<br />Host: %s').format(owner);
 
 			var actionButton;
 			if (section) {
@@ -325,11 +325,11 @@ return view.extend({
 
 		return E('table', { 'class': 'table' }, [
 			E('tr', { 'class': 'tr table-titles' }, [
-				E('th', { 'class': 'th' }, _('PCI address')),
+				E('th', { 'class': 'th' }, _('Address')),
 				E('th', { 'class': 'th' }, _('Vendor')),
 				E('th', { 'class': 'th' }, _('Device')),
-				E('th', { 'class': 'th' }, _('Current driver')),
-				E('th', { 'class': 'th' }, _('Passthrough status')),
+				E('th', { 'class': 'th' }, _('Driver')),
+				E('th', { 'class': 'th', 'style': 'min-width: 140px;' }, _('Status')),
 				E('th', { 'class': 'th' }, _('Action'))
 			])
 		].concat(rows));
@@ -343,8 +343,8 @@ return view.extend({
 			var section = (vendorId && productId) ? self.findUsbSection(vendorId, productId) : null;
 			var owners = (vendorId && productId) ? self.usbOwners(vendorId, productId) : [];
 
-			var passthroughStatus = section ? _('Passthrough active (section: %s)').format(section) : _('Not passthrough');
-			if (owners.length) passthroughStatus += ' ' + _('(attached to VM: %s)').format(owners.join(', '));
+			var passthroughStatus = section ? _('Active<br />Section: %s').format(section) : _('Not passthrough');
+			if (owners.length) passthroughStatus += ' ' + _('<br />Host: %s').format(owners.join(', '));
 
 			var actionButton;
 			if (section) {
@@ -371,9 +371,9 @@ return view.extend({
 		return E('table', { 'class': 'table' }, [
 			E('tr', { 'class': 'tr table-titles' }, [
 				E('th', { 'class': 'th' }, _('Bus:Dev')),
-				E('th', { 'class': 'th' }, _('VendorID:ProductID')),
+				E('th', { 'class': 'th' }, _('VID:PID')),
 				E('th', { 'class': 'th' }, _('Description')),
-				E('th', { 'class': 'th' }, _('Passthrough status')),
+				E('th', { 'class': 'th', 'style': 'min-width: 140px;' }, _('Status')),
 				E('th', { 'class': 'th' }, _('Action'))
 			])
 		].concat(rows));
