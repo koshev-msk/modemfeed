@@ -10,12 +10,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
   SECTION:=utils
   CATEGORY:=Utilities
-  PKGARCH:=all
   TITLE:=QEMU Virtual Machines Simple (VMS)
-  DEPENDS:= +qemu-x86_64-softmmu \
-		+qemu-bridge-helper \
-		+minicom \
-		+socat
+  DEPENDS:= @TARGET_x86_64 \
+	+qemu-x86_64-softmmu \
+	+qemu-bridge-helper \
+	+minicom \
+	+socat
 endef
 
 define Package/$(PKG_NAME)/description
