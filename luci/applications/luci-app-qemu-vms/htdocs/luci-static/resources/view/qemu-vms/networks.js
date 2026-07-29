@@ -46,16 +46,13 @@ return view.extend({
 				return _('Invalid MAC address format (expected xx:xx:xx:xx:xx:xx)');
 			return true;
 		};
-		mac.write = function(section_id, value) {
-			if (!value)
-				value = randomMac();
-			else
-				return form.Value.prototype.write.call(this, section_id, value);
-		};
+
 		mac.rmempty = false;
-		mac.keylist = [];
-		mac.vallist = [];
-		mac.value(randomMac(), _('Automatically assigned'));
+		mac.renderWidget = function(section_id, option_index, cfgvalue) {
+			this.keylist = [randomMac()];
+			this.vallist = [_('Automatically assigned')];
+			return form.Value.prototype.renderWidget.apply(this, arguments);
+		};
 
 		var ifname = s.option(form.Value, 'ifname', _('tap ifname'));
 		ifname.placeholder = 'tap0';
@@ -69,9 +66,8 @@ return view.extend({
 		var bridge = s.option(form.Value, 'bridge', _('Bridge (optional)'));
 		bridge.placeholder = _('leave empty to keep the interface standalone');
 
-		// --- Поле driver с динамическим списком ---
 		var driver = s.option(form.ListValue, 'driver', _('Network driver'));
-		// Добавляем опции из загруженного списка
+
 		if (drivers.length) {
 			drivers.forEach(function(d) {
 				driver.value(d, d);
