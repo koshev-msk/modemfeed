@@ -70,8 +70,6 @@ return view.extend({
 		return owners;
 	},
 
-	// --- Действия для PCI ---
-
 	createPciPassthrough: function(dev, ev) {
 		var self = this;
 		var addr = dev.addr;
@@ -132,7 +130,6 @@ return view.extend({
 			ui.hideModal();
 			ui.addNotification(null, E('p',
 				_('PCI passthrough section "%s" created for %s. Device is now detached from the host driver.').format(sectionName, dev.addr)), 'info');
-			// Обновляем представление без перезагрузки
 			self.updateView();
 		}).catch(function(err) {
 			ui.addNotification(null, E('p', _('Error saving: ') + err.message), 'error');
@@ -165,7 +162,6 @@ return view.extend({
 						return uci.save().then(function() {
 							ui.hideModal();
 							ui.addNotification(null, E('p', _('Passthrough removed for %s.').format(addr)), 'info');
-							// Обновляем представление без перезагрузки
 							self.updateView();
 						}).catch(function(err) {
 							ui.addNotification(null, E('p', _('Error saving: ') + err.message), 'error');
@@ -175,8 +171,6 @@ return view.extend({
 			])
 		]);
 	},
-
-	// --- Действия для USB ---
 
 	createUsbPassthrough: function(dev, ev) {
 		var self = this;
@@ -246,7 +240,6 @@ return view.extend({
 			ui.hideModal();
 			ui.addNotification(null, E('p',
 				_('USB passthrough section "%s" created for %s.').format(sectionName, dev.id)), 'info');
-			// Обновляем представление без перезагрузки
 			self.updateView();
 		}).catch(function(err) {
 			ui.addNotification(null, E('p', _('Error saving: ') + err.message), 'error');
@@ -279,7 +272,6 @@ return view.extend({
 						return uci.save().then(function() {
 							ui.hideModal();
 							ui.addNotification(null, E('p', _('Passthrough removed.')), 'info');
-							// Обновляем представление без перезагрузки
 							self.updateView();
 						}).catch(function(err) {
 							ui.addNotification(null, E('p', _('Error saving: ') + err.message), 'error');
@@ -289,8 +281,6 @@ return view.extend({
 			])
 		]);
 	},
-
-	// --- Рендеринг таблиц ---
 
 	renderPciTable: function(devices) {
 		var self = this;
@@ -379,15 +369,11 @@ return view.extend({
 		].concat(rows));
 	},
 
-	// --- Метод обновления представления ---
-
 	updateView: function() {
 		var self = this;
 		if (!this.container) return;
 
-		// Загружаем свежие данные
 		this.load().then(function(data) {
-			// Перерисовываем содержимое контейнера
 			var newContent = self.renderContent(data);
 			self.container.innerHTML = '';
 			self.container.appendChild(newContent);
@@ -396,8 +382,6 @@ return view.extend({
 		});
 	},
 
-	// --- Основной рендер ---
-
 	render: function(data) {
 		var hw = data[0];
 		var container = E('div', {});
@@ -405,26 +389,76 @@ return view.extend({
 		var content = this.renderContent(data);
 		container.appendChild(content);
 
-		// Сохраняем ссылку на контейнер для обновления
 		this.container = container;
 
 		return container;
 	},
 
-	// Вспомогательная функция для рендеринга контента (используется и в render, и в updateView)
 	renderContent: function(data) {
 		var hw = data[0];
-		return E('div', {}, [
-			E('h3', {}, _('PCI devices')),
+		var self = this;
+	
+		var description = E('div', { 'class': 'cbi-section' }, [
+			E('h2', {}, _('Hardware Passthrough')),
+				E('p', { 'class': 'cbi-section-descr' },
+				_('This page allows you to configure passthrough of PCI and USB devices to virtual machines. ') +
+				'<br />' + _('Changes take effect after VM restart.'))
+		]);
+
+		// tabs
+		var tabs = E('ul', { 'class': 'cbi-tabmenu' }, [
+			E('li', { 'class': 'cbi-tab', 'data-tab': 'pci' }, [
+				E('a', {
+					'href': '#',
+					'click': function(ev) {
+						ev.preventDefault();
+						self.switchTab('pci');
+					}
+				}, _('PCI devices'))
+			]),
+			E('li', { 'class': 'cbi-tab-disabled', 'data-tab': 'usb' }, [
+				E('a', {
+					'href': '#',
+					'click': function(ev) {
+						ev.preventDefault();
+						self.switchTab('usb');
+					}
+				}, _('USB devices'))
+			])
+		]);
+
+		var pciPanel = E('div', { 'class': 'cbi-tabpanel', 'id': 'pci-panel' }, [
 			E('p', { 'class': 'cbi-section-descr' },
 				_('PCI passthrough requires IOMMU enabled in the host BIOS and kernel command line (intel_iommu=on / amd_iommu=on), and the vfio-pci kernel module loaded.') +
-				' ' + _('Creating a passthrough section will bind the device to vfio-pci (if possible). Removing it will attempt to re-bind to the original driver.')),
-			this.renderPciTable(hw.pci || []),
+				'<br />' + _('Creating a passthrough section will bind the device to vfio-pci (if possible). Removing it will attempt to re-bind to the original driver.') +
+				'<br />' + _('Note: Some devices (especially Intel network cards) may require the vfio-pci module option "disable_idle_d3=1" to prevent them from entering a low-power state.') +
+				'<br />' + _('Add "options vfio-pci disable_idle_d3=1" to /etc/modprobe.d/vfio-pci.conf if you encounter "No such device" errors.')),
+			this.renderPciTable(hw.pci || [])
+		]);
 
-			E('h3', { 'style': 'margin-top: 2em' }, _('USB devices')),
+		var usbPanel = E('div', { 'class': 'cbi-tabpanel', 'id': 'usb-panel', 'style': 'display:none;' }, [
 			E('p', { 'class': 'cbi-section-descr' },
 				_('USB passthrough is based on vendor/product ID. The device will be available to any VM that includes the corresponding USB passthrough section.')),
 			this.renderUsbTable(hw.usb || [])
 		]);
-	}
+
+		return E('div', {}, [description, tabs, pciPanel, usbPanel]);
+	},
+
+	switchTab: function(tab) {
+		// all tabs
+		var tabs = document.querySelectorAll('li.cbi-tab, li.cbi-tab-disabled');
+		tabs.forEach(function(el) {
+			if (el.dataset.tab === tab) {
+				el.className = 'cbi-tab';
+			} else {
+				el.className = 'cbi-tab-disabled';
+			}
+		});
+
+		var pciPanel = document.getElementById('pci-panel');
+		var usbPanel = document.getElementById('usb-panel');
+		if (pciPanel) pciPanel.style.display = (tab === 'pci') ? '' : 'none';
+		if (usbPanel) usbPanel.style.display = (tab === 'usb') ? '' : 'none';
+	},
 });

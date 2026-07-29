@@ -48,9 +48,6 @@ function widenModal() {
 	}
 }
 
-
-// ----- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ПОСТРОЕНИЯ СЕЛЕКТОВ -----
-
 function buildMachineSelect(vm, machines) {
 	var select = E('select', { 'class': 'cbi-input-select', 'id': 'edit-machine' });
 	machines.forEach(function(m) {
@@ -211,6 +208,13 @@ return view.extend({
 		var vms = data[0];
 		var self = this;
 		var container = E('div', {});
+
+		container.appendChild(E('div', { 'class': 'cbi-section' }, [
+			E('h2', {}, _('Virtual Machines')),
+				E('p', { 'class': 'cbi-section-descr' },
+					_('This page lists all configured virtual machines. You can start, stop, restart, open a console, view logs, edit, or delete each VM. ' +
+					'Changes to VM configuration require a restart of the VM to take effect.'))
+		]));
 
 		container.appendChild(E('div', { 'class': 'cbi-page-actions', 'style': 'margin-bottom: 1em' }, [
 			E('button', {
@@ -388,7 +392,6 @@ return view.extend({
 			var enabledInput = E('input', { 'type': 'checkbox', 'id': 'edit-enabled', 'checked': (vm.enabled !== '0') || null });
 			var memoryInput = E('input', { 'class': 'cbi-input-text', 'id': 'edit-memory', 'type': 'number', 'min': '32', 'step': '32', 'value': vm.memory || '128' });
 			var smpInput = E('input', { 'class': 'cbi-input-text', 'id': 'edit-smp', 'type': 'number', 'min': '1', 'max': '16', 'step': '1', 'value': vm.smp || '1' });
-			// cpuSelect и machineSelect переданы как аргументы
 
 			var imageInput = E('input', { 'class': 'cbi-input-text', 'id': 'edit-image', 'value': vm.image || '', 'placeholder': '/mnt/disk/vm/name.img' });
 			var diskBusSelect = E('select', { 'class': 'cbi-input-select', 'id': 'edit-disk-bus' }, [
@@ -532,130 +535,122 @@ return view.extend({
 				var cpuSelect = buildCpuSelectFallback(vm);
 				showEditModal(machineSelect, cpuSelect);
 			});
-	},
+		},
+		saveEdit: function(existingName, ev) {
+			var name = existingName || document.getElementById('edit-name').value.trim();
 
-	saveEdit: function(existingName, ev) {
-		var name = existingName || document.getElementById('edit-name').value.trim();
-
-		if (!name) {
-			ui.addNotification(null, E('p', _('VM name is required')), 'error');
-			return;
-		}
-		if (!existingName && uci.get('qemu-vms', name)) {
-			ui.addNotification(null, E('p', _('A VM with this name already exists')), 'error');
-			return;
-		}
-
-		if (!existingName)
-			uci.add('qemu-vms', 'vm', name);
-
-		var memoryRaw = document.getElementById('edit-memory').value.trim();
-		var smpRaw = document.getElementById('edit-smp').value.trim();
-
-		if (!/^\d+$/.test(memoryRaw)) {
-			ui.addNotification(null, E('p', _('Memory must be a whole number (MB)')), 'error');
-			return;
-		}
-		if (!/^\d+$/.test(smpRaw)) {
-			ui.addNotification(null, E('p', _('SMP must be a whole number')), 'error');
-			return;
-		}
-
-		var memory = parseInt(memoryRaw, 10);
-		var smp = parseInt(smpRaw, 10);
-
-		if (memory < 32) {
-			ui.addNotification(null, E('p', _('Memory must be \u2265 32 MB')), 'error');
-			return;
-		}
-		if (smp < 1 || smp > 16) {
-			ui.addNotification(null, E('p', _('SMP must be between 1 and 16')), 'error');
-			return;
-		}
-
-		uci.set('qemu-vms', name, 'enabled', document.getElementById('edit-enabled').checked ? '1' : '0');
-		uci.set('qemu-vms', name, 'memory', String(memory));
-		uci.set('qemu-vms', name, 'smp', String(smp));
-		uci.set('qemu-vms', name, 'cpu', document.getElementById('edit-cpu').value);
-		uci.set('qemu-vms', name, 'machine', document.getElementById('edit-machine').value || 'q35');
-		uci.set('qemu-vms', name, 'image', document.getElementById('edit-image').value);
-		uci.set('qemu-vms', name, 'disk_bus', document.getElementById('edit-disk-bus').value);
-
-		var displayType = document.getElementById('edit-display').value;
-		uci.set('qemu-vms', name, 'display_type', displayType);
-
-		if (displayType === 'vnc') {
-			var vncPortRaw = document.getElementById('edit-vnc-port').value.trim();
-			if (!/^\d+$/.test(vncPortRaw) || parseInt(vncPortRaw, 10) < 5900) {
-				ui.addNotification(null, E('p', _('VNC port must be a number \u2265 5900')), 'error');
+			if (!name) {
+				ui.addNotification(null, E('p', _('VM name is required')), 'error');
 				return;
 			}
-			uci.set('qemu-vms', name, 'vnc_port', vncPortRaw);
-		} else {
-			uci.unset('qemu-vms', name, 'vnc_port');
-		}
-
-		var cdrom = document.getElementById('edit-cdrom').value.trim();
-		if (cdrom)
-			uci.set('qemu-vms', name, 'cdrom', cdrom);
-		else
-			uci.unset('qemu-vms', name, 'cdrom');
-
-		var customArgs = document.getElementById('edit-custom-args').value
-			.split('\n')
-			.map(function(line) { return line.trim(); })
-			.filter(function(line) { return line.length > 0; });
-		if (customArgs.length)
-			uci.set('qemu-vms', name, 'custom_arg', customArgs);
-		else
-			uci.unset('qemu-vms', name, 'custom_arg');
-
-		var pci = document.getElementById('edit-pci').value;
-		if (pci)
-			uci.set('qemu-vms', name, 'pci_passthrough', pci);
-		else
-			uci.unset('qemu-vms', name, 'pci_passthrough');
-
-		var newUsb = Array.prototype.slice.call(document.querySelectorAll('.edit-usb-check:checked'))
-			.map(function(el) { return el.value; });
-		if (newUsb.length)
-			uci.set('qemu-vms', name, 'usb_passthrough', newUsb);
-		else
-			uci.unset('qemu-vms', name, 'usb_passthrough');
-
-
-		//var nets = Array.prototype.slice.call(document.querySelectorAll('.edit-network-check:checked'))
-		//	.map(function(el) { return el.value; });
-		//uci.set('qemu-vms', name, 'network', nets);
-
-		//var newUsb = Array.prototype.slice.call(document.querySelectorAll('.edit-usb-check:checked'))
-		//	.map(function(el) { return el.value; });
-
-		var newNets = Array.prototype.slice.call(document.querySelectorAll('.edit-network-check:checked'))
-			.map(function(el) { return el.value; });
-
-		if (existingName) {
-			var oldNets = uci.get('qemu-vms', name, 'network') || [];
-			if (!Array.isArray(oldNets)) oldNets = oldNets ? [oldNets] : [];
-
-			var sortedOld = oldNets.slice().sort();
-			var sortedNew = newNets.slice().sort();
-			var changed = (sortedOld.length !== sortedNew.length) ||
-			sortedOld.some(function(v, i) { return v !== sortedNew[i]; });
-
-			if (changed) {
-				uci.set('qemu-vms', name, 'network', newNets); // только если изменился
+			if (!existingName && uci.get('qemu-vms', name)) {
+				ui.addNotification(null, E('p', _('A VM with this name already exists')), 'error');
+				return;
 			}
-		} else {
-			uci.set('qemu-vms', name, 'network', newNets);
-		}
 
-		return uci.save().then(function() {
-			ui.hideModal();
-			ui.addNotification(null, E('p',
-				_('Saved to configuration. Restart the VM for changes to take effect.')), 'info');
-			window.location.reload();
-		});
+			if (!existingName)
+				uci.add('qemu-vms', 'vm', name);
+
+			var memoryRaw = document.getElementById('edit-memory').value.trim();
+			var smpRaw = document.getElementById('edit-smp').value.trim();
+
+			if (!/^\d+$/.test(memoryRaw)) {
+				ui.addNotification(null, E('p', _('Memory must be a whole number (MB)')), 'error');
+				return;
+			}
+			if (!/^\d+$/.test(smpRaw)) {
+				ui.addNotification(null, E('p', _('SMP must be a whole number')), 'error');
+				return;
+			}
+
+			var memory = parseInt(memoryRaw, 10);
+			var smp = parseInt(smpRaw, 10);
+
+			if (memory < 32) {
+				ui.addNotification(null, E('p', _('Memory must be \u2265 32 MB')), 'error');
+				return;
+			}
+			if (smp < 1 || smp > 16) {
+				ui.addNotification(null, E('p', _('SMP must be between 1 and 16')), 'error');
+				return;
+			}
+
+			uci.set('qemu-vms', name, 'enabled', document.getElementById('edit-enabled').checked ? '1' : '0');
+			uci.set('qemu-vms', name, 'memory', String(memory));
+			uci.set('qemu-vms', name, 'smp', String(smp));
+			uci.set('qemu-vms', name, 'cpu', document.getElementById('edit-cpu').value);
+			uci.set('qemu-vms', name, 'machine', document.getElementById('edit-machine').value || 'q35');
+			uci.set('qemu-vms', name, 'image', document.getElementById('edit-image').value);
+			uci.set('qemu-vms', name, 'disk_bus', document.getElementById('edit-disk-bus').value);
+
+			var displayType = document.getElementById('edit-display').value;
+			uci.set('qemu-vms', name, 'display_type', displayType);
+
+			if (displayType === 'vnc') {
+				var vncPortRaw = document.getElementById('edit-vnc-port').value.trim();
+				if (!/^\d+$/.test(vncPortRaw) || parseInt(vncPortRaw, 10) < 5900) {
+					ui.addNotification(null, E('p', _('VNC port must be a number \u2265 5900')), 'error');
+					return;
+				}
+				uci.set('qemu-vms', name, 'vnc_port', vncPortRaw);
+			} else {
+				uci.unset('qemu-vms', name, 'vnc_port');
+			}
+
+			var cdrom = document.getElementById('edit-cdrom').value.trim();
+			if (cdrom)
+				uci.set('qemu-vms', name, 'cdrom', cdrom);
+			else
+				uci.unset('qemu-vms', name, 'cdrom');
+
+			var customArgs = document.getElementById('edit-custom-args').value
+				.split('\n')
+				.map(function(line) { return line.trim(); })
+				.filter(function(line) { return line.length > 0; });
+			if (customArgs.length)
+				uci.set('qemu-vms', name, 'custom_arg', customArgs);
+			else
+				uci.unset('qemu-vms', name, 'custom_arg');
+
+			var pci = document.getElementById('edit-pci').value;
+			if (pci)
+				uci.set('qemu-vms', name, 'pci_passthrough', pci);
+			else
+				uci.unset('qemu-vms', name, 'pci_passthrough');
+
+			var newUsb = Array.prototype.slice.call(document.querySelectorAll('.edit-usb-check:checked'))
+				.map(function(el) { return el.value; });
+			if (newUsb.length)
+				uci.set('qemu-vms', name, 'usb_passthrough', newUsb);
+			else
+				uci.unset('qemu-vms', name, 'usb_passthrough');
+
+			var newNets = Array.prototype.slice.call(document.querySelectorAll('.edit-network-check:checked'))
+				.map(function(el) { return el.value; });
+
+			if (existingName) {
+				var oldNets = uci.get('qemu-vms', name, 'network') || [];
+				if (!Array.isArray(oldNets)) oldNets = oldNets ? [oldNets] : [];
+
+				var sortedOld = oldNets.slice().sort();
+				var sortedNew = newNets.slice().sort();
+				var changed = (sortedOld.length !== sortedNew.length) ||
+				sortedOld.some(function(v, i) { return v !== sortedNew[i]; });
+
+				if (changed) {
+					uci.set('qemu-vms', name, 'network', newNets); // только если изменился
+				}
+			} else {
+				uci.set('qemu-vms', name, 'network', newNets);
+			}
+
+			return uci.save().then(function() {
+				ui.hideModal();
+				ui.addNotification(null, E('p',
+					_('Saved to configuration. Restart the VM for changes to take effect.')), 'info');
+				window.location.reload();
+			});
+		}
 	}
-});
+);
 

@@ -123,36 +123,36 @@ _add_usb() {
 #}
 
 _unbind_usb_host() {
-        local usbcfg="$1"
-        local vendor_id product_id
-        config_get vendor_id "$usbcfg" vendor_id
-        config_get product_id "$usbcfg" product_id
+	local usbcfg="$1"
+	local vendor_id product_id
+	config_get vendor_id "$usbcfg" vendor_id
+	config_get product_id "$usbcfg" product_id
 	logger -t qemu-vms "DEBUG unbind: usbcfg=$usbcfg vendor=$vendor_id product=$product_id"
-        [ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
-        for dev in /sys/bus/usb/devices/*; do
-                if [ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ]; then
-                        local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
-                        if [ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ]; then
-                                local devname=$(basename "$dev")
-                                if [ -L "$dev/driver" ]; then
-                                        local driver_path=$(readlink -f "$dev/driver")
-                                        echo -n "$devname" > "$driver_path/unbind" 2>/dev/null
-                                        host_log "$cfg" "USB: unbound $devname from $(basename "$driver_path")"
-                                fi
-                                # interfaces are SIBLINGS of $dev, not children -
-                                # glob at the /sys/bus/usb/devices/ level, matching "$devname:*"
-                                for iface in /sys/bus/usb/devices/"$devname":*; do
-                                        [ -e "$iface" ] || continue
-                                        if [ -L "$iface/driver" ]; then
-                                                local ifname=$(basename "$iface")
-                                                local idriver_path=$(readlink -f "$iface/driver")
-                                                echo -n "$ifname" > "$idriver_path/unbind" 2>/dev/null
-                                                host_log "$cfg" "USB: unbound $ifname from $(basename "$idriver_path")"
-                                        fi
-                                done
-                        fi
-                fi
-        done
+	[ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
+	for dev in /sys/bus/usb/devices/*; do
+		if [ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ]; then
+			local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
+			if [ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ]; then
+				local devname=$(basename "$dev")
+				if [ -L "$dev/driver" ]; then
+					local driver_path=$(readlink -f "$dev/driver")
+					echo -n "$devname" > "$driver_path/unbind" 2>/dev/null
+					host_log "$cfg" "USB: unbound $devname from $(basename "$driver_path")"
+				fi
+				# interfaces are SIBLINGS of $dev, not children -
+				# glob at the /sys/bus/usb/devices/ level, matching "$devname:*"
+				for iface in /sys/bus/usb/devices/"$devname":*; do
+					[ -e "$iface" ] || continue
+					if [ -L "$iface/driver" ]; then
+						local ifname=$(basename "$iface")
+						local idriver_path=$(readlink -f "$iface/driver")
+						echo -n "$ifname" > "$idriver_path/unbind" 2>/dev/null
+						host_log "$cfg" "USB: unbound $ifname from $(basename "$idriver_path")"
+					fi
+				done
+			fi
+		fi
+	done
 }
 
 build_customargs() {
@@ -253,50 +253,64 @@ start_vm() {
 	build_customargs "$cfg"
 	build_diskargs "$cfg" "$image"
 
-	local pci_id="" vendor_id="" pci_opts=""
-	if [ -n "$pci_passthrough" ]; then
-		config_get pci_id "$pci_passthrough" pci_id
-		config_get vendor_id "$pci_passthrough" vendor_id
-		if [ -n "$vendor_id" ] && [ -n "$pci_id" ]; then
-			if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
-				local current_driver
-				current_driver="$(basename "$(readlink -f "/sys/bus/pci/devices/0000:$pci_id/driver" 2>/dev/null)" 2>/dev/null)"
-				host_log "$cfg" "PCI passthrough: $pci_id already bound to driver '$current_driver'"
-			else
-				echo "$vendor_id" > /sys/bus/pci/drivers/vfio-pci/new_id 2>/dev/null
-				if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
-					host_log "$cfg" "PCI passthrough: bound $pci_id (vendor/device $vendor_id) to vfio-pci"
-				else
-					host_log "$cfg" "WARNING: PCI passthrough: failed to bind $pci_id to vfio-pci - check IOMMU/BIOS settings"
-				fi
-			fi
-			pci_opts="-device vfio-pci,host=$pci_id"
-		else
-			host_log "$cfg" "WARNING: pci_passthrough='$pci_passthrough' is set but its pci_id/vendor_id are incomplete - skipping passthrough"
-		fi
-	fi
-
-	#local pci_id="" pci_opts=""
+	#local pci_id="" vendor_id="" pci_opts=""
 	#if [ -n "$pci_passthrough" ]; then
 	#	config_get pci_id "$pci_passthrough" pci_id
-	#	if [ -n "$pci_id" ]; then
-	#		local pci_path="/sys/bus/pci/devices/0000:$pci_id"
-	#		if [ -e "$pci_path/driver" ]; then
-	#			echo -n "0000:$pci_id" > "$pci_path/driver/unbind" 2>/dev/null
-	#			host_log "$cfg" "PCI: unbound $pci_id from $(basename "$(readlink -f "$pci_path/driver")")"
-	#		fi
-	#		echo "vfio-pci" > "$pci_path/driver_override" 2>/dev/null
-	#		echo "0000:$pci_id" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null
-	#		if [ -e "$pci_path/driver" ] && [ "$(basename "$(readlink -f "$pci_path/driver")")" = "vfio-pci" ]; then
-	#			host_log "$cfg" "PCI passthrough: $pci_id successfully bound to vfio-pci"
+	#	config_get vendor_id "$pci_passthrough" vendor_id
+	#	if [ -n "$vendor_id" ] && [ -n "$pci_id" ]; then
+	#		if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
+	#			local current_driver
+	#			current_driver="$(basename "$(readlink -f "/sys/bus/pci/devices/0000:$pci_id/driver" 2>/dev/null)" 2>/dev/null)"
+	#			host_log "$cfg" "PCI passthrough: $pci_id already bound to driver '$current_driver'"
 	#		else
-	#			host_log "$cfg" "ERROR: PCI passthrough: failed to bind $pci_id to vfio-pci. Check IOMMU groups and BIOS settings."
+	#			echo "$vendor_id" > /sys/bus/pci/drivers/vfio-pci/new_id 2>/dev/null
+	#			if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
+	#				host_log "$cfg" "PCI passthrough: bound $pci_id (vendor/device $vendor_id) to vfio-pci"
+	#			else
+	#				host_log "$cfg" "WARNING: PCI passthrough: failed to bind $pci_id to vfio-pci - check IOMMU/BIOS settings"
+	#			fi
 	#		fi
 	#		pci_opts="-device vfio-pci,host=$pci_id"
 	#	else
-	#		host_log "$cfg" "WARNING: pci_passthrough section exists but pci_id is empty - skipping"
+	#		host_log "$cfg" "WARNING: pci_passthrough='$pci_passthrough' is set but its pci_id/vendor_id are incomplete - skipping passthrough"
 	#	fi
 	#fi
+
+	local pci_id="" pci_opts=""
+	if [ -n "$pci_passthrough" ]; then
+		config_get pci_id "$pci_passthrough" pci_id
+		if [ -n "$pci_id" ]; then
+			local pci_path="/sys/bus/pci/devices/0000:$pci_id"
+			local iommu_group=""
+			if [ -L "$pci_path/iommu_group" ]; then
+				iommu_group="$(basename "$(readlink -f "$pci_path/iommu_group")")"
+			fi
+			if [ -n "$iommu_group" ]; then
+				host_log "$cfg" "PCI passthrough: device $pci_id is in IOMMU group $iommu_group"
+				for dev in /sys/kernel/iommu_groups/$iommu_group/devices/*; do
+					local dev_name="$(basename "$dev")"
+					local current_driver="$(basename "$(readlink -f "$dev/driver" 2>/dev/null)" 2>/dev/null)"
+					if [ -n "$current_driver" ] && [ "$current_driver" != "vfio-pci" ]; then
+						echo -n "$dev_name" > "$dev/driver/unbind" 2>/dev/null
+						host_log "$cfg" "PCI: unbound $dev_name from $current_driver"
+					fi
+					echo "vfio-pci" > "$dev/driver_override" 2>/dev/null
+					echo "$dev_name" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null
+					if [ -e "$dev/driver" ] && [ "$(basename "$(readlink -f "$dev/driver")")" = "vfio-pci" ]; then
+						host_log "$cfg" "PCI: successfully bound $dev_name to vfio-pci"
+					else
+						host_log "$cfg" "ERROR: failed to bind $dev_name to vfio-pci"
+					fi
+				done
+				sleep 3
+				pci_opts="-device vfio-pci,host=$pci_id"
+			else
+				host_log "$cfg" "WARNING: Cannot determine IOMMU group for $pci_id"
+			fi
+		else
+			host_log "$cfg" "WARNING: pci_passthrough section exists but pci_id is empty - skipping"
+		fi
+	fi
 
 	local cdrom_opts=""
 	[ -n "$cdrom" ] && cdrom_opts="-cdrom $cdrom"

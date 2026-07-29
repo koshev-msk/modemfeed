@@ -29,9 +29,9 @@ return view.extend({
 		var m, s;
 
 		m = new form.Map('qemu-vms', _('Virtual network segments'),
-			_('Define reusable tap interfaces that can be attached to one or more VMs. ' +
-				'Interfaces are brought up by /etc/qemu-ifup at VM start; if "bridge" is set, ' +
-				'the interface is also enslaved into that bridge, otherwise it is left standalone.'));
+			_('Define reusable tap interfaces that can be attached to one or more VMs.') +
+			'<br />' + _('Interfaces are brought up by /etc/qemu-ifup at VM start; if "bridge" is set,') +
+			' ' + _('the interface is also enslaved into that bridge, otherwise it is left standalone.'));
 
 		s = m.section(form.GridSection, 'network', _('Networks'));
 		s.addremove = true;
@@ -49,9 +49,12 @@ return view.extend({
 		mac.write = function(section_id, value) {
 			if (!value)
 				value = randomMac();
-			return form.Value.prototype.write.call(this, section_id, value);
+			else
+				return form.Value.prototype.write.call(this, section_id, value);
 		};
 		mac.rmempty = false;
+		mac.keylist = [];
+		mac.vallist = [];
 		mac.value(randomMac(), _('Automatically assigned'));
 
 		var ifname = s.option(form.Value, 'ifname', _('tap ifname'));
@@ -78,7 +81,7 @@ return view.extend({
 		}
 		driver.default = 'virtio-net-pci';
 		driver.rmempty = true;
-		driver.description = _('Choose the emulated network card model. If empty, virtio-net-pci is used.');
+		driver.description = _('Choose the emulated network card model. Default driver: <code>virtio-net-pci</code>');
 
 		return m.render();
 	}
