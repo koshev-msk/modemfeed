@@ -309,7 +309,10 @@ case "$1" in
 			"readlog": { "vm_name": "", "lines": 0 },
 			"console_open": { "vm_name": "" },
 			"console_close": { "vm_name": "" },
+			"list_cpus": { },
 			"list_hardware": { },
+			"list_machines": { },
+			"list_net_drivers": { },
 			"delete_vm": { "vm_name": "" }
 		}'
 		;;
@@ -365,6 +368,39 @@ case "$1" in
 				;;
 			list_hardware)
 				list_hardware
+				;;
+			list_machines)
+				machines=$(/usr/bin/qemu-system-x86_64 -M help 2>/dev/null | grep -E '^[a-zA-Z0-9_-]+' | grep -v Supported | awk '{print $1}')
+				json_init
+				json_add_array "machines"
+				for m in $machines; do
+					json_add_string "" "$m"
+				done
+				json_close_array
+				json_dump
+				;;
+			list_cpus)
+				cpus=$(/usr/bin/qemu-system-x86_64 -cpu help 2>/dev/null | \
+					awk '/^[[:space:]]*$/ || /Recognized/ {exit} {print $1}')
+				json_init
+				json_add_array "cpus"
+				for c in $cpus; do
+					json_add_string "" "$c"
+				done
+				json_close_array
+				json_dump
+				;;
+			list_net_drivers)
+				drivers=$(/usr/bin/qemu-system-x86_64 -device help 2>/dev/null | \
+					awk '/^Network devices:/{flag=1; next} /^[[:space:]]*$/{if(flag) exit} flag && /^name "[^"]+"/{print $2}' | \
+					sed -e 's/"//g' -e 's/,//g' )
+				json_init
+				json_add_array "drivers"
+				for d in $drivers; do
+					json_add_string "" "$d"
+				done
+				json_close_array
+				json_dump
 				;;
 			delete_vm)
 				stop_vm_instance "$vm_name"

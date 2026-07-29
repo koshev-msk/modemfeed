@@ -19,6 +19,9 @@
 					"restart",
 					"console_open",
 					"console_close",
+					"list_machines",
+					"list_cpus",
+					"list_net_drivers",
 					"delete_vm"
 				]
 			},

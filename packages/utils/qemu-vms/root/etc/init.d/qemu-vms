@@ -56,6 +56,7 @@ _add_net() {
 	config_get mac "$netcfg" mac
 	config_get ifname "$netcfg" ifname
 	config_get bridge "$netcfg" bridge
+	config_get driver "$netcfg" driver "virtio-net-pci"
 
 	local id="net${idx}"
 
@@ -78,7 +79,7 @@ _add_net() {
 
 	local mac_opt=""
 	[ -n "$mac" ] && mac_opt=",mac=$mac"
-	device_opts="$device_opts -device virtio-net-pci${mac_opt},netdev=$id"
+	device_opts="$device_opts -device ${driver}${mac_opt},netdev=$id"
 	idx=$((idx + 1))
 }
 
@@ -101,25 +102,57 @@ _add_usb() {
 	usb_needed=1
 }
 
+#_unbind_usb_host() {
+#	local usbcfg="$1"
+#	local vendor_id product_id
+#	config_get vendor_id "$usbcfg" vendor_id
+#	config_get product_id "$usbcfg" product_id
+#	[ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
+#	for dev in /sys/bus/usb/devices/*; do
+#		if [ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ]; then
+#			local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
+#			if [ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ]; then
+#				if [ -L "$dev/driver" ]; then
+#					local driver_path=$(readlink -f "$dev/driver")
+#					local driver_name=$(basename "$driver_path")
+#					echo -n "$(basename "$dev")" > "$driver_path/unbind" 2>/dev/null
+#				fi
+#			fi
+#		fi
+#	done
+#}
+
 _unbind_usb_host() {
-	local usbcfg="$1"
-	local vendor_id product_id
-	config_get vendor_id "$usbcfg" vendor_id
-	config_get product_id "$usbcfg" product_id
-	[ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
-	for dev in /sys/bus/usb/devices/*; do
-		if [ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ]; then
-			local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
-			if [ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ]; then
-				if [ -L "$dev/driver" ]; then
-					local driver_path=$(readlink -f "$dev/driver")
-					local driver_name=$(basename "$driver_path")
-					echo -n "$(basename "$dev")" > "$driver_path/unbind" 2>/dev/null
-					host_log "$cfg" "USB: unbound $(basename "$dev") from $driver_name"
-				fi
-			fi
-		fi
-	done
+        local usbcfg="$1"
+        local vendor_id product_id
+        config_get vendor_id "$usbcfg" vendor_id
+        config_get product_id "$usbcfg" product_id
+	logger -t qemu-vms "DEBUG unbind: usbcfg=$usbcfg vendor=$vendor_id product=$product_id"
+        [ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
+        for dev in /sys/bus/usb/devices/*; do
+                if [ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ]; then
+                        local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
+                        if [ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ]; then
+                                local devname=$(basename "$dev")
+                                if [ -L "$dev/driver" ]; then
+                                        local driver_path=$(readlink -f "$dev/driver")
+                                        echo -n "$devname" > "$driver_path/unbind" 2>/dev/null
+                                        host_log "$cfg" "USB: unbound $devname from $(basename "$driver_path")"
+                                fi
+                                # interfaces are SIBLINGS of $dev, not children -
+                                # glob at the /sys/bus/usb/devices/ level, matching "$devname:*"
+                                for iface in /sys/bus/usb/devices/"$devname":*; do
+                                        [ -e "$iface" ] || continue
+                                        if [ -L "$iface/driver" ]; then
+                                                local ifname=$(basename "$iface")
+                                                local idriver_path=$(readlink -f "$iface/driver")
+                                                echo -n "$ifname" > "$idriver_path/unbind" 2>/dev/null
+                                                host_log "$cfg" "USB: unbound $ifname from $(basename "$idriver_path")"
+                                        fi
+                                done
+                        fi
+                fi
+        done
 }
 
 build_customargs() {
@@ -209,6 +242,7 @@ start_vm() {
 	config_get pci_passthrough "$cfg" pci_passthrough
 	config_get display_type "$cfg" display_type "serial"
 	config_get vnc_port "$cfg" vnc_port
+	config_get machine "$cfg" machine "q35"
 
 	local console_sock="/var/run/qemu-$cfg.sock"
 	local console_log="/var/log/qemu-$cfg-console.log"
@@ -242,7 +276,6 @@ start_vm() {
 		fi
 	fi
 
-	# Test version PCI Pass
 	#local pci_id="" pci_opts=""
 	#if [ -n "$pci_passthrough" ]; then
 	#	config_get pci_id "$pci_passthrough" pci_id
@@ -299,7 +332,7 @@ start_vm() {
 		$disk_controller_opts $disk_opts \
 		$device_opts $netdev_opts $pci_opts $cdrom_opts $usb_controller_opts $usb_opts $vnc_opts $custom_opts \
 		-device virtio-rng-pci \
-		-machine q35 \
+		-machine $machine \
 		-chardev socket,id=con0,path="$console_sock",server=on,wait=off,logfile="$console_log",logappend=on \
 		-serial chardev:con0 \
 		-chardev socket,id=qmp0,path="$qmp_sock",server=on,wait=off \
