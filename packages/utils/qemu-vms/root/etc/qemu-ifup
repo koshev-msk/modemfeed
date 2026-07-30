@@ -1,22 +1,63 @@
 #!/bin/sh
 # /etc/qemu-ifup
-#
-# Invoked by QEMU itself (via -netdev tap,...,script=/etc/qemu-ifup) right
-# after it creates the tap interface. $1 is the tap ifname QEMU created;
-# $2 (bridge) is passed through via the netdev's "downscript"-adjacent
-# vhost/helper convention used by build_netargs in /etc/init.d/qemu-vms,
-# which appends the bridge name as a second positional argument.
-#
-# We only enslave the interface into a bridge if one was actually
-# configured on the network section - a tap interface with no "bridge"
-# option stays standalone (e.g. for point-to-point or manually managed
-# setups).
+# $1 - tap iface name
+# $2 - bridge name (optional)
 
-ifname="$1"
-bridge="$2"
+. /lib/functions.sh
 
-ip link set "$ifname" up
-
-if [ -n "$bridge" ]; then
-	ip link set "$ifname" master "$bridge"
+if [ -n "$2" ]; then
+    # if custom user bridge
+    if ! ip link show "$2" >/dev/null 2>&1; then
+        ip link add "$2" type bridge
+        ip link set "$2" up
+        logger -t qemu-ifup "Bridge $2 created"
+    fi
+    ip link set "$1" master "$2"
+    exit 0
 fi
+
+
+network_bridges=""
+
+collect_network_bridge() {
+    local cfg="$1"
+    local type
+    config_get type "$cfg" type
+    [ "$type" = "bridge" ] || return 0
+    local name
+    config_get name "$cfg" name
+    [ -n "$name" ] && network_bridges="$network_bridges $name"
+}
+
+config_load network
+config_foreach collect_network_bridge device
+
+qemu_bridges=""
+
+collect_qemu_bridge() {
+    local cfg="$1"
+    local bridge
+    config_get bridge "$cfg" bridge
+    [ -n "$bridge" ] && qemu_bridges="$qemu_bridges $bridge"
+}
+
+config_load qemu-vms
+config_foreach collect_qemu_bridge network
+
+defined_bridges="$network_bridges $qemu_bridges"
+
+existing_bridges=$(ls -d /sys/devices/virtual/net/*/brif/ 2>/dev/null | awk -F '/' '{print $(NF-2)}')
+
+echo "$existing_bridges" | awk -v def="$defined_bridges" '
+BEGIN {
+    split(def, arr, " ");
+    for (i in arr) declared[arr[i]] = 1;
+}
+!($0 in declared) { print }
+' | while read bridge; do
+    if [ -z "$(ls -A "/sys/devices/virtual/net/$bridge/brif" 2>/dev/null)" ]; then
+        ip link set "$bridge" down 2>/dev/null
+        ip link delete "$bridge" 2>/dev/null
+        logger -t qemu-ifup "Removed orphan bridge $bridge"
+    fi
+done

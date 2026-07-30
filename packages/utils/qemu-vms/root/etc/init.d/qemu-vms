@@ -244,9 +244,9 @@ start_vm() {
 	config_get vnc_port "$cfg" vnc_port
 	config_get machine "$cfg" machine "q35"
 
-	local console_sock="/var/run/qemu-$cfg.sock"
-	local console_log="/var/log/qemu-$cfg-console.log"
-	local qmp_sock="/var/run/qemu-$cfg.qmp"
+	local console_sock="$STAUS_DIR/qemu-$cfg.sock"
+	local console_log="$LOG_DIR/qemu-$cfg-console.log"
+	local qmp_sock="$STATUS_DIR/qemu-$cfg.qmp"
 
 	build_netargs "$cfg"
 	build_usbargs "$cfg"

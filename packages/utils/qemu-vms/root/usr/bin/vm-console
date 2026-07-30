@@ -10,6 +10,9 @@
 # log: just tails the always-on boot/console logfile (safe to run at
 #   any time, does not touch the live console socket at all).
 
+STATUS_DIR=/var/run/qemu-vms
+LOG_DIR=/var/log/qemu-vms
+
 VM="$1"
 MODE="${2:-attach}"
 
@@ -18,9 +21,9 @@ if [ -z "$VM" ]; then
 	exit 1
 fi
 
-CONSOLE_SOCK="/var/run/qemu-$VM.sock"
-CONSOLE_LOG="/var/log/qemu-$VM-console.log"
-TMP_PTY="/var/run/qemu-$VM.console-pty.$$"
+CONSOLE_SOCK="$STATUS_DIR/qemu-$VM.sock"
+CONSOLE_LOG="$LOG_DIR/qemu-$VM-console.log"
+TMP_PTY="$STATUS_DIR/qemu-$VM.console-pty.$$"
 
 case "$MODE" in
 	log)

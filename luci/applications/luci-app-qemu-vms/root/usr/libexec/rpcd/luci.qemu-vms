@@ -4,6 +4,7 @@
 . /lib/functions.sh
 
 STATUS_DIR="/var/run/qemu-vms"
+LOG_DIR="/var/log/qemu-vms"
 
 is_anonymous_section() {
 	# UCI auto-generated names look like: cfgXXXXXX (cfg + hex)
@@ -85,7 +86,7 @@ find_free_port() {
 
 console_open() {
 	local vm="$1"
-	local sock="/var/run/qemu-$vm.sock"
+	local sock="$STATUS_DIR/qemu-$vm.sock"
 	local pidfile="$STATUS_DIR/$vm.ttyd.pid"
 	local portfile="$STATUS_DIR/$vm.ttyd.port"
 
@@ -145,7 +146,7 @@ console_close() {
 readlog() {
 	local vm="$1"
 	local lines="${2:-200}"
-	local log="/var/log/qemu-vms/$vm.log"
+	local log="$LOG_DIR/$vm.log"
 
 	json_init
 	if [ -f "$log" ]; then

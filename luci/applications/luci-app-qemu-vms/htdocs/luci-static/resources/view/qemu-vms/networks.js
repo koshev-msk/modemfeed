@@ -3,8 +3,6 @@
 'require view';
 'require uci';
 'require rpc';
-'require network';
-'require tools.widgets as widgets';
 
 var callListNetDrivers = rpc.declare({
 	object: 'luci.qemu-vms',
