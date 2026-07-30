@@ -102,6 +102,41 @@ _add_usb() {
 	usb_needed=1
 }
 
+_add_pci() {
+	local pci_section="$1"
+	local pci_id
+	config_get pci_id "$pci_section" pci_id
+	[ -n "$pci_id" ] || return 0
+
+	local pci_path="/sys/bus/pci/devices/0000:$pci_id"
+	local iommu_group=""
+	if [ -L "$pci_path/iommu_group" ]; then
+		iommu_group="$(basename "$(readlink -f "$pci_path/iommu_group")")"
+	fi
+	if [ -n "$iommu_group" ]; then
+		host_log "$cfg" "PCI passthrough: device $pci_id is in IOMMU group $iommu_group"
+		for dev in /sys/kernel/iommu_groups/$iommu_group/devices/*; do
+			local dev_name="$(basename "$dev")"
+			local current_driver="$(basename "$(readlink -f "$dev/driver" 2>/dev/null)" 2>/dev/null)"
+			if [ -n "$current_driver" ] && [ "$current_driver" != "vfio-pci" ]; then
+				echo -n "$dev_name" > "$dev/driver/unbind" 2>/dev/null
+				host_log "$cfg" "PCI: unbound $dev_name from $current_driver"
+			fi
+			echo "vfio-pci" > "$dev/driver_override" 2>/dev/null
+			echo "$dev_name" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null
+			if [ -e "$dev/driver" ] && [ "$(basename "$(readlink -f "$dev/driver")")" = "vfio-pci" ]; then
+				host_log "$cfg" "PCI: successfully bound $dev_name to vfio-pci"
+			else
+				host_log "$cfg" "ERROR: failed to bind $dev_name to vfio-pci"
+			fi
+		done
+		sleep 3
+		pci_opts="$pci_opts -device vfio-pci,host=$pci_id"
+	else
+		host_log "$cfg" "WARNING: Cannot determine IOMMU group for $pci_id"
+	fi
+}
+
 #_unbind_usb_host() {
 #	local usbcfg="$1"
 #	local vendor_id product_id
@@ -244,7 +279,7 @@ start_vm() {
 	config_get vnc_port "$cfg" vnc_port
 	config_get machine "$cfg" machine "q35"
 
-	local console_sock="$STAUS_DIR/qemu-$cfg.sock"
+	local console_sock="$STATUS_DIR/qemu-$cfg.sock"
 	local console_log="$LOG_DIR/qemu-$cfg-console.log"
 	local qmp_sock="$STATUS_DIR/qemu-$cfg.qmp"
 
@@ -276,41 +311,8 @@ start_vm() {
 	#	fi
 	#fi
 
-	local pci_id="" pci_opts=""
-	if [ -n "$pci_passthrough" ]; then
-		config_get pci_id "$pci_passthrough" pci_id
-		if [ -n "$pci_id" ]; then
-			local pci_path="/sys/bus/pci/devices/0000:$pci_id"
-			local iommu_group=""
-			if [ -L "$pci_path/iommu_group" ]; then
-				iommu_group="$(basename "$(readlink -f "$pci_path/iommu_group")")"
-			fi
-			if [ -n "$iommu_group" ]; then
-				host_log "$cfg" "PCI passthrough: device $pci_id is in IOMMU group $iommu_group"
-				for dev in /sys/kernel/iommu_groups/$iommu_group/devices/*; do
-					local dev_name="$(basename "$dev")"
-					local current_driver="$(basename "$(readlink -f "$dev/driver" 2>/dev/null)" 2>/dev/null)"
-					if [ -n "$current_driver" ] && [ "$current_driver" != "vfio-pci" ]; then
-						echo -n "$dev_name" > "$dev/driver/unbind" 2>/dev/null
-						host_log "$cfg" "PCI: unbound $dev_name from $current_driver"
-					fi
-					echo "vfio-pci" > "$dev/driver_override" 2>/dev/null
-					echo "$dev_name" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null
-					if [ -e "$dev/driver" ] && [ "$(basename "$(readlink -f "$dev/driver")")" = "vfio-pci" ]; then
-						host_log "$cfg" "PCI: successfully bound $dev_name to vfio-pci"
-					else
-						host_log "$cfg" "ERROR: failed to bind $dev_name to vfio-pci"
-					fi
-				done
-				sleep 3
-				pci_opts="-device vfio-pci,host=$pci_id"
-			else
-				host_log "$cfg" "WARNING: Cannot determine IOMMU group for $pci_id"
-			fi
-		else
-			host_log "$cfg" "WARNING: pci_passthrough section exists but pci_id is empty - skipping"
-		fi
-	fi
+	local pci_opts=""
+	config_list_foreach "$cfg" pci_passthrough _add_pci
 
 	local cdrom_opts=""
 	[ -n "$cdrom" ] && cdrom_opts="-cdrom $cdrom"

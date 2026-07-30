@@ -73,7 +73,7 @@ return view.extend({
 		});
 
 		var bridge = s.option(form.Value, 'bridge', _('Bridge (optional)'));
-		bridge.value('', _('leave empty'));
+		bridge.value('', _('not assign'));
 		bridgeList.forEach(function(name) {
 			bridge.value(name, name);
 		});

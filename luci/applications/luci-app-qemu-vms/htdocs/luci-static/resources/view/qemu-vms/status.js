@@ -423,11 +423,18 @@ return view.extend({
 			});
 			vncPortRow.style.display = ((vm.display_type || 'serial') === 'vnc') ? '' : 'none';
 
-			var pciSelect = E('select', { 'class': 'cbi-input-select', 'id': 'edit-pci' }, [
-				E('option', { 'value': '', 'selected': !vm.pci_passthrough || null }, _('-- none --'))
-			].concat(allPci.map(function(p) {
-				return E('option', { 'value': p, 'selected': vm.pci_passthrough === p || null }, p);
-			})));
+			var attachedPci = [].concat(vm.pci_passthrough || []);
+			var pciSelect = E('div', { 'style': 'display: flex; flex-wrap: wrap; gap: 0.3em 1.2em;' }, allPci.map(function(p) {
+				return E('label', { 'style': 'white-space: nowrap; font-weight: normal;' }, [
+					E('input', {
+						'type': 'checkbox',
+						'class': 'edit-pci-check',
+						'value': p,
+						'checked': attachedPci.indexOf(p) !== -1 || null
+					}),' ' + p
+				]);
+			}));
+			if (!allPci.length) pciSelect = E('em', {}, _('No PCI passthrough sections defined yet'));
 
 			var networkChecks = allNetworks.map(function(net) {
 				return E('div', {}, [
@@ -612,9 +619,10 @@ return view.extend({
 			else
 				uci.unset('qemu-vms', name, 'custom_arg');
 
-			var pci = document.getElementById('edit-pci').value;
-			if (pci)
-				uci.set('qemu-vms', name, 'pci_passthrough', pci);
+			var newPci = Array.prototype.slice.call(document.querySelectorAll('.edit-pci-check:checked'))
+				.map(function(el) { return el.value; });
+			if (newPci.length)
+				uci.set('qemu-vms', name, 'pci_passthrough', newPci);
 			else
 				uci.unset('qemu-vms', name, 'pci_passthrough');
 
