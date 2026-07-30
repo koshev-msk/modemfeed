@@ -4,7 +4,7 @@ Web UI for **QEMU Virtual Machines Simple (VMS)** — a lightweight OpenWrt pack
 for running and managing QEMU virtual machines from LuCI, aimed at x86_64
 routers/gateways with enough RAM and a spare CPU to spare on a VM or two.
 
-This app is the LuCI frontend for the [`qemu-vms`](../../packages/utils/qemu-vms)
+This app is the LuCI frontend for the [`qemu-vms`](../../../packages/utils/qemu-vms)
 backend package (init script + UCI config). It does not work standalone —
 `qemu-vms` must be installed as well (it is pulled in automatically as a
 dependency).
