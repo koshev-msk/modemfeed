@@ -432,7 +432,7 @@ return view.extend({
 				_('PCI passthrough requires IOMMU enabled in the host BIOS and kernel command line (intel_iommu=on / amd_iommu=on), and the vfio-pci kernel module loaded.') +
 				'<br />' + _('Creating a passthrough section will bind the device to vfio-pci (if possible). Removing it will attempt to re-bind to the original driver.') +
 				'<br />' + _('Note: Some devices (especially Intel network cards) may require the vfio-pci module option "disable_idle_d3=1" to prevent them from entering a low-power state.') +
-				'<br />' + _('Add "options vfio-pci disable_idle_d3=1" to /etc/modprobe.d/vfio-pci.conf if you encounter "No such device" errors.')),
+				'<br />' + _('Change to "vfio-pci disable_idle_d3=1" in /etc/modules.d/vfio-pci if you encounter "No such device" errors.')),
 			this.renderPciTable(hw.pci || [])
 		]);
 
