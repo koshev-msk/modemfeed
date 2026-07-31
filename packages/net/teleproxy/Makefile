@@ -25,7 +25,7 @@ define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   TITLE:=MTProxy OpenWRT package
-  DEPENDS:=+libopenssl +zlib
+  DEPENDS:=+libopenssl +zlib +libatomic
 endef
 
 define Package/$(PKG_NAME)/conffiles
