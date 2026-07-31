@@ -119,6 +119,8 @@ _add_pci() {
 			local dev_name="$(basename "$dev")"
 			local current_driver="$(basename "$(readlink -f "$dev/driver" 2>/dev/null)" 2>/dev/null)"
 			if [ -n "$current_driver" ] && [ "$current_driver" != "vfio-pci" ]; then
+				local orig_file="$STATUS_DIR/pci-orig-driver-$dev_name"
+				[ -f "$orig_file" ] || echo "$current_driver" > "$orig_file"
 				echo -n "$dev_name" > "$dev/driver/unbind" 2>/dev/null
 				host_log "$cfg" "PCI: unbound $dev_name from $current_driver"
 			fi
@@ -136,26 +138,6 @@ _add_pci() {
 		host_log "$cfg" "WARNING: Cannot determine IOMMU group for $pci_id"
 	fi
 }
-
-#_unbind_usb_host() {
-#	local usbcfg="$1"
-#	local vendor_id product_id
-#	config_get vendor_id "$usbcfg" vendor_id
-#	config_get product_id "$usbcfg" product_id
-#	[ -n "$vendor_id" ] && [ -n "$product_id" ] || return 0
-#	for dev in /sys/bus/usb/devices/*; do
-#		if [ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ]; then
-#			local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
-#			if [ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ]; then
-#				if [ -L "$dev/driver" ]; then
-#					local driver_path=$(readlink -f "$dev/driver")
-#					local driver_name=$(basename "$driver_path")
-#					echo -n "$(basename "$dev")" > "$driver_path/unbind" 2>/dev/null
-#				fi
-#			fi
-#		fi
-#	done
-#}
 
 _unbind_usb_host() {
 	local usbcfg="$1"
@@ -189,6 +171,68 @@ _unbind_usb_host() {
 		fi
 	done
 }
+
+_release_usb_node() {
+	# Rebind a single sysfs usb node (device or interface) to whatever
+	# driver it was recorded as being on before we ever touched it.
+	local node="$1"
+	local orig_file="$STATUS_DIR/usb-orig-driver-$node"
+
+	[ -f "$orig_file" ] || return 0
+	local orig_driver
+	orig_driver="$(cat "$orig_file")"
+
+	if [ -n "$orig_driver" ] && [ -e "/sys/bus/usb/drivers/$orig_driver" ]; then
+		echo -n "$node" > "/sys/bus/usb/drivers/$orig_driver/bind" 2>/dev/null
+		if [ -L "/sys/bus/usb/devices/$node/driver" ] && \
+		   [ "$(basename "$(readlink -f "/sys/bus/usb/devices/$node/driver")")" = "$orig_driver" ]; then
+			logger -t qemu-vms "release_usb: restored $node to $orig_driver"
+		else
+			logger -t qemu-vms "WARNING: release_usb: failed to rebind $node to $orig_driver"
+		fi
+	fi
+	rm -f "$orig_file"
+}
+
+release_usb() {
+	# Usage: release_usb <vendor_id> <product_id>
+	local vendor_id="$1"
+	local product_id="$2"
+
+	[ -n "$vendor_id" ] && [ -n "$product_id" ] || {
+		logger -t qemu-vms "release_usb: vendor_id/product_id required"
+		return 1
+	}
+
+	for dev in /sys/bus/usb/devices/*; do
+		[ -f "$dev/idVendor" ] && [ -f "$dev/idProduct" ] || continue
+		local v=$(cat "$dev/idVendor") p=$(cat "$dev/idProduct")
+		[ "$v" = "$vendor_id" ] && [ "$p" = "$product_id" ] || continue
+
+		local devname=$(basename "$dev")
+		_release_usb_node "$devname"
+
+		for iface in /sys/bus/usb/devices/"$devname":*; do
+			[ -e "$iface" ] || continue
+			_release_usb_node "$(basename "$iface")"
+		done
+	done
+}
+
+release_usb_passthrough() {
+	# Usage: release_usb_passthrough <usb-passthrough section name>
+	local section="$1"
+	config_load qemu-vms
+	local vendor_id product_id
+	config_get vendor_id "$section" vendor_id
+	config_get product_id "$section" product_id
+	if [ -z "$vendor_id" ] || [ -z "$product_id" ]; then
+		logger -t qemu-vms "release_usb_passthrough: section '$section' has no vendor_id/product_id"
+		return 1
+	fi
+	release_usb "$vendor_id" "$product_id"
+}
+
 
 build_customargs() {
 	local cfg="$1"
@@ -288,29 +332,6 @@ start_vm() {
 	build_customargs "$cfg"
 	build_diskargs "$cfg" "$image"
 
-	#local pci_id="" vendor_id="" pci_opts=""
-	#if [ -n "$pci_passthrough" ]; then
-	#	config_get pci_id "$pci_passthrough" pci_id
-	#	config_get vendor_id "$pci_passthrough" vendor_id
-	#	if [ -n "$vendor_id" ] && [ -n "$pci_id" ]; then
-	#		if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
-	#			local current_driver
-	#			current_driver="$(basename "$(readlink -f "/sys/bus/pci/devices/0000:$pci_id/driver" 2>/dev/null)" 2>/dev/null)"
-	#			host_log "$cfg" "PCI passthrough: $pci_id already bound to driver '$current_driver'"
-	#		else
-	#			echo "$vendor_id" > /sys/bus/pci/drivers/vfio-pci/new_id 2>/dev/null
-	#			if [ -e "/sys/bus/pci/devices/0000:$pci_id/driver" ]; then
-	#				host_log "$cfg" "PCI passthrough: bound $pci_id (vendor/device $vendor_id) to vfio-pci"
-	#			else
-	#				host_log "$cfg" "WARNING: PCI passthrough: failed to bind $pci_id to vfio-pci - check IOMMU/BIOS settings"
-	#			fi
-	#		fi
-	#		pci_opts="-device vfio-pci,host=$pci_id"
-	#	else
-	#		host_log "$cfg" "WARNING: pci_passthrough='$pci_passthrough' is set but its pci_id/vendor_id are incomplete - skipping passthrough"
-	#	fi
-	#fi
-
 	local pci_opts=""
 	config_list_foreach "$cfg" pci_passthrough _add_pci
 
@@ -368,6 +389,74 @@ start_vm() {
 	# access is attached on-demand via /usr/bin/vm-console, which only
 	# connects for the duration of the minicom session.
 }
+
+release_pci() {
+	# Usage: release_pci <pci_id, e.g. 04:00.0>
+	local pci_id="$1"
+	[ -n "$pci_id" ] || {
+		logger -t qemu-vms "release_pci: pci_id required"
+		return 1
+	}
+
+	local pci_path="/sys/bus/pci/devices/0000:$pci_id"
+	local iommu_group=""
+	[ -L "$pci_path/iommu_group" ] && iommu_group="$(basename "$(readlink -f "$pci_path/iommu_group")")"
+
+	if [ -z "$iommu_group" ]; then
+		logger -t qemu-vms "release_pci: cannot determine IOMMU group for $pci_id"
+		return 1
+	fi
+
+	for dev in /sys/kernel/iommu_groups/$iommu_group/devices/*; do
+		local dev_name="$(basename "$dev")"
+		local current_driver="$(basename "$(readlink -f "$dev/driver" 2>/dev/null)" 2>/dev/null)"
+
+		if [ "$current_driver" != "vfio-pci" ]; then
+			logger -t qemu-vms "release_pci: $dev_name is not bound to vfio-pci (currently '$current_driver'), skipping"
+			continue
+		fi
+
+		echo -n "" > "$dev/driver_override" 2>/dev/null
+		echo -n "$dev_name" > "$dev/driver/unbind" 2>/dev/null
+
+		local orig_file="$STATUS_DIR/pci-orig-driver-$dev_name"
+		if [ -f "$orig_file" ]; then
+			local orig_driver
+			orig_driver="$(cat "$orig_file")"
+			if [ -n "$orig_driver" ] && [ -e "/sys/bus/pci/drivers/$orig_driver" ]; then
+				echo -n "$dev_name" > "/sys/bus/pci/drivers/$orig_driver/bind" 2>/dev/null
+				if [ -e "$dev/driver" ] && [ "$(basename "$(readlink -f "$dev/driver")")" = "$orig_driver" ]; then
+					logger -t qemu-vms "release_pci: restored $dev_name to $orig_driver"
+				else
+					logger -t qemu-vms "WARNING: release_pci: failed to rebind $dev_name to $orig_driver"
+					logger -t qemu-vms "WARNING: release_pci: will need reoot host to bind original driver $$orig_driver"
+					fi
+			fi
+			rm -f "$orig_file"
+		else
+			logger -t qemu-vms "release_pci: no recorded original driver for $dev_name, left unbound"
+		fi
+	done
+}
+
+release_pci_passthrough() {
+	# Usage: release_pci_passthrough <pci-passthrough section name>
+	local section="$1"
+	config_load qemu-vms
+	local pci_id
+	config_get pci_id "$section" pci_id
+	if [ -z "$pci_id" ]; then
+		logger -t qemu-vms "release_pci_passthrough: section '$section' has no pci_id"
+		return 1
+	fi
+	release_pci "$pci_id"
+}
+
+
+EXTRA_COMMANDS="release_pci_passthrough release_usb_passthrough"
+EXTRA_HELP="        release_pci_passthrough <section>	Unbind a PCI device from vfio-pci and restore its original driver
+        release_usb_passthrough <section>	Unbind a USB device from passthrough use and restore its original driver"
+
 
 start_service() {
 	config_load qemu-vms

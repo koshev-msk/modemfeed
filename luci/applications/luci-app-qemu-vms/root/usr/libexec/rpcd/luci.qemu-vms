@@ -314,6 +314,8 @@ case "$1" in
 			"list_hardware": { },
 			"list_machines": { },
 			"list_net_drivers": { },
+			"release_pci": { "section_name": "" },
+			"release_usb": { "section_name": "" },
 			"delete_vm": { "vm_name": "" }
 		}'
 		;;
@@ -324,6 +326,7 @@ case "$1" in
 		json_get_var lines lines
 		json_get_var offset offset
 		json_get_var data data
+		json_get_var section_name section_name
 
 		case "$2" in
 			status)
@@ -401,6 +404,18 @@ case "$1" in
 					json_add_string "" "$d"
 				done
 				json_close_array
+				json_dump
+				;;
+			release_pci)
+				/etc/init.d/qemu-vms release_pci_passthrough "$section_name" >/dev/null 2>&1
+				json_init
+				json_add_boolean "success" 1
+				json_dump
+				;;
+			release_usb)
+				/etc/init.d/qemu-vms release_usb_passthrough "$section_name" >/dev/null 2>&1
+				json_init
+				json_add_boolean "success" 1
 				json_dump
 				;;
 			delete_vm)

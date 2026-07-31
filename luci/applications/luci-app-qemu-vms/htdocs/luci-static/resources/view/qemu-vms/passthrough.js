@@ -11,6 +11,18 @@ var callListHardware = rpc.declare({
 	params: []
 });
 
+var callReleasePci = rpc.declare({
+	object: 'luci.qemu-vms',
+	method: 'release_pci',
+	params: ['section_name']
+});
+
+var callReleaseUsb = rpc.declare({
+	object: 'luci.qemu-vms',
+	method: 'release_usb',
+	params: ['section_name']
+});
+
 return view.extend({
 	load: function() {
 		return Promise.all([
@@ -33,7 +45,19 @@ return view.extend({
 		});
 		return found;
 	},
-
+	/*
+	pciOwner: function(addr) {
+		var section = this.findPciSection(addr);
+		if (!section)
+			return null;
+		var owner = null;
+		uci.sections('qemu-vms', 'vm').forEach(function(vm) {
+			if (vm.pci_passthrough === section)
+				owner = vm['.name'];
+		});
+		return owner;
+	},
+	*/
 	pciOwners: function(addr) {
 		var section = this.findPciSection(addr);
 		if (!section)
@@ -175,9 +199,14 @@ return view.extend({
 				E('button', {
 					'class': 'btn cbi-button-negative',
 					'click': function() {
-						uci.remove('qemu-vms', section);
-						self.cleanupVmReferences('pci_passthrough', section);
-						return uci.save().then(function() {
+						return callReleasePci(section).catch(function(err) {
+							ui.addNotification(null, E('p',
+								_('Warning: could not rebind device to its original driver: ') + err.message), 'warning');
+						}).then(function() {
+							uci.remove('qemu-vms', section);
+							self.cleanupVmReferences('pci_passthrough', section);
+							return uci.save();
+						}).then(function() {
 							ui.hideModal();
 							ui.addNotification(null, E('p', _('Passthrough removed for %s.').format(addr)), 'info');
 							self.updateView();
@@ -286,9 +315,14 @@ return view.extend({
 				E('button', {
 					'class': 'btn cbi-button-negative',
 					'click': function() {
-						uci.remove('qemu-vms', section);
-						self.cleanupVmReferences('usb_passthrough', section);
-						return uci.save().then(function() {
+						return callReleaseUsb(section).catch(function(err) {
+							ui.addNotification(null, E('p',
+								_('Warning: could not rebind device to its original driver: ') + err.message), 'warning');
+						}).then(function() {
+							uci.remove('qemu-vms', section);
+							self.cleanupVmReferences('usb_passthrough', section);
+							return uci.save();
+						}).then(function() {
 							ui.hideModal();
 							ui.addNotification(null, E('p', _('Passthrough removed.')), 'info');
 							self.updateView();
@@ -305,10 +339,12 @@ return view.extend({
 		var self = this;
 		var rows = devices.map(function(dev) {
 			var section = self.findPciSection(dev.addr);
+			//var owner = self.pciOwner(dev.addr);
 			var owners = self.pciOwners(dev.addr);
 			var owner = owners.length ? owners.join(', ') : null;
 			var passthroughStatus = section ? _('Active<br />Section: %s').format(section) : _('Not passthrough');
 			if (owner) passthroughStatus += ' ' + _('<br />Host: %s').format(owner);
+			
 
 			var actionButton;
 			if (section) {
@@ -417,7 +453,7 @@ return view.extend({
 	renderContent: function(data) {
 		var hw = data[0];
 		var self = this;
-
+	
 		var description = E('div', { 'class': 'cbi-section' }, [
 			E('h2', {}, _('Hardware Passthrough')),
 				E('p', { 'class': 'cbi-section-descr' },
