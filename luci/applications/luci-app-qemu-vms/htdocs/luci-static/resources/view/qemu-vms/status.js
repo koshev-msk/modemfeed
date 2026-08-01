@@ -635,21 +635,10 @@ return view.extend({
 
 			var newNets = Array.prototype.slice.call(document.querySelectorAll('.edit-network-check:checked'))
 				.map(function(el) { return el.value; });
-
-			if (existingName) {
-				var oldNets = uci.get('qemu-vms', name, 'network') || [];
-				if (!Array.isArray(oldNets)) oldNets = oldNets ? [oldNets] : [];
-
-				var sortedOld = oldNets.slice().sort();
-				var sortedNew = newNets.slice().sort();
-				var changed = (sortedOld.length !== sortedNew.length) ||
-				sortedOld.some(function(v, i) { return v !== sortedNew[i]; });
-
-				if (changed) {
-					uci.set('qemu-vms', name, 'network', newNets); // только если изменился
-				}
-			} else {
+			if (newNets.length) {
 				uci.set('qemu-vms', name, 'network', newNets);
+			} else {
+				uci.unset('qemu-vms', name, 'network');
 			}
 
 			return uci.save().then(function() {
