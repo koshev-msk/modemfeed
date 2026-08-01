@@ -163,7 +163,10 @@ return view.extend({
 						vm.disk_bytes ? (vm.disk_bytes / 1048576).toFixed(0) + ' MB' : '-')
 				])
 			]),
-			E('div', { 'class': 'cbi-page-actions' }, [
+			E('div', {
+					'class': 'cbi-page-actions',
+					'style': 'display: flex; flex-wrap: wrap; gap: 0.4em; row-gap: 0.5em;'
+			}, [
 				E('button', {
 					'id': 'vm-btn-start-%s'.format(name),
 					'class': 'btn cbi-button cbi-button-positive',
