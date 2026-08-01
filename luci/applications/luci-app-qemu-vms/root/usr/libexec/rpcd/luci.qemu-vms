@@ -294,9 +294,9 @@ vm_status_one() {
 	[ -n "$pid" ] && json_add_int "pid" "$pid"
 	[ -n "$ram_kb" ] && json_add_int "ram_kb" "$ram_kb"
 	[ -n "$image_bytes" ] && json_add_int "disk_bytes" "$image_bytes"
-	json_add_string "console_sock" "/var/run/qemu-$vm.sock"
-	json_add_string "console_log" "/var/log/qemu-$vm-console.log"
-	json_add_string "qmp_sock" "/var/run/qemu-$vm.qmp"
+	json_add_string "console_sock" "$STATUS_DIR/qemu-$vm.sock"
+	json_add_string "file_log" "$LOG_DIR/$vm.log"
+	json_add_string "qmp_sock" "$STATUS_DIR/qemu-$vm.qmp"
 	json_close_object
 }
 
