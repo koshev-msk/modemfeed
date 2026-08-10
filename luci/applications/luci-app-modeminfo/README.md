@@ -16,7 +16,7 @@ Supported devices:
 
  - Sierra Wireless EM7455/EM9191
 
- - HP LT4220
+ - Telit LN940(HP LT4220)/LM960
 
  - Dell DW5821e/DW5829e
 
@@ -43,7 +43,7 @@ Supported devices:
 |modeminfo |common files |
 |modeminfo-qmi |Qualcomm MSM Interface support |
 |modeminfo-serial-quectel |Quectel modems support |
-|modeminfo-serial-telit |Telit LN940 (HP LT4220) modem support |
+|modeminfo-serial-telit |Telit LN940(HP LT4220)/LM960 modem support |
 |modeminfo-serial-huawei |Huawei MU709/ME909/E3372(stick mode, LTE only) modems support|
 |modeminfo-serial-sierra |Sierra EM7455/EM9191 modem support |
 |modeminfo-serial-simcom |SimCOM modems support |
