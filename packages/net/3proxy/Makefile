@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
-PKG_VERSION:=0.9.6
-PKG_RELEASE:=3
+PKG_VERSION:=0.9.8
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -10,7 +10,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/z3APA3A/3proxy.git
-PKG_SOURCE_VERSION:=a2641cb103438b8caa5fcc551f085bcb5f244d47
+PKG_SOURCE_VERSION:=122ca26249aaaac9156e0805891555c70e19f2b3
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -59,10 +59,11 @@ define Build/Compile
 		-DFD_SETSIZE=4096 \
 		-DWITH_POLL \
 		-DWITH_NETFILTER \
-		-DWITHSPLICE" \
+		-DWITHSPLICE \
+		-D_GNU_SOURCE" \
         LDFLAGS="$(TARGET_LDFLAGS)" \
         LIBS="-ldl -lcrypto -lssl -lpcre2-8" \
-        PLUGINS="SSLPlugin PCREPlugin StringsPlugin TrafficPlugin TransparentPlugin" \
+        PLUGINS="StringsPlugin TrafficPlugin TransparentPlugin" \
         OPENSSL_CHECK=true \
         PCRE_CHECK=true \
         PAM_CHECK=false
@@ -76,7 +77,6 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/3proxy \
-			$(PKG_BUILD_DIR)/bin/proxy \
 			$(1)/usr/bin/
 	$(CP) ./files/* $(1)/
 endef
@@ -89,15 +89,7 @@ endef
 
 define Package/$(PKG_NAME)-common/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/ftppr \
-		$(PKG_BUILD_DIR)/bin/mycrypt \
-		$(PKG_BUILD_DIR)/bin/pop3p \
-		$(PKG_BUILD_DIR)/bin/smtpp \
-		$(PKG_BUILD_DIR)/bin/tcppm \
-		$(PKG_BUILD_DIR)/bin/udppm \
-		$(PKG_BUILD_DIR)/bin/socks \
-		$(PKG_BUILD_DIR)/bin/proxy \
-		$(PKG_BUILD_DIR)/bin/tlspr \
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/$(PKG_NAME)_* \
 		$(1)/usr/bin
 endef
 
