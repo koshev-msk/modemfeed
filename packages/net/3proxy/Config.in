@@ -1,0 +1,12 @@
+choice
+        prompt "SSL support"
+        depends on PACKAGE_3proxy
+        default PACKAGE_3proxy_OPENSSL
+
+config PACKAGE_3proxy_OPENSSL
+        bool "Build with OpenSSL"
+
+config PACKAGE_3proxy_WOLFSSL
+        bool "Build with wolfSSL"
+
+endchoice

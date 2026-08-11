@@ -18,12 +18,28 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/$(PKG_NAME)/config
+  source "$(SOURCE)/Config.in"
+endef
+
+
+ifeq ($(CONFIG_PACKAGE_3proxy_WOLFSSL),y)
+  SSL_DEPENDS:=+libwolfssl
+  OPENSSL_CHECK_VAL:=false
+  WOLFSSL_CHECK_VAL:=true
+else
+  SSL_DEPENDS:=+libopenssl
+  OPENSSL_CHECK_VAL:=true
+  WOLFSSL_CHECK_VAL:=false
+endif
+
 define Package/$(PKG_NAME)
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
   TITLE:=3proxy OpenWRT package
-  DEPENDS:=+libpthread +libopenssl +libpcre2
+  DEPENDS:=$(SSL_DEPENDS) +libpthread +libpcre2
+  MENU:=1
 endef
 
 define Package/lib$(PKG_NAME)
@@ -51,7 +67,7 @@ endef
 define Build/Compile
     $(MAKE) -C $(PKG_BUILD_DIR) -f Makefile.Linux \
         CC="$(TARGET_CC)" \
-        CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -fPIC -fno-strict-aliasing -c -pthread \
+        EXTRA_CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -fPIC -fno-strict-aliasing -c -pthread \
 		-DNOODBC \
 		-DGETHOSTBYNAME_R \
 		-D_THREAD_SAFE \
@@ -62,9 +78,9 @@ define Build/Compile
 		-DWITHSPLICE \
 		-D_GNU_SOURCE" \
         LDFLAGS="$(TARGET_LDFLAGS)" \
-        LIBS="-ldl -lcrypto -lssl -lpcre2-8" \
         PLUGINS="StringsPlugin TrafficPlugin TransparentPlugin" \
-        OPENSSL_CHECK=true \
+        OPENSSL_CHECK=$(OPENSSL_CHECK_VAL) \
+        WOLFSSL_CHECK=$(WOLFSSL_CHECK_VAL) \
         PCRE_CHECK=true \
         PAM_CHECK=false
 endef
