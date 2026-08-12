@@ -1,0 +1,1691 @@
+--- a/Makefile.Linux
++++ b/Makefile.Linux
+@@ -60,6 +60,21 @@
+     ZLIB = -lz -lzstd
+ endif
+ 
++# mbedTLS backend: WORK IN PROGRESS (ssl.c not converted yet, see
++# comments in src/ssllib.c and src/ssl.h). Deliberately does NOT set
++# -DWITH_SSL and does NOT add ssl$(OBJSUFFICS) to SSL_OBJS below, so
++# turning this on builds ssllib.o against mbedTLS for review/testing
++# without touching the rest of the (still OpenSSL/wolfSSL-only) SSL
++# support or breaking the final link. Not a usable end-to-end TLS
++# backend yet - do not wire ssl_mitm/ssl_cli/ssl_serv config directives
++# to this until step 2 (ssl.c) lands.
++MBEDTLS_CHECK ?= $(shell echo "\#include <mbedtls/ssl.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testmbedtls.o - 2>/dev/null && $(CC) $(LDFLAGS) -otestmbedtls testmbedtls.o $(STATIC_PREFIX) -lmbedtls -lmbedx509 -lmbedcrypto $(STATIC_SUFFIX) 2>/dev/null && rm testmbedtls testmbedtls.o && echo true||echo false)
++ifeq ($(MBEDTLS_CHECK), true)
++    LIBS += $(STATIC_PREFIX) -lmbedtls -lmbedx509 -lmbedcrypto $(STATIC_SUFFIX)
++    CFLAGS += -DWITH_SSL -DWITH_MBEDTLS
++    SSL_OBJS = ssllib$(OBJSUFFICS) ssl_mbedtls$(OBJSUFFICS)
++    ZLIB :=
++else
+ WOLFSSL_CHECK ?= $(shell echo "\#include <wolfssl/options.h>\\n\#include <wolfssl/openssl/ssl.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testwssl.o - 2>/dev/null && $(CC) $(LDFLAGS) -otestwssl testwssl.o $(STATIC_PREFIX) -lwolfssl $(STATIC_SUFFIX) 2>/dev/null && rm testwssl testwssl.o && echo true||echo false)
+ ifeq ($(WOLFSSL_CHECK), true)
+     LIBS += $(STATIC_PREFIX) -lwolfssl $(STATIC_SUFFIX)
+@@ -76,6 +91,7 @@
+     ZLIB :=
+ endif
+ endif
++endif
+ PCRE_CHECK ?= $(shell echo "\#define PCRE2_CODE_UNIT_WIDTH 8\\n\#include <pcre2.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testpcre.o - 2>/dev/null && $(CC) -o testpcre testpcre.o $(LDFLAGS) $(STATIC_PREFIX) -lpcre2-8 $(STATIC_SUFFIX) 2>/dev/null && rm testpcre testpcre.o && echo true||echo false)
+ ifeq ($(PCRE_CHECK), true)
+     CFLAGS += -DWITH_PCRE
+--- a/src/ssl.h
++++ b/src/ssl.h
+@@ -1,6 +1,15 @@
+ #ifndef __ssl_h__
+ #define __ssl_h__
+ 
++#ifdef WITH_MBEDTLS
++#include <mbedtls/ssl.h>
++#include <mbedtls/x509_crt.h>
++#include <mbedtls/pk.h>
++#include <mbedtls/net_sockets.h>
++#include <mbedtls/entropy.h>
++#include <mbedtls/ctr_drbg.h>
++#endif
++
+ //
+ // opaque connection structure
+ //
+@@ -10,16 +19,48 @@
+ //
+ typedef void *SSL_CERT;
+ 
++#ifdef WITH_MBEDTLS
++/* mbedTLS has no OpenSSL-style SSL_CTX/SSL types: the per-connection
++   TLS state lives in mbedtls_ssl_context, and configuration (ciphers,
++   verification, callbacks) lives in a separate mbedtls_ssl_config that
++   plays the role SSL_CTX plays in OpenSSL/wolfSSL. Both are kept
++   together here so the rest of 3proxy can keep treating ssl_conn as
++   an opaque handle the same way it does for OpenSSL/wolfSSL. */
++typedef struct _ssl_conn {
++	mbedtls_ssl_config *ctx;
++	mbedtls_ssl_context *ssl;
++	SOCKET s;
++	int last_err;
++} ssl_conn;
++#else
+ typedef struct _ssl_conn {
+ 	SSL_CTX *ctx;
+ 	SSL *ssl;
+ } ssl_conn;
++#endif
+ 
+ struct alpn {
+     unsigned char *protos;
+     unsigned int protos_len;
+ };
+ 
++#ifdef WITH_MBEDTLS
++struct ssl_config {
++    mbedtls_x509_crt *CA_cert;
++    mbedtls_x509_crt *server_cert;
++    mbedtls_x509_crt *client_cert;
++    mbedtls_pk_context *CA_key;
++    mbedtls_pk_context *server_key;
++    mbedtls_pk_context *client_key;
++    mbedtls_ssl_config *cli_ctx;
++    mbedtls_ssl_config *srv_ctx;
++    char *certcache;
++    int *client_ciphersuites_ids;
++    int *server_ciphersuites_ids;
++    char **client_alpn_list;
++    mbedtls_x509_crt *client_ca_chain;
++    mbedtls_x509_crt *server_ca_chain;
++#else
+ struct ssl_config {
+     X509 *CA_cert;
+     X509 *server_cert;
+@@ -30,6 +71,7 @@
+     SSL_CTX *cli_ctx;
+     SSL_CTX *srv_ctx;
+     char *certcache;
++#endif
+     char * client_ciphersuites;
+     char * server_ciphersuites;
+     char * client_cipher_list;
+@@ -65,8 +107,17 @@
+ //
+ // SSL/TLS handshakes
+ //
++#ifdef WITH_MBEDTLS
++/* ssl.c is not yet converted to mbedTLS (tracked separately); these
++   prototypes will change to mbedtls_x509_crt / mbedtls_pk_context
++   pointers once that lands. Left as-is here so ssl.h stays
++   self-consistent for the ssllib.c-only build/link check. */
++mbedtls_ssl_config * ssl_cli_ctx(SSL_CONFIG *config, mbedtls_x509_crt *server_cert, mbedtls_pk_context *server_key, char** errSSL);
++SSL_CONN ssl_handshake_to_client(SOCKET s, SSL_CONFIG *config, mbedtls_x509_crt *server_cert, mbedtls_pk_context *server_key, char **errSSL);
++#else
+ SSL_CTX * ssl_cli_ctx(SSL_CONFIG *config, X509 *server_cert, EVP_PKEY *server_key,char** errSSL);
+ SSL_CONN ssl_handshake_to_client(SOCKET s, SSL_CONFIG *config, X509 *server_cert, EVP_PKEY *server_key, char **errSSL);
++#endif
+ SSL_CONN ssl_handshake_to_server(SOCKET s, char * hostname, SSL_CONFIG *config, SSL_CERT *server_cert, char **errSSL);
+ 
+ //
+@@ -87,6 +138,12 @@
+ //
+ void ssl_init(void);
+ char * getSSLErr(void);
++#ifdef WITH_MBEDTLS
++void mbedtls_set_err(int err);
++int ssl_get_error(SSL_CONN connection);
++extern mbedtls_entropy_context mbedtls_entropy;
++extern mbedtls_ctr_drbg_context mbedtls_ctr_drbg;
++#endif
+ 
+ //
+ // Built-in SSL installation (called from 3proxy.c)
+--- a/src/ssllib.c
++++ b/src/ssllib.c
+@@ -14,7 +14,18 @@
+ #include <sys/file.h>
+ #endif
+ 
+-#ifdef WITH_WOLFSSL
++#ifdef WITH_MBEDTLS
++#include <mbedtls/error.h>
++#include <mbedtls/x509.h>
++#include <mbedtls/x509_crt.h>
++#include <mbedtls/x509_csr.h>
++#include <mbedtls/pk.h>
++#include <mbedtls/ssl.h>
++#include <mbedtls/net_sockets.h>
++#include <mbedtls/entropy.h>
++#include <mbedtls/ctr_drbg.h>
++#include <mbedtls/sha256.h>
++#elif defined(WITH_WOLFSSL)
+ #include <wolfssl/options.h>
+ #include <wolfssl/openssl/crypto.h>
+ #include <wolfssl/openssl/x509.h>
+@@ -46,10 +57,37 @@
+                         };
+ 
+ 
++#ifdef WITH_MBEDTLS
++/* mbedTLS reports errors as return codes from the call that failed,
++   not via a global/thread-local queue like OpenSSL's ERR_get_error().
++   Every mbedtls_* call site in this file (and, once converted, ssl.c)
++   is expected to stash its own negative return code here with
++   mbedtls_set_err() before falling through to an error path, so that
++   getSSLErr() keeps behaving like it does for OpenSSL/wolfSSL: "give
++   me the text for whatever just went wrong". Not thread-safe, but
++   neither is the OpenSSL/wolfSSL errbuf right above - same existing
++   tradeoff in this file, kept consistent rather than introduced. */
++static int mbedtls_last_err = 0;
++
++void mbedtls_set_err(int err)
++{
++	mbedtls_last_err = err;
++}
+ 
+ char * getSSLErr(){
++    if(mbedtls_last_err == 0){
++	snprintf(errbuf, sizeof(errbuf), "no error");
++	return errbuf;
++    }
++    mbedtls_strerror(mbedtls_last_err, errbuf, sizeof(errbuf));
++    mbedtls_last_err = 0;
++    return errbuf;
++}
++#else
++char * getSSLErr(){
+     return ERR_error_string(ERR_get_error(), errbuf);
+ }
++#endif
+ 
+ static size_t bin2hex (const unsigned char* bin, size_t bin_length, char* str, size_t str_length)
+ {
+@@ -72,6 +110,7 @@
+ 	return p - str;
+ }
+ 
++#ifndef WITH_MBEDTLS
+ static int copy_ext(X509 *dst_cert, X509 *src_cert, int nid)
+ {
+ 	X509_EXTENSION *ext;
+@@ -82,8 +121,9 @@
+ 	if(!(ext = X509_get_ext(src_cert, idx))) return 0;
+ 	return X509_add_ext(dst_cert, ext, -1) > 0;
+ }
++#endif
+ 
+-#ifndef WITH_WOLFSSL
++#if !defined(WITH_WOLFSSL) && !defined(WITH_MBEDTLS)
+ static int add_ext(X509 *cert, int nid, const char *value)
+ {
+ 	X509_EXTENSION *ex;
+@@ -107,6 +147,105 @@
+ }
+ #endif
+ 
++#ifdef WITH_MBEDTLS
++static int format_time_mbedtls(const mbedtls_x509_time *t, char *buf, size_t n)
++{
++	return snprintf(buf, n, "%04d%02d%02d%02d%02d%02d", t->year,t->mon,t->day,t->hour,t->min,t->sec) >= (int)n;
++}
++
++static int build_san_list_mbedtls(const mbedtls_x509_sequence *seq, mbedtls_x509_san_list **out)
++{
++	const mbedtls_x509_sequence *p;
++	mbedtls_x509_san_list *head = NULL, *tail = NULL, *item;
++	int ret;
++	*out = NULL;
++	for(p = seq; p; p = p->next){
++		item = calloc(1, sizeof(*item));
++		if(!item){ ret = MBEDTLS_ERR_X509_ALLOC_FAILED; goto fail; }
++		ret = mbedtls_x509_parse_subject_alt_name(&p->buf, &item->node);
++		if(ret){ free(item); goto fail; }
++		if(!head) head = item; else tail->next = item;
++		tail = item;
++	}
++	*out = head;
++	return 0;
++fail:
++	while(head){
++		item = head->next;
++		mbedtls_x509_free_subject_alt_name(&head->node);
++		free(head);
++		head = item;
++	}
++	return ret;
++}
++
++static void free_san_list_mbedtls(mbedtls_x509_san_list *list)
++{
++	while(list){
++		mbedtls_x509_san_list *next = list->next;
++		mbedtls_x509_free_subject_alt_name(&list->node);
++		free(list);
++		list = next;
++	}
++}
++
++SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config)
++{
++	mbedtls_x509_crt *src = (mbedtls_x509_crt *)cert, *dst = NULL;
++	mbedtls_x509write_cert wr;
++	mbedtls_pk_context *key;
++	mbedtls_x509_san_list *san_list = NULL;
++	char subject[MBEDTLS_X509_MAX_DN_NAME_SIZE], issuer[MBEDTLS_X509_MAX_DN_NAME_SIZE];
++	char not_before[32], not_after[32], cache_name[256];
++	unsigned char hash[32], der[16384];
++	int ret;
++	if(!src || !config || !config->CA_cert || !config->CA_key) return NULL;
++	ret = mbedtls_sha256(src->raw.p, src->raw.len, hash, 0);
++	if(ret) return NULL;
++	if(config->certcache){
++		char *q = cache_name; size_t i;
++		q += snprintf(q, sizeof(cache_name), "%s", config->certcache);
++		for(i = 0; i < 16 && (size_t)(q-cache_name)+2 < sizeof(cache_name); i++) q += snprintf(q, 3, "%02x", hash[i]);
++		snprintf(q, sizeof(cache_name)-(size_t)(q-cache_name), ".pem");
++		dst = calloc(1, sizeof(*dst));
++		if(dst){ mbedtls_x509_crt_init(dst); if(mbedtls_x509_crt_parse_file(dst, cache_name) >= 0) return dst; mbedtls_x509_crt_free(dst); free(dst); dst = NULL; }
++	}
++	if(mbedtls_x509_dn_gets(subject, sizeof(subject), &src->subject) < 0 ||
++	   mbedtls_x509_dn_gets(issuer, sizeof(issuer), &config->CA_cert->subject) < 0 ||
++	   format_time_mbedtls(&src->valid_from, not_before, sizeof(not_before)) ||
++	   format_time_mbedtls(&src->valid_to, not_after, sizeof(not_after))) return NULL;
++	key = config->server_key ? config->server_key : config->CA_key;
++	mbedtls_x509write_crt_init(&wr);
++	mbedtls_x509write_crt_set_version(&wr, MBEDTLS_X509_CRT_VERSION_3);
++	ret = mbedtls_x509write_crt_set_serial_raw(&wr, src->serial.p, src->serial.len);
++	if(!ret) ret = mbedtls_x509write_crt_set_subject_name(&wr, subject);
++	if(!ret) ret = mbedtls_x509write_crt_set_issuer_name(&wr, issuer);
++	if(!ret) ret = mbedtls_x509write_crt_set_validity(&wr, not_before, not_after);
++	if(!ret) mbedtls_x509write_crt_set_subject_key(&wr, key);
++	if(!ret) mbedtls_x509write_crt_set_issuer_key(&wr, config->CA_key);
++	if(!ret) mbedtls_x509write_crt_set_md_alg(&wr, MBEDTLS_MD_SHA256);
++	if(!ret) ret = mbedtls_x509write_crt_set_basic_constraints(&wr, 0, -1);
++	if(!ret) ret = mbedtls_x509write_crt_set_key_usage(&wr, MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_ENCIPHERMENT);
++	if(!ret && src->subject_alt_names.buf.p && src->subject_alt_names.buf.len){
++		ret = build_san_list_mbedtls(&src->subject_alt_names, &san_list);
++		if(!ret) ret = mbedtls_x509write_crt_set_subject_alternative_name(&wr, san_list);
++		free_san_list_mbedtls(san_list); san_list = NULL;
++	}
++	if(!ret) ret = mbedtls_x509write_crt_set_subject_key_identifier(&wr);
++	if(!ret) ret = mbedtls_x509write_crt_set_authority_key_identifier(&wr);
++	if(ret){ mbedtls_x509write_crt_free(&wr); return NULL; }
++	ret = mbedtls_x509write_crt_pem(&wr, der, sizeof(der), mbedtls_ctr_drbg_random, &mbedtls_ctr_drbg);
++	mbedtls_x509write_crt_free(&wr);
++	if(ret < 0) return NULL;
++	dst = calloc(1, sizeof(*dst));
++	if(!dst) return NULL;
++	mbedtls_x509_crt_init(dst);
++	{ int parsed = mbedtls_x509_crt_parse(dst, der, (size_t)ret);
++	  if(parsed < 0){ mbedtls_x509_crt_free(dst); free(dst); return NULL; } }
++	if(config->certcache){ FILE *f = fopen(cache_name, "wb"); if(f){ fwrite(der,1,(size_t)ret,f); fclose(f); } }
++	return dst;
++}
++#else
+ SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config)
+ {
+ 	int err = -1;
+@@ -226,7 +365,69 @@
+ 	}
+ 	return dst_cert;
+ }
++#endif /* WITH_MBEDTLS */
++
++#ifdef WITH_MBEDTLS
++int ssl_read(SSL_CONN connection, void * buf, int bufsize)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++	int ret = mbedtls_ssl_read(conn->ssl, (unsigned char *)buf, (size_t)bufsize);
++
++	if(ret < 0){
++		conn->last_err = ret;
++		mbedtls_set_err(ret);
++		return -1;
++	}
++	return ret;
++}
++
++int ssl_write(SSL_CONN connection, void * buf, int bufsize)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++	int ret = mbedtls_ssl_write(conn->ssl, (const unsigned char *)buf, (size_t)bufsize);
++
++	if(ret < 0){
++		conn->last_err = ret;
++		mbedtls_set_err(ret);
++		return -1;
++	}
++	return ret;
++}
++
++int ssl_pending(SSL_CONN connection)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++
++	return (int)mbedtls_ssl_get_bytes_avail(conn->ssl);
++}
++
++void ssl_conn_free(SSL_CONN connection)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++
++	if(conn){
++		if(conn->ssl){
++			mbedtls_ssl_close_notify(conn->ssl);
++			mbedtls_ssl_free(conn->ssl);
++			free(conn->ssl);
++		}
++		/* conn->ctx (mbedtls_ssl_config) is the shared client/server
++		   config built once in ssl_cli_ctx()/ssl_install() - it is not
++		   owned per-connection and must not be freed here. The
++		   OpenSSL/wolfSSL branch frees conn->ctx because there it is a
++		   context created per-handshake. Config lifetime for mbedTLS is
++		   finalized together with ssl.c in step 2. */
++		free(conn);
++	}
++}
+ 
++void _ssl_cert_free(SSL_CERT cert)
++{
++	if(!cert) return;
++	mbedtls_x509_crt_free((mbedtls_x509_crt *)cert);
++	free(cert);
++}
++#else
+ int ssl_read(SSL_CONN connection, void * buf, int bufsize)
+ {
+ 	ssl_conn *conn = (ssl_conn *) connection;
+@@ -265,6 +466,7 @@
+ {
+ 	X509_free((X509 *)cert);
+ }
++#endif
+ 
+ 
+ 
+@@ -320,13 +522,37 @@
+ 
+ int ssl_init_done = 0;
+ 
++#ifdef WITH_MBEDTLS
++/* Shared, seeded once: mbedtls_ctr_drbg_context is documented as safe
++   for concurrent mbedtls_ctr_drbg_random() calls from multiple threads
++   (internal mutex), so one global pair here mirrors how OpenSSL/wolfSSL
++   keep one global RNG state under the hood. Consumed from ssl.c once
++   that half of the mbedTLS port lands (step 2), exposed here since
++   ssllib.c is what owns SSL library init/shutdown. */
++mbedtls_entropy_context mbedtls_entropy;
++mbedtls_ctr_drbg_context mbedtls_ctr_drbg;
++#endif
++
+ void ssl_init()
+ {
+ 	if(!ssl_init_done){
+ 
+ 	    ssl_init_done = 1;
+ 	    thread_setup();
+-#ifdef WITH_WOLFSSL
++#ifdef WITH_MBEDTLS
++	    {
++		static const char *pers = "3proxy";
++		int ret;
++
++		mbedtls_entropy_init(&mbedtls_entropy);
++		mbedtls_ctr_drbg_init(&mbedtls_ctr_drbg);
++		ret = mbedtls_ctr_drbg_seed(&mbedtls_ctr_drbg, mbedtls_entropy_func,
++			&mbedtls_entropy, (const unsigned char *)pers, strlen(pers));
++		if(ret != 0){
++		    mbedtls_set_err(ret);
++		}
++	    }
++#elif defined(WITH_WOLFSSL)
+ 	    wolfSSL_Init();
+ #elif defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L
+ 	    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+--- a/src/ssl_mbedtls.c
++++ b/src/ssl_mbedtls.c
+@@ -0,0 +1,1248 @@
++/*
++   mbedTLS SSL/TLS backend for 3proxy 0.9.8
++   (c) 2007-2026 by Vladimir Dubrovin <vlad@3proxy.org>
++
++   This file mirrors src/ssl.c's filter/configuration interface but uses
++   mbedTLS directly. It targets mbedTLS 3.x (TLS 1.2/1.3).
++*/
++
++#include "structures.h"
++#include <ctype.h>
++#include <errno.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#ifndef _WIN32
++#include <dirent.h>
++#include <sys/file.h>
++#endif
++
++#include <mbedtls/error.h>
++#include <mbedtls/net_sockets.h>
++#include <mbedtls/oid.h>
++#include <mbedtls/pk.h>
++#include <mbedtls/sha256.h>
++#include <mbedtls/ssl.h>
++#include <mbedtls/x509.h>
++#include <mbedtls/x509_crt.h>
++
++#include "proxy.h"
++#include "ssl.h"
++
++#ifndef _WIN32
++#define WINAPI
++#endif
++
++#ifndef isnumber
++#define isnumber(i_n_arg) ((i_n_arg >= '0') && (i_n_arg <= '9'))
++#endif
++
++PROXYFUNC tcppmfunc, proxyfunc, smtppfunc, ftpprfunc;
++static struct pluginlink *pl;
++static int ssl_loaded = 0;
++static char *certcache = NULL, *srvcert = NULL, *srvkey = NULL;
++static char *clicert = NULL, *clikey = NULL;
++static char *server_ca_file = NULL, *server_ca_dir = NULL,
++            *server_ca_store = NULL;
++static char *server_ca_key = NULL;
++static char *client_ca_file = NULL, *client_ca_dir = NULL,
++            *client_ca_store = NULL;
++static int mitm = 0, serv = 0, cli = 0;
++static int client_min_proto_version = 0, client_max_proto_version = 0;
++static int server_min_proto_version = 0, server_max_proto_version = 0;
++static int client_verify = 0, server_verify = 0;
++static char *client_ciphersuites = NULL, *server_ciphersuites = NULL;
++static char *client_cipher_list = NULL, *server_cipher_list = NULL;
++static char *client_sni = NULL;
++static int client_mode = 0;
++static struct alpn client_alpn_protos;
++
++struct SSLsock {
++  SOCKET s;
++  SSL_CONN conn;
++};
++struct SSLstate {
++  struct SSLsock cli, srv;
++  struct clientparam *param;
++  SSL_CONFIG *config;
++};
++#define STATE ((struct SSLstate *)(state))
++#define SOSTATE ((struct SSLstate *)(param->sostate))
++#define PCONF (((struct SSLstate *)param->sostate)->config)
++
++static struct SSLsock *searchSSL(void *state, SOCKET s) {
++  if (!state || s == INVALID_SOCKET)
++    return NULL;
++  if (STATE->cli.s == s)
++    return &STATE->cli;
++  if (STATE->srv.s == s)
++    return &STATE->srv;
++  return NULL;
++}
++
++static void addSSL(SOCKET cli_s, SSL_CONN cli_conn, SOCKET srv_s,
++                   SSL_CONN srv_conn, struct clientparam *param) {
++  if (!param->sostate)
++    return;
++  if (cli_s != INVALID_SOCKET) {
++    SOSTATE->cli.s = cli_s;
++    SOSTATE->cli.conn = cli_conn;
++  }
++  if (srv_s != INVALID_SOCKET) {
++    SOSTATE->srv.s = srv_s;
++    SOSTATE->srv.conn = srv_conn;
++  }
++}
++
++void delSSL(void *state, SOCKET s) {
++  if (!state || s == INVALID_SOCKET)
++    return;
++  if (STATE->cli.s == s && STATE->cli.conn) {
++    ssl_conn_free(STATE->cli.conn);
++    STATE->cli.conn = NULL;
++    STATE->cli.s = INVALID_SOCKET;
++  } else if (STATE->srv.s == s && STATE->srv.conn) {
++    ssl_conn_free(STATE->srv.conn);
++    STATE->srv.conn = NULL;
++    STATE->srv.s = INVALID_SOCKET;
++  }
++}
++
++struct sockfuncs sso;
++
++static int mbed_send_cb(void *ctx, const unsigned char *buf, size_t len) {
++  ssl_conn *c = (ssl_conn *)ctx;
++#ifdef _WIN32
++  int n = sso._send(sso.state, c->s, (const char *)buf, (int)len, 0);
++#else
++  ssize_t n = sso._send(sso.state, c->s, buf, len, 0);
++#endif
++  if (n >= 0)
++    return (int)n;
++#ifdef _WIN32
++  if (WSAGetLastError() == WSAEWOULDBLOCK)
++    return MBEDTLS_ERR_SSL_WANT_WRITE;
++#else
++  if (errno == EAGAIN || errno == EWOULDBLOCK)
++    return MBEDTLS_ERR_SSL_WANT_WRITE;
++#endif
++  return MBEDTLS_ERR_NET_SEND_FAILED;
++}
++
++static int mbed_recv_cb(void *ctx, unsigned char *buf, size_t len) {
++  ssl_conn *c = (ssl_conn *)ctx;
++#ifdef _WIN32
++  int n = sso._recv(sso.state, c->s, (char *)buf, (int)len, 0);
++#else
++  ssize_t n = sso._recv(sso.state, c->s, buf, len, 0);
++#endif
++  if (n >= 0)
++    return (int)n;
++#ifdef _WIN32
++  if (WSAGetLastError() == WSAEWOULDBLOCK)
++    return MBEDTLS_ERR_SSL_WANT_READ;
++#else
++  if (errno == EAGAIN || errno == EWOULDBLOCK)
++    return MBEDTLS_ERR_SSL_WANT_READ;
++#endif
++  return MBEDTLS_ERR_NET_RECV_FAILED;
++}
++
++static int ssl_wait(SOCKET s, short events) {
++  struct pollfd fds[1] = {{INVALID_SOCKET}};
++  fds[0].fd = s;
++  fds[0].events = events;
++  if (sso._poll(sso.state, fds, 1, pl->conf->timeouts[CONNECT_TO] * 1000) <= 0)
++    return 0;
++  return (fds[0].revents & (POLLIN | POLLOUT)) != 0;
++}
++
++static int do_handshake(ssl_conn *conn, int server, char **errSSL) {
++  int ret;
++  *errSSL = NULL;
++  do {
++    ret = mbedtls_ssl_handshake(conn->ssl);
++    if (ret == 0)
++      return 0;
++    if (ret == MBEDTLS_ERR_SSL_WANT_READ) {
++      if (!ssl_wait(conn->s, POLLIN))
++        break;
++    } else if (ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
++      if (!ssl_wait(conn->s, POLLOUT))
++        break;
++    } else
++      break;
++  } while (1);
++  mbedtls_set_err(ret);
++  *errSSL = getSSLErr();
++  return ret;
++}
++
++int ssl_get_error(SSL_CONN connection) {
++  ssl_conn *conn = (ssl_conn *)connection;
++  return conn ? conn->last_err : MBEDTLS_ERR_SSL_INTERNAL_ERROR;
++}
++
++static int set_error(int ret, char **errSSL) {
++  if (ret) {
++    mbedtls_set_err(ret);
++    if (errSSL)
++      *errSSL = getSSLErr();
++  }
++  return ret;
++}
++
++static int parse_ciphers(const char *spec, int **out) {
++  char *copy, *p, *tok;
++  int *ids = NULL, n = 0, cap = 0, id;
++  if (!spec || !*spec) {
++    *out = NULL;
++    return 0;
++  }
++  copy = strdup(spec);
++  if (!copy)
++    return MBEDTLS_ERR_SSL_ALLOC_FAILED;
++  for (p = copy; *p; p++)
++    if (*p == ';' || *p == ':')
++      *p = ',';
++  tok = strtok(copy, ", ");
++  while (tok) {
++    id = mbedtls_ssl_get_ciphersuite_id(tok);
++    if (!id) {
++      free(ids);
++      free(copy);
++      return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
++    }
++    if (n + 1 >= cap) {
++      cap = cap ? cap * 2 : 8;
++      ids = (int *)realloc(ids, (size_t)cap * sizeof(*ids));
++      if (!ids) {
++        free(copy);
++        return MBEDTLS_ERR_SSL_ALLOC_FAILED;
++      }
++    }
++    ids[n++] = id;
++    tok = strtok(NULL, ", ");
++  }
++  if (ids) {
++    ids[n] = 0;
++  }
++  free(copy);
++  *out = ids;
++  return 0;
++}
++
++static int build_alpn(const struct alpn *a, char ***out) {
++  unsigned int p = 0, n = 0, i;
++  char **list;
++  if (!a || !a->protos_len) {
++    *out = NULL;
++    return 0;
++  }
++  while (p < a->protos_len) {
++    unsigned int l = a->protos[p++];
++    if (!l || p + l > a->protos_len)
++      return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
++    p += l;
++    n++;
++  }
++  list = calloc(n + 1, sizeof(*list));
++  if (!list)
++    return MBEDTLS_ERR_SSL_ALLOC_FAILED;
++  p = 0;
++  for (i = 0; i < n; i++) {
++    unsigned int l = a->protos[p++];
++    list[i] = malloc(l + 1);
++    if (!list[i]) {
++      while (i)
++        free(list[--i]);
++      free(list);
++      return MBEDTLS_ERR_SSL_ALLOC_FAILED;
++    }
++    memcpy(list[i], a->protos + p, l);
++    list[i][l] = 0;
++    p += l;
++  }
++  *out = list;
++  return 0;
++}
++
++static void free_alpn(char **list) {
++  int i;
++  if (!list)
++    return;
++  for (i = 0; list[i]; i++)
++    free(list[i]);
++  free(list);
++}
++
++static int set_versions(mbedtls_ssl_config *ctx, int minv, int maxv) {
++  /* mbedTLS 3.x supports TLS 1.2 and TLS 1.3. */
++  int min = minv ? minv : 0, max = maxv ? maxv : 0;
++  if (min && min < 0x0303)
++    return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
++  if (max && max < 0x0303)
++    return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
++  if (min == 0x0303)
++    mbedtls_ssl_conf_min_tls_version(ctx, MBEDTLS_SSL_VERSION_TLS1_2);
++  else if (min == 0x0304)
++    mbedtls_ssl_conf_min_tls_version(ctx, MBEDTLS_SSL_VERSION_TLS1_3);
++  if (max == 0x0303)
++    mbedtls_ssl_conf_max_tls_version(ctx, MBEDTLS_SSL_VERSION_TLS1_2);
++  else if (max == 0x0304)
++    mbedtls_ssl_conf_max_tls_version(ctx, MBEDTLS_SSL_VERSION_TLS1_3);
++  if (min && max && min > max)
++    return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
++  return 0;
++}
++
++static int load_ca(mbedtls_x509_crt *chain, const char *file, const char *dir,
++                   const char *store) {
++  int ret = 0;
++  if (file)
++    ret = mbedtls_x509_crt_parse_file(chain, file);
++  if (ret < 0)
++    return ret;
++  if (dir) {
++    ret = mbedtls_x509_crt_parse_path(chain, dir);
++    if (ret < 0)
++      return ret;
++  }
++  if (store) {
++    /* mbedTLS has no OpenSSL-style OS trust-store API. Accept store as
++       either a PEM bundle or a directory, matching the other CA options. */
++    ret = mbedtls_x509_crt_parse_file(chain, store);
++    if (ret < 0)
++      ret = mbedtls_x509_crt_parse_path(chain, store);
++    if (ret < 0)
++      return ret;
++  }
++  return 0;
++}
++
++static mbedtls_x509_crt *new_cert(void) {
++  mbedtls_x509_crt *c = calloc(1, sizeof(*c));
++  if (c)
++    mbedtls_x509_crt_init(c);
++  return c;
++}
++
++static mbedtls_pk_context *new_key(void) {
++  mbedtls_pk_context *k = calloc(1, sizeof(*k));
++  if (k)
++    mbedtls_pk_init(k);
++  return k;
++}
++
++static mbedtls_x509_crt *getCert(const char *fname) {
++  mbedtls_x509_crt *c;
++  int ret;
++  if (!fname)
++    return NULL;
++  c = new_cert();
++  if (!c)
++    return NULL;
++  ret = mbedtls_x509_crt_parse_file(c, fname);
++  if (ret < 0) {
++    mbedtls_x509_crt_free(c);
++    free(c);
++    mbedtls_set_err(ret);
++    return NULL;
++  }
++  return c;
++}
++
++static mbedtls_pk_context *getKey(const char *fname) {
++  mbedtls_pk_context *k;
++  int ret;
++  if (!fname)
++    return NULL;
++  k = new_key();
++  if (!k)
++    return NULL;
++  ret = mbedtls_pk_parse_keyfile(k, fname, NULL, mbedtls_ctr_drbg_random,
++                                 &mbedtls_ctr_drbg);
++  if (ret < 0) {
++    mbedtls_pk_free(k);
++    free(k);
++    mbedtls_set_err(ret);
++    return NULL;
++  }
++  return k;
++}
++
++static int configure_ctx(mbedtls_ssl_config *ctx, SSL_CONFIG *config,
++                         int endpoint, mbedtls_x509_crt *cert,
++                         mbedtls_pk_context *key) {
++  int ret, *ids = NULL;
++  char **alpn = NULL;
++  ret = mbedtls_ssl_config_defaults(ctx, endpoint, MBEDTLS_SSL_TRANSPORT_STREAM,
++                                    MBEDTLS_SSL_PRESET_DEFAULT);
++  if (ret)
++    return ret;
++  mbedtls_ssl_conf_rng(ctx, mbedtls_ctr_drbg_random, &mbedtls_ctr_drbg);
++  ret = set_versions(
++      ctx,
++      endpoint == MBEDTLS_SSL_IS_CLIENT ? config->client_min_proto_version
++                                        : config->server_min_proto_version,
++      endpoint == MBEDTLS_SSL_IS_CLIENT ? config->client_max_proto_version
++                                        : config->server_max_proto_version);
++  if (ret)
++    return ret;
++
++  if (endpoint == MBEDTLS_SSL_IS_CLIENT) {
++    if (config->client_ciphersuites_ids)
++      ids = config->client_ciphersuites_ids;
++    else {
++      ret = parse_ciphers(config->client_ciphersuites
++                              ? config->client_ciphersuites
++                              : config->client_cipher_list,
++                          &ids);
++      if (ret)
++        return ret;
++      config->client_ciphersuites_ids = ids;
++    }
++    if (ids)
++      mbedtls_ssl_conf_ciphersuites(ctx, ids);
++    if (config->client_alpn_list)
++      alpn = config->client_alpn_list;
++    else {
++      ret = build_alpn(&config->client_alpn_protos, &alpn);
++      if (ret)
++        return ret;
++      config->client_alpn_list = alpn;
++    }
++    if (alpn)
++      mbedtls_ssl_conf_alpn_protocols(ctx, (const char **)alpn);
++    if (config->client_verify) {
++      mbedtls_ssl_conf_authmode(ctx, MBEDTLS_SSL_VERIFY_REQUIRED);
++      if (!config->client_ca_chain) {
++        config->client_ca_chain = new_cert();
++        if (!config->client_ca_chain)
++          return MBEDTLS_ERR_SSL_ALLOC_FAILED;
++      }
++      ret = load_ca(config->client_ca_chain, config->client_ca_file,
++                    config->client_ca_dir, config->client_ca_store);
++      if (ret)
++        return ret;
++      mbedtls_ssl_conf_ca_chain(ctx, config->client_ca_chain, NULL);
++    } else
++      mbedtls_ssl_conf_authmode(ctx, MBEDTLS_SSL_VERIFY_NONE);
++  } else {
++    if (config->server_ciphersuites_ids)
++      ids = config->server_ciphersuites_ids;
++    else {
++      ret = parse_ciphers(config->server_ciphersuites
++                              ? config->server_ciphersuites
++                              : config->server_cipher_list,
++                          &ids);
++      if (ret)
++        return ret;
++      config->server_ciphersuites_ids = ids;
++    }
++    if (ids)
++      mbedtls_ssl_conf_ciphersuites(ctx, ids);
++    if (config->server_verify) {
++      mbedtls_ssl_conf_authmode(ctx, MBEDTLS_SSL_VERIFY_REQUIRED);
++      if (!config->server_ca_chain) {
++        config->server_ca_chain = new_cert();
++        if (!config->server_ca_chain)
++          return MBEDTLS_ERR_SSL_ALLOC_FAILED;
++      }
++      ret = load_ca(config->server_ca_chain, config->server_ca_file,
++                    config->server_ca_dir, config->server_ca_store);
++      if (ret)
++        return ret;
++      mbedtls_ssl_conf_ca_chain(ctx, config->server_ca_chain, NULL);
++    } else
++      mbedtls_ssl_conf_authmode(ctx, MBEDTLS_SSL_VERIFY_NONE);
++  }
++  if (cert && key) {
++    ret = mbedtls_ssl_conf_own_cert(ctx, cert, key);
++    if (ret)
++      return ret;
++  }
++  return 0;
++}
++
++mbedtls_ssl_config *ssl_cli_ctx(SSL_CONFIG *config,
++                                mbedtls_x509_crt *server_cert,
++                                mbedtls_pk_context *server_key, char **errSSL) {
++  mbedtls_ssl_config *ctx = calloc(1, sizeof(*ctx));
++  int ret;
++  if (!ctx)
++    return NULL;
++  mbedtls_ssl_config_init(ctx);
++  ret = configure_ctx(ctx, config, MBEDTLS_SSL_IS_SERVER, server_cert,
++                      server_key);
++  if (ret) {
++    set_error(ret, errSSL);
++    mbedtls_ssl_config_free(ctx);
++    free(ctx);
++    return NULL;
++  }
++  return ctx;
++}
++
++static SSL_CONN ssl_new_conn(SOCKET s, SSL_CONFIG *config, int endpoint,
++                             mbedtls_ssl_config *ctx, char *hostname,
++                             char **errSSL) {
++  ssl_conn *conn = calloc(1, sizeof(*conn));
++  int ret;
++  if (!conn)
++    return NULL;
++  conn->s = s;
++  conn->ctx = ctx;
++  conn->ssl = calloc(1, sizeof(*conn->ssl));
++  if (!conn->ssl) {
++    free(conn);
++    return NULL;
++  }
++  mbedtls_ssl_init(conn->ssl);
++  ret = mbedtls_ssl_setup(conn->ssl, ctx);
++  if (ret) {
++    set_error(ret, errSSL);
++    ssl_conn_free(conn);
++    return NULL;
++  }
++  mbedtls_ssl_set_bio(conn->ssl, conn, mbed_send_cb, mbed_recv_cb, NULL);
++  if (endpoint == MBEDTLS_SSL_IS_CLIENT && hostname && *hostname) {
++    ret = mbedtls_ssl_set_hostname(conn->ssl, hostname);
++    if (ret) {
++      set_error(ret, errSSL);
++      ssl_conn_free(conn);
++      return NULL;
++    }
++  }
++  ret = do_handshake(conn, endpoint == MBEDTLS_SSL_IS_SERVER, errSSL);
++  if (ret) {
++    ssl_conn_free(conn);
++    return NULL;
++  }
++  conn->ctx = NULL; /* shared config is owned by SSL_CONFIG; temporary ctx is
++                       freed below by caller only if used */
++  return conn;
++}
++
++SSL_CONN ssl_handshake_to_server(SOCKET s, char *hostname, SSL_CONFIG *config,
++                                 SSL_CERT *server_cert, char **errSSL) {
++  ssl_conn *conn;
++  conn = (ssl_conn *)ssl_new_conn(s, config, MBEDTLS_SSL_IS_CLIENT,
++                                  config->srv_ctx, hostname, errSSL);
++  if (!conn)
++    return NULL;
++  if (server_cert) {
++    const mbedtls_x509_crt *peer = mbedtls_ssl_get_peer_cert(conn->ssl);
++    if (!peer) {
++      ssl_conn_free(conn);
++      return NULL;
++    }
++    mbedtls_x509_crt *copy = new_cert();
++    if (!copy ||
++        mbedtls_x509_crt_parse_der(copy, peer->raw.p, peer->raw.len) < 0) {
++      if (copy) {
++        mbedtls_x509_crt_free(copy);
++        free(copy);
++      }
++      ssl_conn_free(conn);
++      return NULL;
++    }
++    *server_cert = copy;
++  }
++  return conn;
++}
++
++SSL_CONN ssl_handshake_to_client(SOCKET s, SSL_CONFIG *config,
++                                 mbedtls_x509_crt *server_cert,
++                                 mbedtls_pk_context *server_key,
++                                 char **errSSL) {
++  mbedtls_ssl_config *tmp = NULL;
++  SSL_CONN conn;
++  if (!config->cli_ctx) {
++    tmp = ssl_cli_ctx(config, server_cert, server_key, errSSL);
++    if (!tmp)
++      return NULL;
++  }
++  conn = ssl_new_conn(s, config, MBEDTLS_SSL_IS_SERVER,
++                      config->cli_ctx ? config->cli_ctx : tmp, NULL, errSSL);
++  if (!conn && tmp) {
++    mbedtls_ssl_config_free(tmp);
++    free(tmp);
++  }
++  /* ssl_new_conn deliberately detaches ctx because shared configs are not
++     per-connection. For a temporary MITM config, retain it in conn. */
++  if (conn && tmp)
++    ((ssl_conn *)conn)->ctx = tmp;
++  return conn;
++}
++
++SSL_CONN dosrvcon(struct clientparam *param, SSL_CERT *cert) {
++  SSL_CONN c;
++  char *errSSL = NULL;
++  c = ssl_handshake_to_server(param->remsock, (char *)param->hostname, PCONF,
++                              cert, &errSSL);
++  if (!c) {
++    param->res = 8011;
++    param->srv->logfunc(param,
++                        (unsigned char *)"SSL handshake to server failed");
++    if (errSSL)
++      param->srv->logfunc(param, (unsigned char *)errSSL);
++  }
++  return c;
++}
++
++int domitm(struct clientparam *param) {
++  SSL_CERT server = NULL, fake = NULL;
++  SSL_CONN sc = NULL, cc = NULL;
++  char *err = NULL;
++  sc = dosrvcon(param, &server);
++  if (!sc)
++    return 1;
++  fake = ssl_copy_cert(server, PCONF);
++  _ssl_cert_free(server);
++  if (!fake) {
++    param->res = 8012;
++    param->srv->logfunc(param,
++                        (unsigned char *)"Failed to create certificate copy");
++    ssl_conn_free(sc);
++    return 2;
++  }
++  cc = ssl_handshake_to_client(
++      param->clisock, PCONF, fake,
++      PCONF->server_key ? PCONF->server_key : PCONF->CA_key, &err);
++  _ssl_cert_free(fake);
++  if (!cc) {
++    param->res = 8012;
++    param->srv->logfunc(param, (unsigned char *)"Handshake to client failed");
++    if (err)
++      param->srv->logfunc(param, (unsigned char *)err);
++    ssl_conn_free(sc);
++    return 3;
++  }
++  addSSL(param->clisock, cc, param->remsock, sc, param);
++  return 0;
++}
++
++int docli(struct clientparam *param) {
++  SSL_CONN c;
++  SSL_CERT cert = NULL;
++  unsigned char *hostname = param->hostname;
++  param->hostname = (unsigned char *)PCONF->client_sni;
++  c = dosrvcon(param, &cert);
++  param->hostname = hostname;
++  _ssl_cert_free(cert);
++  if (!c)
++    return 1;
++  addSSL(INVALID_SOCKET, NULL, param->remsock, c, param);
++  return 0;
++}
++
++#ifdef _WIN32
++static int WINAPI ssl_send(void *state, SOCKET s, const char *msg, int len,
++                           int flags) {
++#else
++static ssize_t ssl_send(void *state, SOCKET s, const void *msg, size_t len,
++                        int flags) {
++#endif
++  struct SSLsock *q = searchSSL(state, s);
++  if (q) {
++    int r = ssl_write(q->conn, (void *)msg, (int)len);
++    if (r < 0) {
++      int e = ssl_get_error(q->conn);
++      if (e == MBEDTLS_ERR_SSL_WANT_WRITE || e == MBEDTLS_ERR_SSL_WANT_READ) {
++        seterrno3(EAGAIN);
++        return -1;
++      }
++      seterrno3(EIO);
++    }
++    return r;
++  }
++  return sso._send(sso.state, s, msg, len, flags);
++}
++
++#ifdef _WIN32
++static int WINAPI ssl_recv(void *state, SOCKET s, char *msg, int len,
++                           int flags) {
++#else
++static ssize_t ssl_recv(void *state, SOCKET s, void *msg, size_t len,
++                        int flags) {
++#endif
++  struct SSLsock *q = searchSSL(state, s);
++  if (q) {
++    int r = ssl_read(q->conn, msg, (int)len);
++    if (r < 0) {
++      int e = ssl_get_error(q->conn);
++      if (e == MBEDTLS_ERR_SSL_WANT_READ || e == MBEDTLS_ERR_SSL_WANT_WRITE) {
++        seterrno3(EAGAIN);
++        return -1;
++      }
++      seterrno3(EIO);
++    }
++    return r;
++  }
++  return sso._recv(sso.state, s, msg, len, flags);
++}
++
++#ifdef _WIN32
++static int WINAPI ssl_sendto(void *state, SOCKET s, const char *msg, int len,
++                             int flags, const struct sockaddr *to, int tolen) {
++  return ssl_send(state, s, msg, len, flags);
++}
++static int WINAPI ssl_recvfrom(void *state, SOCKET s, char *msg, int len,
++                               int flags, struct sockaddr *from, int *fromlen) {
++  return ssl_recv(state, s, msg, len, flags);
++}
++#else
++static ssize_t ssl_sendto(void *state, SOCKET s, const void *msg, size_t len,
++                          int flags, const struct sockaddr *to,
++                          SASIZETYPE tolen) {
++  return ssl_send(state, s, msg, len, flags);
++}
++static ssize_t ssl_recvfrom(void *state, SOCKET s, void *msg, size_t len,
++                            int flags, struct sockaddr *from,
++                            SASIZETYPE *fromlen) {
++  return ssl_recv(state, s, msg, len, flags);
++}
++#endif
++
++static int WINAPI ssl_shutdown(void *state, SOCKET s, int how) {
++  delSSL(state, s);
++  return sso._shutdown(sso.state, s, how);
++}
++static int WINAPI ssl_closesocket(void *state, SOCKET s) {
++  delSSL(state, s);
++  return sso._closesocket(sso.state, s);
++}
++#ifdef _WIN32
++static int WINAPI ssl_poll(void *state, struct pollfd *fds, unsigned int nfds,
++                           int timeout) {
++#else
++static int ssl_poll(void *state, struct pollfd *fds, nfds_t nfds, int timeout) {
++#endif
++  unsigned int i;
++  int ret = 0;
++  struct SSLsock *q;
++  for (i = 0; i < nfds; i++) {
++    q = searchSSL(state, fds[i].fd);
++    if (q && (fds[i].events & POLLIN) && ssl_pending(q->conn)) {
++      fds[i].revents = POLLIN;
++      ret++;
++    } else
++      fds[i].revents = 0;
++  }
++  return ret ? ret : sso._poll(state, fds, nfds, timeout);
++}
++
++static void free_ctx_config(SSL_CONFIG *c) {
++  if (!c)
++    return;
++  free(c->client_ciphersuites_ids);
++  free(c->server_ciphersuites_ids);
++  free_alpn(c->client_alpn_list);
++  if (c->client_ca_chain) {
++    mbedtls_x509_crt_free(c->client_ca_chain);
++    free(c->client_ca_chain);
++  }
++  if (c->server_ca_chain) {
++    mbedtls_x509_crt_free(c->server_ca_chain);
++    free(c->server_ca_chain);
++  }
++}
++
++static void *ssl_filter_open(void *idata, struct srvparam *srv) {
++  char fname[256], *errSSL = NULL;
++  SSL_CONFIG *sc = calloc(1, sizeof(*sc));
++  int ret;
++  if (!sc)
++    return NULL;
++  if (certcache)
++    sc->certcache = strdup(certcache);
++  sc->client_min_proto_version = client_min_proto_version;
++  sc->client_max_proto_version = client_max_proto_version;
++  sc->server_min_proto_version = server_min_proto_version;
++  sc->server_max_proto_version = server_max_proto_version;
++  sc->client_mode = client_mode;
++  sc->client_verify = client_verify;
++  sc->server_verify = server_verify;
++  if (client_ciphersuites)
++    sc->client_ciphersuites = strdup(client_ciphersuites);
++  if (server_ciphersuites)
++    sc->server_ciphersuites = strdup(server_ciphersuites);
++  if (client_cipher_list)
++    sc->client_cipher_list = strdup(client_cipher_list);
++  if (server_cipher_list)
++    sc->server_cipher_list = strdup(server_cipher_list);
++  if (client_sni)
++    sc->client_sni = strdup(client_sni);
++  if (client_ca_file)
++    sc->client_ca_file = strdup(client_ca_file);
++  if (client_ca_dir)
++    sc->client_ca_dir = strdup(client_ca_dir);
++  if (client_ca_store)
++    sc->client_ca_store = strdup(client_ca_store);
++  if (server_ca_file)
++    sc->server_ca_file = strdup(server_ca_file);
++  if (server_ca_dir)
++    sc->server_ca_dir = strdup(server_ca_dir);
++  if (server_ca_store)
++    sc->server_ca_store = strdup(server_ca_store);
++  if (client_alpn_protos.protos_len) {
++    sc->client_alpn_protos = client_alpn_protos;
++    sc->client_alpn_protos.protos = malloc(client_alpn_protos.protos_len);
++    if (sc->client_alpn_protos.protos)
++      memcpy(sc->client_alpn_protos.protos, client_alpn_protos.protos,
++             client_alpn_protos.protos_len);
++    else
++      sc->client_alpn_protos.protos_len = 0;
++  }
++  if (srvkey) {
++    sc->server_key = getKey(srvkey);
++    if (!sc->server_key)
++      return sc;
++  }
++  if (clikey) {
++    sc->client_key = getKey(clikey);
++    if (!sc->client_key)
++      return sc;
++  }
++
++  if (mitm) {
++    if (!server_ca_file) {
++      if (!certcache)
++        return sc;
++      snprintf(fname, sizeof(fname), "%s3proxy.pem", certcache);
++    }
++    sc->CA_cert = getCert(server_ca_file ? server_ca_file : fname);
++    if (!sc->CA_cert)
++      return sc;
++    if (!server_ca_key) {
++      if (!certcache)
++        return sc;
++      snprintf(fname, sizeof(fname), "%s3proxy.key", certcache);
++    }
++    sc->CA_key = getKey(server_ca_key ? server_ca_key : fname);
++    if (!sc->CA_key)
++      return sc;
++    if (!sc->server_key && sc->certcache) {
++      snprintf(fname, sizeof(fname), "%sserver.key", sc->certcache);
++      sc->server_key = getKey(fname);
++    }
++    sc->mitm = 1;
++  }
++  if (cli) {
++    if (clicert) {
++      sc->client_cert = getCert(clicert);
++      if (!sc->client_cert || !sc->client_key)
++        return sc;
++    }
++    sc->cli = 1;
++  }
++  if (serv) {
++    if (!srvcert || !sc->server_key)
++      return sc;
++    sc->server_cert = getCert(srvcert);
++    if (!sc->server_cert)
++      return sc;
++    sc->cli_ctx = calloc(1, sizeof(*sc->cli_ctx));
++    if (!sc->cli_ctx)
++      return sc;
++    mbedtls_ssl_config_init(sc->cli_ctx);
++    ret = configure_ctx(sc->cli_ctx, sc, MBEDTLS_SSL_IS_SERVER, sc->server_cert,
++                        sc->server_key);
++    if (ret) {
++      set_error(ret, &errSSL);
++      fprintf(stderr, "failed to create server context: %s\n",
++              errSSL ? errSSL : "");
++      return sc;
++    }
++    sc->serv = 1;
++  }
++  if (mitm || cli) {
++    sc->srv_ctx = calloc(1, sizeof(*sc->srv_ctx));
++    if (!sc->srv_ctx)
++      return sc;
++    mbedtls_ssl_config_init(sc->srv_ctx);
++    ret = configure_ctx(sc->srv_ctx, sc, MBEDTLS_SSL_IS_CLIENT, sc->client_cert,
++                        sc->client_key);
++    if (ret) {
++      set_error(ret, &errSSL);
++      fprintf(stderr, "failed to create client context: %s\n",
++              errSSL ? errSSL : "");
++      sc->mitm = sc->cli = 0;
++    }
++  }
++  if (mitm || cli || serv) {
++    srv->so._send = ssl_send;
++    srv->so._recv = ssl_recv;
++    srv->so._sendto = ssl_sendto;
++    srv->so._recvfrom = ssl_recvfrom;
++    srv->so._shutdown = ssl_shutdown;
++    srv->so._closesocket = ssl_closesocket;
++    srv->so._poll = ssl_poll;
++  }
++#ifdef WITHSPLICE
++  srv->usesplice = 0;
++#endif
++  return sc;
++}
++
++static FILTER_ACTION ssl_filter_client(void *fo, struct clientparam *param,
++                                       void **fc) {
++  struct SSLstate *ssls = calloc(1, sizeof(*ssls));
++  if (!ssls)
++    return REJECT;
++  ssls->config = fo;
++  ssls->param = param;
++  param->sostate = ssls;
++  *fc = ssls;
++  if (ssls->config->serv) {
++    char *err = NULL;
++    SSL_CONN c =
++        ssl_handshake_to_client(param->clisock, ssls->config, NULL, NULL, &err);
++    if (!c) {
++      param->res = 8013;
++      if (err)
++        param->srv->logfunc(param, (unsigned char *)err);
++      return REJECT;
++    }
++    addSSL(param->clisock, c, INVALID_SOCKET, NULL, param);
++  }
++  return CONTINUE;
++}
++static FILTER_ACTION ssl_filter_connect(void *fc, struct clientparam *param) {
++  if (PCONF->cli && !client_mode && docli(param))
++    return REJECT;
++  return PASS;
++}
++static FILTER_ACTION ssl_filter_afterauth(void *fc, struct clientparam *param) {
++  if (PCONF->cli && client_mode == 1 && docli(param))
++    return REJECT;
++  return PASS;
++}
++static FILTER_ACTION ssl_filter_predata(void *fc, struct clientparam *param) {
++  if (param->operation != HTTP_CONNECT && param->operation != CONNECT)
++    return PASS;
++  if (PCONF->mitm) {
++    if (domitm(param))
++      return REJECT;
++    if (!param->redirectfunc)
++      param->redirectfunc = proxyfunc;
++    return CONTINUE;
++  }
++  if (PCONF->cli && client_mode == 2 && docli(param))
++    return REJECT;
++  return PASS;
++}
++static FILTER_ACTION ssl_parent(struct clientparam *param) {
++  if (PCONF->cli && client_mode == 3 && docli(param))
++    return REJECT;
++  return PASS;
++}
++static void ssl_filter_clear(void *state) {
++  if (state) {
++    struct clientparam *p = STATE->param;
++    free(state);
++    if (p)
++      p->sostate = NULL;
++  }
++}
++#define CONFIG ((SSL_CONFIG *)fo)
++static void ssl_filter_close(void *fo) {
++  SSL_CONFIG *c = CONFIG;
++  free(c->certcache);
++  free(c->client_ciphersuites);
++  free(c->server_ciphersuites);
++  free(c->client_cipher_list);
++  free(c->server_cipher_list);
++  free(c->client_ca_file);
++  free(c->client_ca_dir);
++  free(c->client_ca_store);
++  free(c->server_ca_file);
++  free(c->server_ca_dir);
++  free(c->server_ca_store);
++  free(c->client_sni);
++  if (c->CA_cert) {
++    mbedtls_x509_crt_free(c->CA_cert);
++    free(c->CA_cert);
++  }
++  if (c->server_cert) {
++    mbedtls_x509_crt_free(c->server_cert);
++    free(c->server_cert);
++  }
++  if (c->client_cert) {
++    mbedtls_x509_crt_free(c->client_cert);
++    free(c->client_cert);
++  }
++  if (c->CA_key) {
++    mbedtls_pk_free(c->CA_key);
++    free(c->CA_key);
++  }
++  if (c->server_key) {
++    mbedtls_pk_free(c->server_key);
++    free(c->server_key);
++  }
++  if (c->client_key) {
++    mbedtls_pk_free(c->client_key);
++    free(c->client_key);
++  }
++  if (c->srv_ctx) {
++    mbedtls_ssl_config_free(c->srv_ctx);
++    free(c->srv_ctx);
++  }
++  if (c->cli_ctx) {
++    mbedtls_ssl_config_free(c->cli_ctx);
++    free(c->cli_ctx);
++  }
++  free(c->client_alpn_protos.protos);
++  free_ctx_config(c);
++  free(fo);
++}
++
++static struct filter ssl_filter = {NULL,
++                                   "ssl filter",
++                                   "ssl_filter",
++                                   ssl_filter_open,
++                                   ssl_filter_client,
++                                   NULL,
++                                   ssl_filter_connect,
++                                   ssl_filter_afterauth,
++                                   NULL,
++                                   NULL,
++                                   ssl_filter_predata,
++                                   NULL,
++                                   NULL,
++                                   ssl_filter_clear,
++                                   ssl_filter_close};
++static int filterset = 0;
++static void setfilters(void) {
++  if (++filterset > 1)
++    return;
++  ssl_filter.next = pl->conf->filters;
++  pl->conf->filters = &ssl_filter;
++  sso = *pl->so;
++}
++static void unsetfilters(void) {
++  struct filter *sf;
++  if (!filterset)
++    return;
++  if (--filterset > 0)
++    return;
++  if (pl->conf->filters == &ssl_filter)
++    pl->conf->filters = ssl_filter.next;
++  else
++    for (sf = pl->conf->filters; sf && sf->next; sf = sf->next)
++      if (sf->next == &ssl_filter) {
++        sf->next = ssl_filter.next;
++        break;
++      }
++}
++int h_mitm(int a, unsigned char **v) {
++  if (mitm)
++    return 0;
++  if (serv)
++    return 2;
++  mitm = 1;
++  setfilters();
++  return 0;
++}
++int h_nomitm(int a, unsigned char **v) {
++  if (!mitm)
++    return 0;
++  mitm = 0;
++  unsetfilters();
++  return 0;
++}
++int h_serv(int a, unsigned char **v) {
++  if (serv)
++    return 0;
++  if (mitm)
++    return 2;
++  serv = 1;
++  setfilters();
++  return 0;
++}
++int h_noserv(int a, unsigned char **v) {
++  if (!serv)
++    return 0;
++  serv = 0;
++  unsetfilters();
++  return 0;
++}
++int h_cli(int a, unsigned char **v) {
++  if (cli)
++    return 0;
++  if (mitm)
++    return 2;
++  cli = 1;
++  setfilters();
++  return 0;
++}
++int h_nocli(int a, unsigned char **v) {
++  if (!cli)
++    return 0;
++  cli = 0;
++  unsetfilters();
++  return 0;
++}
++int h_certcache(int a, unsigned char **v) {
++  size_t l = strlen((char *)v[1]);
++  if (!l || (v[1][l - 1] != '/' && v[1][l - 1] != '\\'))
++    return 1;
++  free(certcache);
++  certcache = strdup((char *)v[1]);
++  return 0;
++}
++#define HSTR(name, var)                                                        \
++  int name(int a, unsigned char **v) {                                         \
++    free(var);                                                                 \
++    var = a > 1 ? strdup((char *)v[1]) : NULL;                                 \
++    return 0;                                                                  \
++  }
++HSTR(h_srvcert, srvcert)
++HSTR(h_srvkey, srvkey) HSTR(h_clicert, clicert) HSTR(h_clikey, clikey)
++    HSTR(h_client_cipher_list, client_cipher_list) HSTR(h_server_cipher_list,
++                                                        server_cipher_list)
++        HSTR(h_client_ciphersuites, client_ciphersuites)
++            HSTR(h_server_ciphersuites,
++                 server_ciphersuites) HSTR(h_server_ca_file, server_ca_file)
++                HSTR(h_server_ca_key, server_ca_key) HSTR(h_client_ca_file,
++                                                          client_ca_file)
++                    HSTR(h_client_ca_dir, client_ca_dir) HSTR(h_client_ca_store,
++                                                              client_ca_store)
++                        HSTR(h_server_ca_dir, server_ca_dir)
++                            HSTR(h_server_ca_store, server_ca_store)
++                                HSTR(h_client_sni, client_sni)
++
++                                    int h_client_alpn(int argc,
++                                                      unsigned char **argv) {
++  int len = argc - 1, i;
++  free(client_alpn_protos.protos);
++  client_alpn_protos.protos = NULL;
++  client_alpn_protos.protos_len = 0;
++  if (argc <= 1)
++    return 0;
++  for (i = 1; i < argc; i++) {
++    len += strlen((char *)argv[i]);
++    if (strlen((char *)argv[i]) >= 255)
++      return 2;
++  }
++  client_alpn_protos.protos = malloc(len);
++  if (!client_alpn_protos.protos)
++    return 10;
++  len = 0;
++  for (i = 1; i < argc; i++) {
++    int l = strlen((char *)argv[i]);
++    client_alpn_protos.protos[len++] = (unsigned char)l;
++    memcpy(client_alpn_protos.protos + len, argv[i], l);
++    len += l;
++  }
++  client_alpn_protos.protos_len = len;
++  return 0;
++}
++
++struct vermap {
++  char *sver;
++  int iver;
++} versions[] = {{"TLSv1.2", 0x0303}, {"TLSv1.3", 0x0304}, {NULL, 0}};
++int string_to_version(unsigned char *v) {
++  int i;
++  for (i = 0; versions[i].sver; i++)
++    if (!strcasecmp((char *)v, versions[i].sver))
++      return versions[i].iver;
++  return 0;
++}
++#define HV(name, var)                                                          \
++  int name(int a, unsigned char **v) {                                         \
++    var = a > 1 ? string_to_version(v[1]) : 0;                                 \
++    return 0;                                                                  \
++  }
++HV(h_client_min_proto_version, client_min_proto_version)
++HV(h_client_max_proto_version, client_max_proto_version)
++    HV(h_server_min_proto_version, server_min_proto_version)
++        HV(h_server_max_proto_version,
++           server_max_proto_version) int h_client_verify(int a,
++                                                         unsigned char **v) {
++  client_verify = 1;
++  return 0;
++}
++int h_no_client_verify(int a, unsigned char **v) {
++  client_verify = 0;
++  return 0;
++}
++int h_server_verify(int a, unsigned char **v) {
++  server_verify = 1;
++  return 0;
++}
++int h_no_server_verify(int a, unsigned char **v) {
++  server_verify = 0;
++  return 0;
++}
++int h_client_mode(int a, unsigned char **v) {
++  client_mode = a > 1 ? atoi((char *)v[1]) : 0;
++  return 0;
++}
++static struct symbol ssl_symbols[] = {
++    {NULL, "ssl_parent", (void *)&ssl_parent}};
++
++void ssl_install(void) {
++  h_nomitm(0, NULL);
++  h_noserv(0, NULL);
++  h_nocli(0, NULL);
++  pl = &pluginlink;
++  free(certcache);
++  certcache = NULL;
++  free(srvcert);
++  srvcert = NULL;
++  free(srvkey);
++  srvkey = NULL;
++  free(clicert);
++  clicert = NULL;
++  free(clikey);
++  clikey = NULL;
++  client_min_proto_version = client_max_proto_version =
++      server_min_proto_version = server_max_proto_version = 0;
++  client_verify = server_verify = 0;
++  client_mode = 0;
++  free(client_ciphersuites);
++  client_ciphersuites = NULL;
++  free(server_ciphersuites);
++  server_ciphersuites = NULL;
++  free(client_cipher_list);
++  client_cipher_list = NULL;
++  free(server_cipher_list);
++  server_cipher_list = NULL;
++  free(server_ca_file);
++  server_ca_file = NULL;
++  free(server_ca_key);
++  server_ca_key = NULL;
++  free(client_ca_file);
++  client_ca_file = NULL;
++  free(client_ca_dir);
++  client_ca_dir = NULL;
++  free(client_ca_store);
++  client_ca_store = NULL;
++  free(server_ca_dir);
++  server_ca_dir = NULL;
++  free(server_ca_store);
++  server_ca_store = NULL;
++  free(client_sni);
++  client_sni = NULL;
++  if (!ssl_loaded) {
++    ssl_loaded = 1;
++    ssl_init();
++    ssl_symbols[0].next = pl->symbols.next;
++    pl->symbols.next = ssl_symbols;
++  }
++  tcppmfunc = (PROXYFUNC)pl->findbyname("tcppm");
++  if (!tcppmfunc)
++    return;
++  proxyfunc = (PROXYFUNC)pl->findbyname("proxy");
++  if (!proxyfunc)
++    proxyfunc = tcppmfunc;
++  smtppfunc = (PROXYFUNC)pl->findbyname("smtpp");
++  if (!smtppfunc)
++    smtppfunc = tcppmfunc;
++  ftpprfunc = (PROXYFUNC)pl->findbyname("ftppr");
++  if (!ftpprfunc)
++    ftpprfunc = tcppmfunc;
++}

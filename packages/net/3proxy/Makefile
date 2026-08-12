@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
 PKG_VERSION:=0.9.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -22,15 +22,19 @@ define Package/$(PKG_NAME)/config
   source "$(SOURCE)/Config.in"
 endef
 
+OPENSSL_CHECK_VAL:=false
+WOLFSSL_CHECK_VAL:=false
+MBEDTLS_CHECK_VAL:=false
 
 ifeq ($(CONFIG_PACKAGE_3proxy_WOLFSSL),y)
   SSL_DEPENDS:=+libwolfssl
-  OPENSSL_CHECK_VAL:=false
   WOLFSSL_CHECK_VAL:=true
+else ifeq ($(CONFIG_PACKAGE_3proxy_MBEDTLS),y)
+  SSL_DEPENDS:=+libmbedtls
+  MBEDTLS_CHECK_VAL:=true
 else
   SSL_DEPENDS:=+libopenssl
   OPENSSL_CHECK_VAL:=true
-  WOLFSSL_CHECK_VAL:=false
 endif
 
 define Package/$(PKG_NAME)
@@ -50,7 +54,6 @@ endef
 
 define Package/$(PKG_NAME)-common
   SUBMENU:=Web Servers/Proxies
-  DEPENDS:=+3proxy
   TITLE:=3proxy addional servers
 endef
 
@@ -81,6 +84,7 @@ define Build/Compile
         PLUGINS="StringsPlugin TrafficPlugin TransparentPlugin" \
         OPENSSL_CHECK=$(OPENSSL_CHECK_VAL) \
         WOLFSSL_CHECK=$(WOLFSSL_CHECK_VAL) \
+        MBEDTLS_CHECK=$(MBEDTLS_CHECK_VAL) \
         PCRE_CHECK=true \
         PAM_CHECK=false
 endef

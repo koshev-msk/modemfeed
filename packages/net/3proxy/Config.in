@@ -8,5 +8,8 @@ config PACKAGE_3proxy_OPENSSL
 
 config PACKAGE_3proxy_WOLFSSL
         bool "Build with wolfSSL"
+		
+config PACKAGE_3proxy_MBEDTLS
+        bool "Build with mbedTLS"
 
 endchoice
