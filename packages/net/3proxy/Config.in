@@ -12,4 +12,7 @@ config PACKAGE_3proxy_WOLFSSL
 config PACKAGE_3proxy_MBEDTLS
         bool "Build with mbedTLS"
 
+config PACKAGE_3proxy_NOSSL
+	bool "Build without SSL"
+
 endchoice

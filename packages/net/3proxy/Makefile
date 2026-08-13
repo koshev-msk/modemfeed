@@ -22,27 +22,16 @@ define Package/$(PKG_NAME)/config
   source "$(SOURCE)/Config.in"
 endef
 
-OPENSSL_CHECK_VAL:=false
-WOLFSSL_CHECK_VAL:=false
-MBEDTLS_CHECK_VAL:=false
-
-ifeq ($(CONFIG_PACKAGE_3proxy_WOLFSSL),y)
-  SSL_DEPENDS:=+libwolfssl
-  WOLFSSL_CHECK_VAL:=true
-else ifeq ($(CONFIG_PACKAGE_3proxy_MBEDTLS),y)
-  SSL_DEPENDS:=+libmbedtls
-  MBEDTLS_CHECK_VAL:=true
-else
-  SSL_DEPENDS:=+libopenssl
-  OPENSSL_CHECK_VAL:=true
-endif
-
 define Package/$(PKG_NAME)
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
   TITLE:=3proxy OpenWRT package
-  DEPENDS:=$(SSL_DEPENDS) +libpthread +libpcre2
+  DEPENDS:= +libpthread \
+	+libpcre2 \
+	+PACKAGE_3proxy_MBEDTLS:libmbedtls \
+	+PACKAGE_3proxy_WOLFSSL:libwolfssl \
+	+PACKAGE_3proxy_OPENSSL:libopenssl
   MENU:=1
 endef
 
@@ -55,6 +44,10 @@ endef
 define Package/$(PKG_NAME)-common
   SUBMENU:=Web Servers/Proxies
   TITLE:=3proxy addional servers
+  DEPENDS:= +3proxy \
+	+PACKAGE_3proxy_MBEDTLS:libmbedtls \
+        +PACKAGE_3proxy_WOLFSSL:libwolfssl \
+        +PACKAGE_3proxy_OPENSSL:libopenssl
 endef
 
 define Package/$(PKG_NAME)-sql
@@ -82,9 +75,9 @@ define Build/Compile
 		-D_GNU_SOURCE" \
         LDFLAGS="$(TARGET_LDFLAGS)" \
         PLUGINS="StringsPlugin TrafficPlugin TransparentPlugin" \
-        OPENSSL_CHECK=$(OPENSSL_CHECK_VAL) \
-        WOLFSSL_CHECK=$(WOLFSSL_CHECK_VAL) \
-        MBEDTLS_CHECK=$(MBEDTLS_CHECK_VAL) \
+        OPENSSL_CHECK=$(if $(CONFIG_PACKAGE_3proxy_OPENSSL),true,false) \
+        WOLFSSL_CHECK=$(if $(CONFIG_PACKAGE_3proxy_WOLFSSL),true,false) \
+        MBEDTLS_CHECK=$(if $(CONFIG_PACKAGE_3proxy_MBEDTLS),true,false) \
         PCRE_CHECK=true \
         PAM_CHECK=false
 endef
