@@ -183,9 +183,9 @@ return view.extend({
 
     render: function(data) {
         var modemsData = data[1];
-        var m = new form.Map('mmconfig', _('Modem Configuration'), _('Select bands for modem operation.' +
-			+ '<br />' + 'Selected bands are a recommendation and do not guarantee that the modem will use exactly these bands.' +
-			+ '<br /' + 'If all bands are deselected, the modems default band configuration will be used.'));
+        var m = new form.Map('mmconfig', _('Modem Configuration'), _('Select bands for modem operation.') +
+			'<br />' + _('Selected bands are a recommendation and do not guarantee that the modem will use exactly these bands.') +
+			'<br />' + _('If all bands are deselected, the modems default band configuration will be used.'));
         
         // add styles
         var style = document.createElement('style');
