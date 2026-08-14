@@ -5,6 +5,174 @@
 'require dom';
 'require modemmanager_helper as helper';
 
+function getBandInfo(band) {
+    var match = /^(utran|eutran|ngran)-(\d+)$/.exec(band);
+
+    if (match) {
+        var generation = {
+            'utran':  { key: '3g', title: _('3G / UMTS'), order: 2 },
+            'eutran': { key: '4g', title: _('4G / LTE'), order: 3 },
+            'ngran':  { key: '5g', title: _('5G / NR'), order: 4 }
+        }[match[1]];
+
+        return {
+            value: band,
+            number: parseInt(match[2], 10),
+            label: match[1] == 'ngran' ? 'n' + match[2] : 'B' + match[2],
+            generation: generation
+        };
+    }
+
+    return {
+        value: band,
+        number: null,
+        label: band,
+        generation: {
+            key: '2g',
+            title: _('2G / GSM'),
+            order: 1
+        }
+    };
+}
+
+function groupBands(bands) {
+    var groups = {};
+
+    (bands || []).forEach(function(band) {
+        var info = getBandInfo(band);
+        var key = info.generation.key;
+
+        if (!groups[key]) {
+            groups[key] = {
+                key: key,
+                title: info.generation.title,
+                order: info.generation.order,
+                bands: []
+            };
+        }
+
+        groups[key].bands.push(info);
+    });
+
+    Object.keys(groups).forEach(function(key) {
+        groups[key].bands.sort(function(a, b) {
+            if (a.number !== null && b.number !== null)
+                return a.number - b.number;
+
+            if (a.number !== null)
+                return -1;
+
+            if (b.number !== null)
+                return 1;
+
+            return a.value.localeCompare(b.value);
+        });
+    });
+
+    return Object.keys(groups).map(function(key) {
+        return groups[key];
+    }).sort(function(a, b) {
+        return a.order - b.order;
+    });
+}
+
+var BandValue = form.Value.extend({
+    supportedBands: [],
+    selectedBands: [],
+
+    formvalue: function(section_id) {
+        var node = document.getElementById(this.cbid(section_id));
+        if (!node)
+            return [];
+
+        return Array.prototype.slice.call(
+            node.querySelectorAll('input[type="checkbox"][data-band-value]:checked')
+        ).map(function(input) {
+            return input.getAttribute('data-band-value');
+        });
+    },
+
+    renderWidget: function(section_id) {
+        var container = E('div', {
+            'class': 'mmconfig-bands',
+            'id': this.cbid(section_id)
+        });
+
+        var selected = {};
+        (this.selectedBands || []).forEach(function(band) {
+            selected[band] = true;
+        });
+
+        var groups = groupBands(this.supportedBands);
+
+        if (!groups.length) {
+            return E('div', { 'class': 'mmconfig-bands-empty' },
+                _('No supported bands reported by ModemManager.'));
+        }
+
+        groups.forEach(function(group) {
+            var groupNode = E('div', { 'class': 'mmconfig-band-group' });
+            var header = E('div', { 'class': 'mmconfig-band-group-header' });
+            var title = E('strong', { 'class': 'mmconfig-band-group-title' }, group.title);
+            var actions = E('span', { 'class': 'mmconfig-band-actions' });
+
+            actions.appendChild(E('button', {
+                'type': 'button',
+                'class': 'btn cbi-button cbi-button-neutral mmconfig-band-action',
+                'click': function() {
+                    groupNode.querySelectorAll('input[type="checkbox"][data-band-value]').forEach(function(input) {
+                        input.checked = true;
+                    });
+                }
+            }, _('All')));
+
+            actions.appendChild(E('button', {
+                'type': 'button',
+                'class': 'btn cbi-button cbi-button-neutral mmconfig-band-action',
+                'click': function() {
+                    groupNode.querySelectorAll('input[type="checkbox"][data-band-value]').forEach(function(input) {
+                        input.checked = false;
+                    });
+                }
+            }, _('None')));
+
+            header.appendChild(title);
+            header.appendChild(actions);
+
+            var grid = E('div', { 'class': 'mmconfig-band-grid' });
+
+            group.bands.forEach(function(band) {
+                var id = this.cbid(section_id) + '-' +
+                    band.value.replace(/[^a-zA-Z0-9_-]/g, '-');
+
+                var input = E('input', {
+                    'type': 'checkbox',
+                    'id': id,
+                    'data-band-value': band.value
+                });
+
+                input.checked = !!selected[band.value];
+
+                grid.appendChild(E('label', {
+                    'class': 'mmconfig-band-item',
+                    'for': id,
+                    'title': band.value
+                }, [
+                    input,
+                    E('span', { 'class': 'mmconfig-band-label' }, band.label)
+                ]));
+            }, this);
+
+            groupNode.appendChild(header);
+            groupNode.appendChild(grid);
+            container.appendChild(groupNode);
+        }, this);
+
+        return container;
+    }
+});
+
+
 return view.extend({
     load: function() {
         return Promise.all([
@@ -15,7 +183,9 @@ return view.extend({
 
     render: function(data) {
         var modemsData = data[1];
-        var m = new form.Map('mmconfig', _('Modem Configuration'), _('List supported bands.<br />If deselect all bands, then used default band modem config.'));
+        var m = new form.Map('mmconfig', _('Modem Configuration'), _('Select bands for modem operation.' +
+			+ '<br />' + 'Selected bands are a recommendation and do not guarantee that the modem will use exactly these bands.' +
+			+ '<br /' + 'If all bands are deselected, the modems default band configuration will be used.'));
         
         // add styles
         var style = document.createElement('style');
@@ -133,17 +303,22 @@ return view.extend({
 
             // bands select
             if (modemObj && modemObj.generic && modemObj.generic['supported-bands']) {
-                o = s.option(form.MultiValue, 'bands', _('Bands'));
+                o = s.option(BandValue, 'bands', _('Bands'));
 
-                // get from modem supported-bands
-                modemObj.generic['supported-bands'].forEach(function(band) {
-                    o.value(band, band);
+                o.supportedBands = modemObj.generic['supported-bands'].slice();
+
+                var currentBands = modemObj.generic['current-bands'] || [];
+                var currentSet = {};
+                currentBands.forEach(function(band) {
+                    currentSet[band] = true;
                 });
 
-                // Set current
-                if (section.bands) {
-                    o.default = section.bands;
-		}
+                // Mark a band as active only when ModemManager reports it
+                // in current-bands. Only supported bands are displayed.
+                o.selectedBands = o.supportedBands.filter(function(band) {
+                    return !!currentSet[band];
+                });
+                o.rmempty = true;
             } else {
 		o = s.option(form.Value, 'bands', _('Bands'));
 		o.value('', _('Not Available'));
@@ -201,6 +376,74 @@ return view.extend({
             '.modem-operator {',
             '  color: #4a5568;',
             '  font-size: 0.95em;',
+            '}',
+            '',
+            '.mmconfig-bands {',
+            '  border: 1px solid #e2e8f0;',
+            '  border-radius: 6px;',
+            '  overflow: hidden;',
+            '  margin-top: 4px;',
+            '}',
+            '',
+            '.mmconfig-band-group + .mmconfig-band-group {',
+            '  border-top: 1px solid #e2e8f0;',
+            '}',
+            '',
+            '.mmconfig-band-group-header {',
+            '  display: flex;',
+            '  align-items: center;',
+            '  justify-content: space-between;',
+            '  gap: 10px;',
+            '  padding: 8px 12px;',
+            '  background: #f8fafc;',
+            '}',
+            '',
+            '.mmconfig-band-group-title {',
+            '  font-size: 0.95em;',
+            '}',
+            '',
+            '.mmconfig-band-actions {',
+            '  display: flex;',
+            '  gap: 4px;',
+            '}',
+            '',
+            '.mmconfig-band-action {',
+            '  padding: 2px 8px;',
+            '  font-size: 0.85em;',
+            '}',
+            '',
+            '.mmconfig-band-grid {',
+            '  display: grid;',
+            '  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));',
+            '  gap: 6px;',
+            '  padding: 10px 12px 12px;',
+            '}',
+            '',
+            '.mmconfig-band-item {',
+            '  display: flex;',
+            '  align-items: center;',
+            '  gap: 6px;',
+            '  min-height: 30px;',
+            '  padding: 4px 6px;',
+            '  border: 1px solid #e2e8f0;',
+            '  border-radius: 4px;',
+            '  cursor: pointer;',
+            '  user-select: none;',
+            '}',
+            '',
+            '.mmconfig-band-item:hover {',
+            '  background: #f8fafc;',
+            '}',
+            '',
+            '.mmconfig-band-label {',
+            '  font-weight: 500;',
+            '}',
+            '',
+            '.mmconfig-bands-empty {',
+            '  padding: 10px 12px;',
+            '  border: 1px solid #e2e8f0;',
+            '  border-radius: 6px;',
+            '  color: #718096;',
             '}',
             '',
             '.light-divider {',

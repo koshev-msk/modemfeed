@@ -26,8 +26,15 @@ msgstr "Состояние"
 msgid "WARNING"
 msgstr "ПРЕДУПРЕЖДЕНИЕ"
 
-msgid "List supported bands.<br />If deselect all bands, then used default band modem config."
-msgstr "Список поддерживаемых диапазонов.<br />Если не выбрано ни одного диапазона, используется конфигурация модема по умолчанию."
+
+msgid "Select bands for modem operation."
+msgstr "Выберите диапазоны для работы модема."
+
+msgid "Selected bands are a recommendation and do not guarantee that the modem will use exactly these bands."
+msgstr "Выбранные диапазоны являются рекомендацией и не гарантируют, что модем будет использовать именно эти диапазоны."
+
+msgid "If all bands are deselected, the modems default band configuration will be used."
+msgstr "Если снять все флажки, будет использоваться конфигурация диапазонов модема по умолчанию."
 
 msgid "No modem configuration found. Run <code>/etc/init.d/mmconfig start<code>"
 msgstr "Не найдена конфигурация. Перезапустите скрипт <code>/etc/init.d/mmconfig start</code>"
