@@ -112,7 +112,7 @@ var BandValue = form.Value.extend({
 
         groups.forEach(function(group) {
             var groupNode = E('div', { 'class': 'mmconfig-band-group' });
-            var header = E('div', { 'class': 'mmconfig-band-group-header' });
+            var header = E('div', { 'class': 'mmconfig-band-group-header cbi-rowstyle-2' });
             var title = E('strong', { 'class': 'mmconfig-band-group-title' }, group.title);
             var actions = E('span', { 'class': 'mmconfig-band-actions' });
 
@@ -246,7 +246,7 @@ return view.extend({
                     operatorText = modemObj['3gpp']['operator-name'];
                 }
                 
-                html += '<div class="compact-line">';
+                html += '<div class="compact-line cbi-rowstyle-2">';
                 html += '<span class="modem-model">' + modelText + '</span>';
                 
                 if (operatorText) {
@@ -349,10 +349,10 @@ return view.extend({
     getCSS: function() {
         return [
             '.modem-info-compact {',
-            '  background: #f8fafc;',
             '  border: 1px solid #e2e8f0;',
             '  border-radius: 6px;',
-            '  padding: 12px 16px;',
+            '  //padding: 12px 16px;',
+	    '  padding: 2px 2px;',
             '  margin: 15px 0;',
             '}',
             '',
@@ -364,7 +364,7 @@ return view.extend({
             '',
             '.modem-model {',
             '  font-weight: 600;',
-            '  color: #2d3748;',
+            '  //color: #2d3748;',
             '  font-size: 1em;',
             '}',
             '',
@@ -395,7 +395,7 @@ return view.extend({
             '  justify-content: space-between;',
             '  gap: 10px;',
             '  padding: 8px 12px;',
-            '  background: #f8fafc;',
+            '  //background: #f8fafc;',
             '}',
             '',
             '.mmconfig-band-group-title {',
