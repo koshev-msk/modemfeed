@@ -1,7 +1,7 @@
 choice
         prompt "SSL support"
         depends on PACKAGE_3proxy
-        default PACKAGE_3proxy_OPENSSL
+        default PACKAGE_3proxy_NOSSL
 
 config PACKAGE_3proxy_OPENSSL
         bool "Build with OpenSSL"

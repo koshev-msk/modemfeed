@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
 PKG_VERSION:=0.9.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -44,10 +44,7 @@ endef
 define Package/$(PKG_NAME)-common
   SUBMENU:=Web Servers/Proxies
   TITLE:=3proxy addional servers
-  DEPENDS:= +3proxy \
-	+PACKAGE_3proxy_MBEDTLS:libmbedtls \
-        +PACKAGE_3proxy_WOLFSSL:libwolfssl \
-        +PACKAGE_3proxy_OPENSSL:libopenssl
+  DEPENDS:= +3proxy
 endef
 
 define Package/$(PKG_NAME)-sql
