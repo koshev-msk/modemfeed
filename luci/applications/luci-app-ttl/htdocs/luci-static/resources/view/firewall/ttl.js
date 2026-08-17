@@ -12,6 +12,26 @@
 
 var briefInfo = _('In Method proxy Proxy server must be configured in transparent mode.<br />Default on lan ipaddress interface and port 3128 tcp.<br />Disable masquerade recommended.');
 
+function packageInstalled(name) {
+	return Promise.all([
+		fs.stat('/usr/lib/opkg/info/' + name + '.list').catch(function() {
+			return false;
+		}),
+		fs.stat('/lib/apk/packages/' + name + '.list').catch(function() {
+			return false;
+		})
+	]).then(function(installed) {
+		return installed[0] || installed[1];
+	});
+}
+
+function anyPackageInstalled(packages) {
+	return Promise.all(packages.map(packageInstalled))
+		.then(function(installed) {
+			return installed.some(Boolean);
+		});
+}
+
 return view.extend({
 
 	render: function() {
@@ -32,46 +52,50 @@ return view.extend({
 		o.nocreate = true;
 		o.optional = true;
 
-		o = s.option(form.ListValue, 'method', _('Method'),
-			_('TTL method outgoing interface<br />Proxy method incoming interface'));
-		o.value('ttl', 'TTL');
-		o.value('proxy', 'Proxy');
+		return anyPackageInstalled(['3proxy', 'squid', 'redsocks']).then(function(proxyInstalled) {
+			o = s.option(form.ListValue, 'method', _('Method'),
+				_('TTL method outgoing interface<br />Proxy method incoming interface'));
+			o.value('ttl', 'TTL');
 
-		o = s.option(form.Flag, 'advanced', _('Advanced Option'));
-		o.default = '0';
-		o.rmempty = false;
+			if (proxyInstalled)
+				o.value('proxy', 'Proxy');
 
-		o = s.option(form.ListValue, 'inet', _('Inet Family'));
-		o.value('ipv4', 'IPv4');
-		o.value('ipv6', 'IPv6');
-		o.value('ipv4v6', _('Both'));
-		o.rmempty = true;
-		o.editable = true;
-		o.depends('advanced', '1');
+			o = s.option(form.Flag, 'advanced', _('Advanced Option'));
+			o.default = '0';
+			o.rmempty = false;
 
-		o = s.option(form.Value, 'ttl', _('TTL Value'),
-			_('Select TTL value. Range 1 - 255'));
-		o.value('64','64')
-		o.value('128','128')
-		o.default = '64';
-		o.rmempty = true;
-		o.editable = true;
-		o.depends({advanced: '1', method: /ttl/});
+			o = s.option(form.ListValue, 'inet', _('Inet Family'));
+			o.value('ipv4', 'IPv4');
+			o.value('ipv6', 'IPv6');
+			o.value('ipv4v6', _('Both'));
+			o.rmempty = true;
+			o.editable = true;
+			o.depends('advanced', '1');
 
-		o = s.option(form.Value, 'ports', _('Ports'),
-			_('Incoming ports route to proxy-server<br />Custom ports range: 0-65535'));
-		o.editable = true;
-		o.rmempty = true;
-		o.value('all', _('ALL Ports'));
-		o.value('http', _('HTTP Ports'));
-		o.default = 'all';
-		o.depends({advanced: '1', method: /proxy/})
+			o = s.option(form.Value, 'ttl', _('TTL Value'),
+				_('Select TTL value. Range 1 - 255'));
+			o.value('64', '64');
+			o.value('128', '128');
+			o.default = '64';
+			o.rmempty = true;
+			o.editable = true;
+			o.depends({ advanced: '1', method: /ttl/ });
 
-		o = s.option(form.Value, 'proxy', _('Proxy Server Address'),
-                        _('IP-address proxy<br/>Format: <code>ipaddress:port</code><br />If not defined: use selected interface address.<br />Default: <code>lan</code> interface ipaddress'));
-                o.datatype = 'ipaddrport';
-                o.depends({advanced: '1', method: /proxy/})
+			o = s.option(form.Value, 'ports', _('Ports'),
+				_('Incoming ports route to proxy-server<br />Custom ports range: 0-65535'));
+			o.editable = true;
+			o.rmempty = true;
+			o.value('all', _('ALL Ports'));
+			o.value('http', _('HTTP Ports'));
+			o.default = 'all';
+			o.depends({ advanced: '1', method: /proxy/ });
 
-		return m.render();
+			o = s.option(form.Value, 'proxy', _('Proxy Server Address'),
+				_('IP-address proxy<br/>Format: <code>ipaddress:port</code><br />If not defined: use selected interface address.<br />Default: <code>lan</code> interface ipaddress'));
+			o.datatype = 'ipaddrport';
+			o.depends({ advanced: '1', method: /proxy/ });
+
+			return m.render();
+		});
 	},
 });
