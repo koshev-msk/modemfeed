@@ -106,7 +106,8 @@ return network.registerProtocol('t2s', {
 		o.enable_remove = true;
 		o.depends({ 'proxy': 'ssh' });
 
-		o = s.taboption('general', form.Value, 'ssh_passphrase', _('SSH Key'));
+		o = s.taboption('general', form.Value, 'ssh_passphrase', _('SSH Passphrase'));
+		o.rmempty = true;
 		o.depends({ 'proxy': /ssh/ });
 
 		o = s.taboption('general',form.Flag, 'base64enc', _('Encrypt base64'));
