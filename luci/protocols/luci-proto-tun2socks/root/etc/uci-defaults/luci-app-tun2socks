@@ -1,0 +1,3 @@
+#!/bin/sh
+
+[ -d /etc/tun2socks/keys ] || mkdir -p /etc/tun2socks/keys

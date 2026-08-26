@@ -20,6 +20,8 @@ proto_t2s_init_config(){
 	proto_config_add_string "obfs_host"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
+	proto_config_add_string "ssh_key"
+	proto_config_add_string "ssh_passphrase"
 	proto_config_add_string "opts"
 	proto_config_add_string "sockpath"
 	proto_config_add_int "mtu"
@@ -124,10 +126,10 @@ getaddr() {
 proto_t2s_setup(){
 	local interface="$1"
 	local network ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark 
-	local ip_manual base64enc socket obfs_host port mtu
+	local ip_manual base64enc socket obfs_host port mtu ssh_key ssh_passphrase
 	local username password opts sockpath $PROTO_DEFAULT_OPTIONS
 	json_get_vars network ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark
-	json_get_vars ip_manual base64enc socket obfs_host port mtu
+	json_get_vars ip_manual base64enc socket obfs_host port mtu ssh_key ssh_passphrase
 	json_get_vars username password opts sockpath $PROTO_DEFAULT_OPTIONS
 	ifname=$interface
 	[ "$metric" = "" ] && metric="0"
@@ -170,6 +172,22 @@ proto_t2s_setup(){
 				} || {
 					proto_notify_error "$interface" CONFIGURE_FAILED
 					proto_set_available "$interface" 0
+				}
+			;;
+			ssh)
+				[ "$ssh_key" ] && {
+					[ "$ssh_passphrase" ] && {
+						ARGS="-proxy ${proxy}://${host}?privateKeyFile=${ssh_key}&passphrase=${ssh_passphrase}"
+					} || {
+						ARGS="-proxy ${proxy}://${host}?privateKeyFile=${ssh_key}"
+					}
+				} || {
+					[ "$username" -a "$password" ] && {
+						ARGS="-proxy ${proxy}://${username}:${password}@${host}"
+					} || {
+						proto_notify_error "$interface" CONFIGURE_FAILED
+						proto_set_available "$interface" 0
+					}
 				}
 			;;
 			relay)

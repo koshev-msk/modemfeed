@@ -44,6 +44,7 @@ return network.registerProtocol('t2s', {
                 o.value('socks4', 'SOCKS4');
                 o.value('socks5', 'SOCKS5');
                 o.value('ss', 'Shadowsocks');
+		o.value('ssh', 'SSH');
                 o.value('relay', _('Relay'));
                 o.value('direct', _('Direct'));
                 o.value('reject', _('Reject'));
@@ -63,11 +64,11 @@ return network.registerProtocol('t2s', {
 		o.depends({'socket': '1' , 'proxy': 'socks5' });
 
 		o = s.taboption('general', form.Flag, 'advanced', _('Autentification'), _('Authentification and encryption.'));
-		o.depends({'proxy': /socks4|socks5|relay|ss/ });
+		o.depends({'proxy': /socks4|socks5|relay|ss|ssh/ });
 		o.rmempty = true;
 
 		o = s.taboption('general', form.Value, 'username', _('Proxy USER'));
-		o.depends({'advanced': '1', 'proxy': /socks|relay/});
+		o.depends({'advanced': '1', 'proxy': /socks|ssh|relay/});
 
 		o = s.taboption('general', form.ListValue, 'encrypt', _('Encryption'));
 		o.value('none','none');
@@ -96,7 +97,17 @@ return network.registerProtocol('t2s', {
 
 		o = s.taboption('general', form.Value, 'password', _('Proxy Password'));
 		o.password = true;
-		o.depends({'advanced': '1', 'proxy': /socks5|relay|ss/ });
+		o.depends({'advanced': '1', 'proxy': /socks5|relay|ssh|ss/ });
+
+		o = s.taboption('general', form.FileUpload, 'ssh_key', _('SSH Key'));
+		o.root_directory = '/etc/tun2socks/keys';
+		o.browser = true;
+		o.enable_upload = true;
+		o.enable_remove = true;
+		o.depends({ 'proxy': 'ssh' });
+
+		o = s.taboption('general', form.Value, 'ssh_passphrase', _('SSH Key'));
+		o.depends({ 'proxy': /ssh/ });
 
 		o = s.taboption('general',form.Flag, 'base64enc', _('Encrypt base64'));
 		o.depends({'advanced': '1', 'proxy': 'ss' });
