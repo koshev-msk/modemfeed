@@ -101,7 +101,7 @@ return network.registerProtocol('t2s', {
 
 		o = s.taboption('general', form.FileUpload, 'ssh_key', _('SSH Key'));
 		o.root_directory = '/etc/tun2socks/keys';
-		o.browser = true;
+		o.browser = false;
 		o.enable_upload = true;
 		o.enable_remove = true;
 		o.depends({ 'proxy': 'ssh' });
