@@ -30,10 +30,8 @@ end
 -- ===== Config =====
 local TELEGRAM_BOT_TOKEN  = os.getenv("TELEGRAM_BOT_TOKEN")
                             or uci_get("main.token")
-                            or "YOUR_BOT_TOKEN"
 local DEEPSEEK_API_KEY    = os.getenv("DEEPSEEK_API_KEY")
                             or uci_get("main.deepseek_key")
-                            or "YOUR_DEEPSEEK_KEY"
 local DEEPSEEK_API_URL    = os.getenv("DEEPSEEK_API_URL")
                             or uci_get("main.deepseek_url")
                             or "https://api.deepseek.com/v1/chat/completions"
