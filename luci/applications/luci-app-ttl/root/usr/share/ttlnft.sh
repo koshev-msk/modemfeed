@@ -1,31 +1,4 @@
-# --- Input validation ---
-validate_ttl(){
-	echo "$1" | grep -qE '^([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$' || {
-		logger -t ttl "Invalid TTL value: '$1' (must be 0-255)"; exit 1
-	}
-}
-
-validate_ports(){
-	case "$1" in
-		all|http|"") return 0 ;;
-	esac
-	echo "$1" | grep -qE '^[0-9]+(,[0-9]+)*$' || {
-		logger -t ttl "Invalid ports value: '$1'"; exit 1
-	}
-}
-
-validate_iface(){
-	echo "$1" | grep -qE '^[a-zA-Z0-9._-]{1,15}$' || {
-		logger -t ttl "Invalid iface value: '$1'"; exit 1
-	}
-}
-
-validate_proxy(){
-	echo "$1" | grep -qE '^(\[?[0-9a-fA-F:.]+\]?):([0-9]{1,5})$' || {
-		logger -t ttl "Invalid proxy value: '$1'"; exit 1
-	}
-}
-# --- End validation ---
+# nftables backend
 
 method_ttl(){
 
