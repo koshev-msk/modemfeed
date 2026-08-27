@@ -13,6 +13,12 @@ handle_section(){
 	config_get iface    "$s" iface
 	config_get proxy    "$s" proxy
 
+	case "$inet" in
+		ipv4)  family="ip";     IPT="iptables" ;;
+		ipv6)  family="ip6";    IPT="ip6tables" ;;
+		*)     family="ip ip6"; IPT="iptables ip6tables" ;;
+	esac
+
 	[ -n "$iface" ] && ifn="$iface" || ifn="lan"
 	DEV=$(ifstatus "$ifn" | jsonfilter -e '@["l3_device"]')
 

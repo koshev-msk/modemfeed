@@ -74,6 +74,9 @@ method_proxy(){
 	[ -n "$proxy" ] && validate_proxy "$proxy"
 	[ -n "$iface" ] && validate_iface "$iface"
 
+	# check nat66 module
+	[ -f /lib/modules/$(uname -r)/ip6table_nat.ko ] || IPT="iptables"
+
 	for T in $IPT; do
 		[ "$proxy" ] && {
 			IPADDR=${proxy%:*}
@@ -123,13 +126,6 @@ method_proxy(){
 		esac
 	done
 }
-
-# check nat66 module
-if [ -f /lib/modules/$(uname -r)/ip6table_nat.ko ]; then
-	IPT="iptables ip6tables"
-else
-	IPT="iptables"
-fi
 	
 # Create and flush mangle table
 for T in $IPT; do
