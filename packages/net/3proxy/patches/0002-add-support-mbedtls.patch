@@ -1,9 +1,9 @@
 --- a/Makefile.Linux
 +++ b/Makefile.Linux
-@@ -60,6 +60,21 @@
+@@ -60,6 +60,22 @@
      ZLIB = -lz -lzstd
  endif
- 
+
 +# mbedTLS backend: WORK IN PROGRESS (ssl.c not converted yet, see
 +# comments in src/ssllib.c and src/ssl.h). Deliberately does NOT set
 +# -DWITH_SSL and does NOT add ssl$(OBJSUFFICS) to SSL_OBJS below, so
@@ -12,22 +12,23 @@
 +# support or breaking the final link. Not a usable end-to-end TLS
 +# backend yet - do not wire ssl_mitm/ssl_cli/ssl_serv config directives
 +# to this until step 2 (ssl.c) lands.
-+MBEDTLS_CHECK ?= $(shell echo "\#include <mbedtls/ssl.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testmbedtls.o - 2>/dev/null && $(CC) $(LDFLAGS) -otestmbedtls testmbedtls.o $(STATIC_PREFIX) -lmbedtls -lmbedx509 -lmbedcrypto $(STATIC_SUFFIX) 2>/dev/null && rm testmbedtls testmbedtls.o && echo true||echo false)
++MBEDTLS_CHECK ?= $(shell echo "\#include <mbedtls/ssl.h>\\n int main(){return 0;}" | tr -d \\ | $(CC) -x c $(CFLAGS) -o testmbedtls.o - 2>/dev/null && $(CC) $(LDFLAGS) -otestmbedtls testmbedtls.o $(STATIC_PREFIX) -lmbedtls -lmbedx509 -lmbedcrypto $(STATIC_SUFFIX) 2>/dev/null && rm testmbedtls testmbedtls.o && echo true||echo false)
 +ifeq ($(MBEDTLS_CHECK), true)
 +    LIBS += $(STATIC_PREFIX) -lmbedtls -lmbedx509 -lmbedcrypto $(STATIC_SUFFIX)
 +    CFLAGS += -DWITH_SSL -DWITH_MBEDTLS
 +    SSL_OBJS = ssllib$(OBJSUFFICS) ssl_mbedtls$(OBJSUFFICS)
 +    ZLIB :=
 +else
- WOLFSSL_CHECK ?= $(shell echo "\#include <wolfssl/options.h>\\n\#include <wolfssl/openssl/ssl.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testwssl.o - 2>/dev/null && $(CC) $(LDFLAGS) -otestwssl testwssl.o $(STATIC_PREFIX) -lwolfssl $(STATIC_SUFFIX) 2>/dev/null && rm testwssl testwssl.o && echo true||echo false)
++
+ WOLFSSL_CHECK ?= $(shell printf "\#include <wolfssl/options.h>\\n\#include <wolfssl/openssl/ssl.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testwssl.o - 2>/dev/null && $(CC) $(LDFLAGS) -otestwssl testwssl.o $(STATIC_PREFIX) -lwolfssl $(STATIC_SUFFIX) 2>/dev/null && rm testwssl testwssl.o && echo true||echo false)
  ifeq ($(WOLFSSL_CHECK), true)
      LIBS += $(STATIC_PREFIX) -lwolfssl $(STATIC_SUFFIX)
-@@ -76,6 +91,7 @@
+@@ -76,6 +92,7 @@
      ZLIB :=
  endif
  endif
 +endif
- PCRE_CHECK ?= $(shell echo "\#define PCRE2_CODE_UNIT_WIDTH 8\\n\#include <pcre2.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testpcre.o - 2>/dev/null && $(CC) -o testpcre testpcre.o $(LDFLAGS) $(STATIC_PREFIX) -lpcre2-8 $(STATIC_SUFFIX) 2>/dev/null && rm testpcre testpcre.o && echo true||echo false)
+ PCRE_CHECK ?= $(shell printf "\#define PCRE2_CODE_UNIT_WIDTH 8\\n\#include <pcre2.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testpcre.o - 2>/dev/null && $(CC) -o testpcre testpcre.o $(LDFLAGS) $(STATIC_PREFIX) -lpcre2-8 $(STATIC_SUFFIX) 2>/dev/null && rm testpcre testpcre.o && echo true||echo false)
  ifeq ($(PCRE_CHECK), true)
      CFLAGS += -DWITH_PCRE
 --- a/src/ssl.h
