@@ -1,0 +1,64 @@
+From 71ae05de7e050557289030ffff2b50278cfedcb1 Mon Sep 17 00:00:00 2001
+From: Konstantine <shevlakov@132lan.ru>
+Date: Fri, 2 Oct 2026 01:29:31 +0000
+Subject: [PATCH] Fix build with Linux 6.12+
+
+- nat64_core.c: 'void inline' -> 'static inline void' to fix
+  -Werror=old-style-declaration.
+- nat64_netdev.c: NETIF_F_NETNS_LOCAL was removed in 6.12 in favour of
+  net_device::netns_local, which was renamed to netns_immutable in 6.15.
+  Select the right one by LINUX_VERSION_CODE.
+- nat64_netdev.c: include nat64.h to get prototypes of
+  nat64_netdev_create()/nat64_netdev_destroy(), fixes
+  -Werror=missing-prototypes.
+---
+ nat64_core.c   | 2 +-
+ nat64_netdev.c | 9 +++++++++
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/nat64_core.c b/nat64_core.c
+index 83f7844..18bac13 100644
+--- a/nat64_core.c
++++ b/nat64_core.c
+@@ -168,7 +168,7 @@ static void nat64_translate_6to4(struct sk_buff *old_skb, struct bib_entry *bib,
+ 	return bib;
+ }*/
+ 
+-void inline nat64_handle_icmp6(struct sk_buff *skb, struct ipv6hdr *ip6h)
++static inline void nat64_handle_icmp6(struct sk_buff *skb, struct ipv6hdr *ip6h)
+ {
+ 	struct icmphdr		*icmph;
+ 	struct bib_entry	*bib;
+diff --git a/nat64_netdev.c b/nat64_netdev.c
+index 4e77fd0..75a4593 100644
+--- a/nat64_netdev.c
++++ b/nat64_netdev.c
+@@ -5,9 +5,12 @@
+ 
+ #include <linux/if_arp.h>
+ #include <linux/netdevice.h>
++#include <linux/version.h>
+ #include <linux/skbuff.h>
+ #include <net/ipv6.h>
+ 
++#include "nat64.h"
++
+ int nat64_netdev_ipv4_input(struct sk_buff *skb);
+ int nat64_netdev_ipv6_input(struct sk_buff *skb);
+ 
+@@ -63,7 +66,13 @@ static void nat64_netdev_setup(struct net_device *dev)
+ 	dev->hard_header_len = 0;
+ 	dev->addr_len = 0;
+ 	dev->mtu = ETH_DATA_LEN;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++	dev->netns_immutable = true;
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
++	dev->netns_local = true;
++#else
+ 	dev->features = NETIF_F_NETNS_LOCAL;
++#endif
+ 	dev->flags = IFF_NOARP | IFF_POINTOPOINT;
+ }
+ 
+-- 
+2.43.0
