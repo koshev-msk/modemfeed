@@ -62,7 +62,7 @@ define Package/natflow-boot/conffiles
 /etc/config/natflow
 endef
 
-define Package/natflow-boot/nstall
+define Package/natflow-boot/install
 	$(INSTALL_DIR) $(1)/etc/init.d \
 			$(1)/etc/config \
 			$(1)/etc/hotplug.d/iface \
