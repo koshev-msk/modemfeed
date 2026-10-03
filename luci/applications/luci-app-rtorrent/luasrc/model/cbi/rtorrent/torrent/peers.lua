@@ -62,7 +62,20 @@ function json2table(json)
 	return j2t
 end
 
+function is_public_ipv4(ip)
+	local a, b, c, d = ip:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
+	if not a then return false end
+	a, b, c, d = tonumber(a), tonumber(b), tonumber(c), tonumber(d)
+	if a > 255 or b > 255 or c > 255 or d > 255 then return false end
+	if a == 0 or a == 10 or a == 127 or a >= 224 then return false end
+	if a == 169 and b == 254 then return false end
+	if a == 172 and b >= 16 and b <= 31 then return false end
+	if a == 192 and b == 168 then return false end
+	return true
+end
+
 function add_location(r)
+	if not is_public_ipv4(r.address) then return end
 	for i, j in pairs(json2table(http.request(ip2geo.address % r.address))) do
 		if ip2geo.fields[i] then r[ip2geo.fields[i]] = j end
 	end
