@@ -11,7 +11,7 @@ esac
 DEV="${DEVICE:-${DEVICENAME:-$INTERFACE}}"
 [ -n "$DEV" ] || exit 0
 
-/etc/init.d/natflow enabled || exit 0
+/etc/init.d/natflow-boot enabled || exit 0
 
 . /lib/functions.sh
 config_load natflow
@@ -61,5 +61,5 @@ config_list_foreach main ifname_group chk_grp
 
 lock /var/lock/natflow-hotplug
 logger -t natflow "hotplug: $ACTION $DEV, reload"
-/etc/init.d/natflow reload
+/etc/init.d/natflow-boot reload
 lock -u /var/lock/natflow-hotplug

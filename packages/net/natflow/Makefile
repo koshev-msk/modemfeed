@@ -58,13 +58,17 @@ define Package/natflow-boot
   DEPENDS:= +kmod-natflow
 endef
 
-define Package/natflow/install
+define Package/natflow-boot/conffiles
+/etc/config/natflow
+endef
+
+define Package/natflow-boot/nstall
 	$(INSTALL_DIR) $(1)/etc/init.d \
 			$(1)/etc/config \
 			$(1)/etc/hotplug.d/iface \
 			$(1)/etc/hotplug.d/net 
 	$(INSTALL_BIN) ./files/natflow-boot.init $(1)/etc/init.d/natflow-boot
-	$(INSTALL_BIN) ./files/natflow-boot.config $(1)/etc/config/natflow
+	$(INSTALL_CONF) ./files/natflow-boot.config $(1)/etc/config/natflow
 	$(INSTALL_BIN) ./files/natflow-boot.hotplug $(1)/etc/hotplug.d/iface/90-natflow
 	$(INSTALL_BIN) ./files/natflow-boot.hotplug $(1)/etc/hotplug.d/net/90-natflow
 endef
