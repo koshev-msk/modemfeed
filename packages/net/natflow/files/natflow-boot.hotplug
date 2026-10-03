@@ -1,0 +1,65 @@
+#!/bin/sh
+# ifup (iface) / add (net) -> reload natflow, if device conifg defined
+
+[ -c /dev/natflow_ctl ] || exit 0
+
+case "$ACTION" in
+	ifup|add) ;;
+	*) exit 0 ;;
+esac
+
+DEV="${DEVICE:-${DEVICENAME:-$INTERFACE}}"
+[ -n "$DEV" ] || exit 0
+
+/etc/init.d/natflow enabled || exit 0
+
+. /lib/functions.sh
+config_load natflow
+
+config_get_bool enabled main enabled 1
+[ "$enabled" -eq 1 ] || exit 0
+
+match=0
+
+# pattern с '+' end prefix (some in natflow_zone_ctl): eth+
+dev_match() {
+	case "$1" in
+		*+)
+			case "$DEV" in
+				"${1%+}"*) return 0 ;;
+			esac
+		;;
+		"$DEV")
+			return 0
+		;;
+	esac
+	return 1
+}
+
+chk_zone() {
+	local i
+	config_get i "$1" ifname
+	dev_match "$i" && match=1
+}
+
+chk_vline() {
+	local s d
+	config_get s "$1" src
+	config_get d "$1" dst
+	{ dev_match "$s" || dev_match "$d"; } && match=1
+}
+
+chk_grp() {
+	dev_match "$1" && match=1
+}
+
+config_foreach chk_zone zone
+config_foreach chk_vline vline
+config_list_foreach main ifname_group chk_grp
+
+[ "$match" -eq 1 ] || exit 0
+
+lock /var/lock/natflow-hotplug
+logger -t natflow "hotplug: $ACTION $DEV, reload"
+/etc/init.d/natflow reload
+lock -u /var/lock/natflow-hotplug

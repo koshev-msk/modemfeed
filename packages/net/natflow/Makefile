@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=natflow
 PKG_VERSION:=20260930
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ptpt52/natflow.git
@@ -53,14 +53,20 @@ endef
 define Package/natflow-boot
   CATEGORY:=X
   SUBMENU:=Fast Forward Stacks
-  TITLE:=natflow boot init scripts
+  TITLE:=natflow boot system scripts
   PKGARCH:=all
   DEPENDS:= +kmod-natflow
 endef
 
-define Package/natflow-boot/install
-	$(INSTALL_DIR) $(1)/etc/init.d
+define Package/natflow/install
+	$(INSTALL_DIR) $(1)/etc/init.d \
+			$(1)/etc/config \
+			$(1)/etc/hotplug.d/iface \
+			$(1)/etc/hotplug.d/net 
 	$(INSTALL_BIN) ./files/natflow-boot.init $(1)/etc/init.d/natflow-boot
+	$(INSTALL_BIN) ./files/natflow-boot.config $(1)/etc/config/natflow
+	$(INSTALL_BIN) ./files/natflow-boot.hotplug $(1)/etc/hotplug.d/iface/90-natflow
+	$(INSTALL_BIN) ./files/natflow-boot.hotplug $(1)/etc/hotplug.d/net/90-natflow
 endef
 
 $(eval $(call KernelPackage,natflow))

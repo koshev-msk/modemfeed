@@ -3,11 +3,124 @@
 
 START=95
 
+CTL=/dev/natflow_ctl
+ZONE=/dev/natflow_zone_ctl
+QOS=/dev/natflow_qos_ctl
+
+# opt <dev> <key> <value>: пишет key=value, только если value не пустой
+opt() {
+	[ -n "$3" ] && echo "$2=$3" >"$1"
+}
+
+apply_zone() {
+	local cfg="$1" type id ifname
+
+	config_get type "$cfg" type
+	config_get id "$cfg" id
+	config_get ifname "$cfg" ifname
+
+	case "$type" in
+	lan|wan) ;;
+	*) return 0 ;;
+	esac
+	[ -n "$id" ] && [ -n "$ifname" ] || return 0
+
+	echo "${type}_zone $id=$ifname" >"$ZONE"
+}
+
+apply_vline() {
+	local cfg="$1" type src dst family disabled
+
+	config_get_bool disabled "$cfg" disabled 0
+	[ "$disabled" -eq 0 ] || return 0
+
+	config_get type "$cfg" type vline
+	config_get src "$cfg" src
+	config_get dst "$cfg" dst
+	config_get family "$cfg" family all
+
+	case "$type" in
+	vline|relay) ;;
+	*) return 0 ;;
+	esac
+	[ -n "$src" ] && [ -n "$dst" ] || return 0
+
+	echo "${type}_add=$src,$dst,$family" >"$CTL"
+}
+
+apply_qos() {
+	local cfg="$1" disabled user user_port remote remote_port proto rxbytes txbytes
+
+	config_get_bool disabled "$cfg" disabled 0
+	[ "$disabled" -eq 0 ] || return 0
+
+	config_get user "$cfg" user
+	config_get user_port "$cfg" user_port
+	config_get remote "$cfg" remote
+	config_get remote_port "$cfg" remote_port
+	config_get proto "$cfg" proto
+	config_get rxbytes "$cfg" rxbytes 0
+	config_get txbytes "$cfg" txbytes 0
+
+	echo "add user=$user,user_port=$user_port,remote=$remote,remote_port=$remote_port,proto=$proto,rxbytes=$rxbytes,txbytes=$txbytes" >"$QOS"
+}
+
+ifgroup_add() {
+	echo "ifname_group_add=$1" >"$CTL"
+}
+
 start() {
-	echo debug=3 >/dev/natflow_ctl
-	echo disabled=0 >/dev/natflow_ctl
+	local enabled debug hwnat hwnat_wed_disabled delay_pkts
+	local go_slowpath_if_no_qos ifname_group_type tc_classid_mode
+
+	config_load natflow
+
+	config_get_bool enabled main enabled 1
+	[ "$enabled" -eq 1 ] || { stop; return 0; }
+
+	config_get debug main debug 3
+	config_get hwnat main hwnat
+	config_get hwnat_wed_disabled main hwnat_wed_disabled
+	config_get delay_pkts main delay_pkts
+	config_get go_slowpath_if_no_qos main go_slowpath_if_no_qos
+	config_get ifname_group_type main ifname_group_type
+	config_get tc_classid_mode main tc_classid_mode
+
+	echo "debug=$debug" >"$CTL"
+	opt "$CTL" hwnat "$hwnat"
+	opt "$CTL" hwnat_wed_disabled "$hwnat_wed_disabled"
+	opt "$CTL" delay_pkts "$delay_pkts"
+	opt "$CTL" go_slowpath_if_no_qos "$go_slowpath_if_no_qos"
+
+	if [ -n "$ifname_group_type" ]; then
+		echo "ifname_group_clear" >"$CTL"
+		echo "ifname_group_type=$ifname_group_type" >"$CTL"
+		config_list_foreach main ifname_group ifgroup_add
+	fi
+
+	# zones
+	echo "clean" >"$ZONE"
+	config_foreach apply_zone zone
+	echo "update_match" >"$ZONE"
+
+	# qos
+	echo "clear" >"$QOS"
+	opt "$QOS" tc_classid_mode "$tc_classid_mode"
+	config_foreach apply_qos qos
+
+	# vline/relay
+	echo "vline_clear" >"$CTL"
+	config_foreach apply_vline vline
+	echo "vline_apply" >"$CTL"
+
+	echo "update_magic" >"$CTL"
+	echo "disabled=0" >"$CTL"
 }
 
 stop() {
-	echo disabled=1 >/dev/natflow_ctl
+	echo "disabled=1" >"$CTL"
+}
+
+reload() {
+	start
 }

@@ -62,11 +62,13 @@ config_load ttl
 # Choose firewall backend: nft takes priority over iptables
 if [ -x /usr/sbin/nft ]; then
 	. /usr/share/ttlnft.sh
-elif [ -x /usr/sbin/iptables ] || [ -x /usr/sbin/ip6tables ]; then
-	. /usr/share/ttlipt.sh
 else
-	logger -t ttl "No firewall backend found (nft/iptables/ip6tables)"
-	exit 1
+	if [ -x /usr/sbin/iptables ] || [ -x /usr/sbin/ip6tables ]; then
+		. /usr/share/ttlipt.sh
+	else
+		logger -t ttl "No firewall backend found (nft/iptables/ip6tables)"
+		exit 1
+	fi
 fi
 
 config_foreach handle_section ttl
