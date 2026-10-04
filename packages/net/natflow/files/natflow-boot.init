@@ -12,6 +12,28 @@ opt() {
 	[ -n "$3" ] && echo "$2=$3" >"$1"
 }
 
+# rate_to_bytes <value> -> байт/с
+#   N | NK|NM|NG (KiB/MiB/GiB, x1024) | Nkbit|Nmbit|Ngbit (биты, x1000)
+rate_to_bytes() {
+	local v="$1" n u
+
+	n="${v%%[!0-9]*}"
+	u="${v#$n}"
+	[ -n "$n" ] || return 1
+	u="$(echo "$u" | tr 'A-Z' 'a-z')"
+
+	case "$u" in
+		"")        echo "$n" ;;
+		k|kb)      echo $((n * 1024)) ;;
+		m|mb)      echo $((n * 1024 * 1024)) ;;
+		g|gb)      echo $((n * 1024 * 1024 * 1024)) ;;
+		kbit)      echo $((n * 125)) ;;
+		mbit)      echo $((n * 125000)) ;;
+		gbit)      echo $((n * 125000000)) ;;
+		*)         return 1 ;;
+	esac
+}
+
 apply_zone() {
 	local cfg="$1" type id ifname
 
@@ -61,6 +83,15 @@ apply_qos() {
 	config_get proto "$cfg" proto
 	config_get rxbytes "$cfg" rxbytes 0
 	config_get txbytes "$cfg" txbytes 0
+
+	rxbytes="$(rate_to_bytes "$rxbytes")" || {
+		logger -t natflow "qos $cfg: bad rxbytes, rule skipped"
+		return 0
+	}
+	txbytes="$(rate_to_bytes "$txbytes")" || {
+		logger -t natflow "qos $cfg: bad txbytes, rule skipped"
+		return 0
+	}
 
 	echo "add user=$user,user_port=$user_port,remote=$remote,remote_port=$remote_port,proto=$proto,rxbytes=$rxbytes,txbytes=$txbytes" >"$QOS"
 }
