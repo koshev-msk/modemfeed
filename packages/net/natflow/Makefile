@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=natflow
 PKG_VERSION:=20260930
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ptpt52/natflow.git
@@ -39,8 +39,14 @@ endef
 
 include $(INCLUDE_DIR)/kernel-defaults.mk
 
+EXTRA_CFLAGS += \
+	-Wno-stringop-overread \
+	-DCONFIG_NATFLOW_PATH \
+	-DNATFLOW_VERSION=\\\"$(PKG_VERSION)-$(shell echo $(PKG_SOURCE_VERSION) | head -c7)\\\"
+
 define Build/Compile/natflow
 	+$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
+		EXTRA_CFLAGS="$(EXTRA_CFLAGS)" \
 		$(KERNEL_MAKE_FLAGS) \
 		M="$(PKG_BUILD_DIR)" \
 		modules
