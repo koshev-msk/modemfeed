@@ -1,0 +1,9 @@
+
+config autoweight 'main'
+	option enabled '1'
+	option observe '0'
+	option policy 'balanced'
+	option interval '30'
+	option total '20'
+	option hyst '1.0'
+

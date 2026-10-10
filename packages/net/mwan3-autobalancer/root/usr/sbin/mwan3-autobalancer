@@ -1,0 +1,109 @@
+#!/usr/bin/ucode
+'use strict';
+
+// mwan3-autobalancer [run|once|restore]
+//   run      daemon (by-default): in interval sec check weight
+//   once     one ste, print summary, do not change weights
+//   restore  return weights by mwan3 config and exit
+
+import * as uloop from 'uloop';
+import { connect } from 'ubus';
+import { plan, restore_plan } from 'mwan3_autobalancer.plan';
+import * as io from 'mwan3_autobalancer.io';
+
+const cmd = ARGV[0] ?? 'run';
+const cfg = io.load_config();
+const states = {};
+let last_note = null, last_summary = null;
+
+function note(msg) {
+	if (msg != last_note) {
+		warn(`${msg}\n`);
+		last_note = msg;
+	}
+}
+
+function snapshot() {
+	let inp = io.collect(cfg);
+	if (inp.error) {
+		note(inp.error);
+		return null;
+	}
+	last_note = null;
+	return inp;
+}
+
+function do_restore() {
+	let inp = snapshot();
+	if (!inp)
+		return false;
+	let batch = restore_plan(inp);
+	if (batch == null)
+		return true;
+	let ok = io.nft_apply(batch);
+	warn(ok ? 'return default weghts\n' : 'failed to return default weghts\n');
+	return ok;
+}
+
+function tick() {
+	let inp = snapshot();
+	if (!inp)
+		return;
+	let r = plan(inp, cfg, states);
+
+	if (cmd == 'once') {
+		for (let l in r.lines)
+			print(l + '\n');
+		print(`решение: ${r.summary}${r.batch ? ' (woild appy)' : ''}\n`);
+		return;
+	}
+
+	if (r.summary != last_summary) {
+		last_summary = r.summary;
+		warn(`${cfg.observe ? 'observe: ' : ''}decision ${r.summary}\n`);
+	}
+	if (r.batch == null || cfg.observe)
+		return;
+	if (!io.nft_apply(r.batch))
+		note('nft refused batch, repeat it next time');
+}
+
+function run() {
+	if (!cfg.enabled) {
+		warn('disabled in /etc/config/mwan3_autobalancer\n');
+		exit(0);
+	}
+	warn(`run: policy ${cfg.policy}, ${cfg.observe ? 'observe (not changed)' : 'work mode'}, step ${cfg.interval} с\n`);
+
+	uloop.init();
+	let timer = null;
+	timer = uloop.timer(1000, () => {
+		tick();
+		timer.set(cfg.interval * 1000);
+	});
+
+	// hotplug wakeup deamon after rebuld mwan3 chains
+	let conn = connect();
+	conn.publish('mwan3_autobalancer', {
+		poke:   { call: req => { timer.set(3000); return 0; }, args: {} },
+		status: { call: req => ({ observe: cfg.observe, policy: cfg.policy, summary: last_summary }), args: {} }
+	});
+
+	const stop = () => {
+		if (!cfg.observe)
+			do_restore();
+		uloop.end();
+	};
+	uloop.signal('SIGTERM', stop);
+	uloop.signal('SIGINT', stop);
+	uloop.run();
+}
+
+switch (cmd) {
+case 'run':     run(); break;
+case 'once':    tick(); break;
+case 'restore': exit(do_restore() ? 0 : 1);
+default:
+	warn(`usage: ${ARGV[-1] ?? 'mwan3-autobalancer'} [run|once|restore]\n`);
+	exit(1);
+}

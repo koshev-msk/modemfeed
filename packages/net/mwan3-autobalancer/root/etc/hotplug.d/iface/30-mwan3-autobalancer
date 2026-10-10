@@ -1,0 +1,11 @@
+#!/bin/sh
+
+[ -f /etc/config/mwan3_autobalancer ] || exit 0
+
+case "$ACTION" in
+	ifup|ifdown|connected|disconnected)
+		ubus -t 1 call mwan3_autobalancer poke >/dev/null 2>&1
+	;;
+esac
+
+exit 0
