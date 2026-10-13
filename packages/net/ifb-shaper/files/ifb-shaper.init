@@ -30,14 +30,14 @@ fam() {
 
 # root qdisc + service classes; $1 = dev, $2 = rate of the provider class
 base_classes() {
-	emit qdisc add dev $1 root handle 1: htb default 900 r2q 100
+	emit qdisc add dev $1 root handle 1: htb default 9000 r2q 100
 	emit class add dev $1 parent 1: classid 1:1 htb rate $S_TOTAL burst 15k quantum 200000
 	# local traffic
 	emit class add dev $1 parent 1:1 classid 1:10 htb rate $S_LRATE ceil $S_LCEIL burst 15k
 	# traffic to/from provider; client classes live here
-	emit class add dev $1 parent 1:1 classid 1:100 htb rate $2 burst 15k quantum 200000
+	emit class add dev $1 parent 1:1 classid 1:1000 htb rate $2 burst 15k quantum 200000
 	# unclassified
-	emit class add dev $1 parent 1:1 classid 1:900 htb rate $S_DRATE ceil $S_DCEIL
+	emit class add dev $1 parent 1:1 classid 1:9000 htb rate $S_DRATE ceil $S_DCEIL
 }
 
 # One direction of one client; uses $n and $addr from client_add.
@@ -47,7 +47,7 @@ base_classes() {
 client_dir() {
 	local dev="$1" r="$2" c="$3" sr="$4" dir="$5" port="$6" i a
 
-	emit class add dev $dev parent 1:100 classid 1:${n}1 htb rate $r ceil $c
+	emit class add dev $dev parent 1:1000 classid 1:${n}1 htb rate $r ceil $c
 	for i in 2 3 4 5 6; do
 		emit class add dev $dev parent 1:${n}1 classid 1:${n}$i htb \
 			rate $sr ceil $c prio $((i - 1)) quantum 1514
@@ -93,11 +93,11 @@ client_add() {
 	fi
 
 	S_N=$((S_N + 1))
-	if [ $S_N -gt 128 ]; then
-		log "client $cfg: too many clients (max 128 per shaper), skipped"
+	if [ $S_N -gt 2048 ]; then
+		log "client $cfg: too many clients (max 2048 per shaper), skipped"
 		return 0
 	fi
-	n=$(printf %x $((S_N + 15)))	# 10, 11, ... -> classes 1:<n>1 .. 1:<n>6
+	n=$(printf %x $((S_N + 255)))	# 100, 101, ... 8ff -> classes 1:<n>1 .. 1:<n>6
 
 	client_dir $DEV $dr $dc 33kbit dst sport	# download
 	client_dir $IFB $ur $uc 1kbit  src dport	# upload

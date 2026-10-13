@@ -18,9 +18,9 @@ Class layout (per device and per IFB):
 |-------|---------|
 | `1:1` | root, `total` |
 | `1:10` | bypass (local) networks, `local_rate` / `local_ceil` |
-| `1:100` | parent of all client classes, `down_total` / `up_total` |
-| `1:900` | default (unclassified), `default_rate` / `default_ceil` |
-| `1:<n>1` | a client, numbered automatically (max. 128 per shaper) |
+| `1:1000` | parent of all client classes, `down_total` / `up_total` |
+| `1:9000` | default (unclassified), `default_rate` / `default_ceil` |
+| `1:<n>1` | a client, numbered automatically (max. 2048 per shaper) |
 | `1:<n>2`..`1:<n>6` | client sub-classes: HTTP(S), TCP, UDP, QUIC, rest |
 
 Networks listed in `bypass` skip the client classes and go to `1:10`. Note that `1:10` is still capped by `local_ceil` and shared by all clients; set it equal to `total` for effectively unrestricted local traffic.
