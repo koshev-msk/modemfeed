@@ -1,0 +1,238 @@
+#!/bin/sh /etc/rc.common
+# Per-client HTB shaper on top of IFB.
+# A shaper is bound to a logical (netifd) interface; its L3 device
+# (e.g. br-man) is resolved at run time and paired with ifb-<device>.
+#   download: HTB on <device> egress, match on client dst
+#   upload:   <device> ingress -> ifb-<device>, HTB on it, match on client src
+
+START=50
+USE_PROCD=1
+
+NAME=ifb-shaper
+. /lib/functions/network.sh
+TC=/sbin/tc
+IP=/sbin/ip
+
+extra_command "dump" "Print the tc commands that would be applied"
+
+log() { logger -s -t "$NAME" "$@"; }
+
+emit()     { echo "$*" >> "$BATCH_ADD"; }
+emit_del() { echo "$*" >> "$BATCH_DEL"; }
+
+# set per-family filter parameters for address $1
+fam() {
+	case "$1" in
+	*:*) F_PROTO=ipv6; F_M=ip6; F_P=10; F_ICMP=58 ;;
+	*)   F_PROTO=ip;   F_M=ip;  F_P=0;  F_ICMP=1  ;;
+	esac
+}
+
+# root qdisc + service classes; $1 = dev, $2 = rate of the provider class
+base_classes() {
+	emit qdisc add dev $1 root handle 1: htb default 900 r2q 100
+	emit class add dev $1 parent 1: classid 1:1 htb rate $S_TOTAL burst 15k quantum 200000
+	# local traffic
+	emit class add dev $1 parent 1:1 classid 1:10 htb rate $S_LRATE ceil $S_LCEIL burst 15k
+	# traffic to/from provider; client classes live here
+	emit class add dev $1 parent 1:1 classid 1:100 htb rate $2 burst 15k quantum 200000
+	# unclassified
+	emit class add dev $1 parent 1:1 classid 1:900 htb rate $S_DRATE ceil $S_DCEIL
+}
+
+# One direction of one client; uses $n and $addr from client_add.
+# $1 dev, $2 rate, $3 ceil, $4 sub-class rate, $5 dst|src, $6 sport|dport
+# Sub-classes, highest priority first:
+#   2 HTTP(S)  3 other TCP  4 other UDP  5 QUIC (udp/443)  6 the rest
+client_dir() {
+	local dev="$1" r="$2" c="$3" sr="$4" dir="$5" port="$6" i a
+
+	emit class add dev $dev parent 1:100 classid 1:${n}1 htb rate $r ceil $c
+	for i in 2 3 4 5 6; do
+		emit class add dev $dev parent 1:${n}1 classid 1:${n}$i htb \
+			rate $sr ceil $c prio $((i - 1)) quantum 1514
+		[ -n "$S_LEAF" ] && emit qdisc add dev $dev parent 1:${n}$i $S_LEAF
+	done
+
+	for a in $addr; do
+		fam $a
+		# HTTP(S)
+		emit filter add dev $dev protocol $F_PROTO parent 1:0 prio $((1 + F_P)) u32 \
+			match $F_M $dir $a match $F_M protocol 6 0xff match $F_M $port 80 0xffff flowid 1:${n}2
+		emit filter add dev $dev protocol $F_PROTO parent 1:0 prio $((1 + F_P)) u32 \
+			match $F_M $dir $a match $F_M protocol 6 0xff match $F_M $port 443 0xffff flowid 1:${n}2
+		# QUIC, must precede the generic UDP rule
+		emit filter add dev $dev protocol $F_PROTO parent 1:0 prio $((2 + F_P)) u32 \
+			match $F_M $dir $a match $F_M protocol 17 0xff match $F_M $port 443 0xffff flowid 1:${n}5
+		# other TCP
+		emit filter add dev $dev protocol $F_PROTO parent 1:0 prio $((3 + F_P)) u32 \
+			match $F_M $dir $a match $F_M protocol 6 0xff flowid 1:${n}3
+		# other UDP
+		emit filter add dev $dev protocol $F_PROTO parent 1:0 prio $((4 + F_P)) u32 \
+			match $F_M $dir $a match $F_M protocol 17 0xff flowid 1:${n}4
+		# the rest (icmp etc.)
+		emit filter add dev $dev protocol $F_PROTO parent 1:0 prio $((5 + F_P)) u32 \
+			match $F_M $dir $a flowid 1:${n}6
+	done
+}
+
+client_add() {
+	local cfg="$1" sh addr dr dc ur uc n
+
+	config_get sh "$cfg" shaper
+	[ "$sh" = "$S_NAME" ] || return 0	# clients refer to the shaper section by name
+
+	config_get addr "$cfg" address
+	config_get dr "$cfg" down_rate 1Mbit
+	config_get dc "$cfg" down_ceil
+	config_get ur "$cfg" up_rate 1Mbit
+	config_get uc "$cfg" up_ceil
+	if [ -z "$addr" ] || [ -z "$dc" ] || [ -z "$uc" ]; then
+		log "client $cfg: address, down_ceil and up_ceil are required, skipped"
+		return 0
+	fi
+
+	S_N=$((S_N + 1))
+	if [ $S_N -gt 128 ]; then
+		log "client $cfg: too many clients (max 128 per shaper), skipped"
+		return 0
+	fi
+	n=$(printf %x $((S_N + 15)))	# 10, 11, ... -> classes 1:<n>1 .. 1:<n>6
+
+	client_dir $DEV $dr $dc 33kbit dst sport	# download
+	client_dir $IFB $ur $uc 1kbit  src dport	# upload
+}
+
+shaper_gen() {
+	local cfg="$1" en net iface K HOOK
+
+	config_get iface "$cfg" interface
+	if [ -z "$iface" ]; then
+		log "shaper $cfg: option interface is required, skipped"
+		return 0
+	fi
+	network_flush_cache
+	DEV=
+	network_get_device DEV "$iface"
+	if [ -z "$DEV" ]; then
+		log "shaper $cfg: interface $iface has no device (down?), skipped"
+		return 0
+	fi
+	IFB="ifb-$DEV"
+	if [ ${#IFB} -gt 15 ]; then
+		log "shaper $cfg: name $IFB is longer than 15 chars, skipped"
+		return 0
+	fi
+	append IFB_LIST "$IFB"
+
+	# The ingress hook (clsact/ingress) may be shared with other tools, so it
+	# is never deleted or replaced: only our own filters (prio 4900/4901) are.
+	K=$($TC qdisc show dev $DEV 2>/dev/null | sed -n 's/^qdisc \(ingress\|clsact\) ffff:.*/\1/p')
+	HOOK=ingress
+	[ "$K" = ingress ] && HOOK="parent ffff:"
+
+	emit_del filter del dev $DEV $HOOK prio 4900
+	emit_del filter del dev $DEV $HOOK prio 4901
+	emit_del qdisc del dev $DEV root
+	emit_del qdisc del dev $IFB root
+	[ -n "$STOP" ] && return 0
+
+	config_get_bool en "$cfg" enabled 1
+	[ "$en" = 1 ] || return 0
+
+	if [ -z "$DUMP" ]; then
+		if [ ! -d /sys/class/net/$DEV ]; then
+			log "shaper $cfg: $DEV does not exist, skipped"
+			return 0
+		fi
+		[ -d /sys/class/net/$IFB ] || $IP link add name $IFB type ifb || {
+			log "shaper $cfg: cannot create $IFB (kmod-ifb?), skipped"
+			return 0
+		}
+		$IP link set dev $IFB up
+	fi
+
+	config_get S_TOTAL "$cfg" total 1000Mbit
+	config_get S_LRATE "$cfg" local_rate 50Mbit
+	config_get S_LCEIL "$cfg" local_ceil 500Mbit
+	config_get S_DRATE "$cfg" default_rate 1Mbit
+	config_get S_DCEIL "$cfg" default_ceil 15Mbit
+	config_get S_DOWN "$cfg" down_total 400Mbit
+	config_get S_UP "$cfg" up_total 300Mbit
+	config_get S_BYPASS "$cfg" bypass
+	config_get S_LEAF "$cfg" leaf_qdisc "fq_codel limit 1024 flows 128"
+	[ "$S_LEAF" = none ] && S_LEAF=
+	S_NAME=$cfg
+	S_N=0
+
+	emit "# shaper $cfg: $iface = $DEV <-> $IFB"
+	# everything coming from clients goes to the IFB
+	[ -n "$K" ] || emit qdisc add dev $DEV clsact
+	emit filter add dev $DEV $HOOK protocol ip prio 4900 u32 match u32 0 0 \
+		action mirred egress redirect dev $IFB
+	emit filter add dev $DEV $HOOK protocol ipv6 prio 4901 u32 match u32 0 0 \
+		action mirred egress redirect dev $IFB
+
+	base_classes $DEV $S_DOWN
+	base_classes $IFB $S_UP
+
+	# local networks go to the local class
+	for net in $S_BYPASS; do
+		fam $net
+		emit filter add dev $IFB protocol $F_PROTO parent 1: prio $((1 + F_P)) u32 \
+			match $F_M dst $net flowid 1:10
+		emit filter add dev $DEV protocol $F_PROTO parent 1: prio $((1 + F_P)) u32 \
+			match $F_M src $net flowid 1:10
+	done
+
+	config_foreach client_add client
+}
+
+shaper_run() {
+	local out l
+	BATCH_ADD=/tmp/$NAME.$$.add
+	BATCH_DEL=/tmp/$NAME.$$.del
+	: > $BATCH_ADD
+	: > $BATCH_DEL
+	IFB_LIST=
+
+	config_load $NAME
+	config_foreach shaper_gen shaper
+
+	if [ -n "$DUMP" ]; then
+		cat $BATCH_DEL $BATCH_ADD
+	else
+		$TC -force -batch $BATCH_DEL >/dev/null 2>&1
+		if [ -n "$STOP" ]; then
+			for out in $IFB_LIST; do
+				$IP link del dev $out 2>/dev/null
+			done
+		fi
+		if [ -s $BATCH_ADD ]; then
+			out=$($TC -force -batch $BATCH_ADD 2>&1)
+			case "$out" in
+			*failed*)
+				log "tc reported errors:"
+				echo "$out" | grep -v '^Warning' | while read -r l; do log "$l"; done
+				;;
+			esac
+		fi
+	fi
+	rm -f $BATCH_ADD $BATCH_DEL
+}
+
+start_service() { shaper_run; }
+stop_service()  { STOP=1 shaper_run; }
+dump()          { DUMP=1 shaper_run; }
+
+_iface_trigger() {
+	local iface
+	config_get iface "$1" interface
+	[ -n "$iface" ] && procd_add_reload_interface_trigger "$iface"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+	config_load "$NAME"
+	config_foreach _iface_trigger shaper
+}
