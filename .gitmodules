@@ -11,3 +11,7 @@
 	path = packages/net/mwan3-nft
 	url = https://github.com/koshev-msk/mwan3-nft.git
 	branch = my-25.12
+[submodule "luci/applications/luci-app-mwan3-nft"]
+	path = luci/applications/luci-app-mwan3-nft
+	url = https://github.com/koshev-msk/luci-app-mwan3-nft.git
+	branch = my-25.12
