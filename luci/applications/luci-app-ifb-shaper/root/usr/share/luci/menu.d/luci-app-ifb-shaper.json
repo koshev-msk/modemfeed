@@ -1,0 +1,14 @@
+{
+	"admin/network/ifb-shaper": {
+		"title": "IFB Shaper",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "ifb-shaper/config"
+		},
+		"depends": {
+			"acl": [ "luci-app-ifb-shaper" ],
+			"uci": { "ifb-shaper": true }
+		}
+	}
+}

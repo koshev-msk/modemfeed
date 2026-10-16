@@ -1,0 +1,11 @@
+{
+	"luci-app-ifb-shaper": {
+		"description": "Grant UCI access for luci-app-ifb-shaper",
+		"read": {
+			"uci": [ "ifb-shaper" ]
+		},
+		"write": {
+			"uci": [ "ifb-shaper" ]
+		}
+	}
+}
