@@ -43,7 +43,7 @@ const RateInput = ui.AbstractElement.extend({
 
 		const selectEl = E('select', {
 			'class': 'cbi-input-select',
-			'style': 'flex:0 0 auto',
+			'style': 'flex:0 0 auto; width:5.5em; min-width:0; max-width:none',
 			'disabled': this.options.disabled ? '' : null
 		});
 
