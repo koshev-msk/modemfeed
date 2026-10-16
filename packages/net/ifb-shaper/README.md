@@ -86,6 +86,6 @@ logread -e ifb-shaper            # errors reported by tc
 
 `tc`, `ip`, `kmod-ifb` (pulls in `kmod-sched-core`).
 
-## Todo
+## Luci Application
 
-- Luci app.
+- [`luci-app-ifb-shaper`](../../../luci/applications/luci-app-ifb-shaper)
