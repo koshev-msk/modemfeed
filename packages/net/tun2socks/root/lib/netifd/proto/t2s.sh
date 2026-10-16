@@ -10,9 +10,8 @@ proto_t2s_init_config(){
 	available=1
 	proto_config_add_string "network"
 	proto_config_add_int "ip_manual"
-	proto_config_add_string "ipaddr"
-	proto_config_add_string "netmask"
-	proto_config_add_string "gateway"
+	proto_config_add_array "ipaddr:list(string)"
+	proto_config_add_array "gateway:list(string)"
 	proto_config_add_string "host"
 	proto_config_add_string "proxy"
 	proto_config_add_string "encrypt"
@@ -125,12 +124,15 @@ getaddr() {
 
 proto_t2s_setup(){
 	local interface="$1"
-	local network ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark 
+	local network ifname host proxy encrypt loglevel fwmark
 	local ip_manual base64enc socket obfs_host port mtu ssh_key ssh_passphrase
 	local username password opts sockpath $PROTO_DEFAULT_OPTIONS
-	json_get_vars network ifname ipaddr netmask gateway host proxy encrypt loglevel fwmark
+	local ipaddr ipaddrs gateway gateways a g ad m src4
+	json_get_vars network ifname host proxy encrypt loglevel fwmark
 	json_get_vars ip_manual base64enc socket obfs_host port mtu ssh_key ssh_passphrase
 	json_get_vars username password opts sockpath $PROTO_DEFAULT_OPTIONS
+	json_get_values ipaddrs ipaddr
+	json_get_values gateways gateway
 	ifname=$interface
 	[ "$metric" = "" ] && metric="0"
 	[ "$proxy" = "" ] && proxy=socks5
@@ -225,10 +227,9 @@ proto_t2s_setup(){
 	[ "$opts" ] && ARGS="$ARGS $opts"
 	! [ "$ip_manual" = "1" ] && {
 		eval $(getaddr $network)
-		ipaddr=$GENIPADDR
-		netmask=$GENIPMASK
-		gateway=$GENIPGW
-		echo "Assign $ipaddr mask $netmask gw $gateway"
+		ipaddrs="$GENIPADDR/30"
+		gateways=$GENIPGW
+		echo "Assign $ipaddrs gw $gateways"
 	}
 
 	proto_init_update "$interface" 1
@@ -236,10 +237,27 @@ proto_t2s_setup(){
 	proto_close_data
 	ip tuntap add mode tun dev $interface
 	proto_set_keep 1
-	proto_add_ipv4_address $ipaddr $netmask
-	[ $gateway ] && {
-		proto_add_ipv4_route "0.0.0.0" 0 $gateway $ipaddr
-	}
+	for a in $ipaddrs; do
+		ad="${a%%/*}"
+		m="${a#*/}"
+		case "$a" in
+			*:*)
+				[ "$m" = "$a" ] && m=128
+				proto_add_ipv6_address "$ad" "$m"
+			;;
+			*)
+				[ "$m" = "$a" ] && m=32
+				proto_add_ipv4_address "$ad" "$m"
+				[ "$src4" ] || src4=$ad
+			;;
+		esac
+	done
+	for g in $gateways; do
+		case "$g" in
+			*:*) proto_add_ipv6_route "::" 0 "$g" ;;
+			*) proto_add_ipv4_route "0.0.0.0" 0 "$g" "$src4" ;;
+		esac
+	done
 	proto_add_data
 	proto_close_data
 	proto_send_update "$interface"

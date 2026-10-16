@@ -126,19 +126,14 @@ return network.registerProtocol('t2s', {
 		o.default = '10.0.0.0/8';
 		o.depends({'ip_manual': ''});
 
-                o = s.taboption('general', form.Value, 'ipaddr', _('IPv4 Address'));
-                o.datatype = 'ip4addr("nomask")';
+                o = s.taboption('general', form.DynamicList, 'ipaddr', _('IP Address'), _('Format: <code>address/mask</code>, IPv4 or IPv6, e.g. <code>192.168.255.2/30</code> or <code>fd00::2/64</code>'));
+                o.datatype = 'cidr';
+                o.placeholder = '192.168.255.2/30';
                 o.depends({'ip_manual': '1', 'proxy': /http|socks4|socks5|relay|ss/ });
                 o.rmempty = true;
 
-                o = s.taboption('general', form.Value, 'netmask', _('IPv4 Netmask'));
-                o.value('255.255.255.0', '255.255.255.0');
-                o.value('255.255.0.0', '255.255.0.0');
-                o.depends({'ip_manual': '1', 'proxy': /http|socks4|socks5|relay|ss/ });
-                o.rmempty = true;
-
-                o = s.taboption('general', form.Value, 'gateway', _('IPv4 Gateway'));
-                o.datatype = 'ip4addr("nomask")';
+                o = s.taboption('general', form.DynamicList, 'gateway', _('Gateway'), _('IPv4 and/or IPv6 gateway'));
+                o.datatype = 'ipaddr("nomask")';
                 o.depends({'ip_manual': '1', 'proxy': /http|socks4|socks5|relay|ss/ });
                 o.rmempty = true;
 
