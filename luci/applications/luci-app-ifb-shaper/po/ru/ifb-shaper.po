@@ -1,0 +1,95 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "A shaper is bound to a logical interface; clients refer to it by the name of this section."
+msgstr "Шейпер привязан к логическому интерфейсу; клиенты ссылаются на него по имени этой секции."
+
+msgid "Addresses"
+msgstr "Адреса"
+
+msgid "Aggregate rate of all clients."
+msgstr "Суммарная скорость всех клиентов."
+
+msgid "Bypass networks"
+msgstr "Сети в обход"
+
+msgid "Client"
+msgstr "Клиент"
+
+msgid "Clients"
+msgstr "Клиенты"
+
+msgid "Clients are matched from top to bottom: put specific hosts before wide subnets that contain them."
+msgstr "Клиенты сопоставляются сверху вниз: конкретные хосты ставьте выше широких подсетей, которые их содержат."
+
+msgid "Default class ceil"
+msgstr "Максимум класса по умолчанию"
+
+msgid "Default class rate"
+msgstr "Скорость класса по умолчанию"
+
+msgid "Download guaranteed"
+msgstr "Загрузка: гарантированная"
+
+msgid "Download max"
+msgstr "Загрузка: максимум"
+
+msgid "Download total"
+msgstr "Загрузка: общая"
+
+msgid "Enabled"
+msgstr "Включено"
+
+msgid "Hosts or networks (IPv4 and/or IPv6) sharing one limit."
+msgstr "Хосты или сети (IPv4 и/или IPv6) с одним общим лимитом."
+
+msgid "IFB Shaper"
+msgstr "IFB шейпер"
+
+msgid "Interface"
+msgstr "Интерфейс"
+
+msgid "Leaf qdisc"
+msgstr "Конечный qdisc"
+
+msgid "Local class ceil"
+msgstr "Максимум локального класса"
+
+msgid "Local class rate"
+msgstr "Скорость локального класса"
+
+msgid "Per-client traffic shaper. Download is shaped on the egress of the interface device, upload on an IFB device (ifb-&lt;device&gt;) that is created automatically."
+msgstr "Шейпер трафика по клиентам. Загрузка ограничивается на egress устройства интерфейса, отдача — на IFB-устройстве (ifb-&lt;device&gt;), которое создаётся автоматически."
+
+msgid "Shaper"
+msgstr "Шейпер"
+
+msgid "Shapers"
+msgstr "Шейперы"
+
+msgid "This name is already used"
+msgstr "Это имя уже используется"
+
+msgid "Total rate"
+msgstr "Общая скорость"
+
+msgid "Traffic that matches no client."
+msgstr "Трафик, не попавший ни под одного клиента."
+
+msgid "Traffic to and from these networks skips the client limits and goes to the local class."
+msgstr "Трафик в эти сети и из них минует лимиты клиентов и попадает в локальный класс."
+
+msgid "Upload guaranteed"
+msgstr "Отдача: гарантированная"
+
+msgid "Upload max"
+msgstr "Отдача: максимум"
+
+msgid "Upload total"
+msgstr "Отдача: общая"
+
+msgid "tc arguments of the qdisc attached to every client sub-class, or <code>none</code>."
+msgstr "Аргументы tc для qdisc, который вешается на каждый подкласс клиента, либо <code>none</code>."
