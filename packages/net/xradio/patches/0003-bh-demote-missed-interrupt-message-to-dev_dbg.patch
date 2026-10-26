@@ -1,0 +1,28 @@
+From be6b427d35803ad7ed2dd33d4e133b5791a99c9c Mon Sep 17 00:00:00 2001
+From: koshev-msk <kosnt.shell@gmail.com>
+Date: Mon, 26 Oct 2026 11:08:06 +0300
+Subject: [PATCH] bh: demote 'missed interrupt' message to dev_dbg
+
+The BH thread polls the device every HZ/30 and picks up pending data
+when the edge-triggered IRQ was not seen. This is handled, so there is
+no reason to warn about it on every occurrence.
+---
+ bh.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bh.c b/bh.c
+index 592fad2..5663007 100644
+--- a/bh.c
++++ b/bh.c
+@@ -776,7 +776,7 @@ static int xradio_bh(void *arg)
+ 		} else if (!status) {
+ 			/* check if there is data waiting but we missed the interrupt*/
+ 			if (xradio_bh_rx_availlen(hw_priv) > 0) {
+-				dev_warn(hw_priv->pdev, "missed interrupt\n");
++				dev_dbg(hw_priv->pdev, "missed interrupt\n");
+ 				if(xradio_bh_exchange(hw_priv) < 0){
+ 					break;
+ 				}
+-- 
+2.43.0
+

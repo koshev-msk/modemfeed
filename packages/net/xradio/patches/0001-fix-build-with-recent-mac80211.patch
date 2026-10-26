@@ -1,0 +1,114 @@
+From 301c85463b59270a884ce4ecc8a69bc5b70d378c Mon Sep 17 00:00:00 2001
+From: koshev-msk <kosnt.shell@132gmail.com>
+Date: Mon, 26 Oct 2026 10:12:34 +0300
+Subject: [PATCH 1/2] Fix build with recent mac80211 and -Werror
+
+- add radio_idx to ieee80211_ops .config and .set_rts_threshold
+- add prototypes for non-static functions in main.c (-Wmissing-prototypes)
+- make debug printk stubs proper statements (-Wempty-body)
+---
+ debug.h | 14 +++++++-------
+ main.c  |  1 +
+ main.h  |  4 ++++
+ sta.c   |  4 ++--
+ sta.h   |  4 ++--
+ 5 files changed, 16 insertions(+), 11 deletions(-)
+
+diff --git a/debug.h b/debug.h
+index 30a59f3..90fc3b3 100644
+--- a/debug.h
++++ b/debug.h
+@@ -11,12 +11,12 @@
+ #ifndef XRADIO_DEBUG_H_INCLUDED
+ #define XRADIO_DEBUG_H_INCLUDED
+ 
+-#define xradio_dbg(level, ...)
+-#define txrx_printk(level, ...)
+-#define wsm_printk(level, ...)
+-#define sta_printk(level, ...)
+-#define scan_printk(level, ...)
+-#define ap_printk(level, ...)
+-#define pm_printk(level, ...)
++#define xradio_dbg(level, ...)	do { } while (0)
++#define txrx_printk(level, ...)	do { } while (0)
++#define wsm_printk(level, ...)	do { } while (0)
++#define sta_printk(level, ...)	do { } while (0)
++#define scan_printk(level, ...)	do { } while (0)
++#define ap_printk(level, ...)	do { } while (0)
++#define pm_printk(level, ...)	do { } while (0)
+ 
+ #endif /* XRADIO_DEBUG_H_INCLUDED */
+diff --git a/main.c b/main.c
+index a30c604..a291b3d 100644
+--- a/main.c
++++ b/main.c
+@@ -25,6 +25,7 @@
+ #include "scan.h"
+ #include "pm.h"
+ #include "sdio.h"
++#include "main.h"
+ 
+ /* TODO: use rates and channels from the device */
+ #define RATETAB_ENT(_rate, _rateid, _flags)		\
+diff --git a/main.h b/main.h
+index 2238d75..be634a4 100644
+--- a/main.h
++++ b/main.h
+@@ -1,6 +1,10 @@
+ #ifndef __XRADIO_MAIN_H
+ #define __XRADIO_MAIN_H
+ 
++struct ieee80211_hw *xradio_init_common(size_t hw_priv_data_len);
++void xradio_free_common(struct ieee80211_hw *dev);
++int xradio_register_common(struct ieee80211_hw *dev);
++void xradio_unregister_common(struct ieee80211_hw *dev);
+ int xradio_core_init(struct sdio_func* func);
+ void xradio_core_deinit(struct sdio_func* func);
+ 
+diff --git a/sta.c b/sta.c
+index 2dddb26..db38cfb 100644
+--- a/sta.c
++++ b/sta.c
+@@ -381,7 +381,7 @@ int xradio_change_interface(struct ieee80211_hw *dev,
+ 	return ret;
+ }
+ 
+-int xradio_config(struct ieee80211_hw *dev, u32 changed)
++int xradio_config(struct ieee80211_hw *dev, int radio_idx, u32 changed)
+ {
+ 	int ret = 0;
+ 	struct xradio_common *hw_priv = dev->priv;
+@@ -796,7 +796,7 @@ void xradio_wep_key_work(struct work_struct *work)
+ 	wsm_unlock_tx(hw_priv);
+ }
+ 
+-int xradio_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
++int xradio_set_rts_threshold(struct ieee80211_hw *hw, int radio_idx, u32 value)
+ {
+ 	struct xradio_common *hw_priv = hw->priv;
+ 	int ret = 0;
+diff --git a/sta.h b/sta.h
+index 39a023a..5d769f9 100644
+--- a/sta.h
++++ b/sta.h
+@@ -42,7 +42,7 @@ int xradio_change_interface(struct ieee80211_hw *dev,
+                             struct ieee80211_vif *vif,
+                             enum nl80211_iftype new_type,
+                             bool p2p);
+-int xradio_config(struct ieee80211_hw *dev, u32 changed);
++int xradio_config(struct ieee80211_hw *dev, int radio_idx, u32 changed);
+ int xradio_change_interface(struct ieee80211_hw *dev,
+                             struct ieee80211_vif *vif,
+                             enum nl80211_iftype new_type,
+@@ -65,7 +65,7 @@ int xradio_get_stats(struct ieee80211_hw *dev,
+ int xradio_get_tx_stats(struct ieee80211_hw *dev,
+ 			struct ieee80211_tx_queue_stats *stats);
+ */
+-int xradio_set_rts_threshold(struct ieee80211_hw *hw, u32 value);
++int xradio_set_rts_threshold(struct ieee80211_hw *hw, int radio_idx, u32 value);
+ 
+ void xradio_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif, u32 queues, bool drop);
+ 
+-- 
+2.43.0
+
