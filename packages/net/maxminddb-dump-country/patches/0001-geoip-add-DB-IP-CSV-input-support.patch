@@ -1,0 +1,388 @@
+From 8ea81c36bee0d4eefc023561a423cbfaac7acc41 Mon Sep 17 00:00:00 2001
+From: koshev-msk <kosnt.shell@gmail.com>
+Date: Thu, 29 Oct 2026 23:04:25 +0000
+Subject: [PATCH] geoip: add DB-IP CSV input support
+
+Add a -d option to read DB-IP Country Lite CSV files and generate the
+same per-country .iv4/.iv6 binary range files as the existing MMDB
+input path.
+
+The parser accepts the DB-IP start_ip,end_ip,country format, handles
+quoted fields and CRLF line endings, skips the header and unknown
+country codes, and validates address families and range ordering.
+
+The existing MMDB processing path and -c CSV export mode remain
+unchanged.
+
+Signed-off-by: OpenWrt Developer <builder@example.invalid>
+---
+ xt_geoip_build_maxmind.c | 292 ++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 260 insertions(+), 32 deletions(-)
+
+diff --git a/xt_geoip_build_maxmind.c b/xt_geoip_build_maxmind.c
+index 55e86d0..95d2c92 100644
+--- a/xt_geoip_build_maxmind.c
++++ b/xt_geoip_build_maxmind.c
+@@ -3,6 +3,7 @@
+ #include <string.h>
+ #include <inttypes.h>
+ #include <errno.h>
++#include <ctype.h>
+ #include <arpa/inet.h>
+ #include <maxminddb.h>
+ #include <sys/types.h>
+@@ -31,6 +32,8 @@ int opt_v = 0;
+ int opt_4 = 1;
+ int opt_6 = 1;
+ int opt_csv = 0;
++int opt_dbip = 0;
++char *dbip_filename = NULL;
+ 
+ int opt_asn = 0;
+ char *opt_asn_val = NULL;
+@@ -326,6 +329,204 @@ void p_dump(int l, uint8_t *path, MMDB_entry_s *e) {
+     fwrite(&path[start],16-start,1,CFD[cind]);
+     fwrite(&path2[start],16-start,1,CFD[cind]);
+ }
++/*
++ * DB-IP Country Lite CSV format:
++ * start_ip,end_ip,country
++ *
++ * The fields may optionally be quoted. The CSV has no embedded commas.
++ */
++static char *csv_trim(char *field)
++{
++    char *end;
++
++    while(isspace((unsigned char)*field))
++        field++;
++    end = field + strlen(field);
++    while(end > field && isspace((unsigned char)end[-1]))
++        *--end = '\0';
++    if(end - field >= 2 && field[0] == '"' && end[-1] == '"') {
++        field++;
++        end[-1] = '\0';
++    }
++    return field;
++}
++
++static int dbip_write_range(int family, const uint8_t *start,
++        const uint8_t *end, const char *country, int cind)
++{
++    char path[sizeof(output_dir) + 8];
++    FILE **files;
++    int32_t *counts;
++    size_t addr_len;
++
++    if(family == AF_INET) {
++        if(!opt_4)
++            return 0;
++        files = CFD4;
++        counts = CCN4;
++        addr_len = 4;
++    } else {
++        if(!opt_6)
++            return 0;
++        files = CFD6;
++        counts = CCN6;
++        addr_len = 16;
++    }
++
++    if(!files[cind]) {
++        snprintf(path, sizeof(path), "%s%s.iv%c",
++                output_dir, country, family == AF_INET ? '4' : '6');
++        files[cind] = fopen(path, "wb");
++        if(!files[cind]) {
++            fprintf(stderr, "create file %s: %s\n",
++                    path, strerror(errno));
++            return -1;
++        }
++    }
++
++    if(fwrite(start, addr_len, 1, files[cind]) != 1 ||
++       fwrite(end, addr_len, 1, files[cind]) != 1) {
++        fprintf(stderr, "write %s range failed: %s\n",
++                country, strerror(errno));
++        return -1;
++    }
++
++    counts[cind]++;
++    return 0;
++}
++
++static int dbip_csv_dump(const char *path)
++{
++    FILE *input;
++    char line[256];
++    unsigned long lineno = 0;
++    int first_line = 1;
++    int result = 0;
++
++    input = fopen(path, "r");
++    if(!input) {
++        fprintf(stderr, "Can't open DB-IP CSV %s: %s\n",
++                path, strerror(errno));
++        return -1;
++    }
++
++    while(fgets(line, sizeof(line), input)) {
++        char *field[3], *p, *comma;
++        char *country;
++        uint8_t start[16], end[16];
++        char start_text[INET6_ADDRSTRLEN];
++        char end_text[INET6_ADDRSTRLEN];
++        int family, end_family, cind;
++
++        lineno++;
++        if(!strchr(line, '\n') && !feof(input)) {
++            fprintf(stderr, "DB-IP CSV line %lu is too long\n", lineno);
++            result = -1;
++            break;
++        }
++
++        p = line + strspn(line, " \t");
++        p[strcspn(p, "\r\n")] = '\0';
++        if(!*p)
++            continue;
++
++        field[0] = p;
++        comma = strchr(p, ',');
++        if(!comma)
++            goto malformed;
++        *comma = '\0';
++        field[1] = comma + 1;
++
++        comma = strchr(field[1], ',');
++        if(!comma)
++            goto malformed;
++        *comma = '\0';
++        field[2] = comma + 1;
++        if(strchr(field[2], ','))
++            goto malformed;
++
++        field[0] = csv_trim(field[0]);
++        field[1] = csv_trim(field[1]);
++        field[2] = csv_trim(field[2]);
++        country = field[2];
++
++        if(first_line) {
++            first_line = 0;
++            if(!strcmp(field[0], "start_ip") ||
++               !strcmp(field[0], "ip_start"))
++                continue;
++        }
++
++        /* DB-IP uses "--" when the country is unknown. */
++        if(!strcmp(country, "--") || !*country)
++            continue;
++
++        if(strlen(country) != 2 ||
++           country[0] < 'A' || country[0] > 'Z' ||
++           country[1] < 'A' || country[1] > 'Z') {
++            fprintf(stderr, "Invalid country code on DB-IP CSV line %lu\n",
++                    lineno);
++            result = -1;
++            break;
++        }
++
++        cind = country2idx(country);
++        if(cind < 0)
++            continue;
++
++        if(inet_pton(AF_INET, field[0], start) == 1)
++            family = AF_INET;
++        else if(inet_pton(AF_INET6, field[0], start) == 1)
++            family = AF_INET6;
++        else {
++            fprintf(stderr, "Invalid start IP on DB-IP CSV line %lu\n",
++                    lineno);
++            result = -1;
++            break;
++        }
++
++        if(inet_pton(family, field[1], end) != 1) {
++            fprintf(stderr, "Invalid or mismatched end IP on DB-IP CSV line %lu\n",
++                    lineno);
++            result = -1;
++            break;
++        }
++        end_family = family;
++        if(end_family != family ||
++           memcmp(start, end, family == AF_INET ? 4 : 16) > 0) {
++            fprintf(stderr, "Invalid IP range on DB-IP CSV line %lu\n",
++                    lineno);
++            result = -1;
++            break;
++        }
++
++        if(dbip_write_range(family, start, end, country, cind)) {
++            result = -1;
++            break;
++        }
++
++        if(opt_v > 1) {
++            inet_ntop(family, start, start_text, sizeof(start_text));
++            inet_ntop(family, end, end_text, sizeof(end_text));
++            printf("%s-%s %s\n", start_text, end_text, country);
++        }
++        continue;
++
++malformed:
++        fprintf(stderr, "Malformed DB-IP CSV line %lu\n", lineno);
++        result = -1;
++        break;
++    }
++
++    if(ferror(input)) {
++        fprintf(stderr, "Error reading DB-IP CSV %s: %s\n",
++                path, strerror(errno));
++        result = -1;
++    }
++    fclose(input);
++    return result;
++}
++
+ static int skip_n96 = 0;
+ 
+ void tree_walk(int rn,int l, uint8_t *path) {
+@@ -372,9 +573,10 @@ int main(int argc, char **argv)
+     
+     progname = strdup(argv[0]);
+ 
+-    while((c=getopt(argc,argv,"46cvo:A:N:")) != -1) {
++    while((c=getopt(argc,argv,"46cvd:o:A:N:")) != -1) {
+       switch(c) {
+         case 'c': opt_csv = 1; break;
++        case 'd': opt_dbip = 1; dbip_filename = optarg; break;
+         case '4': opt_6 = 0; break;
+         case '6': opt_4 = 0; break;
+         case 'v': opt_v++; break;
+@@ -394,17 +596,29 @@ int main(int argc, char **argv)
+         filename = strdup(argv[optind]);
+     } else {
+         filename = opt_asn ? asn_name:country_name;
+-        if(access(filename,R_OK)) usage();
++        if(!opt_dbip && access(filename,R_OK)) usage();
++    }
++
++    if(opt_dbip) {
++        if(opt_csv || opt_asn || !opt_xtgeo || optind < argc) {
++            fprintf(stderr, "%s: -d requires -o and cannot be combined with -c, -A or a positional input file\n", progname);
++            exit(1);
++        }
++        filename = dbip_filename;
+     }
+ 
+     if(stat(filename,&st)) {
+-        perror("mmdb file:");
++        perror("input file:");
+         exit(1);
+     }
+     if(!opt_xtgeo && !opt_csv && !opt_asn) {
+         fprintf(stderr,"%s: -o or -c or -a is required!\n",progname);
+         exit(1);
+     }
++    if(opt_dbip && !S_ISREG(st.st_mode)) {
++        fprintf(stderr, "DB-IP input is not a regular file\n");
++        exit(1);
++    }
+     if(opt_asn && (opt_xtgeo  || opt_csv)) {
+         fprintf(stderr,"%s: cant use -A with -o or -c\n",progname);
+         exit(1);
+@@ -426,43 +640,55 @@ int main(int argc, char **argv)
+         output_dir[l+2] = '\0';
+     }
+ 
+-    status = MMDB_open(filename, MMDB_MODE_MMAP, &mmdb);
++    if(opt_dbip) {
++        status = dbip_csv_dump(filename);
++        if(status)
++            exit(1);
++    } else {
++        status = MMDB_open(filename, MMDB_MODE_MMAP, &mmdb);
+ 
+-    if (MMDB_SUCCESS != status) {
+-        fprintf(stderr, "\n  Can't open %s - %s\n",
+-           filename, MMDB_strerror(status));
++        if (MMDB_SUCCESS != status) {
++            fprintf(stderr, "\n  Can't open %s - %s\n",
++               filename, MMDB_strerror(status));
+ 
+-        if (MMDB_IO_ERROR == status) {
+-            fprintf(stderr, "    IO error: %s\n", strerror(errno));
+-        }
+-        exit(1);
+-    }
+-    if(opt_csv) {
+-        if(opt_4) {
+-            CSV_IPv4_fd = fopen("GeoLite2-Country-Blocks-IPv4.csv","w");
+-            if(CSV_IPv4_fd)
+-                fprintf(CSV_IPv4_fd,"%s",CSV_IP_hdr);
++            if (MMDB_IO_ERROR == status) {
++                fprintf(stderr, "    IO error: %s\n", strerror(errno));
++            }
++            exit(1);
+         }
+-        if(opt_6) {
+-            CSV_IPv6_fd = fopen("GeoLite2-Country-Blocks-IPv6.csv","w");
+-            if(CSV_IPv6_fd)
+-                fprintf(CSV_IPv6_fd,"%s",CSV_IP_hdr);
++        if(opt_csv) {
++            if(opt_4) {
++                CSV_IPv4_fd = fopen("GeoLite2-Country-Blocks-IPv4.csv","w");
++                if(CSV_IPv4_fd)
++                    fprintf(CSV_IPv4_fd,"%s",CSV_IP_hdr);
++            }
++            if(opt_6) {
++                CSV_IPv6_fd = fopen("GeoLite2-Country-Blocks-IPv6.csv","w");
++                if(CSV_IPv6_fd)
++                    fprintf(CSV_IPv6_fd,"%s",CSV_IP_hdr);
++            }
++            CSV_EN_fd = fopen("GeoLite2-Country-Locations-en.csv","w");
++            if(CSV_EN_fd)
++                fprintf(CSV_EN_fd,"%s",CSV_EN_hdr);
+         }
+-        CSV_EN_fd = fopen("GeoLite2-Country-Locations-en.csv","w");
+-        if(CSV_EN_fd)
+-            fprintf(CSV_EN_fd,"%s",CSV_EN_hdr);
++        memset(path,0,sizeof(path));
++        if(!opt_6) {
++            tree_walk(mmdb.ipv4_start_node.node_value,mmdb.ipv4_start_node.netmask,path);
++        } else
++            tree_walk(0,0,path);
++        MMDB_close(&mmdb);
+     }
+-    memset(path,0,sizeof(path));
+-    if(!opt_6) {
+-        tree_walk(mmdb.ipv4_start_node.node_value,mmdb.ipv4_start_node.netmask,path);
+-    } else
+-        tree_walk(0,0,path);
+-    MMDB_close(&mmdb);
+     if(opt_asn) exit(0);
+     for(fd = 0; fd < sizeof(CFD4)/sizeof(CFD4[0]); fd++) {
+         if(opt_xtgeo) {
+-            if(CFD4[fd]) fclose(CFD4[fd]);
+-            if(CFD6[fd]) fclose(CFD6[fd]);
++            if(CFD4[fd] && fclose(CFD4[fd])) {
++                fprintf(stderr, "close IPv4 output failed: %s\n", strerror(errno));
++                status = 1;
++            }
++            if(CFD6[fd] && fclose(CFD6[fd])) {
++                fprintf(stderr, "close IPv6 output failed: %s\n", strerror(errno));
++                status = 1;
++            }
+         }
+         c_ipv4 += CCN4[fd];
+         c_ipv6 += CCN6[fd];
+@@ -482,6 +708,8 @@ int main(int argc, char **argv)
+     if(CSV_IPv6_fd) fclose(CSV_IPv6_fd);
+     if(CSV_EN_fd) fclose(CSV_EN_fd);
+ 
++    if(status)
++        exit(1);
+     exit(0);
+ }
+ 
+-- 
+2.43.0
+

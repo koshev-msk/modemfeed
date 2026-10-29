@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=maxminddb-dump-country
-PKG_VERSION:=1
-PKG_RELEASE:=1
+PKG_VERSION:=2
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
 PKG_LICENSE:=LICENSE
@@ -40,12 +40,12 @@ endef
 
 define Build/Compile
 	$(TARGET_CC) $(TARGET_CFLAGS) -Wall -lmaxminddb \
-		-o $(PKG_BUILD_DIR)/xt_geoip_build_maxmind $(PKG_BUILD_DIR)/xt_geoip_build_maxmind.c 
+		-o $(PKG_BUILD_DIR)/xt_geoip_build $(PKG_BUILD_DIR)/xt_geoip_build_maxmind.c 
 endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xt_geoip_build_maxmind $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xt_geoip_build $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

@@ -1,0 +1,11 @@
+--- a/xt_geoip_build_maxmind.c
++++ b/xt_geoip_build_maxmind.c
+@@ -559,7 +559,7 @@
+ }
+ 
+ void usage(void) {
+-    printf("%s [-4] [-6] [-v] [-c] [-N ASNUM|string ][-A all|asnum[,asnum...]] [-o outputdir] file.mmdb\n",progname);
++    printf("%s [-4] [-6] [-v] [-c] [-N ASNUM|string ][-A all|asnum[,asnum...]] [-o outputdir] file.mmdb|-d file.dbip.csv\n",progname);
+     printf("\t asnum: number | number-number\n");
+     exit(1);
+ }
