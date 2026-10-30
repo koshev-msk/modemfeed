@@ -1,0 +1,167 @@
+From d77c01d155793a19d28828bbb1d659ec19089b18 Mon Sep 17 00:00:00 2001
+From: koshev-msk <kosnt.shell@gmail.com>
+Date: Fri, 30 Oct 2026 10:55:20 +0000
+Subject: [PATCH 2/2] geoip: accept ip/prefix,country lines in -d CSV input
+
+Besides the DB-IP start_ip,end_ip,country format, allow two-field
+lines in the form ip/prefix,country so that own lists can be written
+in CIDR notation. Both IPv4 and IPv6 are supported; the range is
+computed by clearing host bits for the start address and setting them
+for the end address. Prefix length is validated against the address
+family (0..32 / 0..128).
+
+Signed-off-by: OpenWrt Developer <builder@example.invalid>
+---
+ xt_geoip_build_maxmind.c | 90 ++++++++++++++++++++++++++++++----------
+ 1 file changed, 67 insertions(+), 23 deletions(-)
+
+diff --git a/xt_geoip_build_maxmind.c b/xt_geoip_build_maxmind.c
+index eeb6bae..0c81d58 100644
+--- a/xt_geoip_build_maxmind.c
++++ b/xt_geoip_build_maxmind.c
+@@ -332,6 +332,8 @@ void p_dump(int l, uint8_t *path, MMDB_entry_s *e) {
+ /*
+  * DB-IP Country Lite CSV format:
+  * start_ip,end_ip,country
++ * or, for own lists:
++ * ip/prefix,country
+  *
+  * The fields may optionally be quoted. The CSV has no embedded commas.
+  */
+@@ -351,6 +353,21 @@ static char *csv_trim(char *field)
+     return field;
+ }
+ 
++/* Convert addr/plen to first and last address of the network. */
++static void cidr_range(uint8_t *start, uint8_t *end, unsigned alen,
++        unsigned plen)
++{
++    unsigned i, bits;
++    uint8_t mask;
++
++    for(i = 0; i < alen; i++) {
++        bits = plen > i * 8 ? plen - i * 8 : 0;
++        mask = bits >= 8 ? 0xff : (uint8_t)(0xff00 >> bits);
++        start[i] &= mask;
++        end[i] = start[i] | (uint8_t)~mask;
++    }
++}
++
+ static int dbip_write_range(int family, const uint8_t *start,
+         const uint8_t *end, const char *country, int cind)
+ {
+@@ -411,8 +428,10 @@ static int dbip_csv_dump(const char *path)
+     }
+ 
+     while(fgets(line, sizeof(line), input)) {
+-        char *field[3], *p, *comma;
++        char *field[3], *p, *comma, *slash, *endp;
+         char *country;
++        unsigned long plen;
++        int nfields;
+         uint8_t start[16], end[16];
+         char start_text[INET6_ADDRSTRLEN];
+         char end_text[INET6_ADDRSTRLEN];
+@@ -438,17 +457,22 @@ static int dbip_csv_dump(const char *path)
+         field[1] = comma + 1;
+ 
+         comma = strchr(field[1], ',');
+-        if(!comma)
+-            goto malformed;
+-        *comma = '\0';
+-        field[2] = comma + 1;
+-        if(strchr(field[2], ','))
+-            goto malformed;
++        if(comma) {
++            *comma = '\0';
++            field[2] = comma + 1;
++            if(strchr(field[2], ','))
++                goto malformed;
++            nfields = 3;
++        } else {
++            field[2] = NULL;
++            nfields = 2;
++        }
+ 
+         field[0] = csv_trim(field[0]);
+         field[1] = csv_trim(field[1]);
+-        field[2] = csv_trim(field[2]);
+-        country = field[2];
++        if(field[2])
++            field[2] = csv_trim(field[2]);
++        country = field[nfields - 1];
+ 
+         if(first_line) {
+             first_line = 0;
+@@ -474,6 +498,14 @@ static int dbip_csv_dump(const char *path)
+         if(cind < 0)
+             continue;
+ 
++        slash = NULL;
++        if(nfields == 2) {
++            slash = strchr(field[0], '/');
++            if(!slash)
++                goto malformed;
++            *slash++ = '\0';
++        }
++
+         if(inet_pton(AF_INET, field[0], start) == 1)
+             family = AF_INET;
+         else if(inet_pton(AF_INET6, field[0], start) == 1)
+@@ -485,19 +517,31 @@ static int dbip_csv_dump(const char *path)
+             break;
+         }
+ 
+-        if(inet_pton(family, field[1], end) != 1) {
+-            fprintf(stderr, "Invalid or mismatched end IP on DB-IP CSV line %lu\n",
+-                    lineno);
+-            result = -1;
+-            break;
+-        }
+-        end_family = family;
+-        if(end_family != family ||
+-           memcmp(start, end, family == AF_INET ? 4 : 16) > 0) {
+-            fprintf(stderr, "Invalid IP range on DB-IP CSV line %lu\n",
+-                    lineno);
+-            result = -1;
+-            break;
++        if(slash) {
++            plen = strtoul(slash, &endp, 10);
++            if(!isdigit((unsigned char)*slash) || *endp ||
++               plen > (family == AF_INET ? 32 : 128)) {
++                fprintf(stderr, "Invalid prefix length on DB-IP CSV line %lu\n",
++                        lineno);
++                result = -1;
++                break;
++            }
++            cidr_range(start, end, family == AF_INET ? 4 : 16, plen);
++        } else {
++            if(inet_pton(family, field[1], end) != 1) {
++                fprintf(stderr, "Invalid or mismatched end IP on DB-IP CSV line %lu\n",
++                        lineno);
++                result = -1;
++                break;
++            }
++            end_family = family;
++            if(end_family != family ||
++               memcmp(start, end, family == AF_INET ? 4 : 16) > 0) {
++                fprintf(stderr, "Invalid IP range on DB-IP CSV line %lu\n",
++                        lineno);
++                result = -1;
++                break;
++            }
+         }
+ 
+         if(dbip_write_range(family, start, end, country, cind)) {
+@@ -560,7 +604,7 @@ void tree_walk(int rn,int l, uint8_t *path) {
+ 
+ void usage(void) {
+     printf("%s [-4] [-6] [-v] [-c] [-d dbip.csv] [-N ASNUM|string ][-A all|asnum[,asnum...]] [-o outputdir] [file.mmdb]\n",progname);
+-    printf("\t -d: read DB-IP Country Lite CSV and write binary GeoIP files\n");
++    printf("\t -d: read CSV (start_ip,end_ip,CC or ip/prefix,CC) and write binary GeoIP files\n");
+     printf("\t asnum: number | number-number\n");
+     exit(1);
+ }
+-- 
+2.43.0
+

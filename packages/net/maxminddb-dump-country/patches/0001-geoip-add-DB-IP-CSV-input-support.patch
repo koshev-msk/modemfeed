@@ -1,7 +1,7 @@
-From 8ea81c36bee0d4eefc023561a423cbfaac7acc41 Mon Sep 17 00:00:00 2001
+From 2090af86fc5769d865bacb9446af046500f48914 Mon Sep 17 00:00:00 2001
 From: koshev-msk <kosnt.shell@gmail.com>
-Date: Thu, 29 Oct 2026 23:04:25 +0000
-Subject: [PATCH] geoip: add DB-IP CSV input support
+Date: Fri, 30 Oct 2026 10:55:20 +0000
+Subject: [PATCH 1/2] geoip: add DB-IP CSV input support
 
 Add a -d option to read DB-IP Country Lite CSV files and generate the
 same per-country .iv4/.iv6 binary range files as the existing MMDB
@@ -16,11 +16,11 @@ unchanged.
 
 Signed-off-by: OpenWrt Developer <builder@example.invalid>
 ---
- xt_geoip_build_maxmind.c | 292 ++++++++++++++++++++++++++++++++++-----
- 1 file changed, 260 insertions(+), 32 deletions(-)
+ xt_geoip_build_maxmind.c | 295 ++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 262 insertions(+), 33 deletions(-)
 
 diff --git a/xt_geoip_build_maxmind.c b/xt_geoip_build_maxmind.c
-index 55e86d0..95d2c92 100644
+index 55e86d0..eeb6bae 100644
 --- a/xt_geoip_build_maxmind.c
 +++ b/xt_geoip_build_maxmind.c
 @@ -3,6 +3,7 @@
@@ -245,7 +245,17 @@ index 55e86d0..95d2c92 100644
  static int skip_n96 = 0;
  
  void tree_walk(int rn,int l, uint8_t *path) {
-@@ -372,9 +573,10 @@ int main(int argc, char **argv)
+@@ -358,7 +559,8 @@ void tree_walk(int rn,int l, uint8_t *path) {
+ }
+ 
+ void usage(void) {
+-    printf("%s [-4] [-6] [-v] [-c] [-N ASNUM|string ][-A all|asnum[,asnum...]] [-o outputdir] file.mmdb\n",progname);
++    printf("%s [-4] [-6] [-v] [-c] [-d dbip.csv] [-N ASNUM|string ][-A all|asnum[,asnum...]] [-o outputdir] [file.mmdb]\n",progname);
++    printf("\t -d: read DB-IP Country Lite CSV and write binary GeoIP files\n");
+     printf("\t asnum: number | number-number\n");
+     exit(1);
+ }
+@@ -372,9 +574,10 @@ int main(int argc, char **argv)
      
      progname = strdup(argv[0]);
  
@@ -257,7 +267,7 @@ index 55e86d0..95d2c92 100644
          case '4': opt_6 = 0; break;
          case '6': opt_4 = 0; break;
          case 'v': opt_v++; break;
-@@ -394,17 +596,29 @@ int main(int argc, char **argv)
+@@ -394,17 +597,29 @@ int main(int argc, char **argv)
          filename = strdup(argv[optind]);
      } else {
          filename = opt_asn ? asn_name:country_name;
@@ -289,7 +299,7 @@ index 55e86d0..95d2c92 100644
      if(opt_asn && (opt_xtgeo  || opt_csv)) {
          fprintf(stderr,"%s: cant use -A with -o or -c\n",progname);
          exit(1);
-@@ -426,43 +640,55 @@ int main(int argc, char **argv)
+@@ -426,43 +641,55 @@ int main(int argc, char **argv)
          output_dir[l+2] = '\0';
      }
  
@@ -374,7 +384,7 @@ index 55e86d0..95d2c92 100644
          }
          c_ipv4 += CCN4[fd];
          c_ipv6 += CCN6[fd];
-@@ -482,6 +708,8 @@ int main(int argc, char **argv)
+@@ -482,6 +709,8 @@ int main(int argc, char **argv)
      if(CSV_IPv6_fd) fclose(CSV_IPv6_fd);
      if(CSV_EN_fd) fclose(CSV_EN_fd);
  
