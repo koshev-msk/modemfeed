@@ -10,7 +10,7 @@
 proto_h2s_init_config() {
 	no_device=1
 	available=1
-	logger -t h2s "init_config called"
+
         proto_config_add_array "ipaddr:list(string)"
         proto_config_add_array "gateway:list(string)"
 	proto_config_add_string server
@@ -40,7 +40,7 @@ proto_h2s_setup() {
 	local udp mtu log_level mark tcp_fast_open
 	local ipaddrs gateways a ad m g src4
 	local config i
-	logger -t h2s "setup called: interface=$interface"
+
 	json_get_values ipaddrs ipaddr
 	json_get_values gateways gateway
 	json_get_var server server
@@ -125,7 +125,7 @@ proto_h2s_setup() {
 		proto_notify_error "$interface" CONFIG_DIR_FAILED
 		return 1
 	}
-	logger -t h2s "writing config: /var/run/hev-${interface}.yml"
+
 	{
 		cat <<EOF
 tunnel:

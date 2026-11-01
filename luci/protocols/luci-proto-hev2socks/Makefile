@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=Support for hev socks5 tunnel
-LUCI_DEPENDS:=+hev-socks5-tunnel
+LUCI_DEPENDS:=+hev-socks5-tunnel +kmod-tun
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
