@@ -1,0 +1,12 @@
+{
+	"luci-app-vless-core": {
+		"description": "Grant access to VLESS Core configuration",
+		"read": {
+			"ubus": { "service": [ "list" ] },
+			"uci": [ "vless-core" ]
+		},
+		"write": {
+			"uci": [ "vless-core" ]
+		}
+	}
+}

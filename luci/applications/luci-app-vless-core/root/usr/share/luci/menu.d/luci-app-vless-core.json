@@ -1,0 +1,13 @@
+{
+	"admin/services/vless-core": {
+		"title": "VLESS Core",
+		"action": {
+			"type": "view",
+			"path": "vless-core"
+		},
+		"depends": {
+			"acl": [ "luci-app-vless-core" ],
+			"uci": { "vless-core": true }
+		}
+	}
+}
