@@ -1,13 +1,18 @@
 # vless-core-cli
 
 OpenWrt package for [notfence/vless-core-cli](https://github.com/notfence/vless-core-cli) —
-a standalone C client for VLESS that exposes a local SOCKS5 proxy.
+a standalone C client that connects to a VLESS, Trojan, VMess, Shadowsocks or SOCKS5 server
+and exposes a local SOCKS5 proxy.
 
-Compared to Go-based cores it is tiny (the ipk is about ~70 KB) and depends only on `libopenssl`,
+Compared to Go-based cores it is very small and depends only on `libopenssl`,
 which makes it suitable for devices with small flash and RAM.
 
-Supported upstreams: VLESS over TCP / XHTTP / gRPC / WebSocket with Reality, TLS or no security
-(`xtls-rprx-vision` on TCP), and plain SOCKS5.
+Supported upstreams:
+
+- VLESS (with `xtls-rprx-vision` and VLESS Encryption), Trojan, VMess AEAD (`alterId=0`),
+  Shadowsocks (AEAD and 2022) over TCP / WebSocket / gRPC / XHTTP / HTTPUpgrade with
+  no security, TLS or Reality (Reality is not available for WebSocket and HTTPUpgrade).
+- Plain SOCKS5, optionally with username/password.
 
 ## Files
 
@@ -44,12 +49,14 @@ Section `config vless-core 'main'`:
 | Option | Default | Description |
 |--------|---------|-------------|
 | `enabled` | `0` | Start the service (`1`/`0`) |
-| `uri` | – | `vless://...` or `socks5://host:port` upstream URI (required) |
+| `uri` | – | `vless://`, `vmess://`, `trojan://`, `ss://` or `socks5://` upstream URI (required) |
 | `listen_port` | `1080` | Local SOCKS5 port on `127.0.0.1` |
 | `routing` | – | Optional routing rules, see below |
 | `tls_mode` | `strict` | Certificate verification: `strict`, `insecure` or `tofu` |
 
 Always quote the URI in `uci set`: it contains `&`, `#` and `?`.
+
+The client serves exactly one upstream URI, so the init script runs a single instance.
 
 ## URI examples
 
@@ -77,13 +84,38 @@ gRPC + Reality:
 vless://UUID@example.com:443?type=grpc&security=reality&serviceName=svc&sni=www.example.org&fp=chrome&pbk=PUBLIC_KEY&sid=SHORT_ID#grpc
 ```
 
+HTTPUpgrade + TLS:
+
+```
+vless://UUID@example.com:443?type=httpupgrade&security=tls&sni=example.com&host=example.com&path=%2Fup#httpupgrade
+```
+
+Trojan (TLS by default, the whole userinfo is the password):
+
+```
+trojan://PASSWORD@example.com:443?sni=example.com#trojan
+```
+
+VMess (`encryption` is the body mode, `scy` is an alias; the base64 JSON form is accepted too):
+
+```
+vmess://UUID@example.com:443?type=ws&security=tls&sni=example.com&host=example.com&path=%2Fws&encryption=auto#vmess
+```
+
+Shadowsocks (SIP002, userinfo is base64url of `method:password`):
+
+```
+ss://BASE64URL_METHOD_PASSWORD@example.com:8388#ss
+```
+
 Upstream SOCKS5:
 
 ```
 socks5://192.0.2.1:1080
 ```
 
-Supported `fp` values: `chrome`, `firefox`, `edge`, `random`, `randomized`, `qq`.
+Supported `fp` values: `chrome`, `firefox`, `edge`, `random`, `randomized`, `qq`
+(there are no `safari` or `ios` fingerprints).
 
 ## Routing
 
@@ -130,12 +162,24 @@ Notes:
 - `insecure` — never verify certificates.
 - `tofu` — pin the certificate on first connection, later connections must match.
 
+## Reality client version
+
+For Reality the client writes an Xray version (`x.y.z`, default `26.3.27`) into the ClientHello
+session ID. Override it with the `XRAY_VER` environment variable or `--xray-version x.y.z`,
+for example if the server limits client versions with `minClientVer` / `maxClientVer`.
+This is not exposed in UCI.
+
 ## Build notes
 
-Upstream hardcodes the output name `vless-core-linux-amd64` regardless of the target
-architecture, so the package passes `BIN_LINUX=vless-core` to upstream `make` and builds
-with the SDK `CC`/`CFLAGS`/`LDFLAGS`.
+Upstream's Makefile runs its test suite (clang sanitizers, a separate OpenSSL 3.5, Xray) and
+an x86-64-only binary check, and hardcodes the output name `vless-core-linux-amd64`.
+The package therefore does not use it: it compiles `src/*.c` directly with the SDK toolchain
+and installs the result as `/usr/bin/vless-core`.
+
+ML-KEM based features (VLESS Encryption, the X25519MLKEM768 key share) need OpenSSL 3.5 or newer.
+
+Tested: OpenWrt SDK, musl x86-64, OpenSSL 3.5.9.
 
 ## ToDo
 
-- `luci-app-vless-core` — LuCI web interface.
+- `luci-app-vless-core` — LuCI web interface (someday).
