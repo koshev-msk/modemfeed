@@ -2,7 +2,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vless-core-cli
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
+PKG_GIT_DIR:=$(dir $(firstword $(MAKEFILE_LIST)))
+PKG_GIT_COMMIT:=$(shell git -C $(PKG_GIT_DIR) rev-parse --short HEAD 2>/dev/null || echo unknown)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/notfence/vless-core-cli/tar.gz/v$(PKG_VERSION)?
@@ -37,6 +39,7 @@ endef
 define Build/Compile
 	$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -std=c11 -Wall \
 		-I$(PKG_BUILD_DIR)/include $(PKG_BUILD_DIR)/src/*.c \
+		-DVLESS_CORE_COMMIT='"git~$(PKG_GIT_COMMIT)"'\
 		-o $(PKG_BUILD_DIR)/vless-core \
 		$(TARGET_LDFLAGS) -lssl -lcrypto -lpthread
 endef
