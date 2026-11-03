@@ -25,7 +25,9 @@ get_mm_config(){
 			[ "$preffer" = "$curpref" ] ||	mmcli -m $device $setpref
 			[ "$curbands" = "$setbands" ] || mmcli -m $device --set-current-bands="$setbands"
 			sleep 3
-			ifup $modemif
+			if [ "$(ifstatus $modemif | jsonfilter -e '@["up"]')" = "true"  ]; then
+				ifup $modemif
+			fi
 		}
 	}
 }
