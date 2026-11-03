@@ -651,7 +651,9 @@ static void on_signal_info(QmiClientNas *client, GAsyncResult *res, gpointer ud)
         if (qmi_message_nas_get_signal_info_output_get_wcdma_signal_strength(
                 out, &wrssi, &wecio, NULL)) {
             info.rssi     = wrssi;
-            info.sinr     = wecio;
+            /* QMI reports WCDMA Ec/Io in -0.5 dB steps (raw 0..48 = 0..-24 dB);
+             * info.sinr is kept in 0.1 dB units, same as LTE SNR */
+            info.sinr     = -wecio * 5;
             info.has_sinr = TRUE;
             info.is_umts  = TRUE;
         }
