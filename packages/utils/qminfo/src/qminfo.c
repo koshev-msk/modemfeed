@@ -325,17 +325,22 @@ static void emit_results(void)
     if (csq_pct >= 0) snprintf(csq_per_str, sizeof(csq_per_str), "%d", csq_pct);
 
     gint16 best_rsrp = 0, best_rsrq = 0, best_sinr = 0;
+    gboolean have_rsrp = FALSE, have_rsrq = FALSE;
 
     if (info.has_nr_rsrp && info.nr_rsrp > -32700) {
         best_rsrp = (gint16)roundf(info.nr_rsrp / 10.0f);
+        have_rsrp = TRUE;
     } else if (info.has_rsrp) {
         best_rsrp = (gint16)roundf(info.rsrp);
+        have_rsrp = TRUE;
     }
 
     if (info.has_nr_rsrq && info.nr_rsrq > -32700) {
         best_rsrq = (gint16)roundf(info.nr_rsrq / 10.0f);
+        have_rsrq = TRUE;
     } else if (info.has_rsrq) {
         best_rsrq = (gint16)roundf(info.rsrq);
+        have_rsrq = TRUE;
     }
 
     if (info.has_nr_snr && info.nr_snr > -32700) {
@@ -360,8 +365,14 @@ static void emit_results(void)
     printf("  \"lac\"      : \"%u\",\n",  info.lac);
     printf("  \"cid\"      : \"%llu\",\n",(unsigned long long)info.cid);
     printf("  \"rssi\"     : \"%d\",\n",  info.rssi);
-    printf("  \"rsrp\"     : \"%d\",\n",  best_rsrp);
-    printf("  \"rsrq\"     : \"%d\",\n",  best_rsrq);
+    if (have_rsrp)
+        printf("  \"rsrp\"     : \"%d\",\n",  best_rsrp);
+    else
+        printf("  \"rsrp\"     : \"--\",\n");
+    if (have_rsrq)
+        printf("  \"rsrq\"     : \"%d\",\n",  best_rsrq);
+    else
+        printf("  \"rsrq\"     : \"--\",\n");
     printf("  \"sinr\"     : \"%d\",\n",  best_sinr);
     printf("  \"imei\"     : \"%s\",\n",  b_imei);
     printf("  \"reg\"      : \"%d\",\n",  info.reg_state);
