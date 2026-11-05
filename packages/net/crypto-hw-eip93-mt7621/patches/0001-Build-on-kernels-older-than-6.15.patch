@@ -1,0 +1,129 @@
+From 0eeeade621c4d132e78896c8bc49a77ba9efe4c3 Mon Sep 17 00:00:00 2001
+From: koshev-msk <konst.shell@gmail.com>
+Date: Thu, 5 Nov 2026 14:01:50 +0300
+Subject: [PATCH] Build on kernels older than 6.15
+
+Several helpers the driver uses only exist in newer kernels:
+
+- scatterwalk_start_at_pos(), scatterwalk_next(), scatterwalk_done_src(),
+  walk->addr and memcpy_{from,to}_sglist() were added in 6.15. Provide
+  scatterwalk_start_at_pos() and map memcpy_{from,to}_sglist() to
+  scatterwalk_map_and_copy() on older kernels, and walk the list with the
+  classic scatter_walk API in eip93_gcm_ghash_sg().
+- MD5_BLOCK_SIZE and SHA256_STATE_WORDS were added to <crypto/md5.h> and
+  <crypto/sha2.h> in 6.18. Define them locally when missing.
+
+Newer kernels use the code as-is. Build-tested against 6.12.112 mipsel
+with -Werror.
+---
+ eip93-gcm.c             | 39 +++++++++++++++++++++++++++++++++++++++
+ sw/md5/md5-core.h       |  5 +++++
+ sw/sha256/sha256-core.h |  5 +++++
+ 3 files changed, 49 insertions(+)
+
+diff --git a/eip93-gcm.c b/eip93-gcm.c
+index 4b8db2f..9460e8b 100644
+--- a/eip93-gcm.c
++++ b/eip93-gcm.c
+@@ -17,6 +17,7 @@
+ #include <linux/slab.h>
+ #include <linux/string.h>
+ #include <linux/unaligned.h>
++#include <linux/version.h>
+ 
+ #include "eip93-bench.h"
+ #include "eip93-cipher.h"
+@@ -26,6 +27,29 @@
+ #include "sw/ghash/gf128.h"
+ #include "sw/ghash/ghash.h"
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 15, 0)
++/*
++ * memcpy_{from,to}_sglist() and scatterwalk_start_at_pos() appeared in 6.15.
++ * Older kernels have the generic helper and the same walk fields.
++ */
++#define memcpy_from_sglist(buf, sg, start, n) \
++	scatterwalk_map_and_copy(buf, sg, start, n, 0)
++#define memcpy_to_sglist(sg, start, buf, n) \
++	scatterwalk_map_and_copy(buf, sg, start, n, 1)
++
++static inline void scatterwalk_start_at_pos(struct scatter_walk *walk,
++					    struct scatterlist *sg,
++					    unsigned int pos)
++{
++	while (pos > sg->length) {
++		pos -= sg->length;
++		sg = sg_next(sg);
++	}
++	walk->sg = sg;
++	walk->offset = sg->offset + pos;
++}
++#endif
++
+ /*
+  * Longest request the MIPS code still finishes ahead of the engine.
+  * EIP93_DEVELOPER find, five 3 s windows, median. Steps below 256 are
+@@ -138,6 +162,7 @@ static void eip93_gcm_ghash_sg(struct ghash_mips_desc *gh, const void *tab,
+ 	if (!len)
+ 		return;
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
+ 	scatterwalk_start_at_pos(&walk, sg, skip);
+ 	while (len) {
+ 		unsigned int n = scatterwalk_next(&walk, len);
+@@ -146,6 +171,20 @@ static void eip93_gcm_ghash_sg(struct ghash_mips_desc *gh, const void *tab,
+ 		scatterwalk_done_src(&walk, n);
+ 		len -= n;
+ 	}
++#else
++	scatterwalk_start_at_pos(&walk, sg, skip);
++	scatterwalk_done(&walk, 0, 1);
++	while (len) {
++		unsigned int n = scatterwalk_clamp(&walk, len);
++		void *p = scatterwalk_map(&walk);
++
++		ghash_mips_acc_update(gh, tab, p, n);
++		scatterwalk_unmap(p);
++		scatterwalk_advance(&walk, n);
++		len -= n;
++		scatterwalk_done(&walk, 0, len);
++	}
++#endif
+ }
+ 
+ static void eip93_gcm_tag(struct ghash_mips_desc *gh, const void *tab,
+diff --git a/sw/md5/md5-core.h b/sw/md5/md5-core.h
+index ac1400a..6a5d8a7 100644
+--- a/sw/md5/md5-core.h
++++ b/sw/md5/md5-core.h
+@@ -8,6 +8,11 @@
+ #include <crypto/md5.h>
+ #include <linux/types.h>
+ 
++/* Added to <crypto/md5.h> in 6.18 */
++#ifndef MD5_BLOCK_SIZE
++#define MD5_BLOCK_SIZE		64
++#endif
++
+ /*
+  * Own context, same layout as struct md5_ctx. Names stay off the md5-lib
+  * exports: this file is linked into crypto-hw-eip93.
+diff --git a/sw/sha256/sha256-core.h b/sw/sha256/sha256-core.h
+index b379322..28085fa 100644
+--- a/sw/sha256/sha256-core.h
++++ b/sw/sha256/sha256-core.h
+@@ -8,6 +8,11 @@
+ #include <crypto/sha2.h>
+ #include <linux/types.h>
+ 
++/* Added to <crypto/sha2.h> in 6.18 */
++#ifndef SHA256_STATE_WORDS
++#define SHA256_STATE_WORDS	8
++#endif
++
+ /*
+  * Own context, same layout as struct __sha256_ctx. Names stay off the
+  * sha256-lib / sha224-lib exports: this file is linked into
+-- 
+2.43.0
+
