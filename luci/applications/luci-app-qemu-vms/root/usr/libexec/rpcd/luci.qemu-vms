@@ -116,7 +116,7 @@ console_open() {
 		return
 	}
 
-	ttyd -p "$port" -o /usr/bin/vm-console "$vm" >/dev/null 2>&1 &
+	ttyd -W -p "$port" -o /usr/bin/vm-console "$vm" >/dev/null 2>&1 &
 	echo $! > "$pidfile"
 	echo "$port" > "$portfile"
 
