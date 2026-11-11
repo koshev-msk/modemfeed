@@ -1,0 +1,5 @@
+[gost_sect]
+engine_id = gost
+dynamic_path = /usr/lib/engines-3/gost.so
+default_algorithms = ALL
+CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet

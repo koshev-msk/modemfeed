@@ -1,0 +1,10 @@
+#!/bin/sh
+
+touch /etc/config/openssl
+uci -q get openssl.gostprov >/dev/null && exit 0
+
+uci set openssl.gostprov=provider
+uci set openssl.gostprov.enabled='1'
+uci commit openssl
+
+exit 0
