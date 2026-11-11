@@ -6,7 +6,7 @@ Index: teleproxy/src/common/rdtsc_32bit.h
 +#ifndef RDTSC_EMUL_H
 +#define RDTSC_EMUL_H
 +
-+#if defined(__arm__) || defined(__mips__) || defined(__mipsel__)
++#if !defined(__i386__) && !defined(__x86_64__) && !defined(__aarch64__)
 +#include <time.h>
 +
 +static inline unsigned long long rdtsc(void) {
