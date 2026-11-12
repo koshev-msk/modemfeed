@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -288,7 +288,9 @@
+ if(GOST_BUILD_PROVIDER)
+   include(provider)
+ endif()
+-include(tests)
++if(GOST_BUILD_TESTS)
++  include(tests)
++endif()
+ 
+ if(NOT MSVC)
+   add_executable(sign benchmark/sign.c)
