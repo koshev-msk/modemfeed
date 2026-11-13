@@ -1,0 +1,205 @@
+From c2b4ae50479d12a2f72914595a1cb3d24bd6e831 Mon Sep 17 00:00:00 2001
+From: Kirill Ermoshin <ermoshin@rutoken.ru>
+Date: Tue, 10 Nov 2026 16:09:05 +0300
+Subject: [PATCH 4/4] Add OSSL_CIPHER_PARAM_TLS_MAC handler for ciphers
+
+We need cut MAC during decryption for TLS 1.2
+---
+ gost_prov_cipher.c | 54 +++++++++++++++++++++++++++++--
+ test_ciphers.c     | 80 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 132 insertions(+), 2 deletions(-)
+
+diff --git a/gost_prov_cipher.c b/gost_prov_cipher.c
+index 7a0a02d..0a7472c 100644
+--- a/gost_prov_cipher.c
++++ b/gost_prov_cipher.c
+@@ -118,6 +118,13 @@ struct gost_prov_crypt_ctx_st {
+     GOST_cipher *cipher;
+     /* The context for the GOST_cipher functions */
+     GOST_cipher_ctx *cctx;
++    /*
++     * TLS MAC extracted from the tail of decrypted records, it is
++     * requested by libssl through OSSL_CIPHER_PARAM_TLS_MAC (octet_ptr).
++     * The size is set by libssl via OSSL_CIPHER_PARAM_TLS_MAC_SIZE.
++     */
++    unsigned char *tls_mac;
++    size_t tls_mac_size;
+ };
+ typedef struct gost_prov_crypt_ctx_st GOST_CTX;
+ 
+@@ -147,6 +154,7 @@ static void cipher_freectx(void *vgctx)
+     if (gctx == NULL)
+         return;
+     GOST_cipher_ctx_free(gctx->cctx);
++    OPENSSL_clear_free(gctx->tls_mac, gctx->tls_mac_size);
+     OPENSSL_free(gctx);
+ }
+ 
+@@ -314,6 +322,14 @@ static int cipher_get_ctx_params(void *vgctx, OSSL_PARAM params[])
+         if (!OSSL_PARAM_set_int(p, nid))
+             return 0;
+     }
++    if ((p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS_MAC)) != NULL) {
++        /*
++         * libssl reads the MAC extracted from the decrypted record tail
++         * (see cipher_update) through the octet_ptr parameter.
++         */
++        if (!OSSL_PARAM_set_octet_ptr(p, gctx->tls_mac, gctx->tls_mac_size))
++            return 0;
++    }
+     return 1;
+ }
+ 
+@@ -383,6 +399,22 @@ static int cipher_set_ctx_params(void *vgctx, const OSSL_PARAM params[])
+                                     (int)arg, (void *)val) <= 0)
+             return 0;
+     }
++    if ((p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS_MAC_SIZE)) != NULL) {
++        size_t mac_size = 0;
++        if (!OSSL_PARAM_get_size_t(p, &mac_size))
++            return 0;
++        if (mac_size > EVP_MAX_MD_SIZE)
++            return 0;
++        OPENSSL_clear_free(gctx->tls_mac, gctx->tls_mac_size);
++        gctx->tls_mac = NULL;
++        gctx->tls_mac_size = 0;
++        if (mac_size != 0) {
++            gctx->tls_mac = OPENSSL_malloc(mac_size);
++            if (gctx->tls_mac == NULL)
++                return 0;
++            gctx->tls_mac_size = mac_size;
++        }
++    }
+     return 1;
+ }
+ 
+@@ -422,8 +454,26 @@ static int cipher_update(void *vgctx,
+     int int_outl = outl != NULL ? *outl : 0;
+     int res = GOST_CipherUpdate(gctx->cctx, out, &int_outl, in, (int)inl);
+ 
+-    if (res > 0 && outl != NULL)
+-        *outl = (size_t)int_outl;
++    if (res > 0) {
++        /*
++         * In TLS the MAC is encrypted together with the data, libssl
++         * expects the provider to cut the MAC off the tail of the
++         * decrypted record and to hand it over later through the
++         * OSSL_CIPHER_PARAM_TLS_MAC (octet_ptr) parameter. This works
++         * only for stream ciphers which don't buffer data internally,
++         * i.e. all GOST TLS 1.2 suites.
++         */
++        if (!GOST_cipher_ctx_encrypting(gctx->cctx)
++            && gctx->tls_mac_size > 0) {
++            if (out == NULL || int_outl < 0
++                || (size_t)int_outl < gctx->tls_mac_size)
++                return 0;
++            int_outl -= (int)gctx->tls_mac_size;
++            memcpy(gctx->tls_mac, out + int_outl, gctx->tls_mac_size);
++        }
++        if (outl != NULL)
++            *outl = (size_t)int_outl;
++    }
+     return res > 0;
+ }
+ 
+diff --git a/test_ciphers.c b/test_ciphers.c
+index 7508a82..ed8e382 100644
+--- a/test_ciphers.c
++++ b/test_ciphers.c
+@@ -858,6 +858,82 @@ static int test_provider_padded_decrypt(const EVP_CIPHER *type, const char *name
+     return ret;
+ }
+ 
++/* Size of the MAC (imit) for the GOST TLS 1.2 stream cipher suites */
++static size_t tls_mac_size_for_cipher(const char *name)
++{
++    if (strcmp(name, SN_grasshopper_ctr) == 0
++        || strcmp(name, SN_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm) == 0)
++        return 16;
++    return 8;
++}
++
++/*
++ * Emulates the libssl record protection for Mac-then-encrypt stream
++ * ciphers: the MAC is encrypted as a tail of the record, on decryption
++ * the provider must cut it off the output and hand it over through the
++ * OSSL_CIPHER_PARAM_TLS_MAC (octet_ptr) parameter.
++ */
++static int test_provider_tls_mac(const EVP_CIPHER *type, const char *name,
++                                 const unsigned char *key,
++                                 const unsigned char *iv, size_t iv_size,
++                                 size_t mac_size)
++{
++    EVP_CIPHER_CTX *enc = NULL, *dec = NULL;
++    OSSL_PARAM params[2];
++    unsigned char rec[128];
++    unsigned char ct[128];
++    unsigned char *tls_mac = NULL;
++    int outl = 0, part = 0;
++    int ret = 0, test;
++    size_t i;
++
++    if (EVP_CIPHER_get0_provider(type) == NULL)
++        return 0;
++
++    T(mac_size > 0 && mac_size <= EVP_MAX_MD_SIZE);
++    T(sizeof(rec) >= sizeof(P) + mac_size);
++    memcpy(rec, P, sizeof(P));
++    for (i = 0; i < mac_size; i++)
++        rec[sizeof(P) + i] = (unsigned char)(0xa0 + i);
++
++    printf("Provider tls-mac test [%s]: ", name);
++
++    enc = EVP_CIPHER_CTX_new();
++    dec = EVP_CIPHER_CTX_new();
++    T(enc != NULL && dec != NULL);
++
++    /* libssl sets tls-mac-size on both directions */
++    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_TLS_MAC_SIZE, &mac_size);
++    params[1] = OSSL_PARAM_construct_end();
++
++    T(EVP_CipherInit_ex(enc, type, NULL, key, iv, 1));
++    T(EVP_CIPHER_CTX_set_params(enc, params));
++    /* Nothing must be cut off the output while encrypting */
++    T(EVP_EncryptUpdate(enc, ct, &outl, rec, (int)(sizeof(P) + mac_size)));
++    TEST_ASSERT((size_t)outl != sizeof(P) + mac_size);
++    ret |= test;
++
++    T(EVP_CipherInit_ex(dec, type, NULL, key, iv, 0));
++    T(EVP_CIPHER_CTX_set_params(dec, params));
++    T(EVP_DecryptUpdate(dec, ct, &part, ct, outl));
++    /* The plaintext must come out without the MAC tail */
++    TEST_ASSERT((size_t)part != sizeof(P) || memcmp(ct, P, sizeof(P)) != 0);
++    ret |= test;
++
++    params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
++                                               (void **)&tls_mac, mac_size);
++    params[1] = OSSL_PARAM_construct_end();
++    T(EVP_CIPHER_CTX_get_params(dec, params));
++    T(params[0].return_size == mac_size);
++    TEST_ASSERT(tls_mac == NULL
++                || memcmp(tls_mac, rec + sizeof(P), mac_size) != 0);
++    ret |= test;
++
++    EVP_CIPHER_CTX_free(enc);
++    EVP_CIPHER_CTX_free(dec);
++    return ret;
++}
++
+ int engine_is_available(const char *name)
+ {
+ #if HAVE_ENGINE
+@@ -963,6 +1039,10 @@ int main(int argc, char **argv)
+             }
+             ret |= test_provider_padded_decrypt(ciph, t->algname, t->block,
+                                                 t->key, t->iv);
++            if (t->stream || strcmp(t->algname, SN_magma_ctr) == 0)
++                ret |= test_provider_tls_mac(ciph, t->algname, t->key,
++                                             t->iv, t->iv_size,
++                                             tls_mac_size_for_cipher(t->algname));
+         }
+         ret |= test_engine_asn1_acpkm_reinit(ciph, t->algname, t->key, t->iv);
+ 
+-- 
+2.43.0
+

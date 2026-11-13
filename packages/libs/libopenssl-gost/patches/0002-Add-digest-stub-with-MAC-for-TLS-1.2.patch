@@ -1,0 +1,86 @@
+From d7932b33a779c08551d6cd44bf0eae3e250db91c Mon Sep 17 00:00:00 2001
+From: Kirill Ermoshin <ermoshin@rutoken.ru>
+Date: Tue, 10 Nov 2026 16:27:14 +0300
+Subject: [PATCH 1/4] Add digest stub with MAC for TLS 1.2
+
+---
+ gost_prov_digest.c | 20 +++++++++++++++++++-
+ test_digest.c      | 18 +++++++++++++++---
+ 2 files changed, 34 insertions(+), 4 deletions(-)
+
+diff --git a/gost_prov_digest.c b/gost_prov_digest.c
+index 7a237e5..4ce22fb 100644
+--- a/gost_prov_digest.c
++++ b/gost_prov_digest.c
+@@ -158,6 +158,11 @@ MAKE_FUNCTIONS(GostR3411_94_digest);
+ MAKE_FUNCTIONS(GostR3411_2012_256_digest);
+ MAKE_FUNCTIONS(GostR3411_2012_512_digest);
+ 
++MAKE_FUNCTIONS(Gost28147_89_mac);
++MAKE_FUNCTIONS(Gost28147_89_mac_12);
++MAKE_FUNCTIONS(magma_omac_mac);
++MAKE_FUNCTIONS(grasshopper_omac_mac);
++
+ /* The OSSL_ALGORITHM for the provider's operation query function */
+ const OSSL_ALGORITHM GOST_prov_digests[] = {
+     /*
+@@ -184,13 +189,26 @@ const OSSL_ALGORITHM GOST_prov_digests[] = {
+     { SN_id_GostR3411_94":id-GostR3411-94:1.2.643.2.2.9:"
+       LN_id_GostR3411_94, NULL,
+       GostR3411_94_digest_functions, "GOST R 34.11-94" },
+-    { NULL , NULL, NULL }
++
++    { SN_id_Gost28147_89_MAC ":" LN_id_Gost28147_89_MAC ":1.2.643.2.2.22", NULL,
++      Gost28147_89_mac_functions, "gost mac stub for TLS 1.2" },
++    { SN_gost_mac_12, NULL,
++      Gost28147_89_mac_12_functions, "gost12 mac stub for TLS 1.2" },
++    { SN_magma_mac, NULL,
++      magma_omac_mac_functions, "magma mac stub for TLS 1.2" },
++    { SN_kuznyechik_mac, NULL,
++      grasshopper_omac_mac_functions, "kuznyechik mac stub for TLS 1.2" },
++    { NULL, NULL, NULL }
+ };
+ 
+ static GOST_digest *digests[] = {
+     &GostR3411_94_digest,
+     &GostR3411_2012_256_digest,
+     &GostR3411_2012_512_digest,
++    &Gost28147_89_mac,
++    &Gost28147_89_mac_12,
++    &magma_omac_mac,
++    &grasshopper_omac_mac,
+ };
+ 
+ #define arraysize(l) (sizeof(l) / sizeof(l[0]))
+diff --git a/test_digest.c b/test_digest.c
+index 89f73d9..46aaa94 100644
+--- a/test_digest.c
++++ b/test_digest.c
+@@ -824,9 +824,21 @@ static int do_test(const struct hash_testvec *tv)
+     EVP_MAC *mac = NULL;
+ 
+     ERR_set_mark();
+-    T((md = EVP_MD_fetch(NULL, tv->algname, NULL))
+-      || (mac = EVP_MAC_fetch(NULL, tv->algname, NULL))
+-      || (md = (EVP_MD *)EVP_get_digestbyname(tv->algname)));
++    if (tv->key && !tv->hmac) {
++	/*
++	 * The provider may expose a digest stub under the same name
++	 * (needed for TLS 1.2) which cannot accept a key through
++	 * EVP_MD_CTX_ctrl. Prefer the MAC implementation for keyed
++	 * non-HMAC vectors.
++	 */
++	T((mac = EVP_MAC_fetch(NULL, tv->algname, NULL))
++	  || (md = EVP_MD_fetch(NULL, tv->algname, NULL))
++	  || (md = (EVP_MD *)EVP_get_digestbyname(tv->algname)));
++    } else {
++	T((md = EVP_MD_fetch(NULL, tv->algname, NULL))
++	  || (mac = EVP_MAC_fetch(NULL, tv->algname, NULL))
++	  || (md = (EVP_MD *)EVP_get_digestbyname(tv->algname)));
++    }
+     ERR_pop_to_mark();
+ 
+     printf(cBLUE "Test %s: %s: " cNORM, tv->algname, tv->name);
+-- 
+2.43.0
+
