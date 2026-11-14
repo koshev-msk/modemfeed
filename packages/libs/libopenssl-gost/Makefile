@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libopenssl-gost
 PKG_VERSION:=3.0.5
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/gost-engine/engine.git
@@ -60,7 +60,7 @@ endef
 define Package/gost-utils
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libopenssl-gost-engine
+  DEPENDS:=+libopenssl
   TITLE+= GOST utilities
 endef
 
