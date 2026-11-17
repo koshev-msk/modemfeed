@@ -9,9 +9,10 @@ START=50
 USE_PROCD=1
 
 NAME=ifb-shaper
-. /lib/functions/network.sh
 TC=/sbin/tc
 IP=/sbin/ip
+
+. "${IPKG_INSTROOT}/lib/functions/network.sh"
 
 extra_command "dump" "Print the tc commands that would be applied"
 
