@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Wizard hook example. Rename to e.g. 50-mwan3-led (no extension) and
+# make it executable (chmod +x) to enable it. Hooks run in name order
+# when the user presses "Apply", BEFORE the wizard configuration is
+# saved and applied, so a hook must not touch the configs the wizard
+# edits (system, network, wireless, firewall, mwan3). Use direct
+# "uci set" + "uci commit" for other configs.
+#
+# Environment:
+#   WZ_STATE     path to a JSON file with the collected answers (no passwords)
+#   WZ_MODE      wired | mobile | balancer
+#   WZ_HOSTNAME, WZ_ZONENAME, WZ_COUNTRY
+#   WZ_UPLINKS   interface names, space separated (wan wan2 modem ...)
+#   WZ_RADIOS    enabled radios, space separated (radio0 radio1 ...)
+#
+# A non-zero exit code is shown to the user as a warning, the wizard
+# continues anyway. Output is truncated to 2000 bytes.
+
+[ "$WZ_MODE" = "balancer" ] || exit 0
+
+echo "balancer over: $WZ_UPLINKS"
+exit 0

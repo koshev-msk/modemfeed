@@ -1,0 +1,450 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: \n"
+"Language: ru\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/view/wizzard/wizard.js:22
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1148
+#: applications/luci-app-wizzard/root/usr/share/luci/menu.d/luci-app-wizzard.json:3
+msgid "Setup Wizard"
+msgstr "Мастер настройки"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/view/wizzard/wizard.js:24
+msgid "Step-by-step first setup: router name and time, internet connection, Wi-Fi and administrator password."
+msgstr "Пошаговая первоначальная настройка: имя и время роутера, подключение к интернету, Wi-Fi и пароль администратора."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/view/wizzard/wizard.js:25
+msgid "The wizard has been completed on this router."
+msgstr "На этом роутере мастер уже завершил работу."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/view/wizzard/wizard.js:26
+msgid "The wizard has not been completed yet."
+msgstr "Мастер ещё не пройден."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/view/wizzard/wizard.js:27
+msgid "Open the wizard automatically on the Status page"
+msgstr "Открывать мастер автоматически на странице «Состояние»"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/view/wizzard/wizard.js:31
+msgid "Start wizard"
+msgstr "Запустить мастер"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:482
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:548
+msgid "Modem"
+msgstr "Модем"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:482
+msgid "Connection"
+msgstr "Подключение"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:486
+msgid "Remove"
+msgstr "Удалить"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:490
+msgid "Connection type"
+msgstr "Тип подключения"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:491
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:673
+msgid "Wired"
+msgstr "Проводное"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:491
+msgid "Mobile (3G/4G/5G)"
+msgstr "Мобильное (3G/4G/5G)"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:504
+msgid "Port"
+msgstr "Порт"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:507
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:523
+msgid "Automatic (DHCP)"
+msgstr "Автоматически (DHCP)"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:508
+msgid "PPPoE"
+msgstr "PPPoE"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:509
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:524
+msgid "Static address"
+msgstr "Статический адрес"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:519
+msgid "Protocol"
+msgstr "Протокол"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:522
+msgid "Provider network"
+msgstr "Сеть провайдера"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:525
+msgid "Local connection that reaches the VPN server."
+msgstr "Локальное подключение, через которое доступен VPN-сервер."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:528
+msgid "IPv4 address"
+msgstr "IPv4-адрес"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:529
+msgid "Netmask"
+msgstr "Маска сети"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:530
+msgid "Gateway"
+msgstr "Шлюз"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:531
+msgid "DNS servers"
+msgstr "DNS-серверы"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:535
+msgid "PPPoE login"
+msgstr "Логин PPPoE"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:536
+msgid "PPPoE password"
+msgstr "Пароль PPPoE"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:540
+msgid "VPN server"
+msgstr "VPN-сервер"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:541
+msgid "L2TP without IPsec."
+msgstr "L2TP без IPsec."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:542
+msgid "Login"
+msgstr "Логин"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:543
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:562
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:788
+msgid "Password"
+msgstr "Пароль"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:552
+msgid "Modem device path"
+msgstr "Путь к устройству модема"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:553
+msgid "ModemManager reports no modems. Enter the sysfs path manually."
+msgstr "ModemManager не обнаружил модем(ы). Введите путь sysfs вручную."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:555
+msgid "APN"
+msgstr "APN"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:556
+msgid "Authentication"
+msgstr "Аутентификация"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:557
+msgid "None"
+msgstr "Нет"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:561
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:565
+msgid "SIM PIN"
+msgstr "PIN-код SIM"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:565
+msgid "Leave empty when the SIM has no PIN."
+msgstr "Оставьте пустым, когда у SIM-карты нет PIN-кода."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:569
+msgid "Weight"
+msgstr "Вес"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:572
+msgid "Share of traffic relative to the other connections."
+msgstr "Доля трафика относительно остальных подключений."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:578
+msgid "Sets legal channels and transmit power."
+msgstr "Определяет разрешённые каналы и мощность передатчика."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:581
+msgid "Preselected from the browser language, please check it."
+msgstr "Выбрано по языку браузера, проверьте значение."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:584
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:594
+msgid "Country code"
+msgstr "Код страны"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:585
+msgid "Two letters."
+msgstr "Две буквы."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:587
+msgid "driver default"
+msgstr "по умолчанию драйвера"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:599
+msgid "Network name (SSID)"
+msgstr "Имя сети (SSID)"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:600
+msgid "Encryption"
+msgstr "Шифрование"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:604
+msgid "No encryption (open)"
+msgstr "Без шифрования (открытая сеть)"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:606
+msgid "Wi-Fi password"
+msgstr "Пароль Wi-Fi"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:607
+msgid "8 characters or more."
+msgstr "8 символов и больше."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:613
+msgid "Welcome"
+msgstr "Добро пожаловать"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:619
+#, javascript-format
+msgid "This wizard helps with the first setup of the router. It takes %d short steps:"
+msgstr "Мастер поможет выполнить начальную настройку роутера. Всего пунктов: %d."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:621
+msgid "Nothing is changed until the last step. The final configuration is applied with an automatic rollback, so a wrong setting will not lock you out."
+msgstr "До последнего шага ничего не меняется. Итоговая конфигурация применяется с автоматическим откатом, поэтому неверная настройка не закроет доступ к роутеру."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:626
+msgid "Name and time"
+msgstr "Имя и время"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:627
+msgid "Router name, time zone and clock"
+msgstr "Имя роутера, часовой пояс и время"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:633
+msgid "Router name"
+msgstr "Имя роутера"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:634
+msgid "Time zone"
+msgstr "Часовой пояс"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:635
+msgid "choose"
+msgstr "выберите"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:636
+msgid "Clock"
+msgstr "Часы"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:638
+msgid "Set from this browser"
+msgstr "Взять из этого браузера"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:639
+msgid "Enter manually"
+msgstr "Ввести вручную"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:640
+msgid "Keep as is and use NTP"
+msgstr "Не менять, использовать NTP"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:654
+msgid "Time in the selected time zone."
+msgstr "Время в выбранном часовом поясе."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:660
+msgid "Router name may contain letters, digits and hyphens only."
+msgstr "В имени роутера допустимы только латинские буквы, цифры и дефис."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:662
+msgid "Choose a time zone."
+msgstr "Выберите часовой пояс."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:664
+msgid "Enter a valid date and time."
+msgstr "Введите корректные дату и время."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:668
+msgid "Operating mode"
+msgstr "Режим работы"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:669
+msgid "How the router connects to the internet"
+msgstr "Как роутер подключается к Интернет"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:673
+msgid "Cable from the provider (DHCP, PPPoE or static)"
+msgstr "Кабель от провайдера (DHCP, PPPoE или статика)"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:674
+msgid "Mobile"
+msgstr "Мобильное"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:674
+msgid "USB or mini-PCIe modem via ModemManager"
+msgstr "USB- или mini-PCIe-модем через ModemManager"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:675
+msgid "Balancer"
+msgstr "Балансировщик"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:675
+msgid "Several connections shared by mwan3"
+msgstr "Несколько подключений под управлением mwan3"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:687
+msgid "Internet connection"
+msgstr "Подключение к интернету"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:688
+msgid "Internet connection parameters"
+msgstr "Параметры подключения к интернету"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:704
+msgid "Add modem"
+msgstr "Добавить модем"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:704
+msgid "Add connection"
+msgstr "Добавить подключение"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:716
+msgid "Choose a port."
+msgstr "Выберите порт."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:721
+msgid "Enter the PPPoE login."
+msgstr "Введите логин PPPoE."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:723
+msgid "Enter the VPN server and login."
+msgstr "Введите VPN-сервер и логин."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:726
+msgid "Static address, netmask and gateway must be valid IPv4 addresses."
+msgstr "Укажите корректные IPv4-адреса статического адреса, маски сети и шлюза."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:729
+msgid "Choose a modem."
+msgstr "Выберите модем."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:734
+msgid "Each connection needs its own port or modem."
+msgstr "Каждому подключению нужен отдельный порт или модем."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:739
+msgid "Weight must be between 1 and 100."
+msgstr "Вес принимает значения от 1 до 100."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:744
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:745
+msgid "Wi-Fi"
+msgstr "Wi-Fi"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:751
+msgid "Same network name and password on all bands"
+msgstr "Одинаковые имя сети и пароль на всех диапазонах"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:755
+msgid "Enabled radios"
+msgstr "Включённые радиомодули"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:758
+msgid "Band steering: 802.11k and BSS transition (802.11v) will be enabled."
+msgstr "Band steering: будут включены 802.11k и BSS transition (802.11v)."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:763
+msgid "Enabled"
+msgstr "Включено"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:771
+msgid "Country code must be two letters."
+msgstr "Код страны состоит из двух символов."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:781
+msgid "Enter the network name."
+msgstr "Введите имя сети."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:783
+msgid "Wi-Fi password must have at least 8 characters."
+msgstr "Пароль Wi-Fi: не меньше 8 символов."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:789
+msgid "Administrator password"
+msgstr "Пароль администратора"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:793
+msgid "New administrator password"
+msgstr "Новый пароль администратора"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:794
+msgid "Used for the web interface and SSH. Leave empty to keep the current one."
+msgstr "Используется для веб-интерфейса и SSH. Оставьте пустым, чтобы сохранить текущий."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:795
+msgid "Confirmation"
+msgstr "Подтверждение"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:800
+msgid "Password must have at least 8 characters."
+msgstr "Пароль: не меньше 8 символов."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:802
+msgid "Passwords do not match."
+msgstr "Пароли не совпадают."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1049
+#, javascript-format
+msgid "Hook %s failed (exit code %d): %s"
+msgstr "Хук %s завершился с ошибкой (код %d): %s"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1077
+msgid "Apply configuration"
+msgstr "Применение конфигурации"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1078
+msgid "These changes will be applied. The router rolls back automatically when the web interface becomes unreachable."
+msgstr "Будут применены эти изменения. Роутер автоматически откатит их, если веб-интерфейс станет недоступен."
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1079
+msgid "No changes"
+msgstr "Изменений нет"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1084
+msgid "Cancel"
+msgstr "Отмена"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1089
+msgid "Apply"
+msgstr "Применить"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1111
+msgid "Do not show this wizard automatically next time"
+msgstr "Больше не показывать мастер автоматически"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1122
+msgid "Close"
+msgstr "Закрыть"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1126
+msgid "Back"
+msgstr "Назад"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1142
+msgid "Finish"
+msgstr "Готово"
+
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1142
+msgid "Next"
+msgstr "Далее"

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+[ -e /etc/config/wizzard ] || touch /etc/config/wizzard
+
+if [ -z "$(uci -q get wizzard.main)" ]; then
+	uci -q batch <<-EOF2
+		set wizzard.main=wizzard
+		set wizzard.main.done='0'
+		set wizzard.main.hide='0'
+		set wizzard.main.exec='/usr/share/wizzard/hooks.d'
+		commit wizzard
+	EOF2
+fi
+
+exit 0

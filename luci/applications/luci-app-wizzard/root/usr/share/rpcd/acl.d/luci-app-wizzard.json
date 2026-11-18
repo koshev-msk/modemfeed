@@ -1,0 +1,21 @@
+{
+	"luci-app-wizzard": {
+		"description": "Grant access to the first-time setup wizard",
+		"read": {
+			"ubus": {
+				"luci": [ "getTimezones" ],
+				"luci-rpc": [ "getNetworkDevices" ],
+				"iwinfo": [ "countrylist" ],
+				"wizzard": [ "caps", "modems" ]
+			},
+			"uci": [ "system", "network", "wireless", "firewall", "mwan3", "wizzard" ]
+		},
+		"write": {
+			"ubus": {
+				"luci": [ "setLocaltime", "setPassword" ],
+				"wizzard": [ "hooks" ]
+			},
+			"uci": [ "system", "network", "wireless", "firewall", "mwan3", "wizzard" ]
+		}
+	}
+}

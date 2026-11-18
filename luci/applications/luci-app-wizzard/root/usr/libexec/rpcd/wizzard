@@ -1,0 +1,105 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+HOOKS_DEFAULT=/usr/share/wizzard/hooks.d
+STATE_FILE=/tmp/wizzard-state.json
+
+case "$1" in
+list)
+	echo '{ "caps": {}, "modems": {}, "hooks": { "state": "str" } }'
+	;;
+call)
+	case "$2" in
+	caps)
+		json_init
+		if [ -x /etc/init.d/mwan3 ]; then json_add_boolean mwan3 1; else json_add_boolean mwan3 0; fi
+		if [ -x /usr/bin/mmcli ]; then json_add_boolean modemmanager 1; else json_add_boolean modemmanager 0; fi
+		if [ -f /lib/netifd/proto/pptp.sh ]; then json_add_boolean pptp 1; else json_add_boolean pptp 0; fi
+		if [ -f /lib/netifd/proto/l2tp.sh ]; then json_add_boolean l2tp 1; else json_add_boolean l2tp 0; fi
+		# 802.11k/v (ieee80211k, bss_transition) need a full wpad or hostapd build:
+		# the -mini and -basic* variants (any crypto backend) do not provide them
+		if command -v apk >/dev/null 2>&1; then
+			list="$({ apk list -I 'wpad*'; apk list -I 'hostapd*'; } 2>/dev/null)"
+		else
+			list="$({ opkg list-installed 'wpad*'; opkg list-installed 'hostapd*'; } 2>/dev/null)"
+		fi
+		# first column is the package name, helper packages are not a variant
+		wpad="$(echo "$list" | awk '{ print $1 }' | \
+			grep -Ev '^(hostapd-(common|utils|glue)|wpad-glue)' | head -n1)"
+		full=0
+		case "$wpad" in
+		""|wpad-mini*|wpad-basic*|hostapd-mini*|hostapd-basic*) ;;
+		wpad*|hostapd*) full=1 ;;
+		esac
+		json_add_string wpad "$wpad"
+		json_add_boolean wpad_full "$full"
+		json_dump
+		;;
+	modems)
+		json_init
+		json_add_array modems
+		if [ -x /usr/bin/mmcli ]; then
+			for path in $(mmcli -L -J 2>/dev/null | jsonfilter -e '@["modem-list"][*]'); do
+				id="${path##*/}"
+				info="$(mmcli -m "$id" -J 2>/dev/null)"
+				dev="$(echo "$info" | jsonfilter -e '@.modem.generic.device')"
+				[ -n "$dev" ] || continue
+				man="$(echo "$info" | jsonfilter -e '@.modem.generic.manufacturer')"
+				mdl="$(echo "$info" | jsonfilter -e '@.modem.generic.model')"
+				json_add_object ""
+				json_add_string id "$id"
+				json_add_string device "$dev"
+				json_add_string label "$man $mdl"
+				json_close_object
+			done
+		fi
+		json_close_array
+		json_dump
+		;;
+	hooks)
+		read -r input
+		json_load "$input"
+		json_get_var state state
+
+		dir="$(uci -q get wizzard.main.exec)"
+		[ -n "$dir" ] || dir="$HOOKS_DEFAULT"
+
+		json_init
+		json_add_array results
+
+		if [ -n "$state" ] && [ -d "$dir" ]; then
+			(umask 077; echo "$state" > "$STATE_FILE")
+
+			export WZ_STATE="$STATE_FILE"
+			export WZ_MODE="$(jsonfilter -s "$state" -e '@.mode')"
+			export WZ_HOSTNAME="$(jsonfilter -s "$state" -e '@.hostname')"
+			export WZ_ZONENAME="$(jsonfilter -s "$state" -e '@.zonename')"
+			export WZ_COUNTRY="$(jsonfilter -s "$state" -e '@.country')"
+			export WZ_UPLINKS="$(jsonfilter -s "$state" -e '@.uplinks[*].name' | tr '\n' ' ')"
+			export WZ_RADIOS="$(jsonfilter -s "$state" -e '@.radios[*]' | tr '\n' ' ')"
+
+			tmo=""
+			command -v timeout >/dev/null 2>&1 && tmo="timeout 60"
+			out="$(mktemp)"
+
+			for f in "$dir"/*; do
+				[ -f "$f" ] && [ -x "$f" ] || continue
+				$tmo "$f" > "$out" 2>&1
+				rc=$?
+				json_add_object ""
+				json_add_string name "${f##*/}"
+				json_add_int code "$rc"
+				json_add_string output "$(head -c 2000 "$out")"
+				json_close_object
+			done
+
+			rm -f "$out" "$STATE_FILE"
+		fi
+
+		json_close_array
+		json_dump
+		;;
+	esac
+	;;
+esac

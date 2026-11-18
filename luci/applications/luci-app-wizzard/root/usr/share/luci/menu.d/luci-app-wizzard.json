@@ -1,0 +1,13 @@
+{
+	"admin/system/wizzard": {
+		"title": "Setup Wizard",
+		"order": 80,
+		"action": {
+			"type": "view",
+			"path": "wizzard/wizard"
+		},
+		"depends": {
+			"acl": [ "luci-app-wizzard" ]
+		}
+	}
+}
