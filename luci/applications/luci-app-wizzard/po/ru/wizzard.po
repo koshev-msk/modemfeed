@@ -293,7 +293,7 @@ msgstr "Мобильное"
 
 #: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:674
 msgid "USB or mini-PCIe modem via ModemManager"
-msgstr "USB- или mini-PCIe-модем через ModemManager"
+msgstr "USB или mini-PCIe модем через ModemManager"
 
 #: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:675
 msgid "Balancer"
@@ -398,7 +398,7 @@ msgstr "Подтверждение"
 
 #: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:800
 msgid "Password must have at least 8 characters."
-msgstr "Пароль: не меньше 8 символов."
+msgstr "Заданный пароль не может быть меньше 8 символов."
 
 #: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:802
 msgid "Passwords do not match."
