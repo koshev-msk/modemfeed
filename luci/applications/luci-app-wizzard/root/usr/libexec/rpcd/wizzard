@@ -15,7 +15,7 @@ call)
 		json_init
 		if [ -x /etc/init.d/mwan3 ]; then json_add_boolean mwan3 1; else json_add_boolean mwan3 0; fi
 		if [ -x /usr/bin/mmcli ]; then json_add_boolean modemmanager 1; else json_add_boolean modemmanager 0; fi
-		if [ -f /lib/netifd/proto/pptp.sh ]; then json_add_boolean pptp 1; else json_add_boolean pptp 0; fi
+		if [ -f /usr/lib/pppd/*/pptp.so ]; then json_add_boolean pptp 1; else json_add_boolean pptp 0; fi
 		if [ -f /lib/netifd/proto/l2tp.sh ]; then json_add_boolean l2tp 1; else json_add_boolean l2tp 0; fi
 		# 802.11k/v (ieee80211k, bss_transition) need a full wpad or hostapd build:
 		# the -mini and -basic* variants (any crypto backend) do not provide them
