@@ -404,47 +404,52 @@ msgstr "Заданный пароль не может быть меньше 8 с
 msgid "Passwords do not match."
 msgstr "Пароли не совпадают."
 
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1077
+#, javascript-format
+msgid "Hooks could not be started: %s"
+msgstr "Не удалось запустить хуки: %s"
+
 #: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1049
 #, javascript-format
 msgid "Hook %s failed (exit code %d): %s"
 msgstr "Хук %s завершился с ошибкой (код %d): %s"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1077
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1110
 msgid "Apply configuration"
 msgstr "Применение конфигурации"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1078
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1111
 msgid "These changes will be applied. The router rolls back automatically when the web interface becomes unreachable."
 msgstr "Будут применены эти изменения. Роутер автоматически откатит их, если веб-интерфейс станет недоступен."
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1079
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1112
 msgid "No changes"
 msgstr "Изменений нет"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1084
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1117
 msgid "Cancel"
 msgstr "Отмена"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1089
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1119
 msgid "Apply"
 msgstr "Применить"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1111
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1144
 msgid "Do not show this wizard automatically next time"
 msgstr "Больше не показывать мастер автоматически"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1122
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1155
 msgid "Close"
 msgstr "Закрыть"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1126
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1175
 msgid "Back"
 msgstr "Назад"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1142
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1175
 msgid "Finish"
 msgstr "Готово"
 
-#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1142
+#: applications/luci-app-wizzard/htdocs/luci-static/resources/wizzard/wizard.js:1175
 msgid "Next"
 msgstr "Далее"
