@@ -84,13 +84,19 @@ call)
 			out="$(mktemp)"
 
 			for f in "$dir"/*; do
-				[ -f "$f" ] && [ -x "$f" ] || continue
-				$tmo "$f" > "$out" 2>&1
-				rc=$?
+				[ -f "$f" ] || continue
+				case "$f" in *.sample) continue ;; esac
 				json_add_object ""
 				json_add_string name "${f##*/}"
-				json_add_int code "$rc"
-				json_add_string output "$(head -c 2000 "$out")"
+				if [ ! -x "$f" ]; then
+					json_add_int code 126
+					json_add_string output "not executable, run chmod +x"
+				else
+					$tmo "$f" > "$out" 2>&1
+					rc=$?
+					json_add_int code "$rc"
+					json_add_string output "$(head -c 2000 "$out")"
+				fi
 				json_close_object
 			done
 

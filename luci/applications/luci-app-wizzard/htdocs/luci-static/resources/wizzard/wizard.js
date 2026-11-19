@@ -974,26 +974,55 @@ return baseclass.extend({
 			});
 		}
 
+		/*
+		 * uci.changes() is an RPC that returns only already saved changes, so the
+		 * preview is built from the staged state of the uci module instead:
+		 * it shows exactly what uci.save() is going to send and has no side effects.
+		 */
 		function previewLines() {
-			var ch = uci.changes(), lines = [];
+			var st = uci.state, lines = [];
 
-			Object.keys(ch).forEach(function(cfg) {
-				ch[cfg].forEach(function(c) {
-					var op = c[0], sid = c[1], opt = c[2], val = c[3];
+			function fmt(opt, v) {
+				return SECRETS.indexOf(opt) >= 0 ? '********' : (Array.isArray(v) ? v.join(' ') : String(v));
+			}
 
-					if (SECRETS.indexOf(opt) >= 0)
-						val = '********';
+			function same(a, b) {
+				return JSON.stringify(a) === JSON.stringify(b);
+			}
 
-					if (op === 'add')
-						lines.push('+ ' + cfg + '.' + sid + '=' + opt);
-					else if (op === 'remove')
-						lines.push('- ' + cfg + '.' + sid + (opt ? '.' + opt : ''));
-					else if (op === 'list-add')
-						lines.push('  ' + cfg + '.' + sid + '.' + opt + ' += ' + val);
-					else if (op === 'list-del')
-						lines.push('  ' + cfg + '.' + sid + '.' + opt + ' -= ' + val);
-					else if (op === 'set')
-						lines.push('  ' + cfg + '.' + sid + '.' + opt + '=' + val);
+			CONFIGS.forEach(function(cfg) {
+				var del = st.deletes[cfg] || {}, add = st.creates[cfg] || {}, chg = st.changes[cfg] || {};
+				var vals = st.values[cfg] || {};
+
+				Object.keys(del).forEach(function(sid) {
+					if (del[sid] === true)
+						lines.push('- ' + cfg + '.' + sid);
+					else
+						Object.keys(del[sid]).forEach(function(opt) {
+							lines.push('- ' + cfg + '.' + sid + '.' + opt);
+						});
+				});
+
+				Object.keys(add).forEach(function(sid) {
+					lines.push('+ ' + cfg + '.' + sid + '=' + add[sid]['.type']);
+
+					Object.keys(add[sid]).forEach(function(opt) {
+						if (opt.charAt(0) !== '.' && add[sid][opt] != null)
+							lines.push('  ' + cfg + '.' + sid + '.' + opt + '=' + fmt(opt, add[sid][opt]));
+					});
+				});
+
+				Object.keys(chg).forEach(function(sid) {
+					Object.keys(chg[sid]).forEach(function(opt) {
+						var v = chg[sid][opt], old = vals[sid] ? vals[sid][opt] : undefined;
+
+						if (v == null || v === '') {
+							if (old != null)
+								lines.push('- ' + cfg + '.' + sid + '.' + opt);
+						}
+						else if (!same(v, old))
+							lines.push('  ' + cfg + '.' + sid + '.' + opt + '=' + fmt(opt, v));
+					});
 				});
 			});
 
@@ -1044,7 +1073,11 @@ return baseclass.extend({
 
 			tasks.push(L.resolveDefault(setFlags({ done: '1' }), null));
 
-			return L.resolveDefault(callHooks(hookState()), []).then(function(results) {
+			return callHooks(hookState()).catch(function(e) {
+				ui.addNotification(null, E('p', _('Hooks could not be started: %s').format(e.message)), 'warning');
+
+				return [];
+			}).then(function(results) {
 				results.filter(function(r) { return r.code !== 0; }).forEach(function(r) {
 					ui.addNotification(null, E('p', _('Hook %s failed (exit code %d): %s')
 						.format(r.name, r.code, r.output || '-')), 'warning');
