@@ -922,7 +922,7 @@ return baseclass.extend({
 				});
 
 				ensure('mwan3', 'wz_balanced', 'policy');
-				put('mwan3', 'wz_balanced', { use_member: members, last_resort: 'unreachable' });
+				put('mwan3', 'wz_balanced', { use_member: members, last_resort: 'default' });
 
 				ensure('mwan3', 'wz_default', 'rule');
 				put('mwan3', 'wz_default', { dest_ip: '0.0.0.0/0', family: 'ipv4', use_policy: 'wz_balanced' });
