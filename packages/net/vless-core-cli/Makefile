@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vless-core-cli
-PKG_VERSION:=2.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.1
+PKG_RELEASE:=1
 PKG_GIT_DIR:=$(dir $(firstword $(MAKEFILE_LIST)))
 PKG_GIT_COMMIT:=$(shell git -C $(PKG_GIT_DIR) rev-parse --short HEAD 2>/dev/null || echo unknown)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/notfence/vless-core-cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d9212ce3955f7824fa9113c34df14570f52a6ad62f47e7e2a7d1a5dbd13cada4
+PKG_HASH:=a483fc8acb53790eff96e9e35551b541bb3cb9d404fee69826a848536633de2b
 
 PKG_MAINTAINER:=Konstantine Shevlakov <kosnt.shell@gmail.com>
 PKG_LICENSE_FILES:=THIRD_PARTY_LICENSES.txt
@@ -23,7 +23,7 @@ define Package/vless-core-cli
   SUBMENU:=Web Servers/Proxies
   TITLE:=Standalone C proxy client (VLESS/Trojan/VMess/SS) with local SOCKS5
   URL:=https://github.com/notfence/vless-core-cli
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl +zlib +libbrotli +libzstd
 endef
 
 define Package/vless-core-cli/description
@@ -41,7 +41,7 @@ define Build/Compile
 		-I$(PKG_BUILD_DIR)/include $(PKG_BUILD_DIR)/src/*.c \
 		-DVLESS_CORE_COMMIT='"git~$(PKG_GIT_COMMIT)"'\
 		-o $(PKG_BUILD_DIR)/vless-core \
-		$(TARGET_LDFLAGS) -lssl -lcrypto -lpthread
+		$(TARGET_LDFLAGS) -lssl -lcrypto -lpthread -lz -lbrotlidec -lzstd
 endef
 
 define Package/vless-core-cli/install

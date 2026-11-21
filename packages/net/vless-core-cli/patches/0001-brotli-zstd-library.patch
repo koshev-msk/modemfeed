@@ -1,0 +1,13 @@
+--- a/src/tls_certificate_compression.c
++++ b/src/tls_certificate_compression.c
+@@ -1,8 +1,7 @@
+ #include "tls_internal.h"
+-#include "tls_decode_namespace.h"
+-#include "../third_party/brotli-1.2.1/c/include/brotli/decode.h"
++#include <brotli/decode.h>
+ #define ZSTD_STATIC_LINKING_ONLY
+-#include "../third_party/zstd-1.5.7/lib/zstd.h"
++#include <zstd.h>
+ #include <zlib.h>
+ 
+ static voidpf zlib_allocate(voidpf context,uInt count,uInt size) {
