@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ifb-shaper
-PKG_VERSION:=0.1.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.1.2
+PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
 

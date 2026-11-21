@@ -188,8 +188,18 @@ return view.extend({
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'leaf_qdisc', _('Leaf qdisc'),
-			_('tc arguments of the qdisc attached to every client sub-class, or <code>none</code>.'));
+			_('tc arguments of the qdisc attached to every client sub-class, or <code>none</code>. Used for both directions unless overridden below.'));
 		o.placeholder = 'fq_codel limit 1024 flows 128';
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'leaf_qdisc_down', _('Leaf qdisc, download'),
+			_('Overrides the leaf qdisc for download, e.g. <code>cake besteffort dual-dsthost</code> (needs kmod-sched-cake).'));
+		o.placeholder = _('same as Leaf qdisc');
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'leaf_qdisc_up', _('Leaf qdisc, upload'),
+			_('Overrides the leaf qdisc for upload, e.g. <code>cake besteffort dual-srchost</code> (needs kmod-sched-cake).'));
+		o.placeholder = _('same as Leaf qdisc');
 		o.modalonly = true;
 
 		/* clients */

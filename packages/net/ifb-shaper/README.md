@@ -51,7 +51,6 @@ config client 'laptop'
 | `enabled` | `1` | Enable/disable this shaper |
 | `interface` | – | Logical interface to shape (required) |
 | `bypass` | – | List of networks (IPv4/IPv6) not subject to client limits |
-| `leaf_qdisc` | `fq_codel limit 1024 flows 128` | qdisc attached to every client sub-class (`tc` arguments); `none` disables it |
 | `leaf_qdisc_down` / `leaf_qdisc_up` | `leaf_qdisc` | the same for one direction only (download is shaped on the device, upload on the IFB); `none` disables it |
 | `total` | `1000Mbit` | Root class rate |
 | `local_rate` / `local_ceil` | `50Mbit` / `500Mbit` | Bypass class |
