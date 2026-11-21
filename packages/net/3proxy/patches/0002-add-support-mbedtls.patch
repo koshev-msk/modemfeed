@@ -1,9 +1,36 @@
+From b69ed0a9ac13c32a7c8f6d6b27964dcdcf7008f3 Mon Sep 17 00:00:00 2001
+From: Konstantine <shevlakov@132lan.ru>
+Date: Sat, 21 Nov 2026 06:52:22 +0000
+Subject: [PATCH] Add mbedTLS SSL/TLS backend
+
+Adds src/ssl_mbedtls.c, a mbedTLS 3.x counterpart of src/ssl.c, the
+WITH_MBEDTLS branches in src/ssllib.c and src/ssl.h, and the mbedTLS
+autodetection in Makefile.Linux (tried before wolfSSL and OpenSSL).
+
+ssl_mbedtls.c follows ssl.c of 1.0.3: rwant/wwant tracking and the
+poll() wrapper for reads that wait for a write and vice versa,
+PCONF->client_mode.
+
+ssl_copy_cert(): mbedtls_x509write_crt_pem() returns 0 on success, not
+the length of the PEM, so the generated certificate was parsed with a
+length of 0 and every ssl_mitm connection failed with "Failed to create
+certificate copy". Use the length of the NUL terminated PEM.
+---
+ Makefile.Linux    |   17 +
+ src/ssl.h         |   57 ++
+ src/ssl_mbedtls.c | 1293 +++++++++++++++++++++++++++++++++++++++++++++
+ src/ssllib.c      |  233 +++++++-
+ 4 files changed, 1598 insertions(+), 2 deletions(-)
+ create mode 100644 src/ssl_mbedtls.c
+
+diff --git a/Makefile.Linux b/Makefile.Linux
+index ba7cb12..38a2044 100644
 --- a/Makefile.Linux
 +++ b/Makefile.Linux
-@@ -60,6 +60,22 @@
+@@ -81,6 +81,22 @@ ifeq ($(LIBSTATIC), true)
      ZLIB = -lz -lzstd
  endif
-
+ 
 +# mbedTLS backend: WORK IN PROGRESS (ssl.c not converted yet, see
 +# comments in src/ssllib.c and src/ssl.h). Deliberately does NOT set
 +# -DWITH_SSL and does NOT add ssl$(OBJSUFFICS) to SSL_OBJS below, so
@@ -23,7 +50,7 @@
  WOLFSSL_CHECK ?= $(shell printf "\#include <wolfssl/options.h>\\n\#include <wolfssl/openssl/ssl.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testwssl.o - 2>/dev/null && $(CC) $(LDFLAGS) -otestwssl testwssl.o $(STATIC_PREFIX) -lwolfssl $(STATIC_SUFFIX) 2>/dev/null && rm testwssl testwssl.o && echo true||echo false)
  ifeq ($(WOLFSSL_CHECK), true)
      LIBS += $(STATIC_PREFIX) -lwolfssl $(STATIC_SUFFIX)
-@@ -76,6 +92,7 @@
+@@ -97,6 +113,7 @@ else
      ZLIB :=
  endif
  endif
@@ -31,6 +58,8 @@
  PCRE_CHECK ?= $(shell printf "\#define PCRE2_CODE_UNIT_WIDTH 8\\n\#include <pcre2.h>\\n int main(){return 0;}" | tr -d \\\\ | $(CC) -x c $(CFLAGS) -o testpcre.o - 2>/dev/null && $(CC) -o testpcre testpcre.o $(LDFLAGS) $(STATIC_PREFIX) -lpcre2-8 $(STATIC_SUFFIX) 2>/dev/null && rm testpcre testpcre.o && echo true||echo false)
  ifeq ($(PCRE_CHECK), true)
      CFLAGS += -DWITH_PCRE
+diff --git a/src/ssl.h b/src/ssl.h
+index a824190..ebdc73f 100644
 --- a/src/ssl.h
 +++ b/src/ssl.h
 @@ -1,6 +1,15 @@
@@ -49,7 +78,7 @@
  //
  // opaque connection structure
  //
-@@ -10,16 +19,48 @@
+@@ -10,16 +19,48 @@ typedef void *SSL_CONN;
  //
  typedef void *SSL_CERT;
  
@@ -98,7 +127,7 @@
  struct ssl_config {
      X509 *CA_cert;
      X509 *server_cert;
-@@ -30,6 +71,7 @@
+@@ -30,6 +71,7 @@ struct ssl_config {
      SSL_CTX *cli_ctx;
      SSL_CTX *srv_ctx;
      char *certcache;
@@ -106,7 +135,7 @@
      char * client_ciphersuites;
      char * server_ciphersuites;
      char * client_cipher_list;
-@@ -65,8 +107,17 @@
+@@ -65,8 +107,17 @@ SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config);
  //
  // SSL/TLS handshakes
  //
@@ -124,7 +153,7 @@
  SSL_CONN ssl_handshake_to_server(SOCKET s, char * hostname, SSL_CONFIG *config, SSL_CERT *server_cert, char **errSSL);
  
  //
-@@ -87,6 +138,12 @@
+@@ -97,6 +148,12 @@ void _ssl_cert_free(SSL_CERT cert);
  //
  void ssl_init(void);
  char * getSSLErr(void);
@@ -137,313 +166,14 @@
  
  //
  // Built-in SSL installation (called from 3proxy.c)
---- a/src/ssllib.c
-+++ b/src/ssllib.c
-@@ -14,7 +14,18 @@
- #include <sys/file.h>
- #endif
- 
--#ifdef WITH_WOLFSSL
-+#ifdef WITH_MBEDTLS
-+#include <mbedtls/error.h>
-+#include <mbedtls/x509.h>
-+#include <mbedtls/x509_crt.h>
-+#include <mbedtls/x509_csr.h>
-+#include <mbedtls/pk.h>
-+#include <mbedtls/ssl.h>
-+#include <mbedtls/net_sockets.h>
-+#include <mbedtls/entropy.h>
-+#include <mbedtls/ctr_drbg.h>
-+#include <mbedtls/sha256.h>
-+#elif defined(WITH_WOLFSSL)
- #include <wolfssl/options.h>
- #include <wolfssl/openssl/crypto.h>
- #include <wolfssl/openssl/x509.h>
-@@ -46,10 +57,37 @@
-                         };
- 
- 
-+#ifdef WITH_MBEDTLS
-+/* mbedTLS reports errors as return codes from the call that failed,
-+   not via a global/thread-local queue like OpenSSL's ERR_get_error().
-+   Every mbedtls_* call site in this file (and, once converted, ssl.c)
-+   is expected to stash its own negative return code here with
-+   mbedtls_set_err() before falling through to an error path, so that
-+   getSSLErr() keeps behaving like it does for OpenSSL/wolfSSL: "give
-+   me the text for whatever just went wrong". Not thread-safe, but
-+   neither is the OpenSSL/wolfSSL errbuf right above - same existing
-+   tradeoff in this file, kept consistent rather than introduced. */
-+static int mbedtls_last_err = 0;
-+
-+void mbedtls_set_err(int err)
-+{
-+	mbedtls_last_err = err;
-+}
- 
- char * getSSLErr(){
-+    if(mbedtls_last_err == 0){
-+	snprintf(errbuf, sizeof(errbuf), "no error");
-+	return errbuf;
-+    }
-+    mbedtls_strerror(mbedtls_last_err, errbuf, sizeof(errbuf));
-+    mbedtls_last_err = 0;
-+    return errbuf;
-+}
-+#else
-+char * getSSLErr(){
-     return ERR_error_string(ERR_get_error(), errbuf);
- }
-+#endif
- 
- static size_t bin2hex (const unsigned char* bin, size_t bin_length, char* str, size_t str_length)
- {
-@@ -72,6 +110,7 @@
- 	return p - str;
- }
- 
-+#ifndef WITH_MBEDTLS
- static int copy_ext(X509 *dst_cert, X509 *src_cert, int nid)
- {
- 	X509_EXTENSION *ext;
-@@ -82,8 +121,9 @@
- 	if(!(ext = X509_get_ext(src_cert, idx))) return 0;
- 	return X509_add_ext(dst_cert, ext, -1) > 0;
- }
-+#endif
- 
--#ifndef WITH_WOLFSSL
-+#if !defined(WITH_WOLFSSL) && !defined(WITH_MBEDTLS)
- static int add_ext(X509 *cert, int nid, const char *value)
- {
- 	X509_EXTENSION *ex;
-@@ -107,6 +147,105 @@
- }
- #endif
- 
-+#ifdef WITH_MBEDTLS
-+static int format_time_mbedtls(const mbedtls_x509_time *t, char *buf, size_t n)
-+{
-+	return snprintf(buf, n, "%04d%02d%02d%02d%02d%02d", t->year,t->mon,t->day,t->hour,t->min,t->sec) >= (int)n;
-+}
-+
-+static int build_san_list_mbedtls(const mbedtls_x509_sequence *seq, mbedtls_x509_san_list **out)
-+{
-+	const mbedtls_x509_sequence *p;
-+	mbedtls_x509_san_list *head = NULL, *tail = NULL, *item;
-+	int ret;
-+	*out = NULL;
-+	for(p = seq; p; p = p->next){
-+		item = calloc(1, sizeof(*item));
-+		if(!item){ ret = MBEDTLS_ERR_X509_ALLOC_FAILED; goto fail; }
-+		ret = mbedtls_x509_parse_subject_alt_name(&p->buf, &item->node);
-+		if(ret){ free(item); goto fail; }
-+		if(!head) head = item; else tail->next = item;
-+		tail = item;
-+	}
-+	*out = head;
-+	return 0;
-+fail:
-+	while(head){
-+		item = head->next;
-+		mbedtls_x509_free_subject_alt_name(&head->node);
-+		free(head);
-+		head = item;
-+	}
-+	return ret;
-+}
-+
-+static void free_san_list_mbedtls(mbedtls_x509_san_list *list)
-+{
-+	while(list){
-+		mbedtls_x509_san_list *next = list->next;
-+		mbedtls_x509_free_subject_alt_name(&list->node);
-+		free(list);
-+		list = next;
-+	}
-+}
-+
-+SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config)
-+{
-+	mbedtls_x509_crt *src = (mbedtls_x509_crt *)cert, *dst = NULL;
-+	mbedtls_x509write_cert wr;
-+	mbedtls_pk_context *key;
-+	mbedtls_x509_san_list *san_list = NULL;
-+	char subject[MBEDTLS_X509_MAX_DN_NAME_SIZE], issuer[MBEDTLS_X509_MAX_DN_NAME_SIZE];
-+	char not_before[32], not_after[32], cache_name[256];
-+	unsigned char hash[32], der[16384];
-+	int ret;
-+	if(!src || !config || !config->CA_cert || !config->CA_key) return NULL;
-+	ret = mbedtls_sha256(src->raw.p, src->raw.len, hash, 0);
-+	if(ret) return NULL;
-+	if(config->certcache){
-+		char *q = cache_name; size_t i;
-+		q += snprintf(q, sizeof(cache_name), "%s", config->certcache);
-+		for(i = 0; i < 16 && (size_t)(q-cache_name)+2 < sizeof(cache_name); i++) q += snprintf(q, 3, "%02x", hash[i]);
-+		snprintf(q, sizeof(cache_name)-(size_t)(q-cache_name), ".pem");
-+		dst = calloc(1, sizeof(*dst));
-+		if(dst){ mbedtls_x509_crt_init(dst); if(mbedtls_x509_crt_parse_file(dst, cache_name) >= 0) return dst; mbedtls_x509_crt_free(dst); free(dst); dst = NULL; }
-+	}
-+	if(mbedtls_x509_dn_gets(subject, sizeof(subject), &src->subject) < 0 ||
-+	   mbedtls_x509_dn_gets(issuer, sizeof(issuer), &config->CA_cert->subject) < 0 ||
-+	   format_time_mbedtls(&src->valid_from, not_before, sizeof(not_before)) ||
-+	   format_time_mbedtls(&src->valid_to, not_after, sizeof(not_after))) return NULL;
-+	key = config->server_key ? config->server_key : config->CA_key;
-+	mbedtls_x509write_crt_init(&wr);
-+	mbedtls_x509write_crt_set_version(&wr, MBEDTLS_X509_CRT_VERSION_3);
-+	ret = mbedtls_x509write_crt_set_serial_raw(&wr, src->serial.p, src->serial.len);
-+	if(!ret) ret = mbedtls_x509write_crt_set_subject_name(&wr, subject);
-+	if(!ret) ret = mbedtls_x509write_crt_set_issuer_name(&wr, issuer);
-+	if(!ret) ret = mbedtls_x509write_crt_set_validity(&wr, not_before, not_after);
-+	if(!ret) mbedtls_x509write_crt_set_subject_key(&wr, key);
-+	if(!ret) mbedtls_x509write_crt_set_issuer_key(&wr, config->CA_key);
-+	if(!ret) mbedtls_x509write_crt_set_md_alg(&wr, MBEDTLS_MD_SHA256);
-+	if(!ret) ret = mbedtls_x509write_crt_set_basic_constraints(&wr, 0, -1);
-+	if(!ret) ret = mbedtls_x509write_crt_set_key_usage(&wr, MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_ENCIPHERMENT);
-+	if(!ret && src->subject_alt_names.buf.p && src->subject_alt_names.buf.len){
-+		ret = build_san_list_mbedtls(&src->subject_alt_names, &san_list);
-+		if(!ret) ret = mbedtls_x509write_crt_set_subject_alternative_name(&wr, san_list);
-+		free_san_list_mbedtls(san_list); san_list = NULL;
-+	}
-+	if(!ret) ret = mbedtls_x509write_crt_set_subject_key_identifier(&wr);
-+	if(!ret) ret = mbedtls_x509write_crt_set_authority_key_identifier(&wr);
-+	if(ret){ mbedtls_x509write_crt_free(&wr); return NULL; }
-+	ret = mbedtls_x509write_crt_pem(&wr, der, sizeof(der), mbedtls_ctr_drbg_random, &mbedtls_ctr_drbg);
-+	mbedtls_x509write_crt_free(&wr);
-+	if(ret < 0) return NULL;
-+	dst = calloc(1, sizeof(*dst));
-+	if(!dst) return NULL;
-+	mbedtls_x509_crt_init(dst);
-+	{ int parsed = mbedtls_x509_crt_parse(dst, der, (size_t)ret);
-+	  if(parsed < 0){ mbedtls_x509_crt_free(dst); free(dst); return NULL; } }
-+	if(config->certcache){ FILE *f = fopen(cache_name, "wb"); if(f){ fwrite(der,1,(size_t)ret,f); fclose(f); } }
-+	return dst;
-+}
-+#else
- SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config)
- {
- 	int err = -1;
-@@ -226,7 +365,69 @@
- 	}
- 	return dst_cert;
- }
-+#endif /* WITH_MBEDTLS */
-+
-+#ifdef WITH_MBEDTLS
-+int ssl_read(SSL_CONN connection, void * buf, int bufsize)
-+{
-+	ssl_conn *conn = (ssl_conn *) connection;
-+	int ret = mbedtls_ssl_read(conn->ssl, (unsigned char *)buf, (size_t)bufsize);
-+
-+	if(ret < 0){
-+		conn->last_err = ret;
-+		mbedtls_set_err(ret);
-+		return -1;
-+	}
-+	return ret;
-+}
-+
-+int ssl_write(SSL_CONN connection, void * buf, int bufsize)
-+{
-+	ssl_conn *conn = (ssl_conn *) connection;
-+	int ret = mbedtls_ssl_write(conn->ssl, (const unsigned char *)buf, (size_t)bufsize);
-+
-+	if(ret < 0){
-+		conn->last_err = ret;
-+		mbedtls_set_err(ret);
-+		return -1;
-+	}
-+	return ret;
-+}
-+
-+int ssl_pending(SSL_CONN connection)
-+{
-+	ssl_conn *conn = (ssl_conn *) connection;
-+
-+	return (int)mbedtls_ssl_get_bytes_avail(conn->ssl);
-+}
-+
-+void ssl_conn_free(SSL_CONN connection)
-+{
-+	ssl_conn *conn = (ssl_conn *) connection;
-+
-+	if(conn){
-+		if(conn->ssl){
-+			mbedtls_ssl_close_notify(conn->ssl);
-+			mbedtls_ssl_free(conn->ssl);
-+			free(conn->ssl);
-+		}
-+		/* conn->ctx (mbedtls_ssl_config) is the shared client/server
-+		   config built once in ssl_cli_ctx()/ssl_install() - it is not
-+		   owned per-connection and must not be freed here. The
-+		   OpenSSL/wolfSSL branch frees conn->ctx because there it is a
-+		   context created per-handshake. Config lifetime for mbedTLS is
-+		   finalized together with ssl.c in step 2. */
-+		free(conn);
-+	}
-+}
- 
-+void _ssl_cert_free(SSL_CERT cert)
-+{
-+	if(!cert) return;
-+	mbedtls_x509_crt_free((mbedtls_x509_crt *)cert);
-+	free(cert);
-+}
-+#else
- int ssl_read(SSL_CONN connection, void * buf, int bufsize)
- {
- 	ssl_conn *conn = (ssl_conn *) connection;
-@@ -265,6 +466,7 @@
- {
- 	X509_free((X509 *)cert);
- }
-+#endif
- 
- 
- 
-@@ -320,13 +522,37 @@
- 
- int ssl_init_done = 0;
- 
-+#ifdef WITH_MBEDTLS
-+/* Shared, seeded once: mbedtls_ctr_drbg_context is documented as safe
-+   for concurrent mbedtls_ctr_drbg_random() calls from multiple threads
-+   (internal mutex), so one global pair here mirrors how OpenSSL/wolfSSL
-+   keep one global RNG state under the hood. Consumed from ssl.c once
-+   that half of the mbedTLS port lands (step 2), exposed here since
-+   ssllib.c is what owns SSL library init/shutdown. */
-+mbedtls_entropy_context mbedtls_entropy;
-+mbedtls_ctr_drbg_context mbedtls_ctr_drbg;
-+#endif
-+
- void ssl_init()
- {
- 	if(!ssl_init_done){
- 
- 	    ssl_init_done = 1;
- 	    thread_setup();
--#ifdef WITH_WOLFSSL
-+#ifdef WITH_MBEDTLS
-+	    {
-+		static const char *pers = "3proxy";
-+		int ret;
-+
-+		mbedtls_entropy_init(&mbedtls_entropy);
-+		mbedtls_ctr_drbg_init(&mbedtls_ctr_drbg);
-+		ret = mbedtls_ctr_drbg_seed(&mbedtls_ctr_drbg, mbedtls_entropy_func,
-+			&mbedtls_entropy, (const unsigned char *)pers, strlen(pers));
-+		if(ret != 0){
-+		    mbedtls_set_err(ret);
-+		}
-+	    }
-+#elif defined(WITH_WOLFSSL)
- 	    wolfSSL_Init();
- #elif defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L
- 	    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
---- a/src/ssl_mbedtls.c
+diff --git a/src/ssl_mbedtls.c b/src/ssl_mbedtls.c
+new file mode 100644
+index 0000000..955f904
+--- /dev/null
 +++ b/src/ssl_mbedtls.c
-@@ -0,0 +1,1248 @@
+@@ -0,0 +1,1293 @@
 +/*
-+   mbedTLS SSL/TLS backend for 3proxy 0.9.8
++   mbedTLS SSL/TLS backend for 3proxy 1.0.3
 +   (c) 2007-2026 by Vladimir Dubrovin <vlad@3proxy.org>
 +
 +   This file mirrors src/ssl.c's filter/configuration interface but uses
@@ -504,6 +234,9 @@
 +struct SSLsock {
 +  SOCKET s;
 +  SSL_CONN conn;
++  /* what a read and a write which could not be done wait for, POLLIN
++     or POLLOUT, 0 once one is: TLS may have to write to read */
++  short rwant, wwant;
 +};
 +struct SSLstate {
 +  struct SSLsock cli, srv;
@@ -531,10 +264,12 @@
 +  if (cli_s != INVALID_SOCKET) {
 +    SOSTATE->cli.s = cli_s;
 +    SOSTATE->cli.conn = cli_conn;
++    SOSTATE->cli.rwant = SOSTATE->cli.wwant = 0;
 +  }
 +  if (srv_s != INVALID_SOCKET) {
 +    SOSTATE->srv.s = srv_s;
 +    SOSTATE->srv.conn = srv_conn;
++    SOSTATE->srv.rwant = SOSTATE->srv.wwant = 0;
 +  }
 +}
 +
@@ -1094,11 +829,13 @@
 +    if (r < 0) {
 +      int e = ssl_get_error(q->conn);
 +      if (e == MBEDTLS_ERR_SSL_WANT_WRITE || e == MBEDTLS_ERR_SSL_WANT_READ) {
++        q->wwant = (e == MBEDTLS_ERR_SSL_WANT_READ) ? POLLIN : POLLOUT;
 +        seterrno3(EAGAIN);
 +        return -1;
 +      }
 +      seterrno3(EIO);
-+    }
++    } else
++      q->wwant = 0;
 +    return r;
 +  }
 +  return sso._send(sso.state, s, msg, len, flags);
@@ -1117,11 +854,13 @@
 +    if (r < 0) {
 +      int e = ssl_get_error(q->conn);
 +      if (e == MBEDTLS_ERR_SSL_WANT_READ || e == MBEDTLS_ERR_SSL_WANT_WRITE) {
++        q->rwant = (e == MBEDTLS_ERR_SSL_WANT_WRITE) ? POLLOUT : POLLIN;
 +        seterrno3(EAGAIN);
 +        return -1;
 +      }
 +      seterrno3(EIO);
-+    }
++    } else
++      q->rwant = 0;
 +    return r;
 +  }
 +  return sso._recv(sso.state, s, msg, len, flags);
@@ -1166,6 +905,7 @@
 +  unsigned int i;
 +  int ret = 0;
 +  struct SSLsock *q;
++  short own[64], *events = own, ev;
 +  for (i = 0; i < nfds; i++) {
 +    q = searchSSL(state, fds[i].fd);
 +    if (q && (fds[i].events & POLLIN) && ssl_pending(q->conn)) {
@@ -1174,7 +914,42 @@
 +    } else
 +      fds[i].revents = 0;
 +  }
-+  return ret ? ret : sso._poll(state, fds, nfds, timeout);
++  if (ret)
++    return ret;
++  for (i = 0; i < nfds; i++)
++    if ((q = searchSSL(state, fds[i].fd)) && (q->rwant || q->wwant))
++      break;
++  if (i == nfds)
++    return sso._poll(state, fds, nfds, timeout);
++
++  /* A read or a write TLS could not do waits for what TLS needs, a read
++     for the socket to be writable: whatever that gets is the caller's
++     chance to try again, revents what it asked for, and its events are
++     given back as they were. */
++  if (nfds > sizeof(own) / sizeof(own[0]) &&
++      !(events = malloc(nfds * sizeof(*events))))
++    return -1;
++  for (i = 0; i < nfds; i++) {
++    events[i] = fds[i].events;
++    if (!(q = searchSSL(state, fds[i].fd)))
++      continue;
++    ev = fds[i].events & ~(POLLIN | POLLOUT);
++    if (fds[i].events & POLLIN)
++      ev |= q->rwant ? q->rwant : POLLIN;
++    if (fds[i].events & POLLOUT)
++      ev |= q->wwant ? q->wwant : POLLOUT;
++    fds[i].events = ev;
++  }
++  ret = sso._poll(state, fds, nfds, timeout);
++  for (i = 0; i < nfds; i++) {
++    if (ret > 0 && fds[i].events != events[i] &&
++        (fds[i].revents & ~(POLLERR | POLLHUP | POLLNVAL)))
++      fds[i].revents = events[i] | (fds[i].revents & (POLLERR | POLLHUP | POLLNVAL));
++    fds[i].events = events[i];
++  }
++  if (events != own)
++    free(events);
++  return ret;
 +}
 +
 +static void free_ctx_config(SSL_CONFIG *c) {
@@ -1354,12 +1129,12 @@
 +  return CONTINUE;
 +}
 +static FILTER_ACTION ssl_filter_connect(void *fc, struct clientparam *param) {
-+  if (PCONF->cli && !client_mode && docli(param))
++  if (PCONF->cli && !PCONF->client_mode && docli(param))
 +    return REJECT;
 +  return PASS;
 +}
 +static FILTER_ACTION ssl_filter_afterauth(void *fc, struct clientparam *param) {
-+  if (PCONF->cli && client_mode == 1 && docli(param))
++  if (PCONF->cli && PCONF->client_mode == 1 && docli(param))
 +    return REJECT;
 +  return PASS;
 +}
@@ -1373,12 +1148,12 @@
 +      param->redirectfunc = proxyfunc;
 +    return CONTINUE;
 +  }
-+  if (PCONF->cli && client_mode == 2 && docli(param))
++  if (PCONF->cli && PCONF->client_mode == 2 && docli(param))
 +    return REJECT;
 +  return PASS;
 +}
 +static FILTER_ACTION ssl_parent(struct clientparam *param) {
-+  if (PCONF->cli && client_mode == 3 && docli(param))
++  if (PCONF->cli && PCONF->client_mode == 3 && docli(param))
 +    return REJECT;
 +  return PASS;
 +}
@@ -1690,3 +1465,304 @@
 +  if (!ftpprfunc)
 +    ftpprfunc = tcppmfunc;
 +}
+diff --git a/src/ssllib.c b/src/ssllib.c
+index db8f3be..8c616b5 100644
+--- a/src/ssllib.c
++++ b/src/ssllib.c
+@@ -14,7 +14,18 @@
+ #include <sys/file.h>
+ #endif
+ 
+-#ifdef WITH_WOLFSSL
++#ifdef WITH_MBEDTLS
++#include <mbedtls/error.h>
++#include <mbedtls/x509.h>
++#include <mbedtls/x509_crt.h>
++#include <mbedtls/x509_csr.h>
++#include <mbedtls/pk.h>
++#include <mbedtls/ssl.h>
++#include <mbedtls/net_sockets.h>
++#include <mbedtls/entropy.h>
++#include <mbedtls/ctr_drbg.h>
++#include <mbedtls/sha256.h>
++#elif defined(WITH_WOLFSSL)
+ #include <wolfssl/options.h>
+ #include <wolfssl/openssl/crypto.h>
+ #include <wolfssl/openssl/x509.h>
+@@ -48,10 +59,37 @@ static char hexMap[] = {
+                         };
+ 
+ 
++#ifdef WITH_MBEDTLS
++/* mbedTLS reports errors as return codes from the call that failed,
++   not via a global/thread-local queue like OpenSSL's ERR_get_error().
++   Every mbedtls_* call site in this file (and, once converted, ssl.c)
++   is expected to stash its own negative return code here with
++   mbedtls_set_err() before falling through to an error path, so that
++   getSSLErr() keeps behaving like it does for OpenSSL/wolfSSL: "give
++   me the text for whatever just went wrong". Not thread-safe, but
++   neither is the OpenSSL/wolfSSL errbuf right above - same existing
++   tradeoff in this file, kept consistent rather than introduced. */
++static int mbedtls_last_err = 0;
++
++void mbedtls_set_err(int err)
++{
++	mbedtls_last_err = err;
++}
+ 
++char * getSSLErr(){
++    if(mbedtls_last_err == 0){
++	snprintf(errbuf, sizeof(errbuf), "no error");
++	return errbuf;
++    }
++    mbedtls_strerror(mbedtls_last_err, errbuf, sizeof(errbuf));
++    mbedtls_last_err = 0;
++    return errbuf;
++}
++#else
+ char * getSSLErr(){
+     return ERR_error_string(ERR_get_error(), errbuf);
+ }
++#endif
+ 
+ static size_t bin2hex (const unsigned char* bin, size_t bin_length, char* str, size_t str_length)
+ {
+@@ -74,6 +112,7 @@ static size_t bin2hex (const unsigned char* bin, size_t bin_length, char* str, s
+ 	return p - str;
+ }
+ 
++#ifndef WITH_MBEDTLS
+ static int copy_ext(X509 *dst_cert, X509 *src_cert, int nid)
+ {
+ 	X509_EXTENSION *ext;
+@@ -141,7 +180,110 @@ static int set_serial_hash(X509 *cert, const unsigned char *hash)
+ 	BN_free(bn);
+ 	return res;
+ }
++#endif /* !WITH_MBEDTLS */
+ 
++#ifdef WITH_MBEDTLS
++static int format_time_mbedtls(const mbedtls_x509_time *t, char *buf, size_t n)
++{
++	return snprintf(buf, n, "%04d%02d%02d%02d%02d%02d", t->year,t->mon,t->day,t->hour,t->min,t->sec) >= (int)n;
++}
++
++static int build_san_list_mbedtls(const mbedtls_x509_sequence *seq, mbedtls_x509_san_list **out)
++{
++	const mbedtls_x509_sequence *p;
++	mbedtls_x509_san_list *head = NULL, *tail = NULL, *item;
++	int ret;
++	*out = NULL;
++	for(p = seq; p; p = p->next){
++		item = calloc(1, sizeof(*item));
++		if(!item){ ret = MBEDTLS_ERR_X509_ALLOC_FAILED; goto fail; }
++		ret = mbedtls_x509_parse_subject_alt_name(&p->buf, &item->node);
++		if(ret){ free(item); goto fail; }
++		if(!head) head = item; else tail->next = item;
++		tail = item;
++	}
++	*out = head;
++	return 0;
++fail:
++	while(head){
++		item = head->next;
++		mbedtls_x509_free_subject_alt_name(&head->node);
++		free(head);
++		head = item;
++	}
++	return ret;
++}
++
++static void free_san_list_mbedtls(mbedtls_x509_san_list *list)
++{
++	while(list){
++		mbedtls_x509_san_list *next = list->next;
++		mbedtls_x509_free_subject_alt_name(&list->node);
++		free(list);
++		list = next;
++	}
++}
++
++SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config)
++{
++	mbedtls_x509_crt *src = (mbedtls_x509_crt *)cert, *dst = NULL;
++	mbedtls_x509write_cert wr;
++	mbedtls_pk_context *key;
++	mbedtls_x509_san_list *san_list = NULL;
++	char subject[MBEDTLS_X509_MAX_DN_NAME_SIZE], issuer[MBEDTLS_X509_MAX_DN_NAME_SIZE];
++	char not_before[32], not_after[32], cache_name[256];
++	unsigned char hash[32], der[16384];
++	size_t pemlen;
++	int ret;
++	if(!src || !config || !config->CA_cert || !config->CA_key) return NULL;
++	ret = mbedtls_sha256(src->raw.p, src->raw.len, hash, 0);
++	if(ret) return NULL;
++	if(config->certcache){
++		char *q = cache_name; size_t i;
++		q += snprintf(q, sizeof(cache_name), "%s", config->certcache);
++		for(i = 0; i < 16 && (size_t)(q-cache_name)+2 < sizeof(cache_name); i++) q += snprintf(q, 3, "%02x", hash[i]);
++		snprintf(q, sizeof(cache_name)-(size_t)(q-cache_name), ".pem");
++		dst = calloc(1, sizeof(*dst));
++		if(dst){ mbedtls_x509_crt_init(dst); if(mbedtls_x509_crt_parse_file(dst, cache_name) >= 0) return dst; mbedtls_x509_crt_free(dst); free(dst); dst = NULL; }
++	}
++	if(mbedtls_x509_dn_gets(subject, sizeof(subject), &src->subject) < 0 ||
++	   mbedtls_x509_dn_gets(issuer, sizeof(issuer), &config->CA_cert->subject) < 0 ||
++	   format_time_mbedtls(&src->valid_from, not_before, sizeof(not_before)) ||
++	   format_time_mbedtls(&src->valid_to, not_after, sizeof(not_after))) return NULL;
++	key = config->server_key ? config->server_key : config->CA_key;
++	mbedtls_x509write_crt_init(&wr);
++	mbedtls_x509write_crt_set_version(&wr, MBEDTLS_X509_CRT_VERSION_3);
++	ret = mbedtls_x509write_crt_set_serial_raw(&wr, src->serial.p, src->serial.len);
++	if(!ret) ret = mbedtls_x509write_crt_set_subject_name(&wr, subject);
++	if(!ret) ret = mbedtls_x509write_crt_set_issuer_name(&wr, issuer);
++	if(!ret) ret = mbedtls_x509write_crt_set_validity(&wr, not_before, not_after);
++	if(!ret) mbedtls_x509write_crt_set_subject_key(&wr, key);
++	if(!ret) mbedtls_x509write_crt_set_issuer_key(&wr, config->CA_key);
++	if(!ret) mbedtls_x509write_crt_set_md_alg(&wr, MBEDTLS_MD_SHA256);
++	if(!ret) ret = mbedtls_x509write_crt_set_basic_constraints(&wr, 0, -1);
++	if(!ret) ret = mbedtls_x509write_crt_set_key_usage(&wr, MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_ENCIPHERMENT);
++	if(!ret && src->subject_alt_names.buf.p && src->subject_alt_names.buf.len){
++		ret = build_san_list_mbedtls(&src->subject_alt_names, &san_list);
++		if(!ret) ret = mbedtls_x509write_crt_set_subject_alternative_name(&wr, san_list);
++		free_san_list_mbedtls(san_list); san_list = NULL;
++	}
++	if(!ret) ret = mbedtls_x509write_crt_set_subject_key_identifier(&wr);
++	if(!ret) ret = mbedtls_x509write_crt_set_authority_key_identifier(&wr);
++	if(ret){ mbedtls_x509write_crt_free(&wr); return NULL; }
++	ret = mbedtls_x509write_crt_pem(&wr, der, sizeof(der), mbedtls_ctr_drbg_random, &mbedtls_ctr_drbg);
++	mbedtls_x509write_crt_free(&wr);
++	if(ret < 0) return NULL;
++	/* ret is 0 on success, the length is the one of the NUL terminated PEM */
++	pemlen = strlen((char *)der);
++	dst = calloc(1, sizeof(*dst));
++	if(!dst) return NULL;
++	mbedtls_x509_crt_init(dst);
++	{ int parsed = mbedtls_x509_crt_parse(dst, der, pemlen + 1);
++	  if(parsed < 0){ mbedtls_x509_crt_free(dst); free(dst); return NULL; } }
++	if(config->certcache){ FILE *f = fopen(cache_name, "wb"); if(f){ fwrite(der,1,pemlen,f); fclose(f); } }
++	return dst;
++}
++#else
+ SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config)
+ {
+ 	int err = -1;
+@@ -272,7 +414,69 @@ SSL_CERT ssl_copy_cert(SSL_CERT cert, SSL_CONFIG *config)
+ 	}
+ 	return dst_cert;
+ }
++#endif /* WITH_MBEDTLS */
++
++#ifdef WITH_MBEDTLS
++int ssl_read(SSL_CONN connection, void * buf, int bufsize)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++	int ret = mbedtls_ssl_read(conn->ssl, (unsigned char *)buf, (size_t)bufsize);
++
++	if(ret < 0){
++		conn->last_err = ret;
++		mbedtls_set_err(ret);
++		return -1;
++	}
++	return ret;
++}
+ 
++int ssl_write(SSL_CONN connection, void * buf, int bufsize)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++	int ret = mbedtls_ssl_write(conn->ssl, (const unsigned char *)buf, (size_t)bufsize);
++
++	if(ret < 0){
++		conn->last_err = ret;
++		mbedtls_set_err(ret);
++		return -1;
++	}
++	return ret;
++}
++
++int ssl_pending(SSL_CONN connection)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++
++	return (int)mbedtls_ssl_get_bytes_avail(conn->ssl);
++}
++
++void ssl_conn_free(SSL_CONN connection)
++{
++	ssl_conn *conn = (ssl_conn *) connection;
++
++	if(conn){
++		if(conn->ssl){
++			mbedtls_ssl_close_notify(conn->ssl);
++			mbedtls_ssl_free(conn->ssl);
++			free(conn->ssl);
++		}
++		/* conn->ctx (mbedtls_ssl_config) is the shared client/server
++		   config built once in ssl_cli_ctx()/ssl_install() - it is not
++		   owned per-connection and must not be freed here. The
++		   OpenSSL/wolfSSL branch frees conn->ctx because there it is a
++		   context created per-handshake. Config lifetime for mbedTLS is
++		   finalized together with ssl.c in step 2. */
++		free(conn);
++	}
++}
++
++void _ssl_cert_free(SSL_CERT cert)
++{
++	if(!cert) return;
++	mbedtls_x509_crt_free((mbedtls_x509_crt *)cert);
++	free(cert);
++}
++#else
+ int ssl_read(SSL_CONN connection, void * buf, int bufsize)
+ {
+ 	ssl_conn *conn = (ssl_conn *) connection;
+@@ -328,6 +532,7 @@ void _ssl_cert_free(SSL_CERT cert)
+ {
+ 	X509_free((X509 *)cert);
+ }
++#endif
+ 
+ 
+ 
+@@ -383,13 +588,37 @@ int ssl_file_init = 0;
+ 
+ int ssl_init_done = 0;
+ 
++#ifdef WITH_MBEDTLS
++/* Shared, seeded once: mbedtls_ctr_drbg_context is documented as safe
++   for concurrent mbedtls_ctr_drbg_random() calls from multiple threads
++   (internal mutex), so one global pair here mirrors how OpenSSL/wolfSSL
++   keep one global RNG state under the hood. Consumed from ssl.c once
++   that half of the mbedTLS port lands (step 2), exposed here since
++   ssllib.c is what owns SSL library init/shutdown. */
++mbedtls_entropy_context mbedtls_entropy;
++mbedtls_ctr_drbg_context mbedtls_ctr_drbg;
++#endif
++
+ void ssl_init()
+ {
+ 	if(!ssl_init_done){
+ 
+ 	    ssl_init_done = 1;
+ 	    thread_setup();
+-#ifdef WITH_WOLFSSL
++#ifdef WITH_MBEDTLS
++	    {
++		static const char *pers = "3proxy";
++		int ret;
++
++		mbedtls_entropy_init(&mbedtls_entropy);
++		mbedtls_ctr_drbg_init(&mbedtls_ctr_drbg);
++		ret = mbedtls_ctr_drbg_seed(&mbedtls_ctr_drbg, mbedtls_entropy_func,
++			&mbedtls_entropy, (const unsigned char *)pers, strlen(pers));
++		if(ret != 0){
++		    mbedtls_set_err(ret);
++		}
++	    }
++#elif defined(WITH_WOLFSSL)
+ 	    wolfSSL_Init();
+ #elif defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L
+ 	    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+-- 
+2.43.0
+

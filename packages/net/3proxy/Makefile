@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=3proxy
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.3
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=muziling <lls924@gmail.com>
@@ -10,7 +10,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/z3APA3A/3proxy.git
-PKG_SOURCE_VERSION:=f6963ea302bd01209dc94f8677c3dba9f3504b4e
+PKG_SOURCE_VERSION:=4d79d68af65fcab009c7e89a57492f7457ad2166
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -71,7 +71,7 @@ define Build/Compile
 		-DWITHSPLICE \
 		-D_GNU_SOURCE" \
         LDFLAGS="$(TARGET_LDFLAGS)" \
-        PLUGINS="StringsPlugin TrafficPlugin TransparentPlugin" \
+        PLUGINS="StringsPlugin TrafficPlugin" \
         OPENSSL_CHECK=$(if $(CONFIG_PACKAGE_3proxy_OPENSSL),true,false) \
         WOLFSSL_CHECK=$(if $(CONFIG_PACKAGE_3proxy_WOLFSSL),true,false) \
         MBEDTLS_CHECK=$(if $(CONFIG_PACKAGE_3proxy_MBEDTLS),true,false) \
