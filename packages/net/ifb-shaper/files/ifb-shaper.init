@@ -42,17 +42,18 @@ base_classes() {
 }
 
 # One direction of one client; uses $n and $addr from client_add.
-# $1 dev, $2 rate, $3 ceil, $4 sub-class rate, $5 dst|src, $6 sport|dport
+# $1 dev, $2 rate, $3 ceil, $4 sub-class rate, $5 dst|src, $6 sport|dport,
+# $7 leaf qdisc (tc arguments, empty for none)
 # Sub-classes, highest priority first:
 #   2 HTTP(S)  3 other TCP  4 other UDP  5 QUIC (udp/443)  6 the rest
 client_dir() {
-	local dev="$1" r="$2" c="$3" sr="$4" dir="$5" port="$6" i a
+	local dev="$1" r="$2" c="$3" sr="$4" dir="$5" port="$6" lq="$7" i a
 
 	emit class add dev $dev parent 1:1000 classid 1:${n}1 htb rate $r ceil $c
 	for i in 2 3 4 5 6; do
 		emit class add dev $dev parent 1:${n}1 classid 1:${n}$i htb \
 			rate $sr ceil $c prio $((i - 1)) quantum 1514
-		[ -n "$S_LEAF" ] && emit qdisc add dev $dev parent 1:${n}$i $S_LEAF
+		[ -n "$lq" ] && emit qdisc add dev $dev parent 1:${n}$i $lq
 	done
 
 	for a in $addr; do
@@ -100,8 +101,8 @@ client_add() {
 	fi
 	n=$(printf %x $((S_N + 255)))	# 100, 101, ... 8ff -> classes 1:<n>1 .. 1:<n>6
 
-	client_dir $DEV $dr $dc 33kbit dst sport	# download
-	client_dir $IFB $ur $uc 1kbit  src dport	# upload
+	client_dir $DEV $dr $dc 33kbit dst sport "$S_LEAF_DOWN"	# download
+	client_dir $IFB $ur $uc 1kbit  src dport "$S_LEAF_UP"	# upload
 }
 
 shaper_gen() {
@@ -162,7 +163,10 @@ shaper_gen() {
 	config_get S_UP "$cfg" up_total 300Mbit
 	config_get S_BYPASS "$cfg" bypass
 	config_get S_LEAF "$cfg" leaf_qdisc "fq_codel limit 1024 flows 128"
-	[ "$S_LEAF" = none ] && S_LEAF=
+	config_get S_LEAF_DOWN "$cfg" leaf_qdisc_down "$S_LEAF"
+	config_get S_LEAF_UP "$cfg" leaf_qdisc_up "$S_LEAF"
+	[ "$S_LEAF_DOWN" = none ] && S_LEAF_DOWN=
+	[ "$S_LEAF_UP" = none ] && S_LEAF_UP=
 	S_NAME=$cfg
 	S_N=0
 

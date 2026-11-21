@@ -52,6 +52,7 @@ config client 'laptop'
 | `interface` | – | Logical interface to shape (required) |
 | `bypass` | – | List of networks (IPv4/IPv6) not subject to client limits |
 | `leaf_qdisc` | `fq_codel limit 1024 flows 128` | qdisc attached to every client sub-class (`tc` arguments); `none` disables it |
+| `leaf_qdisc_down` / `leaf_qdisc_up` | `leaf_qdisc` | the same for one direction only (download is shaped on the device, upload on the IFB); `none` disables it |
 | `total` | `1000Mbit` | Root class rate |
 | `local_rate` / `local_ceil` | `50Mbit` / `500Mbit` | Bypass class |
 | `down_total` / `up_total` | `400Mbit` / `300Mbit` | Aggregate rate of all clients |
@@ -72,6 +73,19 @@ Rates use `tc` notation (`kbit`, `Mbit`, ...). Clients are matched in file order
 
 - The ingress hook of the device may be shared with other tools (`clsact` from qosify etc.). It is never deleted or replaced: if there is no `ingress`/`clsact` qdisc, `clsact` is created, and only the shaper's own redirect filters (prio 4900 for IPv4, 4901 for IPv6) are managed. After `stop` an empty `clsact` stays on the device.
 - Software/hardware flow offloading can bypass tc for offloaded flows.
+
+## Per-host fairness with cake
+
+The leaf qdisc shares a sub-class between the hosts of a client. `fq_codel` is fair per flow; `cake` can be fair per host, but the host is the destination for download and the source for upload, so the two directions need different modes (`dual-dsthost` and `dual-srchost` are alternatives, the last one wins). Requires `kmod-sched-cake`; every `cake` instance needs roughly 0.6 MB of memory.
+
+```
+config shaper 'lan'
+	option interface 'lan'
+	option leaf_qdisc_down 'cake besteffort dual-dsthost'
+	option leaf_qdisc_up   'cake besteffort dual-srchost'
+```
+
+Fairness is only inside one sub-class; sub-classes still have a strict priority between them.
 
 ## Usage
 
