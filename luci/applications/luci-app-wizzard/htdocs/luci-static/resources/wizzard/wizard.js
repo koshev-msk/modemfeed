@@ -1134,7 +1134,7 @@ return baseclass.extend({
 				dots.push(E('div', {
 					'class': 'wz-dot' + (i < idx ? ' done' : '') + (i === idx ? ' active' : ''),
 					title: x.title
-				}, String(i + 1)));
+				}, i ? String(i) : '>'));
 			});
 
 			dom.content(root, [
