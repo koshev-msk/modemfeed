@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=99
+
+led_ifup() {
+	local iface
+	config_get iface "$1" iface
+	[ -n "$iface" ] && mwan3 ifup "$iface"
+}
+
+start_service() { :; }
+
+reload_service() {
+	config_load mwan3_led
+	config_foreach led_ifup led
+}
+
+service_triggers() {
+	procd_add_reload_trigger mwan3_led
+}

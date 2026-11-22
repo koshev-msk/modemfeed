@@ -4,6 +4,7 @@
 		"read": {
 			"file": {
 				"/etc/init.d/mwan3": [ "exec" ],
+				"/usr/sbin/mwan3": [ "exec" ],
 				"/etc/config/mwan3": [ "read" ]
 			},
 			"cgi-io": [ "exec" ],
@@ -14,6 +15,9 @@
 			"uci": [ "mwan3_led" ]
 		},
 		"write": {
+			"file": {
+				"/etc/init.d/mwan3-ledhelper": [ "exec" ]
+			},
 			"cgi-io": [ "exec" ],
 			"ubus": {
 				"file": [ "exec" ],
