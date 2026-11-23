@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vless-core-cli
 PKG_VERSION:=2.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_GIT_DIR:=$(dir $(firstword $(MAKEFILE_LIST)))
 PKG_GIT_COMMIT:=$(shell git -C $(PKG_GIT_DIR) rev-parse --short HEAD 2>/dev/null || echo unknown)
 
@@ -23,7 +23,12 @@ define Package/vless-core-cli
   SUBMENU:=Web Servers/Proxies
   TITLE:=Standalone C proxy client (VLESS/Trojan/VMess/SS) with local SOCKS5
   URL:=https://github.com/notfence/vless-core-cli
-  DEPENDS:=+libopenssl +zlib +libbrotli +libzstd
+  DEPENDS:=\
+	+libopenssl \
+	+zlib \
+	+libbrotli \
+	+libzstd \
+	+(arm||armeb||mips||mipsel||powerpc):libatomic
 endef
 
 define Package/vless-core-cli/description
