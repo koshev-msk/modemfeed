@@ -8,7 +8,7 @@ PROG=/usr/bin/vless-core
 CONF=vless-core
 
 start_service() {
-	local enabled uri listen_port routing tls_mode
+	local enabled uri listen_port routing tls_mode loglevel
 
 	config_load "$CONF"
 	config_get_bool enabled main enabled 0
@@ -27,6 +27,7 @@ start_service() {
 	procd_open_instance
 	procd_set_param command "$PROG" --uri "$uri" --listen-port "$listen_port"
 	[ -n "$routing" ] && procd_append_param command --routing "$routing"
+	[ -n "$loglevel" ] && procd_append_param command --log-level "$loglevel"
 	procd_set_param env VLESS_TLS_MODE="$tls_mode"
 	procd_set_param respawn
 	procd_set_param stdout 1

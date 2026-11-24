@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vless-core-cli
 PKG_VERSION:=2.0.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_GIT_DIR:=$(dir $(firstword $(MAKEFILE_LIST)))
 PKG_GIT_COMMIT:=$(shell git -C $(PKG_GIT_DIR) rev-parse --short HEAD 2>/dev/null || echo unknown)
 
