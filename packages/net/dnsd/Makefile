@@ -5,8 +5,8 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/koshev-msk/dnsd.git
-PKG_SOURCE_DATE:=2026-11-25
-PKG_SOURCE_VERSION:=b5c01d0c84c1b9491cae0972dea0581d076c31e4
+PKG_SOURCE_DATE:=2026-11-26
+PKG_SOURCE_VERSION:=3a59f20d26663be7454c559e79696219400d93e7
 PKG_MIRROR_HASH:=skip
 
 PKG_MAINTAINER:=Konstantine <shevlakov@132lan.ru>
@@ -39,8 +39,6 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/$(PKG_NAME)
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/$(PKG_NAME).conf $(1)/etc/$(PKG_NAME)/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
