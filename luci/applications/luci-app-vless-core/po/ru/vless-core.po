@@ -1,0 +1,88 @@
+# Russian translations for vless-core.
+# This file is distributed under the same license as the vless-core package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-vless-core\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 00:00+0000\n"
+"PO-Revision-Date: 2026-11-25 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: vless-core.js
+msgid "VLESS Core"
+msgstr "VLESS Core"
+
+#: vless-core.js
+msgid "Standalone client for VLESS, Trojan, VMess, Shadowsocks and SOCKS5 upstreams with a local SOCKS5 proxy."
+msgstr "Автономный клиент для серверов VLESS, Trojan, VMess, Shadowsocks и SOCKS5 с локальным SOCKS5-прокси."
+
+#: vless-core.js
+msgid "Status"
+msgstr "Статус"
+
+#: vless-core.js
+msgid "running"
+msgstr "работает"
+
+#: vless-core.js
+msgid "stopped"
+msgstr "остановлен"
+
+#: vless-core.js
+msgid "Enable"
+msgstr "Включить"
+
+#: vless-core.js
+msgid "Upstream URI"
+msgstr "URI сервера"
+
+#: vless-core.js
+msgid "<code>vless://</code>, <code>vmess://</code>, <code>trojan://</code>, <code>ss://</code> or <code>socks5://</code> URI of the upstream server."
+msgstr "<code>vless://</code>, <code>vmess://</code>, <code>trojan://</code>, <code>ss://</code> или <code>socks5://</code> URI вышестоящего сервера."
+
+#: vless-core.js
+msgid "Unsupported URI scheme"
+msgstr "Неподдерживаемая схема URI"
+
+#: vless-core.js
+msgid "SOCKS5 port"
+msgstr "Порт SOCKS5"
+
+#: vless-core.js
+msgid "Local SOCKS5 listener, binds to 127.0.0.1 only."
+msgstr "Локальный SOCKS5-прокси только на 127.0.0.1."
+
+#: vless-core.js
+msgid "Routing"
+msgstr "Маршрутизация"
+
+#: vless-core.js
+msgid "Optional. Format: <code>ENABLED;DEFAULT;LAN;action,type,value;...</code><br />DEFAULT and action: <code>proxy</code>, <code>direct</code>, <code>block</code>. Type: <code>domain</code>, <code>suffix</code>, <code>cidr</code>, <code>port</code>.<br />Example: <code>1;proxy;1;direct,suffix,ru;block,port,25</code>"
+msgstr "Необязательно. Формат: <code>ENABLED;DEFAULT;LAN;action,type,value;...</code><br />DEFAULT и action: <code>proxy</code>, <code>direct</code>, <code>block</code>. Тип: <code>domain</code>, <code>suffix</code>, <code>cidr</code>, <code>port</code>.<br />Пример: <code>1;proxy;1;direct,suffix,ru;block,port,25</code>"
+
+#: vless-core.js
+msgid "Certificate verification"
+msgstr "Проверка сертификата"
+
+#: vless-core.js
+msgid "<code>strict</code>: verified TLS only (needs <code>ca-bundle</code> for security=tls). <code>insecure</code>: never verify. <code>tofu</code>: pin the certificate on first connection."
+msgstr "<code>strict</code>: только проверенный TLS (для security=tls требуется <code>ca-bundle</code>). <code>insecure</code>: не проверять. <code>tofu</code>: закрепить сертификат при первом подключении."
+
+#: vless-core.js
+msgid "strict"
+msgstr "strict"
+
+#: vless-core.js
+msgid "insecure"
+msgstr "insecure"
+
+#: vless-core.js
+msgid "tofu"
+msgstr "tofu"
