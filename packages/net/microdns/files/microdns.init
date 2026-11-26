@@ -1,0 +1,34 @@
+#!/bin/sh /etc/rc.common
+
+START=20
+STOP=10
+USE_PROCD=1
+
+PROG=/usr/bin/microdns
+
+start_service() {
+	local enabled address port resolv timeout
+
+	config_load microdns
+	config_get_bool enabled main enabled 1
+	[ "$enabled" = 1 ] || return 0
+
+	config_get address main address
+	config_get port    main port
+	config_get resolv  main resolv
+	config_get timeout main timeout
+
+	procd_open_instance
+	procd_set_param command $PROG
+	[ -n "$address" ] && procd_append_param command -a "$address"
+	[ -n "$port" ] && procd_append_param command -p "$port"
+	[ -n "$resolv" ] && procd_append_param command -r "$resolv"
+	[ -n "$timeout" ] && procd_append_param command -t "$timeout"
+	procd_set_param respawn
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger microdns
+}
