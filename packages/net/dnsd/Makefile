@@ -29,6 +29,10 @@ define Package/$(PKG_NAME)/description
 	No cache, one process, libcurl does the TLS/HTTP part.
 endef
 
+define Package/$(PKG_NAME)/conffiles
+/etc/config/dnsd
+endef
+
 # upstream Makefile ignores CFLAGS/LDFLAGS, so call the compiler directly
 define Build/Compile
 	$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -std=gnu11 -Wall \
@@ -39,6 +43,10 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME) $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/dnsd.init $(1)/etc/init.d/$(PKG_NAME)
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/dnsd.config $(1)/etc/config/$(PKG_NAME)
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

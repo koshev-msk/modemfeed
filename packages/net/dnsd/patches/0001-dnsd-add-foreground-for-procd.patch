@@ -1,0 +1,78 @@
+From dbfe92d3fd4529c5d58476166b3fc7f32d122e14 Mon Sep 17 00:00:00 2001
+From: Konstantine <shevlakov@132lan.ru>
+Date: Thu, 26 Nov 2026 04:36:03 +0000
+Subject: [PATCH] dnsd: add --foreground for procd
+
+procd needs a process that stays in the foreground, but -D also logs
+every query. Add -f/--foreground: no daemonizing, no per-query log,
+errors still go to stderr (procd sends them to syslog).
+---
+ inc/dnssec.h |  1 +
+ src/dnssec.c | 11 ++++++++---
+ 2 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/inc/dnssec.h b/inc/dnssec.h
+index 9f1588d..4c7431a 100644
+--- a/inc/dnssec.h
++++ b/inc/dnssec.h
+@@ -79,6 +79,7 @@ struct func_options
+     const char*  pin;
+     uint16_t     server_timeout;
+     uint16_t     port;
++    uint8_t      foreground;
+     uint8_t      debug;
+ };
+ 
+diff --git a/src/dnssec.c b/src/dnssec.c
+index c8862c9..480b88c 100644
+--- a/src/dnssec.c
++++ b/src/dnssec.c
+@@ -658,6 +658,7 @@ int main(int argc, char **argv)
+         {"pid",        required_argument,       0, 'P'},
+         {"proxy",      required_argument,       0, 'x'},
+         {"pin",        required_argument,       0, 'k'},
++        {"foreground", no_argument,             0, 'f'},
+         {"debug",      no_argument,             0, 'D'},
+         {"help",       no_argument,             0, 'h'},
+         {0, 0, 0, 0}
+@@ -665,7 +666,7 @@ int main(int argc, char **argv)
+ 
+     int option_index = 0;
+ 
+-    while ((c = getopt_long(argc, argv, "u:b:l:p:P:x:k:Dh", long_options, &option_index)) != -1)
++    while ((c = getopt_long(argc, argv, "u:b:l:p:P:x:k:fDh", long_options, &option_index)) != -1)
+     {
+         switch (c)
+         {
+@@ -700,6 +701,9 @@ int main(int argc, char **argv)
+         case 'k':
+             options.pin = optarg;
+             break;
++        case 'f':
++            options.foreground = 1;
++            break;
+         case 'D':
+             options.debug = 1;
+             break;
+@@ -761,7 +765,7 @@ int main(int argc, char **argv)
+     sigaction(SIGTERM,  &sa, NULL);
+     signal(SIGPIPE, SIG_IGN);
+ 
+-    if (!options.debug) start_daemon();
++    if (!options.debug && !options.foreground) start_daemon();
+ 
+     if (options.pid_file && create_pidfile() == EXIT_FAILURE)
+     {
+@@ -806,7 +810,8 @@ void usage(char* exec_name)
+         "  -P, --pid FILE         write the PID file\n"
+         "  -x, --proxy URL        use a proxy for the DoH connection\n"
+         "  -k, --pin PIN          pin the server public key (sha256//base64)\n"
+-        "  -D, --debug            stay in the foreground and log every query to stderr\n"
++        "  -f, --foreground       stay in the foreground (procd), errors go to stderr\n"
++        "  -D, --debug            like -f, and log every query to stderr\n"
+         "  -h, --help             display this information\n");
+ }
+ 
+-- 
+2.43.0
+
