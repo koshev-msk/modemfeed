@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vless-core-cli
-PKG_VERSION:=2.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=2.0.2
+PKG_RELEASE:=1
 PKG_GIT_DIR:=$(dir $(firstword $(MAKEFILE_LIST)))
 PKG_GIT_COMMIT:=$(shell git -C $(PKG_GIT_DIR) rev-parse --short HEAD 2>/dev/null || echo unknown)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/notfence/vless-core-cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a483fc8acb53790eff96e9e35551b541bb3cb9d404fee69826a848536633de2b
+PKG_HASH:=eefe309bb50034c74eed589242db72a80c5f0cc6dacf03c6bad2da392e7f7e8e
 
 PKG_MAINTAINER:=Konstantine Shevlakov <kosnt.shell@gmail.com>
 PKG_LICENSE_FILES:=THIRD_PARTY_LICENSES.txt
